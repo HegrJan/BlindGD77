@@ -215,7 +215,7 @@ static void cpsHandleWriteCommand(void)
 				{
 					if (voicePromptsCheckMagicAndVersion((uint32_t *)&com_requestbuffer[8]))
 					{
-						nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
+						nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 					}
 				}
 #endif
