@@ -142,4 +142,5 @@ int lastLoadedRxGroup = -1;// to show data for which RxGroupIndex has been loade
 struct_codeplugContact_t currentContactData;
 
 bool PTTToggledDown = false; // PTT toggle feature
+bool 					dtmfPTTLatch;
 
