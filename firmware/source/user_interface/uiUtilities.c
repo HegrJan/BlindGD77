@@ -2338,8 +2338,12 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	default:
 		break;
 	}
+	// If PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY, after building up the prompt, save it for speaking later but don't play it now.
+	if (immediateAnnounceThreshold==PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY)
+		return;
+
 	// Follow-on when voicePromptWasPlaying is enabled on voice prompt level 2 and above
-	// Prompts are voiced immediately on voice prompt level 3
+		// Prompts are voiced immediately on voice prompt level 3
 	if ((voicePromptWasPlaying && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)) ||
 			(nonVolatileSettings.audioPromptMode >= immediateAnnounceThreshold))
 	{
