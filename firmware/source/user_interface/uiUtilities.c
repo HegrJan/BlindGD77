@@ -2279,6 +2279,16 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 		if (trxGetMode() == RADIO_MODE_DIGITAL)
 		{
 			announceContactNameTgOrPc(false);// false = force the title "Contact" to be played to always separate the Channel name announcement from the Contact name
+			if ((nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_TS & INFO_ON_SCREEN_BOTH)) && tsGetManualOverrideFromCurrentChannel())
+			{
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+				announceTS();
+			}
+		}
+		if ((currentChannelData->libreDMR_Power != 0) && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH)))
+		{
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			announcePowerLevel(voicePromptWasPlaying);
 		}
 	}
 	break;
@@ -2902,11 +2912,11 @@ static uint32_t dtmfGetToneDuration(uint32_t duration)
 	{
 		/*
 		 * First digit duration:
-		 *    - Example 1ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+		 *    - Example 1??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 		 *        The first digit time is set to 100 milliseconds. Thus, the actual length of the first digit duration is 150 milliseconds.
 		 *        However, if the launch starts with a "*" or "#" tone, the intercom will compare the duration with "* and #" and whichever
 		 *        is longer for both.
-		 *    - Example 2ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+		 *    - Example 2??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 		 *        The first digit time is set to 100 milliseconds. "* And # tone" is set to 500 milliseconds.
 		 *        Thus, the actual length of the first "*" or "#" tone is 550 milliseconds.
 		 */
@@ -2915,11 +2925,11 @@ static uint32_t dtmfGetToneDuration(uint32_t duration)
 
 	/*
 	 * '*' '#' Duration:
-	 *    - Example 1ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+	 *    - Example 1??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 	 *        "* And # tone" is set to 500 milliseconds. Thus, the actual length of "* and # sounds" is 550 milliseconds.
 	 *        However, if the launch starts with * and # sounds, the intercom compares the duration of the pitch with
 	 *        the "first digit time" and uses the longer one of the two.
-	 *    - Example 2ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+	 *    - Example 2??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 	 *        The first digit time is set to 100 milliseconds. "* And # tone" is set to 500 milliseconds.
 	 *        Therefore, the actual number of the first digit * or # is 550 milliseconds.
 	 */
