@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ *Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -137,7 +137,7 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 		if (!uiDataGlobal.VoicePrompts.inhibitInitial)
 		{
 			uiDataGlobal.VoicePrompts.inhibitInitial = false;
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_3);
+			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
 		}
 
 		if (screenOperationMode[nonVolatileSettings.currentVFONumber] == VFO_SCREEN_OPERATION_SCAN)
@@ -564,7 +564,7 @@ void uiVFOModeStopScanning(void)
 		rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);// Level is reduced by 1 when Dual Watch , so re-instate it back to the correct setting
 	}
 
-	announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+	announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 	uiVFOModeUpdateScreen(0); // Needs to redraw the screen now
 }
 
@@ -718,7 +718,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			uiVFOModeStopScanning();
 			keyboardReset();
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 			return;
 		}
 	}
@@ -935,7 +935,7 @@ static void handleEvent(uiEvent_t *ev)
 						trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
 					}
 
-					announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 				}
 				else
@@ -961,7 +961,7 @@ static void handleEvent(uiEvent_t *ev)
 						{
 							menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
 						}
-						announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
 					}
 					else
 					{
@@ -1005,6 +1005,7 @@ static void handleEvent(uiEvent_t *ev)
 							(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_DUAL_SCAN))
 					{
 						selectedFreq = VFO_SELECTED_FREQUENCY_INPUT_TX;
+						announceItem(PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 					}
 				}
 				else
@@ -1169,7 +1170,7 @@ static void handleEvent(uiEvent_t *ev)
 							addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, true);
 						}
 						uiVFOModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 					}
 					else
 					{
@@ -1183,7 +1184,7 @@ static void handleEvent(uiEvent_t *ev)
 							currentChannelData->sql++;
 						}
 
-						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
 
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiDataGlobal.displaySquelch = true;
@@ -1241,7 +1242,7 @@ static void handleEvent(uiEvent_t *ev)
 							addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, true);
 						}
 						uiVFOModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 					}
 					else
 					{
@@ -1255,7 +1256,7 @@ static void handleEvent(uiEvent_t *ev)
 							currentChannelData->sql--;
 						}
 
-						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiDataGlobal.displaySquelch = true;
 						uiVFOModeUpdateScreen(0);
@@ -1286,7 +1287,7 @@ static void handleEvent(uiEvent_t *ev)
 
 					if (trxGetBandFromFrequency(newFrequency) != -1)
 					{
-						updateFrequency(newFrequency, PROMPT_THRESHOLD_3);
+						updateFrequency(newFrequency, PROMPT_THRESHOLD_2);
 						freqEnterReset();
 					}
 					else
@@ -1413,7 +1414,7 @@ static void handleEvent(uiEvent_t *ev)
 
 							freqEnterReset();
 							soundSetMelody(MELODY_ACK_BEEP);
-							announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+							announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 						}
 						else
 						{
@@ -1442,6 +1443,7 @@ static void handleUpKey(uiEvent_t *ev)
 				(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_DUAL_SCAN))
 		{
 			selectedFreq = VFO_SELECTED_FREQUENCY_INPUT_RX;
+			announceItem(PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 		}
 	}
 	else
@@ -1513,7 +1515,7 @@ static void stepFrequency(int increment)
 
 		if ((uiDataGlobal.Scan.active == false) || (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state == SCAN_PAUSED)))
 		{
-			announceItem(PROMPT_SEQUENCE_VFO_FREQ_UPDATE, PROMPT_THRESHOLD_3);
+			announceItem(PROMPT_SEQUENCE_VFO_FREQ_UPDATE, PROMPT_THRESHOLD_2);
 		}
 	}
 	else
@@ -1557,7 +1559,7 @@ menuStatus_t uiVFOModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
 		uiDataGlobal.QuickMenu.tmpTxRxLockMode = nonVolatileSettings.bitfieldOptions & BIT_TX_RX_FREQ_LOCK;
 		uiDataGlobal.QuickMenu.tmpVFONumber = nonVolatileSettings.currentVFONumber;
 		uiDataGlobal.QuickMenu.tmpToneScanCSS = toneScanCSS;
-		
+
 		menuDataGlobal.endIndex = NUM_VFO_SCREEN_QUICK_MENU_ITEMS;
 
 		voicePromptsInit();
@@ -1878,18 +1880,18 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 				currentChannelData->txFreq = currentChannelData->rxFreq;
 				currentChannelData->rxFreq = tmpFreq;
 				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 			}
 			break;
 			case VFO_SCREEN_QUICK_MENU_BOTH_TO_RX:
 				currentChannelData->txFreq = currentChannelData->rxFreq;
 				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 				break;
 			case VFO_SCREEN_QUICK_MENU_BOTH_TO_TX:
 				currentChannelData->rxFreq = currentChannelData->txFreq;
 				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 				break;
 			case VFO_SCREEN_QUICK_MENU_FILTER_FM:
 				settingsSet(nonVolatileSettings.analogFilterLevel, (uint8_t) uiDataGlobal.QuickMenu.tmpAnalogFilterLevel);
@@ -2263,7 +2265,7 @@ static void setCurrentFreqToScanLimits(void)
 		currentChannelData->rxFreq = nonVolatileSettings.vfoScanLow[nonVolatileSettings.currentVFONumber];
 		currentChannelData->txFreq = currentChannelData->rxFreq + offset;
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 	}
 }
 
