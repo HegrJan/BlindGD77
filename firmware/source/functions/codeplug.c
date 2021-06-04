@@ -693,8 +693,10 @@ int codeplugDTMFContactGetDataForNumber(int number, struct_codeplugDTMFContact_t
 {
 	if ((number >= CODEPLUG_DTMF_CONTACTS_MIN) && (number <= CODEPLUG_DTMF_CONTACTS_MAX))
 	{
-		codeplugDTMFContactGetDataForIndex(codeplugContactsCache.contactsDTMFLookupCache[number - 1].index, contact);
-		return number;
+		if (codeplugDTMFContactGetDataForIndex(codeplugContactsCache.contactsDTMFLookupCache[number - 1].index, contact))
+		{
+			return codeplugContactsCache.contactsDTMFLookupCache[number - 1].index;
+		}
 	}
 
 	return 0;
@@ -716,7 +718,7 @@ int codeplugContactGetDataForNumberInType(int number, uint32_t callType, struct_
 		{
 			if (codeplugContactGetDataForIndex(codeplugContactsCache.contactsLookupCache[i].index, contact))
 			{
-				pos = i + 1;
+				pos = codeplugContactsCache.contactsLookupCache[i].index;
 				break;
 			}
 		}
