@@ -1890,7 +1890,20 @@ ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->zone);
 	}
-	voicePromptsAppendString(currentZone.name);
+	if (strcmp(currentZone.name,currentLanguage->all_channels) == 0)
+		voicePromptsAppendLanguageString(&currentLanguage->all_channels);
+	else
+	{
+		int len=strlen(currentLanguage->zone);
+		if (strncmp(currentZone.name,currentLanguage->zone, len)==0)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->zone);
+			if (strlen(currentZone.name) > len)
+				voicePromptsAppendString(currentZone.name+len);
+		}
+		else
+			voicePromptsAppendString(currentZone.name);
+	}
 }
 
 ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
@@ -2272,6 +2285,13 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	case PROMPT_SEQUENCE_ZONE:
 		announceZoneName(voicePromptWasPlaying);
 		break;
+	case PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME:
+		announceZoneName(voicePromptWasPlaying);
+		if (voicePromptSequenceState==PROMPT_SEQUENCE_ZONE)
+			break;
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceChannelName(voicePromptWasPlaying);
+	//	deliberate fall through to announce mode.
 	case PROMPT_SEQUENCE_MODE:
 		announceRadioMode(voicePromptWasPlaying);
 		break;
