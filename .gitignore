@@ -5,6 +5,7 @@
 *.diff
 *to_utf-8*.h
 /firmware/.settings
+/firmware/.cproject
 /firmware/Debug
 /firmware/Debug_GD-77
 /firmware/Debug_DM-1801
@@ -12,8 +13,7 @@
 /firmware/Debug_RD-5R
 /firmware/Release
 /firmware/*.launch
-/firmware/linkerdata/*.dat
-/firmware/linkerdata/*.bin
+/firmware/linkerdata/*.*
 /ComTool/.vs
 /ComTool/ComTool/bin
 /ComTool/ComTool/obj
@@ -24,3 +24,6 @@
 /tools/font_tools/font_converter/UC1701_font_tool_JA.o
 /tools/bin2sgl/.vs
 /tools/bin2sgl/obj
+.project
+.cproject
+

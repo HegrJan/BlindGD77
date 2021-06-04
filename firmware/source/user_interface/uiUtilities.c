@@ -2211,7 +2211,15 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	{
 		return;
 	}
-	bool voicePromptWasPlaying = voicePromptsIsPlaying();
+
+	bool level2=nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2;
+	// If voice prompts are already playing and further speech is requested, a less verbose sequence is spoken.
+	// This is known as follow-on.
+	// For example, at level 3, if the name and mode are being spoken,
+	// the user would hear "channel" name "mode" fm.
+	// If follow-on occurs, they'd just hear name fm.
+	// At voice prompt level 2, we always enforce follow-on to reduce verbosity.
+	bool voicePromptWasPlaying = voicePromptsIsPlaying() || level2;
 
 	voicePromptSequenceState = item;
 
@@ -2412,6 +2420,74 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	}
 
 	return false;
+}
+
+void AnnounceChannelSummary(bool voicePromptWasPlaying)
+{
+		char voiceBuf[17];
+	char voiceBufChNumber[5];
+	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
+
+	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
+	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
+
+	voicePromptsInit();
+	voicePromptsAppendPrompt(PROMPT_CHANNEL);
+	// If the number and name differ, then append.
+	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+	{
+		voicePromptsAppendString(voiceBufChNumber);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
+	voicePromptsAppendString(voiceBuf);
+
+	if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
+	{
+		announceRadioMode(voicePromptWasPlaying);
+	}
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+	announceFrequency();
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+	if (trxGetMode() == RADIO_MODE_DIGITAL)
+	{
+		announceContactNameTgOrPc(voicePromptsIsPlaying());
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceTS();
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceCC();
+	}
+	else
+	{
+		bool rxAndTxTonesAreTheSame = (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
+		&& (currentChannelData->rxTone ==currentChannelData->txTone);
+		if (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
+		{
+			bool isCTCSS = codeplugGetCSSType(currentChannelData->rxTone)==CSS_TYPE_CTCSS;
+
+			buildCSSCodeVoicePrompts(currentChannelData->rxTone,
+			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->rxTone & CSS_TYPE_DCS_MASK) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), rxAndTxTonesAreTheSame? DIRECTION_NONE : DIRECTION_RECEIVE, true);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+		}
+
+		if (currentChannelData->txTone != CODEPLUG_CSS_TONE_NONE && !rxAndTxTonesAreTheSame)
+		{
+			bool isCTCSS = codeplugGetCSSType(currentChannelData->txTone)==CSS_TYPE_CTCSS;
+
+			buildCSSCodeVoicePrompts(currentChannelData->txTone,
+			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->txTone & CSS_TYPE_DCS_MASK ) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), DIRECTION_TRANSMIT, true);
+		}
+	}
+
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	announcePowerLevel(voicePromptWasPlaying);
+	if (currentChannelData->libreDMR_Power == 0)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->from_master);
+	}
+
+	voicePromptsPlay();
 }
 
 bool handleMonitorMode(uiEvent_t *ev)
