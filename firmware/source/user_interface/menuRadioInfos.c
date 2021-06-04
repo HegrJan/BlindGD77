@@ -61,7 +61,7 @@ static const int BATTERY_ITER_PUSHBACK = 20;
 
 static void updateScreen(bool forceRedraw);
 static void handleEvent(uiEvent_t *ev);
-static void updateVoicePrompts(bool spellIt);
+static void updateVoicePrompts(bool flushIt, bool spellIt);
 
 static void circularBufferInit(voltageCircularBuffer_t *cb)
 {
@@ -125,8 +125,17 @@ menuStatus_t menuRadioInfos(uiEvent_t *ev, bool isFirstRun)
 		ucClearBuf();
 		menuDisplayTitle(currentLanguage->radio_info);
 		ucRenderRows(0, 2);
+
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->radio_info);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		updateVoicePrompts(false, true);
+
 		updateScreen(true);
-		updateVoicePrompts(true);
 	}
 	else
 	{
@@ -206,7 +215,7 @@ static void updateScreen(bool forceRedraw)
 
 				if (voicePromptsIsPlaying() == false)
 				{
-					updateVoicePrompts(false);
+					updateVoicePrompts(true, false);
 				}
 			}
 
@@ -305,7 +314,7 @@ static void updateScreen(bool forceRedraw)
 
 			if (voicePromptsIsPlaying() == false)
 			{
-				updateVoicePrompts(false);
+				updateVoicePrompts(true, false);
 			}
 		}
 		break;
@@ -377,7 +386,7 @@ static void updateScreen(bool forceRedraw)
 
 				if (voicePromptsIsPlaying() == false)
 				{
-					updateVoicePrompts(false);
+					updateVoicePrompts(true, false);
 				}
 			}
 
@@ -401,7 +410,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			displayMode = QUICKKEY_ENTRYID(ev->function);
 			updateScreen(true);
-			updateVoicePrompts(true);
+			updateVoicePrompts(true, true);
 			return;
 		}
 	}
@@ -425,7 +434,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			displayMode++;
 			updateScreen(true);
-			updateVoicePrompts(true);
+			updateVoicePrompts(true, true);
 		}
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
@@ -434,7 +443,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			displayMode--;
 			updateScreen(true);
-			updateVoicePrompts(true);
+			updateVoicePrompts(true, true);
 		}
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT))
@@ -497,13 +506,16 @@ void menuRadioInfosPushBackVoltage(int32_t voltage)
 	battery_stack_iter++;
 }
 
-static void updateVoicePrompts(bool spellIt)
+static void updateVoicePrompts(bool flushIt, bool spellIt)
 {
 	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
 		char buffer[17];
 
-		voicePromptsInit();
+		if (flushIt)
+		{
+			voicePromptsInit();
+		}
 		switch (displayMode)
 		{
 			case RADIO_INFOS_BATTERY_LEVEL:

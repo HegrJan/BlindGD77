@@ -129,24 +129,19 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 			contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
 
 			voicePromptsInit();
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
 			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 			{
-				voicePromptsAppendLanguageString(&currentLanguage->contacts);
-				voicePromptsAppendLanguageString(&currentLanguage->menu);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
+				voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
 			}
 			else
 			{
-				if (menuSystemGetCurrentMenuNumber() == MENU_CONTACT_QUICKLIST)
-				{
-					voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-				}
+				voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
 			}
+			if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->menu);
+			}
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
 		else
 		{
