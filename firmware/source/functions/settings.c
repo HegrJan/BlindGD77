@@ -302,7 +302,7 @@ void settingsRestoreDefaultSettings(void)
 #else
 	if (voicePromptDataIsLoaded)
 	{
-		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
+		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 	}
 	else
 	{
@@ -333,7 +333,7 @@ void enableVoicePromptsIfLoaded(void)
 #if defined(PLATFORM_GD77S)
 		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #else
-		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
+		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #endif
 		settingsDirty = true;
 		settingsSaveSettings(false);

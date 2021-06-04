@@ -347,6 +347,12 @@ void mainTask(void *data)
 
 	menuRadioInfosInit(); // Initialize circular buffer
 	watchdogInit(menuRadioInfosPushBackVoltage);
+	// If hash is held down during boot, ensure Voice Prompts are on if not already.
+	bool forceVoicePromptsOn=false;
+	if ((keyboardRead()&SCAN_HASH) && (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
+	{
+		forceVoicePromptsOn=true;
+	}
 
 	soundInitBeepTask();
 
@@ -371,7 +377,7 @@ void mainTask(void *data)
 	dmrIDCacheInit();
 	voicePromptsCacheInit();
 
-	if (wasRestoringDefaultsettings)
+	if (wasRestoringDefaultsettings || forceVoicePromptsOn)
 	{
 		enableVoicePromptsIfLoaded();
 	}
