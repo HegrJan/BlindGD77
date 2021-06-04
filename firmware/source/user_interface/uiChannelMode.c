@@ -1265,6 +1265,8 @@ static void handleEvent(uiEvent_t *ev)
 
 				trxUpdateTsForCurrentChannelWithSpecifiedContact(&currentContactData);
 
+				announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
+
 				clearActiveDMRID();
 				lastHeardClearLastID();
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
