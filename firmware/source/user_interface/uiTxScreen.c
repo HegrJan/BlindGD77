@@ -38,8 +38,19 @@ typedef enum
 {
 	TXSTOP_TIMEOUT,
 	TXSTOP_RX_ONLY,
-	TXSTOP_OUT_OF_BAND
+	TXSTOP_OUT_OF_BAND,
+	TXSTOP_DTMF_KEYING_TIMEOUT
 } txTerminationReason_t;
+
+static uint16_t dtmfPTTLatchTimeout=0;
+typedef enum
+{
+	dtmfNotLatched=0,
+	dtmfTransmittingCode,
+	dtmfPTTLatched
+} dtmfLatchState_t;
+
+static dtmfLatchState_t dtmfLatchState=dtmfNotLatched;
 
 static void updateScreen(void);
 static void handleEvent(uiEvent_t *ev);
@@ -220,6 +231,18 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				}
 
 			}
+			//DTMF latch
+			if (dtmfLatchState==dtmfPTTLatched)
+			{
+				if (dtmfPTTLatchTimeout > 0)
+					dtmfPTTLatchTimeout--;
+				else
+				{
+					dtmfLatchState=dtmfNotLatched;
+					handleTxTermination(ev, TXSTOP_DTMF_KEYING_TIMEOUT);
+				}
+			}
+			//end of DTMF latch
 		}
 
 		// Timeout happened, postpone going further otherwise timeout
@@ -250,7 +273,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		// That's important in DMR mode, otherwise quickly press/release the PTT key will left
 		// the system in an unexpected state (RED led on, displayed TXScreen, but PA off).
 		// It doesn't have any impact on FM mode.
-		if (((ev->buttons & BUTTON_PTT) == 0) && (pttWasReleased == false))
+		if (((ev->buttons & BUTTON_PTT) == 0) && (dtmfLatchState==dtmfNotLatched) && (pttWasReleased == false))
 		{
 			pttWasReleased = true;
 		}
@@ -310,7 +333,7 @@ static void updateScreen(void)
 static void handleEvent(uiEvent_t *ev)
 {
 	// Xmiting ends (normal or timeouted)
-	if (((ev->buttons & BUTTON_PTT) == 0)
+	if ((((ev->buttons & BUTTON_PTT) == 0) && (dtmfLatchState==dtmfNotLatched))
 			|| ((currentChannelData->tot != 0) && (timeInSeconds == 0)))
 	{
 		if (trxTransmissionEnabled)
@@ -320,6 +343,8 @@ static void handleEvent(uiEvent_t *ev)
 
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{
+				dtmfLatchState = dtmfNotLatched;
+				dtmfPTTLatch=false;
 				// In analog mode. Stop transmitting immediately
 				LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, 0);
 
@@ -396,6 +421,10 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				trxSetDTMF(keyval);
 				isTransmittingTone = true;
+				dtmfLatchState=dtmfTransmittingCode;
+				dtmfPTTLatchTimeout=0;
+				PTTToggledDown = true; // released after a timeout when the dtmf key is released.
+				dtmfPTTLatch=true;
 				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_DTMF);
 				enableAudioAmp(AUDIO_AMP_MODE_RF);
 				GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1);
@@ -407,6 +436,11 @@ static void handleEvent(uiEvent_t *ev)
 	if (isTransmittingTone && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && ((ev->keys.key == 0) || (ev->keys.event & KEY_MOD_UP)))
 	{
 		isTransmittingTone = false;
+		if (dtmfLatchState==dtmfTransmittingCode)
+		{
+			dtmfLatchState=dtmfPTTLatched;
+			dtmfPTTLatchTimeout=1500;
+		}
 		trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
 		disableAudioAmp(AUDIO_AMP_MODE_RF);
 	}
@@ -437,6 +471,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 {
 	PTTToggledDown = false;
 	voxReset();
+	dtmfPTTLatch=false;
 
 	ucClearBuf();
 
@@ -472,6 +507,8 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 			voicePromptsAppendLanguageString(&currentLanguage->timeout);
 			mto = ev->time;
 			break;
+		case TXSTOP_DTMF_KEYING_TIMEOUT:
+			return ; // silent timeout.
 	}
 
 	ucRender();

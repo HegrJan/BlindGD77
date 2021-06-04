@@ -656,7 +656,9 @@ void mainTask(void *data)
 			}
 
 			// PTT toggle action
-			if (nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH)
+			bool pttLatchEnabled=((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) && (currentChannelData->tot != 0)) || dtmfPTTLatch;
+
+			if (pttLatchEnabled)
 			{
 				if (button_event == EVENT_BUTTON_CHANGE)
 				{

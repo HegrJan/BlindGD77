@@ -335,5 +335,6 @@ extern struct_codeplugContact_t currentContactData;
 extern LinkItem_t 				*LinkHead;
 
 extern bool 					PTTToggledDown;
+extern bool 					dtmfPTTLatch;
 
 #endif
