@@ -313,7 +313,9 @@ int codeplugContactGetDataForNumberInType(int number, uint32_t callType, struct_
 int codeplugDTMFContactGetDataForNumber(int number, struct_codeplugDTMFContact_t *contact);
 int codeplugContactIndexByTGorPC(uint32_t tgorpc, uint32_t callType, struct_codeplugContact_t *contact, uint8_t optionalTS);
 int codeplugContactSaveDataForIndex(int index, struct_codeplugContact_t *contact);
+int codeplugContactSaveDTMFDataForIndex(int index, struct_codeplugDTMFContact_t *contact);
 int codeplugContactGetFreeIndex(void);
+int codeplugDTMFContactGetFreeIndex(void);
 bool codeplugContactGetRXGroup(int index);
 void codeplugInitChannelsPerZone(void);
 bool codeplugGetOpenGD77CustomData(codeplugCustomDataType_t dataType, uint8_t *dataBuf);
