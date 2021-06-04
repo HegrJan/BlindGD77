@@ -553,7 +553,7 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 			((uiDataGlobal.Scan.active == false) ||
 					(uiDataGlobal.Scan.active && ((uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED) || (uiDataGlobal.Scan.state = SCAN_PAUSED)))))
 	{
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || uiDataGlobal.Scan.active) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_3);
+			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || uiDataGlobal.Scan.active) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
 	}
 #else
 	// Force GD77S to always use the Master power level
@@ -803,6 +803,13 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & BUTTON_EVENT)
 	{
+		// long hold sk1 now summarizes channel for all models.
+		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
+		{
+			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2));
+			return;
+		}
+
 		if (repeatVoicePromptOnSK1(ev))
 		{
 			return;
@@ -1092,7 +1099,7 @@ static void handleEvent(uiEvent_t *ev)
 						addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, true);
 					}
 					uiChannelModeUpdateScreen(0);
-					announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 				}
 				else
 				{
@@ -1106,7 +1113,7 @@ static void handleEvent(uiEvent_t *ev)
 						currentChannelData->sql++;
 					}
 
-					announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
 
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 					uiDataGlobal.displaySquelch = true;
@@ -1162,7 +1169,7 @@ static void handleEvent(uiEvent_t *ev)
 						addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, true);
 					}
 					uiChannelModeUpdateScreen(0);
-					announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 				}
 				else
 				{
@@ -1176,7 +1183,7 @@ static void handleEvent(uiEvent_t *ev)
 						currentChannelData->sql--;
 					}
 
-					announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
 
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 					uiDataGlobal.displaySquelch = true;
@@ -1204,7 +1211,7 @@ static void handleEvent(uiEvent_t *ev)
 					trxSetRxCSS(currentChannelData->rxTone);
 				}
 
-				announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_3);
+				announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 				uiChannelModeUpdateScreen(0);
 			}
@@ -1232,7 +1239,7 @@ static void handleEvent(uiEvent_t *ev)
 					{
 						menuChannelExitStatus |= MENU_STATUS_FORCE_FIRST;
 					}
-					announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
 				}
 				else
 				{
@@ -1375,7 +1382,7 @@ static void handleEvent(uiEvent_t *ev)
 				}
 				else
 				{
-					announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
 				}
 
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
@@ -2514,7 +2521,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
-			announceItem(PROMPT_SEQUENCE_BATTERY, PROMPT_THRESHOLD_3);
+			announceItem(PROMPT_SEQUENCE_BATTERY, PROMPT_THRESHOLD_2);
 			return;
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE) && (uiDataGlobal.DTMFContactList.isKeying == false))
@@ -2635,7 +2642,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 						updateTrxID();
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiChannelModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_2);
 					}
 					else
 					{
@@ -2649,7 +2656,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 							currentChannelData->sql++;
 						}
 
-						announceItem(PROMPT_SQUENCE_SQUELCH, PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SQUENCE_SQUELCH, PROMPT_THRESHOLD_2);
 					}
 					break;
 
@@ -2675,7 +2682,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					if (trxGetMode() == RADIO_MODE_DIGITAL)
 					{
 						toggleTimeslotForGD77S();
-						announceItem(PROMPT_SEQUENCE_TS, PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_TS, PROMPT_THRESHOLD_2);
 					}
 					break;
 
@@ -2742,7 +2749,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;
 
-					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_2);
 					break;
 
 				case GD77S_UIMODE_POWER: // Power
@@ -2816,7 +2823,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 						updateTrxID();
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiChannelModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_2);
 					}
 					else
 					{
@@ -2830,7 +2837,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 							currentChannelData->sql--;
 						}
 
-						announceItem(PROMPT_SQUENCE_SQUELCH, PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SQUENCE_SQUELCH, PROMPT_THRESHOLD_2);
 					}
 					break;
 
@@ -2866,7 +2873,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					if (trxGetMode() == RADIO_MODE_DIGITAL)
 					{
 						toggleTimeslotForGD77S();
-						announceItem(PROMPT_SEQUENCE_TS, PROMPT_THRESHOLD_3);
+						announceItem(PROMPT_SEQUENCE_TS, PROMPT_THRESHOLD_2);
 					}
 					break;
 
@@ -2932,7 +2939,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;
 
-					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_2);
 					break;
 
 				case GD77S_UIMODE_POWER: // Power
