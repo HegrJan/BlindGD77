@@ -2060,23 +2060,30 @@ static void announceQRG(uint32_t qrg, bool unit)
 }
 
 
-ANNOUNCE_STATIC void announceFrequency(void)
+static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool announceTx)
 {
 	bool duplex = (currentChannelData->txFreq != currentChannelData->rxFreq);
 
-	if (duplex)
+	if (duplex && announcePrompt && announceRx)
 	{
 		voicePromptsAppendPrompt(PROMPT_RECEIVE);
 	}
 
-	announceQRG(currentChannelData->rxFreq, true);
+	if (announceRx)
+		announceQRG(currentChannelData->rxFreq, true);
 
-	if (duplex)
+	if (duplex && announceTx)
 	{
-		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
+		if (announcePrompt)
+			voicePromptsAppendPrompt(PROMPT_TRANSMIT);
 		announceQRG(currentChannelData->txFreq, true);
 	}
 }
+
+ANNOUNCE_STATIC void announceFrequency(void)
+{
+	announceFrequencyEx(true, true, true);
+	}
 
 ANNOUNCE_STATIC void announceVFOChannelName(void)
 {
@@ -2316,7 +2323,18 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	case PROMPT_SEQUENCE_TEMPERATURE:
 		announceTemperature(voicePromptWasPlaying);
 		break;
-
+	case PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ:
+	{
+		voicePromptsAppendPrompt(PROMPT_RECEIVE);
+		announceFrequencyEx(false, true, false);
+		break;
+	}
+	case PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ:
+	{
+		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
+		announceFrequencyEx(false, false, true);
+		break;
+	}
 	default:
 		break;
 	}
