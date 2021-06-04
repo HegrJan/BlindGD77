@@ -1286,6 +1286,8 @@ static void handleEvent(uiEvent_t *ev)
 					menuChannelExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 				}
 
+				announceItem(PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME, PROMPT_THRESHOLD_2);
+
 				return;
 			}
 			else
@@ -1449,6 +1451,9 @@ static void handleUpKey(uiEvent_t *ev)
 		{
 			menuChannelExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 		}
+
+		announceItem(PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME, PROMPT_THRESHOLD_2);
+
 		return;
 	}
 	else
