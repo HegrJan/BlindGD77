@@ -263,6 +263,14 @@ void voicePromptsAppendString(char *promptString)
 		{
 			voicePromptsAppendPrompt(PROMPT_PERCENT);
 		}
+		else if (*promptString == '*')
+		{
+			voicePromptsAppendPrompt(PROMPT_STAR);
+		}
+		else if (*promptString == '#')
+		{
+			voicePromptsAppendPrompt(PROMPT_HASH);
+		}
 		else
 		{
 			// otherwise just add silence
