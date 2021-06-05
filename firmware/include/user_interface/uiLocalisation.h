@@ -219,6 +219,9 @@ typedef struct
    const char *dmr_id;
    const char *scan_on_boot;
    const char* sk2Latch;
+   const char* name;
+   const char* dtmfCode;
+   const char* vox;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

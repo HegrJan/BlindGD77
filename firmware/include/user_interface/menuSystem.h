@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -130,7 +130,6 @@ bool uiVFOModeDualWatchIsScanning(void);
 bool uiVFOModeFrequencyScanningIsActiveAndEnabled(uint32_t *lowFreq, uint32_t *highFreq);
 void uiChannelModeStopScanning(void);
 bool uiChannelModeIsScanning(void);
-
 void uiCPSUpdate(uiCPSCommand_t command, int x, int y, ucFont_t fontSize, ucTextAlign_t alignment, bool isInverted, char *szMsg);
 
 void menuSystemInit(void);
@@ -231,6 +230,7 @@ enum MENU_SCREENS
 	MENU_LANGUAGE,
 	UI_PRIVATE_CALL,
 	UI_MESSAGE_BOX,
+	MENU_CONTACT_NEW_DTMF,
 	NUM_MENU_ENTRIES
 };
 
@@ -302,6 +302,7 @@ menuStatus_t menuLockScreen(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactList(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactListSubMenu(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactDetails(uiEvent_t *event, bool isFirstRun);
+menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun);
 menuStatus_t menuLanguage(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuPrivateCall(uiEvent_t *event, bool isFirstRun);
 
