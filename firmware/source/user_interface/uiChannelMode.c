@@ -443,6 +443,29 @@ static void scanApplyNextChannel(void)
 	nextChannelReady = false;
 }
 
+static bool AnnounceChannelInfoImmediately()
+{
+	int nextMenu = menuSystemGetPreviouslyPushedMenuNumber();
+
+	if (nextMenu == UI_TX_SCREEN)
+	return false;
+	if (nextMenu == UI_PRIVATE_CALL)
+		return false;
+	if (nextMenu == UI_LOCK_SCREEN)
+		return false;
+	if (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.scanType == SCAN_TYPE_NORMAL_STEP))
+	return false;
+	return true;
+}
+
+static bool AllowedToAnnounceChannelInfo(bool loadVoicePromptAnnouncement)
+{
+	if (uiDataGlobal.VoicePrompts.inhibitInitial && !loadVoicePromptAnnouncement)
+	return false;
+
+	return true;
+}
+
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement)
 {
 	bool rxGroupValid = true;
@@ -548,12 +571,9 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 	}
 
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
-	int nextMenu = menuSystemGetPreviouslyPushedMenuNumber(); // used to determine if this screen has just been loaded after Tx ended (in loadChannelData()))
-	if ((!uiDataGlobal.VoicePrompts.inhibitInitial || loadVoicePromptAnnouncement) &&
-			((uiDataGlobal.Scan.active == false) ||
-					(uiDataGlobal.Scan.active && ((uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED) || (uiDataGlobal.Scan.state = SCAN_PAUSED)))))
+	if (AllowedToAnnounceChannelInfo(loadVoicePromptAnnouncement))
 	{
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || uiDataGlobal.Scan.active) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
+		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, AnnounceChannelInfoImmediately() ? PROMPT_THRESHOLD_2 : PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
 	}
 #else
 	// Force GD77S to always use the Master power level
@@ -1624,7 +1644,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 			rightSideVar[0] = 0;
 			rightSideConst = NULL;
 			leftSide = NULL;
-	
+
 			switch(mNum)
 			{
 				case CH_SCREEN_QUICK_MENU_COPY2VFO:
@@ -1666,7 +1686,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 				default:
 					buf[0] = 0;
 			}
-	
+
 			if (leftSide != NULL)
 			{
 				snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
@@ -1675,19 +1695,19 @@ static void updateQuickMenuScreen(bool isFirstRun)
 			{
 				snprintf(buf, bufferLen, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
-	
+
 			if (i == 0)
 			{
 				if (!isFirstRun && (menuDataGlobal.menuOptionsSetQuickkey == 0))
 				{
 					voicePromptsInit();
 				}
-	
+
 				if (leftSide != NULL)
 				{
 					voicePromptsAppendLanguageString((const char * const *)leftSide);
 				}
-	
+
 				if (rightSideVar[0] != 0)
 				{
 					voicePromptsAppendString(rightSideVar);
@@ -1734,7 +1754,7 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 			return;
 		}
 	}
- 
+
 	if (ev->events & FUNCTION_EVENT)
 	{
 		if ((QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) && (QUICKKEY_ENTRYID(ev->function) < NUM_CH_SCREEN_QUICK_MENU_ITEMS))

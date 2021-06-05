@@ -137,7 +137,7 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 		if (!uiDataGlobal.VoicePrompts.inhibitInitial)
 		{
 			uiDataGlobal.VoicePrompts.inhibitInitial = false;
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
+			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || (nextMenu == UI_LOCK_SCREEN)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
 		}
 
 		if (screenOperationMode[nonVolatileSettings.currentVFONumber] == VFO_SCREEN_OPERATION_SCAN)
@@ -1697,7 +1697,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 			rightSideVar[0] = 0;
 			rightSideConst = NULL;
 			leftSide = NULL;
-	
+
 			switch(mNum)
 			{
 	#if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S) || defined(PLATFORM_RD5R)
@@ -1756,7 +1756,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					{
 						const char *scanCSS[] = { currentLanguage->all, "CTCSS", "DCS", "iDCS" };
 						uint8_t offset = 0;
-	
+
 						if (uiDataGlobal.QuickMenu.tmpToneScanCSS == CSS_TYPE_NONE)
 						{
 							offset = 0;
@@ -1773,9 +1773,9 @@ static void updateQuickMenuScreen(bool isFirstRun)
 						{
 							offset = 3;
 						}
-	
+
 						snprintf(rightSideVar, bufferLen, "%s", scanCSS[offset]);
-	
+
 						if (uiDataGlobal.QuickMenu.tmpToneScanCSS == CSS_TYPE_NONE)
 						{
 							rightSideConst = (char * const *)&currentLanguage->all;
@@ -1797,7 +1797,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					strcpy(buf, "");
 					break;
 			}
-	
+
 			if (leftSide != NULL)
 			{
 				snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
@@ -1806,14 +1806,14 @@ static void updateQuickMenuScreen(bool isFirstRun)
 			{
 				snprintf(buf, bufferLen, "%s", ((rightSideVar[0] != 0) ? rightSideVar : *rightSideConst));
 			}
-	
+
 			if (i == 0)
 			{
 				if (!isFirstRun && (menuDataGlobal.menuOptionsSetQuickkey == 0))
 				{
 					voicePromptsInit();
 				}
-	
+
 				if (prompt != -1)
 				{
 					voicePromptsAppendPrompt(prompt);
@@ -1824,7 +1824,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					{
 						voicePromptsAppendLanguageString((const char * const *)leftSide);
 					}
-	
+
 					if ((rightSideVar[0] != 0) && (rightSideConst == NULL))
 					{
 						voicePromptsAppendString(rightSideVar);
@@ -1834,7 +1834,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 						voicePromptsAppendLanguageString((const char * const *)rightSideConst);
 					}
 				}
-	
+
 				if (menuDataGlobal.menuOptionsTimeout != -1)
 				{
 					promptsPlayNotAfterTx();
@@ -1844,7 +1844,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					menuDataGlobal.menuOptionsTimeout = 0;// clear flag indicating that a QuickKey has just been set
 				}
 			}
-	
+
 			if (menuDataGlobal.menuOptionsTimeout > 0)
 			{
 				menuDisplaySettingOption(*leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
