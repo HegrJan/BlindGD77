@@ -105,16 +105,12 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 
 	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
 	{
-		if (voicePromptsIsPlaying())
-		{
-			voicePromptsTerminate();
-		}
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->rssi);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		updateVoicePrompts(false, true);
 	}

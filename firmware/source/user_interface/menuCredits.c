@@ -84,7 +84,6 @@ static void updateScreen(bool isFirstRun)
 	ucClearBuf();
 	menuDisplayTitle(currentLanguage->credits);
 
-
 	for(int i = 0; i < NUM_LINES_PER_SCREEN; i++)
 	{
 		ucPrintCentered(i * 8 + 16, (char *)creditTexts[i + menuDataGlobal.currentItemIndex], FONT_SIZE_1);

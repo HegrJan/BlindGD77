@@ -1522,6 +1522,9 @@ menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+		menuDataGlobal.menuOptionsSetQuickkey = 0;
+		menuDataGlobal.menuOptionsTimeout = 0;
+
 		if (quickmenuChannelFromVFOHandled)
 		{
 			quickmenuChannelFromVFOHandled = false;
@@ -1536,12 +1539,8 @@ menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
 		menuDataGlobal.endIndex = NUM_CH_SCREEN_QUICK_MENU_ITEMS;
 
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->quick_menu);
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 		updateQuickMenuScreen(true);
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
@@ -1549,7 +1548,7 @@ menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
 	{
 		menuQuickChannelExitStatus = MENU_STATUS_SUCCESS;
 
-		if (ev->hasEvent)
+		if (ev->hasEvent || (menuDataGlobal.menuOptionsTimeout > 0))
 		{
 			handleQuickMenuEvent(ev);
 		}
@@ -1614,90 +1613,109 @@ static void updateQuickMenuScreen(bool isFirstRun)
 	char rightSideVar[bufferLen];
 
 	ucClearBuf();
-	menuDisplayTitle(currentLanguage->quick_menu);
+	bool settingOption = uiShowQuickKeysChoices(buf, bufferLen,currentLanguage->quick_menu);
 
 	for(int i =- 1; i <= 1; i++)
 	{
-		mNum = menuGetMenuOffset(NUM_CH_SCREEN_QUICK_MENU_ITEMS, i);
-		buf[0] = 0;
-		rightSideVar[0] = 0;
-		rightSideConst = NULL;
-		leftSide = NULL;
-
-		switch(mNum)
+		if ((settingOption == false) || (i == 0))
 		{
-			case CH_SCREEN_QUICK_MENU_COPY2VFO:
-				rightSideConst = (char * const *)&currentLanguage->channelToVfo;
-				break;
-			case CH_SCREEN_QUICK_MENU_COPY_FROM_VFO:
-				rightSideConst = (char * const *)&currentLanguage->vfoToChannel;
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_FM:
-				leftSide = (char * const *)&currentLanguage->filter;
-				if (uiDataGlobal.QuickMenu.tmpAnalogFilterLevel == 0)
-				{
-					rightSideConst = (char * const *)&currentLanguage->none;
-				}
-				else
-				{
-					snprintf(rightSideVar, bufferLen, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
-				}
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR:
-				leftSide = (char * const *)&currentLanguage->dmr_filter;
-				if (uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel == 0)
-				{
-					rightSideConst = (char * const *)&currentLanguage->none;
-				}
-				else
-				{
-					snprintf(rightSideVar, bufferLen, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
-				}
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR_CC:
-				leftSide = (char * const *)&currentLanguage->dmr_cc_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_CC_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR_TS:
-				leftSide = (char * const *)&currentLanguage->dmr_ts_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_TS_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			default:
-				buf[0] = 0;
-		}
-
-		if (leftSide != NULL)
-		{
-			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-		else
-		{
-			snprintf(buf, bufferLen, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-
-		if (i == 0)
-		{
-			if (!isFirstRun)
+			mNum = menuGetMenuOffset(NUM_CH_SCREEN_QUICK_MENU_ITEMS, i);
+			buf[0] = 0;
+			rightSideVar[0] = 0;
+			rightSideConst = NULL;
+			leftSide = NULL;
+	
+			switch(mNum)
 			{
-				voicePromptsInit();
+				case CH_SCREEN_QUICK_MENU_COPY2VFO:
+					rightSideConst = (char * const *)&currentLanguage->channelToVfo;
+					break;
+				case CH_SCREEN_QUICK_MENU_COPY_FROM_VFO:
+					rightSideConst = (char * const *)&currentLanguage->vfoToChannel;
+					break;
+				case CH_SCREEN_QUICK_MENU_FILTER_FM:
+					leftSide = (char * const *)&currentLanguage->filter;
+					if (uiDataGlobal.QuickMenu.tmpAnalogFilterLevel == 0)
+					{
+						rightSideConst = (char * const *)&currentLanguage->none;
+					}
+					else
+					{
+						snprintf(rightSideVar, bufferLen, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
+					}
+					break;
+				case CH_SCREEN_QUICK_MENU_FILTER_DMR:
+					leftSide = (char * const *)&currentLanguage->dmr_filter;
+					if (uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel == 0)
+					{
+						rightSideConst = (char * const *)&currentLanguage->none;
+					}
+					else
+					{
+						snprintf(rightSideVar, bufferLen, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
+					}
+					break;
+				case CH_SCREEN_QUICK_MENU_FILTER_DMR_CC:
+					leftSide = (char * const *)&currentLanguage->dmr_cc_filter;
+					rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_CC_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
+					break;
+				case CH_SCREEN_QUICK_MENU_FILTER_DMR_TS:
+					leftSide = (char * const *)&currentLanguage->dmr_ts_filter;
+					rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_TS_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
+					break;
+				default:
+					buf[0] = 0;
 			}
-
+	
 			if (leftSide != NULL)
 			{
-				voicePromptsAppendLanguageString((const char * const *)leftSide);
-			}
-
-			if (rightSideVar[0] != 0)
-			{
-				voicePromptsAppendString(rightSideVar);
+				snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
 			else
 			{
-				voicePromptsAppendLanguageString((const char * const *)rightSideConst);
+				snprintf(buf, bufferLen, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
-			promptsPlayNotAfterTx();
+	
+			if (i == 0)
+			{
+				if (!isFirstRun && (menuDataGlobal.menuOptionsSetQuickkey == 0))
+				{
+					voicePromptsInit();
+				}
+	
+				if (leftSide != NULL)
+				{
+					voicePromptsAppendLanguageString((const char * const *)leftSide);
+				}
+	
+				if (rightSideVar[0] != 0)
+				{
+					voicePromptsAppendString(rightSideVar);
+				}
+				else
+				{
+					voicePromptsAppendLanguageString((const char * const *)rightSideConst);
+				}
+
+				if (menuDataGlobal.menuOptionsTimeout != -1)
+				{
+					promptsPlayNotAfterTx();
+				}
+				else
+				{
+					menuDataGlobal.menuOptionsTimeout = 0;// clear flag indicating that a QuickKey has just been set
+				}
+			}
+
+			if (menuDataGlobal.menuOptionsTimeout > 0)
+			{
+				menuDisplaySettingOption(*leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
+			}
+			else
+			{
+				menuDisplayEntry(i, mNum, buf);
+			}
 		}
-		menuDisplayEntry(i, mNum, buf);
 	}
 
 	ucRender();
@@ -1706,6 +1724,31 @@ static void updateQuickMenuScreen(bool isFirstRun)
 static void handleQuickMenuEvent(uiEvent_t *ev)
 {
 	bool isDirty = false;
+
+	if ((menuDataGlobal.menuOptionsTimeout > 0) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
+	{
+		menuDataGlobal.menuOptionsTimeout--;
+		if (menuDataGlobal.menuOptionsTimeout == 0)
+		{
+			menuSystemPopPreviousMenu();
+			return;
+		}
+	}
+ 
+	if (ev->events & FUNCTION_EVENT)
+	{
+		if ((QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) && (QUICKKEY_ENTRYID(ev->function) < NUM_CH_SCREEN_QUICK_MENU_ITEMS))
+		{
+			menuDataGlobal.currentItemIndex = QUICKKEY_ENTRYID(ev->function);
+			menuQuickChannelExitStatus |= MENU_STATUS_LIST_TYPE;
+			isDirty = true;
+		}
+
+		if ((QUICKKEY_FUNCTIONID(ev->function) != 0))
+		{
+			menuDataGlobal.menuOptionsTimeout = 1000;
+		}
+	}
 
 	if (ev->events & BUTTON_EVENT)
 	{
@@ -1717,12 +1760,31 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 	{
+		if (menuDataGlobal.menuOptionsSetQuickkey != 0)
+		{
+			menuDataGlobal.menuOptionsSetQuickkey = 0;
+			menuDataGlobal.menuOptionsTimeout = 0;
+			menuQuickChannelExitStatus |= MENU_STATUS_ERROR;
+			menuSystemPopPreviousMenu();
+
+			return;
+		}
+
 		uiChannelModeStopScanning();
 		menuSystemPopPreviousMenu();
 		return;
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 	{
+		if ((menuDataGlobal.menuOptionsSetQuickkey != 0) && (menuDataGlobal.menuOptionsTimeout == 0))
+		{
+			saveQuickkeyMenuIndex(menuDataGlobal.menuOptionsSetQuickkey, menuSystemGetCurrentMenuNumber(), menuDataGlobal.currentItemIndex, 0);
+			menuDataGlobal.menuOptionsSetQuickkey = 0;
+			updateQuickMenuScreen(false);
+
+			return;
+		}
+
 		switch(menuDataGlobal.currentItemIndex)
 		{
 			case CH_SCREEN_QUICK_MENU_COPY2VFO:
@@ -1877,6 +1939,14 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 					isDirty = true;
 					menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, NUM_CH_SCREEN_QUICK_MENU_ITEMS);
 					menuQuickChannelExitStatus |= MENU_STATUS_LIST_TYPE;
+				}
+				else
+				{
+					if (KEYCHECK_SHORTUP_NUMBER(ev->keys)  && (BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
+					{
+						menuDataGlobal.menuOptionsSetQuickkey = ev->keys.key;
+						isDirty = true;
+					}
 				}
 			}
 		}

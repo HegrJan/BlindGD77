@@ -357,13 +357,12 @@ static void promptsInit(bool isFirstRun)
 	voicePromptsInit();
 	if (isFirstRun)
 	{
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->last_heard);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 		if (uiDataGlobal.lastHeardCount == 0)
 		{
 			voicePromptsAppendLanguageString(&currentLanguage->empty_list);

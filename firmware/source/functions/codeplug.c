@@ -693,8 +693,10 @@ int codeplugDTMFContactGetDataForNumber(int number, struct_codeplugDTMFContact_t
 {
 	if ((number >= CODEPLUG_DTMF_CONTACTS_MIN) && (number <= CODEPLUG_DTMF_CONTACTS_MAX))
 	{
-		codeplugDTMFContactGetDataForIndex(codeplugContactsCache.contactsDTMFLookupCache[number - 1].index, contact);
-		return number;
+		if (codeplugDTMFContactGetDataForIndex(codeplugContactsCache.contactsDTMFLookupCache[number - 1].index, contact))
+		{
+			return codeplugContactsCache.contactsDTMFLookupCache[number - 1].index;
+		}
 	}
 
 	return 0;
@@ -716,7 +718,7 @@ int codeplugContactGetDataForNumberInType(int number, uint32_t callType, struct_
 		{
 			if (codeplugContactGetDataForIndex(codeplugContactsCache.contactsLookupCache[i].index, contact))
 			{
-				pos = i + 1;
+				pos = codeplugContactsCache.contactsLookupCache[i].index;
 				break;
 			}
 		}
@@ -934,6 +936,31 @@ void codeplugContactsCacheUpdateOrInsertContactAt(int index, struct_codeplugCont
 	codeplugContactsCache.contactsLookupCache[numContacts].tgOrPCNum |= (contact->callType << 24);// Store the call type in the upper byte
 }
 
+void codeplugContactsCacheUpdateOrInsertDTMFContactAt(int index)
+{
+	for (int i = 0; i < codeplugContactsCache.numDTMFContacts; i++)
+	{
+		// Check if the contact is already in the cache, and is being modified
+		if (codeplugContactsCache.contactsDTMFLookupCache[i].index == index)
+		{
+			return;
+		}
+		else
+		{
+			if ((i < codeplugContactsCache.numDTMFContacts - 1) && (codeplugContactsCache.contactsDTMFLookupCache[i].index < index) && (codeplugContactsCache.contactsDTMFLookupCache[i + 1].index > index))
+			{// found a gap
+				codeplugContactsCache.numDTMFContacts++;
+				memmove(&codeplugContactsCache.contactsDTMFLookupCache[i + 2], &codeplugContactsCache.contactsDTMFLookupCache[i + 1], (codeplugContactsCache.numDTMFContacts - 2 - i) * sizeof(codeplugDTMFContactCache_t));
+				codeplugContactsCache.contactsDTMFLookupCache[i + 1].index = index;
+				return;
+			}
+		}
+	}
+
+	codeplugContactsCache.contactsDTMFLookupCache[codeplugContactsCache.numDTMFContacts].index = index;
+	codeplugContactsCache.numDTMFContacts++;
+}
+
 void codeplugContactsCacheRemoveContactAt(int index)
 {
 	int numContacts = codeplugContactsCache.numTGContacts + codeplugContactsCache.numALLContacts + codeplugContactsCache.numPCContacts;
@@ -962,6 +989,22 @@ void codeplugContactsCacheRemoveContactAt(int index)
 	}
 }
 
+bool codeplugContactsCacheRemoveDTMFContactAt(int index)
+{
+	if (codeplugContactsCache.numDTMFContacts==0)
+		return false;
+	for(int i = 0; i < codeplugContactsCache.numDTMFContacts; i++)
+	{
+		if(codeplugContactsCache.contactsDTMFLookupCache[i].index == index)
+		{
+			memcpy(&codeplugContactsCache.contactsDTMFLookupCache[i], &codeplugContactsCache.contactsDTMFLookupCache[i + 1], (codeplugContactsCache.numDTMFContacts - 1 - i) * sizeof(codeplugDTMFContactCache_t));
+			codeplugContactsCache.numDTMFContacts--;
+			return true;
+		}
+	}
+	return false;
+}
+
 int codeplugContactGetFreeIndex(void)
 {
 	int numContacts = codeplugContactsCache.numTGContacts + codeplugContactsCache.numALLContacts + codeplugContactsCache.numPCContacts;
@@ -983,6 +1026,25 @@ int codeplugContactGetFreeIndex(void)
 	}
 
 	return 0;
+}
+
+int codeplugDTMFContactGetFreeIndex(void)
+{
+	if (codeplugContactsCache.numDTMFContacts == CODEPLUG_DTMF_CONTACTS_MAX)
+	{
+		return 0;
+	}
+
+	int i;
+	for (i = 0; i < codeplugContactsCache.numDTMFContacts; i++)
+	{
+		if (codeplugContactsCache.contactsDTMFLookupCache[i].index != i + 1)
+		{
+			break;
+		}
+	}
+
+	return i + 1;
 }
 
 bool codeplugDTMFContactGetDataForIndex(int index, struct_codeplugDTMFContact_t *contact)
@@ -1111,6 +1173,26 @@ int codeplugContactSaveDataForIndex(int index, struct_codeplugContact_t *contact
 		codeplugContactsCacheUpdateOrInsertContactAt(index + 1, contact);
 		//initCodeplugContactsCache();// Update the cache
 	}
+	return retVal;
+}
+
+int codeplugContactSaveDTMFDataForIndex(int index, struct_codeplugDTMFContact_t *contact)
+{
+	int address = CODEPLUG_ADDR_DTMF_CONTACTS + (index - 1) * CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE;
+	int retVal = EEPROM_Write(address, (uint8_t*)contact, CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE);
+
+	if (retVal)
+	{
+		if ((contact->name[0] == 0xFF) || (contact->code[0] == 0xFF))
+		{
+			codeplugContactsCacheRemoveDTMFContactAt(index);
+		}
+		else
+		{
+			codeplugContactsCacheUpdateOrInsertDTMFContactAt(index);
+		}
+	}
+
 	return retVal;
 }
 

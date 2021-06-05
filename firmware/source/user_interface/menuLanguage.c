@@ -37,7 +37,7 @@
 #include "hardware/UC1701_charset.h"
 #endif
 
-static void updateScreen(void);
+static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
 static menuStatus_t menuLanguageExitCode = MENU_STATUS_SUCCESS;
 
@@ -53,133 +53,133 @@ static void clearNonLatinChar(uint8_t *str)
 		{
 			case FONT_CHAR_CAPITAL_A_WITH_OGONEK: // Ą
 			case FONT_CHAR_SMALL_A_WITH_OGONEK:   // ą
-			case 192: // À
-			case 193: // Á
-			case 194: // Â
-			case 195: // Ã
-			case 196: // Ä
-			case 197: // Å
-			case 224: // à
-			case 225: // á
-			case 226: // â
-			case 227: // ã
-			case 228: // ä
-			case 229: // å
+			case 192: // ?�
+			case 193: // ?�
+			case 194: // ?�
+			case 195: // ??
+			case 196: // ?�
+			case 197: // ?�
+			case 224: // ?�
+			case 225: // ??
+			case 226: // ??
+			case 227: // ??
+			case 228: // ?�
+			case 229: // ??
 				*p = 'a';
 				break;
 
-			case FONT_CHAR_CAPITAL_C_WITH_CARON: // Č
-			case FONT_CHAR_SMALL_C_WITH_CARON:   // č
+			case FONT_CHAR_CAPITAL_C_WITH_CARON: // �?
+			case FONT_CHAR_SMALL_C_WITH_CARON:   // �?
 			case FONT_CHAR_CAPITAL_C_WITH_ACUTE: // Ć
 			case FONT_CHAR_SMALL_C_WITH_ACUTE:   // ć
-			case 199: // Ç
-			case 231: // ç
+			case 199: // ?�
+			case 231: // ?�
 				*p = 'c';
 				break;
 
-			case FONT_CHAR_CAPITAL_E_WITH_OGONEK: // Ę
+			case FONT_CHAR_CAPITAL_E_WITH_OGONEK: // �?
 			case FONT_CHAR_SMALL_E_WITH_OGONEK:   // ę
 			case FONT_CHAR_CAPITAL_E_WITH_CARON:  // Ě
 			case FONT_CHAR_SMALL_E_WITH_CARON:    // ě
-			case 200: // È
-			case 201: // É
-			case 202: // Ê
-			case 203: // Ë
-			case 232: // è
-			case 233: // é
-			case 234: // ê
-			case 235: // ë
+			case 200: // ??
+			case 201: // ?�
+			case 202: // ?�
+			case 203: // ?�
+			case 232: // ?�
+			case 233: // ?�
+			case 234: // ??
+			case 235: // ?�
 				*p = 'e';
 				break;
 
 			case FONT_CHAR_G_CAPITAL_WITH_BREVE: // Ğ
-			case FONT_CHAR_G_SMALL_WITH_BREVE:   // ğ
+			case FONT_CHAR_G_SMALL_WITH_BREVE:   // �?
 				*p = 'g';
 				break;
 
 			case FONT_CHAR_SMALL_I_DOTLESS:    // ı
 			case FONT_CHAR_CAPITAL_I_WITH_DOT: // İ
-			case 204: // Ì
-			case 205: // Í
-			case 206: // Î
-			case 207: // Ï
-			case 236: // ì
-			case 237: // í
-			case 238: // î
-			case 239: // ï
+			case 204: // ??
+			case 205: // ??
+			case 206: // ?�
+			case 207: // ??
+			case 236: // ?�
+			case 237: // ?�
+			case 238: // ?�
+			case 239: // ??
 				*p ='i';
 				break;
 
-			case FONT_CHAR_CAPITAL_L_WITH_STROKE: // Ł
-			case FONT_CHAR_SMALL_L_WITH_STROKE:   // ł
+			case FONT_CHAR_CAPITAL_L_WITH_STROKE: // ?�
+			case FONT_CHAR_SMALL_L_WITH_STROKE:   // ?�
 				*p = 'l';
 				break;
 
-			case FONT_CHAR_CAPITAL_N_WITH_ACUTE: // Ń
-			case FONT_CHAR_SMALL_N_WITH_ACUTE:   // ń
-			case 209: // Ñ
-			case 241: // ñ
+			case FONT_CHAR_CAPITAL_N_WITH_ACUTE: // ??
+			case FONT_CHAR_SMALL_N_WITH_ACUTE:   // ?�
+			case 209: // ?�
+			case 241: // ?�
 				*p = 'n';
 				break;
 
-			case 210: // Ò
-			case 211: // Ó
-			case 212: // Ô
-			case 213: // Õ
-			case 214: // Ö
-			case 216: // Ø
-			case 242: // ò
-			case 243: // ó
-			case 244: // ô
-			case 245: // õ
-			case 246: // ö
-			case 248: // ø
-			case 240: // ð
+			case 210: // ?�
+			case 211: // ?�
+			case 212: // ?�
+			case 213: // ?�
+			case 214: // ?�
+			case 216: // ??
+			case 242: // ??
+			case 243: // ??
+			case 244: // ?�
+			case 245: // ?�
+			case 246: // ?�
+			case 248: // ?�
+			case 240: // ?�
 				*p = 'o';
 				break;
 
-			case FONT_CHAR_CAPITAL_R_WITH_CARON: // Ř
-			case FONT_CHAR_SMALL_R_WITH_CARON:   // ř
-			case 208: // Ð
+			case FONT_CHAR_CAPITAL_R_WITH_CARON: // ??
+			case FONT_CHAR_SMALL_R_WITH_CARON:   // ?�
+			case 208: // ?�
 				*p = 'r';
 				break;
 
-			case FONT_CHAR_CAPITAL_S_WITH_ACUTE:   // Ś
-			case FONT_CHAR_SMALL_S_WITH_ACUTE:     // ś
-			case FONT_CHAR_CAPITAL_S_WITH_CARON:   // Š
-			case FONT_CHAR_SMALL_S_WITH_CARON:     // š
-			case FONT_CHAR_S_CAPITAL_WITH_CEDILLA: // Ş
-			case FONT_CHAR_S_SMALL_WITH_CEDILLA:   // ş
-			case 223: // ß
+			case FONT_CHAR_CAPITAL_S_WITH_ACUTE:   // ?�
+			case FONT_CHAR_SMALL_S_WITH_ACUTE:     // ?�
+			case FONT_CHAR_CAPITAL_S_WITH_CARON:   // ?�
+			case FONT_CHAR_SMALL_S_WITH_CARON:     // ??
+			case FONT_CHAR_S_CAPITAL_WITH_CEDILLA: // ?�
+			case FONT_CHAR_S_SMALL_WITH_CEDILLA:   // ??
+			case 223: // ??
 				*p = 's';
 				break;
 
-			case FONT_CHAR_CAPITAL_U_WITH_RING_ABOVE: // Ů
-			case FONT_CHAR_SMALL_U_WITH_RING_ABOVE:   // ů
-			case 217: // Ù
-			case 218: // Ú
-			case 219: // Û
-			case 220: // Ü
-			case 249: // ù
-			case 250: // ú
-			case 251: // û
-			case 252: // ü
+			case FONT_CHAR_CAPITAL_U_WITH_RING_ABOVE: // ?�
+			case FONT_CHAR_SMALL_U_WITH_RING_ABOVE:   // ??
+			case 217: // ?�
+			case 218: // ?�
+			case 219: // ?�
+			case 220: // ??
+			case 249: // ??
+			case 250: // ??
+			case 251: // ?�
+			case 252: // ??
 				*p = 'u';
 				break;
 
-			case FONT_CHAR_CAPITAL_Y_WITH_DIAERESIS: // Ÿ
-			case 221: // Ý
-			case 253: // ý
-			case 255: // ÿ
+			case FONT_CHAR_CAPITAL_Y_WITH_DIAERESIS: // ?�
+			case 221: // ??
+			case 253: // ??
+			case 255: // ??
 				*p = 'y';
 				break;
 
-			case FONT_CHAR_SMALL_Z_WITH_CARON:       // ž
-			case FONT_CHAR_CAPITAL_Z_WITH_CARON:     // Ž
-			case FONT_CHAR_CAPITAL_Z_WITH_ACUTE:     // Ź
-			case FONT_CHAR_SMALL_Z_WITH_ACUTE:       // ź
-			case FONT_CHAR_CAPITAL_Z_WITH_DOT_ABOVE: // Ż
-			case FONT_CHAR_SMALL_Z_WITH_DOT_ABOVE:   // ż
+			case FONT_CHAR_SMALL_Z_WITH_CARON:       // ??
+			case FONT_CHAR_CAPITAL_Z_WITH_CARON:     // ??
+			case FONT_CHAR_CAPITAL_Z_WITH_ACUTE:     // ??
+			case FONT_CHAR_SMALL_Z_WITH_ACUTE:       // ??
+			case FONT_CHAR_CAPITAL_Z_WITH_DOT_ABOVE: // ?�
+			case FONT_CHAR_SMALL_Z_WITH_DOT_ABOVE:   // ??
 				*p = 'z';
 				break;
 		}
@@ -193,7 +193,16 @@ menuStatus_t menuLanguage(uiEvent_t *ev, bool isFirstRun)
 	if (isFirstRun)
 	{
 		menuDataGlobal.endIndex = NUM_LANGUAGES;
-		updateScreen();
+
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->language);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+		updateScreen(true);
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
 	else
@@ -208,7 +217,7 @@ menuStatus_t menuLanguage(uiEvent_t *ev, bool isFirstRun)
 	return menuLanguageExitCode;
 }
 
-static void updateScreen(void)
+static void updateScreen(bool isFirstRun)
 {
 	int mNum = 0;
 
@@ -233,7 +242,10 @@ static void updateScreen(void)
 
 					clearNonLatinChar((uint8_t *)&buffer[0]);
 
-					voicePromptsInit();
+					if (!isFirstRun)
+					{
+						voicePromptsInit();
+					}
 					voicePromptsAppendString(buffer);
 					promptsPlayNotAfterTx();
 				}
@@ -270,13 +282,13 @@ static void handleEvent(uiEvent_t *ev)
 	if (KEYCHECK_PRESS(ev->keys, KEY_DOWN) && (menuDataGlobal.endIndex != 0))
 	{
 		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, NUM_LANGUAGES);
-		updateScreen();
+		updateScreen(false);
 		menuLanguageExitCode |= MENU_STATUS_LIST_TYPE;
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 	{
 		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, NUM_LANGUAGES);
-		updateScreen();
+		updateScreen(false);
 		menuLanguageExitCode |= MENU_STATUS_LIST_TYPE;
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))

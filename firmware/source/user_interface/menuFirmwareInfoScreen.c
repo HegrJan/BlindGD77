@@ -93,6 +93,8 @@ static void updateScreen(void)
 #endif
 
 	voicePromptsInit();
+	voicePromptsAppendLanguageString(&currentLanguage->firmware_info);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendLanguageString((const char * const *)radioModel);
 	voicePromptsAppendLanguageString(&currentLanguage->built);
 	voicePromptsAppendString(__TIME__);

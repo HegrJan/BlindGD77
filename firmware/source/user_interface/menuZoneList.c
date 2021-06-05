@@ -47,6 +47,10 @@ menuStatus_t menuZoneList(uiEvent_t *ev, bool isFirstRun)
 
 		voicePromptsInit();
 		voicePromptsAppendLanguageString(&currentLanguage->zone);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 		updateScreen(true);
