@@ -65,20 +65,14 @@ menuStatus_t menuCredits(uiEvent_t *ev, bool isFirstRun)
 
 static void updateScreen(bool isFirstRun)
 {
-
 	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
 	{
-		if (voicePromptsIsPlaying())
-		{
-			voicePromptsTerminate();
-		}
 		voicePromptsInit();
 		voicePromptsAppendLanguageString(&currentLanguage->credits);
 		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 		{
 			voicePromptsAppendLanguageString(&currentLanguage->menu);
 		}
-		promptsPlayNotAfterTx();
 	}
 
 	ucClearBuf();
@@ -89,9 +83,12 @@ static void updateScreen(bool isFirstRun)
 		ucPrintCentered(i * 8 + 16, (char *)creditTexts[i + menuDataGlobal.currentItemIndex], FONT_SIZE_1);
 		if (i==0)
 		{
-			voicePromptsInit();
-			voicePromptsAppendString(creditTexts[voicePromptCreditIndex]);
-			voicePromptsPlay();
+			if (!isFirstRun)
+			{
+				voicePromptsInit();
+			}
+			voicePromptsAppendString((char *)creditTexts[voicePromptCreditIndex]);
+			promptsPlayNotAfterTx();
 		}
 	}
 
