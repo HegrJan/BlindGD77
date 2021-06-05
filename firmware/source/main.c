@@ -781,7 +781,7 @@ void mainTask(void *data)
 							// Mode was blinking, hence it needs to be redrawn as it could be in its hidden phase.
 							uiUtilityRedrawHeaderOnly(false);
 						}
-						else
+						//else // VK7js commented out to fix ptt not txing after scan stops.
 						{
 							if (((currentMenu == UI_MESSAGE_BOX) && (menuSystemGetPreviousMenuNumber() == UI_PRIVATE_CALL))
 									&& (nonVolatileSettings.privateCalls == ALLOW_PRIVATE_CALLS_PTT))
