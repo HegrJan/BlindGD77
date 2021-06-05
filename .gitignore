@@ -5,7 +5,6 @@
 *.diff
 *to_utf-8*.h
 /firmware/.settings
-/firmware/.cproject
 /firmware/Debug
 /firmware/Debug_GD-77
 /firmware/Debug_DM-1801
