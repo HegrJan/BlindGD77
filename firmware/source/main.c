@@ -56,6 +56,10 @@ static uint32_t lowbatteryTimer = 0;
 static const int LOW_BATTERY_INTERVAL = ((1000 * 60) * 5); // 5 minute;
 static const int LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL = 6;	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
 static bool updateMessageOnScreen = false;
+#if !defined(PLATFORM_GD77S)
+static bool sk2Latch =false;
+static uint16_t sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
 
 void mainTaskInit(void)
 {
@@ -521,6 +525,37 @@ void mainTask(void *data)
 				button_event = EVENT_BUTTON_CHANGE;
 				buttons &= ~BUTTON_PTT;
 			}
+// SK2 latch.
+// if sk2 is being released with no other buttons, we'll latch it, otherwise we wil not latch it.
+#if !defined(PLATFORM_GD77S)
+	if (nonVolatileSettings.sk2Latch && ((buttons&BUTTON_SK2_SHORT_UP) ==BUTTON_SK2_SHORT_UP) && keys.key==0)
+	{
+		sk2Latch =!sk2Latch;
+		if (voicePromptsIsPlaying())
+			voicePromptsTerminate();
+		if (sk2Latch)
+			soundSetMelody(melody_sk2_beep);
+		else
+			soundSetMelody(melody_sk1_beep);
+		sk2LatchTimeout=3000;
+	}
+	if (sk2Latch)
+	{
+		buttons|=BUTTON_SK2;
+		if (sk2LatchTimeout && ((buttons&~BUTTON_SK2)==0 && keys.key==0))
+			sk2LatchTimeout--;
+#if !defined(PLATFORM_RD5R)
+		bool releaseSK2Latch=(buttons&(BUTTON_ORANGE_SHORT_UP|BUTTON_SK1_SHORT_UP)) || (keys.key!=0 && (keys.event&KEY_MOD_UP)) || (sk2LatchTimeout==0);
+#else
+		bool releaseSK2Latch=(buttons&(BUTTON_SK1_SHORT_UP)) || (keys.key!=0 && (keys.event&KEY_MOD_UP)) || (sk2LatchTimeout==0);
+#endif
+		if (releaseSK2Latch)
+		{
+			sk2Latch=false;
+			soundSetMelody(melody_sk1_beep);
+		}
+	}
+#endif // !defined(PLATFORM_GD77S)
 
 			// EVENT_*_CHANGED can be cleared later, so check this now as hasEvent has to be set anyway.
 			keyOrButtonChanged = ((key_event != NO_EVENT) || (button_event != NO_EVENT) || (rotary_event != NO_EVENT));

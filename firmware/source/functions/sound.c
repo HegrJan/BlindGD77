@@ -94,10 +94,10 @@ const int MELODY_PRIVATE_CALL[] = {
 const int MELODY_KEY_BEEP[] = { 600, 60, -1, -1 };
 const int MELODY_KEY_LONG_BEEP[] = { 880, 60, -1, -1 };
 /* These melodies are not currently used
-const int melody_sk1_beep[] = { 466, 60, 0, 60, 466, 60, -1, -1 };
-const int melody_sk2_beep[] = { 494, 60, 0, 60, 494, 60, -1, -1 };
 const int melody_orange_beep[] = { 440, 60, 494, 60, 440, 60, 494, 60, -1, -1 };
 */
+const int melody_sk1_beep[] = { 466, 60, 0, 60, 466, 60, -1, -1 };
+const int melody_sk2_beep[] = { 494, 60, 0, 60, 494, 60, -1, -1 };
 const int MELODY_ACK_BEEP[] = { 440, 120, 660, 120, 880, 120, -1, -1 };
 const int MELODY_NACK_BEEP[] = { 494, 120, 466, 120, -1, -1 };
 const int MELODY_ERROR_BEEP[] = { 440, 30, 0, 30, 440, 30, 0, 30, 440, 30, -1, -1 };

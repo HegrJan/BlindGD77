@@ -115,6 +115,7 @@ typedef struct
 	int8_t			temperatureCalibration;// Units of 0.5 deg C
 	uint8_t			batteryCalibration; // Units of 0.01V
 	uint8_t			ecoLevel;// Power saving / economy level
+	uint8_t sk2Latch;
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
