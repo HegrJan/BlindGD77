@@ -1932,7 +1932,10 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
 		}
 		else
 		{
-			voicePromptsAppendPrompt(PROMPT_TALKGROUP);
+			if (!voicePromptWasPlaying)
+			{
+				voicePromptsAppendPrompt(PROMPT_TALKGROUP);
+			}
 		}
 		voicePromptsAppendString(buf);
 	}
@@ -2278,7 +2281,7 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 		}
 		if (trxGetMode() == RADIO_MODE_DIGITAL)
 		{
-			announceContactNameTgOrPc(false);// false = force the title "Contact" to be played to always separate the Channel name announcement from the Contact name
+			announceContactNameTgOrPc(voicePromptWasPlaying);
 			if ((nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_TS & INFO_ON_SCREEN_BOTH)) && tsGetManualOverrideFromCurrentChannel())
 			{
 				voicePromptsAppendPrompt(PROMPT_SILENCE);
