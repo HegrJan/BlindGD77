@@ -226,6 +226,10 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 
 static void handleEvent(uiEvent_t *ev)
 {
+	if (handleMonitorMode(ev))
+	{
+		return;
+	}
 	if (ev->events & BUTTON_EVENT)
 	{
 		bool wasPlaying = false;
