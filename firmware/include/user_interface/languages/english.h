@@ -208,10 +208,10 @@ const stringsTable_t englishLanguage =
 .high					= "High",
 .dmr_id					= "DMR ID",
 .scan_on_boot				= "Scan On Boot",
-.sk2Latch="SK2 Latch",
+.dtmf_entry = "DTMF entry",
 .name = "Name",
-.dtmfCode = "DTMF Code",
-.vox = "Vox"
+.vox = "Vox",
+.sk2Latch="SK2 Latch"
 };
 /********************************************************************
  *

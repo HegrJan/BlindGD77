@@ -218,10 +218,10 @@ typedef struct
    const char *high;
    const char *dmr_id;
    const char *scan_on_boot;
-   const char* sk2Latch;
+   const char* dtmf_entry;
    const char* name;
-   const char* dtmfCode;
    const char* vox;
+   const char* sk2Latch;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
