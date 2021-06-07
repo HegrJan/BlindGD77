@@ -79,7 +79,7 @@ menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 // Returns S-Unit 0..9..10(S9+10dB)..15(S9+60)
 static int32_t getSignalStrength(int dbm)
 {
-	if (dbm)
+	if (dbm < DBM_LEVELS[1])
 	{
 		return 0;
 	}
