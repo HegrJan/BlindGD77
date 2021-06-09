@@ -56,10 +56,6 @@ static uint32_t lowbatteryTimer = 0;
 static const int LOW_BATTERY_INTERVAL = ((1000 * 60) * 5); // 5 minute;
 static const int LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL = 6;	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
 static bool updateMessageOnScreen = false;
-#if !defined(PLATFORM_GD77S)
-static bool sk2Latch =false;
-static uint16_t sk2LatchTimeout=0;
-#endif // !defined(PLATFORM_GD77S)
 
 void mainTaskInit(void)
 {

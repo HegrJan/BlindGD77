@@ -1006,6 +1006,10 @@ static void handleEvent(uiEvent_t *ev)
 				((dmrMonitorCapturedTS != -1) && (dmrMonitorCapturedTS != trxGetDMRTimeSlot())) ||
 				(trxGetDMRColourCode() != currentChannelData->txColor)))
 		{
+#if !defined(PLATFORM_GD77S)
+			sk2Latch =false;
+			sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
 			lastHeardClearLastID();
 
 			// Set TS to overriden TS

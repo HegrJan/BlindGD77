@@ -143,4 +143,8 @@ struct_codeplugContact_t currentContactData;
 
 bool PTTToggledDown = false; // PTT toggle feature
 bool 					dtmfPTTLatch;
+#if !defined(PLATFORM_GD77S)
+bool sk2Latch =false;
+uint16_t sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
 

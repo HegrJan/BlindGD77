@@ -336,5 +336,9 @@ extern LinkItem_t 				*LinkHead;
 
 extern bool 					PTTToggledDown;
 extern bool 					dtmfPTTLatch;
+#if !defined(PLATFORM_GD77S)
+extern bool sk2Latch;
+extern uint16_t sk2LatchTimeout;
+#endif // !defined(PLATFORM_GD77S)
 
 #endif
