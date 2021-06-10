@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -53,13 +53,15 @@ static void handleEvent(uiEvent_t *ev);
 static struct_codeplugContact_t     contact;
 static struct_codeplugDTMFContact_t dtmfContact;
 
-static contactListContactType_t contactListType = MENU_CONTACT_LIST_CONTACT_DIGITAL;
-static uint32_t contactCallType;
+static int contactListType;
+static int contactCallType;
 static contactListState_t contactListDisplayState;
 static contactListState_t contactListOverrideState = MENU_CONTACT_LIST_DISPLAY;
 static int contactListTimeout;
 static menuStatus_t menuContactListExitCode = MENU_STATUS_SUCCESS;
 static menuStatus_t menuContactListSubMenuExitCode = MENU_STATUS_SUCCESS;
+static int contactListEntryCount;
+static int submenuEntryCount;
 
 // Apply contact + its TS on selection for TX (contact list of quick list).
 static void overrideWithSelectedContact(void)
@@ -129,24 +131,19 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 			contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
 
 			voicePromptsInit();
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
 			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 			{
-				voicePromptsAppendLanguageString(&currentLanguage->contacts);
-				voicePromptsAppendLanguageString(&currentLanguage->menu);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
+				voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
 			}
 			else
 			{
-				if (menuSystemGetCurrentMenuNumber() == MENU_CONTACT_QUICKLIST)
-				{
-					voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-				}
+				voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
 			}
+			if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->menu);
+			}
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
 		else
 		{
@@ -183,6 +180,8 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 
 static void updateScreen(bool isFirstRun)
 {
+	contactListEntryCount=menuDataGlobal.endIndex;// store this off as it will be used in the submenu because the above changes to reflect that menu.
+
 	char nameBuf[33];
 	int mNum;
 	int idx;
@@ -219,8 +218,10 @@ static void updateScreen(bool isFirstRun)
 					if (idx > 0)
 					{
 						codeplugUtilConvertBufToString(((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contact.name : dtmfContact.name), nameBuf, 16); // need to convert to zero terminated string
-						menuDisplayEntry(i, mNum, (char*) nameBuf);
 					}
+					else
+						strcpy(nameBuf, " ");
+					menuDisplayEntry(i, mNum, (char*) nameBuf);
 
 					if (i == 0)
 					{
@@ -311,6 +312,18 @@ static void handleEvent(uiEvent_t *ev)
 
 				if (currentMenu == MENU_CONTACT_QUICKLIST)
 				{
+					if (contactListEntryCount==0)
+					{
+						if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+						{
+							menuSystemSetCurrentMenu(MENU_CONTACT_DETAILS);
+						}
+						else
+						{
+							menuSystemSetCurrentMenu(MENU_CONTACT_NEW_DTMF);
+						}
+						return;
+					}
 					if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 					{
 						if (menuDataGlobal.endIndex > 0)
@@ -329,7 +342,7 @@ static void handleEvent(uiEvent_t *ev)
 						}
 						return;
 					}
-					else // MENU_CONTACT_LIST_CONTACT_DTMF
+					else if (menuDataGlobal.endIndex > 0)// MENU_CONTACT_LIST_CONTACT_DTMF
 					{
 						if (currentMode == RADIO_MODE_ANALOG)
 						{
@@ -343,19 +356,12 @@ static void handleEvent(uiEvent_t *ev)
 					}
 				}
 
-				// Display submenu for DTMF contact list
-				if (menuDataGlobal.endIndex > 0) // display action list only if contact list is non empty
+				if ((currentMenu == MENU_CONTACT_LIST) ||
+						((currentMenu == MENU_DTMF_CONTACT_LIST)))
 				{
-					if ((currentMenu == MENU_CONTACT_LIST) ||
-							((currentMenu == MENU_DTMF_CONTACT_LIST) && (currentMode == RADIO_MODE_ANALOG)))
-					{
-						menuSystemPushNewMenu(MENU_CONTACT_LIST_SUBMENU);
-					}
-					else
-					{
-						menuContactListExitCode |= MENU_STATUS_ERROR;
-					}
+					menuSystemPushNewMenu(MENU_CONTACT_LIST_SUBMENU);
 				}
+
 				return;
 			}
 			else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
@@ -377,10 +383,18 @@ static void handleEvent(uiEvent_t *ev)
 		case MENU_CONTACT_LIST_CONFIRM:
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 			{
-				memset(contact.name, 0xff, 16);
-				contact.tgNumber = 0;
-				contact.callType = 0xFF;
-				codeplugContactSaveDataForIndex(uiDataGlobal.currentSelectedContactIndex, &contact);
+				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+				{
+					memset(contact.name, 0xff, 16);
+					contact.tgNumber = 0;
+					contact.callType = 0xFF;
+					codeplugContactSaveDataForIndex(uiDataGlobal.currentSelectedContactIndex, &contact);
+				}
+				else // DTMF
+				{
+					memset(&dtmfContact, 0xFFu, CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE);
+					codeplugContactSaveDTMFDataForIndex(uiDataGlobal.currentSelectedContactIndex, &dtmfContact);
+				}
 				uiDataGlobal.currentSelectedContactIndex = 0;
 				contactListTimeout = 2000;
 				contactListDisplayState = MENU_CONTACT_LIST_DELETED;
@@ -413,6 +427,7 @@ static void handleEvent(uiEvent_t *ev)
 enum CONTACT_LIST_QUICK_MENU_ITEMS
 {
 	CONTACT_LIST_QUICK_MENU_SELECT = 0,
+	CONTACT_LIST_QUICK_MENU_NEW,
 	CONTACT_LIST_QUICK_MENU_EDIT,
 	CONTACT_LIST_QUICK_MENU_DELETE,
 	NUM_CONTACT_LIST_QUICK_MENU_ITEMS    // The last item in the list is used so that we automatically get a total number of items in the list
@@ -434,7 +449,11 @@ static void updateSubMenuScreen(void)
 
 	for(int i = -1; i <= 1; i++)
 	{
-		mNum = menuGetMenuOffset(((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1), i);
+		submenuEntryCount = contactListEntryCount > 0 ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1; // only render New Contact if list is empty.
+
+		mNum = submenuEntryCount ==1? CONTACT_LIST_QUICK_MENU_NEW : menuGetMenuOffset(submenuEntryCount, i);
+		bool renderOption= submenuEntryCount > 1 ?true : mNum==CONTACT_LIST_QUICK_MENU_NEW;
+
 		buf[0] = 0;
 
 		switch(mNum)
@@ -442,15 +461,18 @@ static void updateSubMenuScreen(void)
 			case CONTACT_LIST_QUICK_MENU_SELECT:
 				langTextConst = (char * const *)&currentLanguage->select_tx;
 				break;
+			case CONTACT_LIST_QUICK_MENU_NEW:
+				langTextConst = (char * const *)&currentLanguage->new_contact;
+				break;
 			case CONTACT_LIST_QUICK_MENU_EDIT:
-				langTextConst = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? (char * const *)&currentLanguage->edit_contact : NULL;
+				langTextConst = (char * const *)&currentLanguage->edit_contact;
 				break;
 			case CONTACT_LIST_QUICK_MENU_DELETE:
-				langTextConst = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? (char * const *)&currentLanguage->delete_contact : NULL;
+				langTextConst = (char * const *)&currentLanguage->delete_contact;
 				break;
 		}
 
-		if (langTextConst != NULL)
+		if (langTextConst != NULL && renderOption)
 		{
 			strncpy(buf, *langTextConst, 17);
 		}
@@ -502,6 +524,19 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 		switch (menuDataGlobal.currentItemIndex)
 		{
 			case CONTACT_LIST_QUICK_MENU_SELECT:
+				if (contactListEntryCount==0)
+				{
+					uiDataGlobal.currentSelectedContactIndex =0;
+					if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+					{
+						menuSystemSetCurrentMenu(MENU_CONTACT_DETAILS);
+					}
+					else
+					{
+						menuSystemSetCurrentMenu(MENU_CONTACT_NEW_DTMF);
+					}
+					return;
+				}
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
 					if (trxGetMode() == RADIO_MODE_DIGITAL)
@@ -520,13 +555,29 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 				}
 				else
 				{
-					dtmfSequencePrepare(contactListDTMFContactData.code, true);
+					if (trxGetMode() == RADIO_MODE_ANALOG)
+					{
+						dtmfSequencePrepare(contactListDTMFContactData.code, true);
+					}
+					else
+					{
+						menuContactListSubMenuExitCode |= MENU_STATUS_ERROR;
+						uiDataGlobal.VoicePrompts.inhibitInitial = true;
+
+						return;
+					}
 				}
 				break;
+			case CONTACT_LIST_QUICK_MENU_NEW:
+				uiDataGlobal.currentSelectedContactIndex =0; // Deliberate fall through
 			case CONTACT_LIST_QUICK_MENU_EDIT:
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
 					menuSystemSetCurrentMenu(MENU_CONTACT_DETAILS);
+				}
+				else
+				{
+					menuSystemSetCurrentMenu(MENU_CONTACT_NEW_DTMF);
 				}
 				break;
 			case CONTACT_LIST_QUICK_MENU_DELETE:
@@ -550,6 +601,12 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 							voicePromptsPlay();
 						}
 					}
+					else
+					{//DTMF
+						contactListOverrideState = MENU_CONTACT_LIST_CONFIRM;
+						voicePromptsAppendLanguageString(&currentLanguage->delete_contact_qm);
+						voicePromptsPlay();
+					}
 					menuSystemPopPreviousMenu();
 				}
 				break;
@@ -557,12 +614,12 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 	{
-		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, ((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1));
+		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
 		updateSubMenuScreen();
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 	{
-		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, ((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1));
+		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
 		updateSubMenuScreen();
 	}
 
@@ -579,6 +636,7 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+		menuDataGlobal.currentItemIndex=0;
 		updateSubMenuScreen();
 		keyboardInit();
 		menuContactListSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);

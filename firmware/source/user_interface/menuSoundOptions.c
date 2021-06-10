@@ -56,13 +56,12 @@ menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
 		}
 
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->sound_options);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 		updateScreen(isFirstRun);
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}

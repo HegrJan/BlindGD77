@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -76,13 +76,12 @@ menuStatus_t menuDisplayOptions(uiEvent_t *ev, bool isFirstRun)
 		}
 
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->display_options);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 		updateScreen(true);
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}

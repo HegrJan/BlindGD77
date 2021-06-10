@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -41,7 +41,11 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_KEYPAD_TIMER_LONG, OPTIONS_MENU_KEYPAD_TIMER_REPEAT, OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT,
 							OPTIONS_MENU_SCAN_DELAY, OPTIONS_MENU_SCAN_STEP_TIME, OPTIONS_MENU_SCAN_MODE, OPTIONS_MENU_SCAN_ON_BOOT,
 							OPTIONS_MENU_SQUELCH_DEFAULT_VHF, OPTIONS_MENU_SQUELCH_DEFAULT_220MHz, OPTIONS_MENU_SQUELCH_DEFAULT_UHF,
-							OPTIONS_MENU_PTT_TOGGLE, OPTIONS_MENU_HOTSPOT_TYPE, OPTIONS_MENU_TALKER_ALIAS_TX,
+							OPTIONS_MENU_PTT_TOGGLE,
+#if !defined(PLATFORM_GD77S)
+							OPTIONS_MENU_SK2_LATCH,
+#endif
+							OPTIONS_MENU_HOTSPOT_TYPE, OPTIONS_MENU_TALKER_ALIAS_TX,
 							OPTIONS_MENU_PRIVATE_CALLS,
 							OPTIONS_MENU_USER_POWER,
 							OPTIONS_MENU_TEMPERATURE_CALIBRATON, OPTIONS_MENU_BATTERY_CALIBRATON,
@@ -64,13 +68,12 @@ menuStatus_t menuOptions(uiEvent_t *ev, bool isFirstRun)
 		}
 
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->options);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 		updateScreen(true);
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
@@ -191,6 +194,12 @@ static void updateScreen(bool isFirstRun)
 					leftSide = (char * const *)&currentLanguage->ptt_toggle;
 					rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_PTT_LATCH) ? &currentLanguage->on : &currentLanguage->off);
 					break;
+#if !defined(PLATFORM_GD77S)
+				case OPTIONS_MENU_SK2_LATCH:
+								leftSide = (char * const *)&currentLanguage->sk2Latch;
+								rightSideConst = (char * const *)(nonVolatileSettings.sk2Latch ? &currentLanguage->on : &currentLanguage->off);
+								break;
+#endif
 				case OPTIONS_MENU_HOTSPOT_TYPE:
 					leftSide = (char * const *)&currentLanguage->hotspot_mode;
 #if defined(PLATFORM_RD5R)
@@ -536,6 +545,14 @@ static void handleEvent(uiEvent_t *ev)
 						settingsIncrement(nonVolatileSettings.ecoLevel, 1);
 					}
 					break;
+					#if !defined(PLATFORM_GD77S)
+				case OPTIONS_MENU_SK2_LATCH:
+					if (nonVolatileSettings.sk2Latch==0)
+					{
+						nonVolatileSettings.sk2Latch=1;
+					}
+					break;
+#endif
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -666,6 +683,14 @@ static void handleEvent(uiEvent_t *ev)
 						settingsDecrement(nonVolatileSettings.ecoLevel, 1);
 					}
 					break;
+#if !defined(PLATFORM_GD77S)
+				case OPTIONS_MENU_SK2_LATCH:
+					if (nonVolatileSettings.sk2Latch == 1)
+					{
+						nonVolatileSettings.sk2Latch=0;
+					}
+					break;
+#endif
 			}
 		}
 		else if ((ev->keys.event & KEY_MOD_PRESS) && (menuDataGlobal.menuOptionsTimeout > 0))

@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -1890,7 +1890,20 @@ ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->zone);
 	}
-	voicePromptsAppendString(currentZone.name);
+	if (strcmp(currentZone.name,currentLanguage->all_channels) == 0)
+		voicePromptsAppendLanguageString(&currentLanguage->all_channels);
+	else
+	{
+		int len=strlen(currentLanguage->zone);
+		if (strncmp(currentZone.name,currentLanguage->zone, len)==0)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->zone);
+			if (strlen(currentZone.name) > len)
+				voicePromptsAppendString(currentZone.name+len);
+		}
+		else
+			voicePromptsAppendString(currentZone.name);
+	}
 }
 
 ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
@@ -1919,7 +1932,10 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
 		}
 		else
 		{
-			voicePromptsAppendPrompt(PROMPT_TALKGROUP);
+			if (!voicePromptWasPlaying)
+			{
+				voicePromptsAppendPrompt(PROMPT_TALKGROUP);
+			}
 		}
 		voicePromptsAppendString(buf);
 	}
@@ -2047,23 +2063,30 @@ static void announceQRG(uint32_t qrg, bool unit)
 }
 
 
-ANNOUNCE_STATIC void announceFrequency(void)
+static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool announceTx)
 {
 	bool duplex = (currentChannelData->txFreq != currentChannelData->rxFreq);
 
-	if (duplex)
+	if (duplex && announcePrompt && announceRx)
 	{
 		voicePromptsAppendPrompt(PROMPT_RECEIVE);
 	}
 
-	announceQRG(currentChannelData->rxFreq, true);
+	if (announceRx)
+		announceQRG(currentChannelData->rxFreq, true);
 
-	if (duplex)
+	if (duplex && announceTx)
 	{
-		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
+		if (announcePrompt)
+			voicePromptsAppendPrompt(PROMPT_TRANSMIT);
 		announceQRG(currentChannelData->txFreq, true);
 	}
 }
+
+ANNOUNCE_STATIC void announceFrequency(void)
+{
+	announceFrequencyEx(true, true, true);
+	}
 
 ANNOUNCE_STATIC void announceVFOChannelName(void)
 {
@@ -2211,7 +2234,15 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	{
 		return;
 	}
-	bool voicePromptWasPlaying = voicePromptsIsPlaying();
+
+	bool level2=nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2;
+	// If voice prompts are already playing and further speech is requested, a less verbose sequence is spoken.
+	// This is known as follow-on.
+	// For example, at level 3, if the name and mode are being spoken,
+	// the user would hear "channel" name "mode" fm.
+	// If follow-on occurs, they'd just hear name fm.
+	// At voice prompt level 2, we always enforce follow-on to reduce verbosity.
+	bool voicePromptWasPlaying = voicePromptsIsPlaying() || level2;
 
 	voicePromptSequenceState = item;
 
@@ -2250,13 +2281,30 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 		}
 		if (trxGetMode() == RADIO_MODE_DIGITAL)
 		{
-			announceContactNameTgOrPc(false);// false = force the title "Contact" to be played to always separate the Channel name announcement from the Contact name
+			announceContactNameTgOrPc(voicePromptWasPlaying);
+			if ((nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_TS & INFO_ON_SCREEN_BOTH)) && tsGetManualOverrideFromCurrentChannel())
+			{
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+				announceTS();
+			}
+		}
+		if ((currentChannelData->libreDMR_Power != 0) && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH)))
+		{
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			announcePowerLevel(voicePromptWasPlaying);
 		}
 	}
 	break;
 	case PROMPT_SEQUENCE_ZONE:
 		announceZoneName(voicePromptWasPlaying);
 		break;
+	case PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME:
+		announceZoneName(voicePromptWasPlaying);
+		if (voicePromptSequenceState==PROMPT_SEQUENCE_ZONE)
+			break;
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceChannelName(voicePromptWasPlaying);
+	//	deliberate fall through to announce mode.
 	case PROMPT_SEQUENCE_MODE:
 		announceRadioMode(voicePromptWasPlaying);
 		break;
@@ -2288,12 +2336,27 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	case PROMPT_SEQUENCE_TEMPERATURE:
 		announceTemperature(voicePromptWasPlaying);
 		break;
-
+	case PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ:
+	{
+		voicePromptsAppendPrompt(PROMPT_RECEIVE);
+		announceFrequencyEx(false, true, false);
+		break;
+	}
+	case PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ:
+	{
+		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
+		announceFrequencyEx(false, false, true);
+		break;
+	}
 	default:
 		break;
 	}
+	// If PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY, after building up the prompt, save it for speaking later but don't play it now.
+	if (immediateAnnounceThreshold==PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY)
+		return;
+
 	// Follow-on when voicePromptWasPlaying is enabled on voice prompt level 2 and above
-	// Prompts are voiced immediately on voice prompt level 3
+		// Prompts are voiced immediately on voice prompt level 3
 	if ((voicePromptWasPlaying && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)) ||
 			(nonVolatileSettings.audioPromptMode >= immediateAnnounceThreshold))
 	{
@@ -2412,6 +2475,74 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	}
 
 	return false;
+}
+
+void AnnounceChannelSummary(bool voicePromptWasPlaying)
+{
+		char voiceBuf[17];
+	char voiceBufChNumber[5];
+	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
+
+	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
+	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
+
+	voicePromptsInit();
+	voicePromptsAppendPrompt(PROMPT_CHANNEL);
+	// If the number and name differ, then append.
+	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+	{
+		voicePromptsAppendString(voiceBufChNumber);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
+	voicePromptsAppendString(voiceBuf);
+
+	if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
+	{
+		announceRadioMode(voicePromptWasPlaying);
+	}
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+	announceFrequency();
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+	if (trxGetMode() == RADIO_MODE_DIGITAL)
+	{
+		announceContactNameTgOrPc(voicePromptsIsPlaying());
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceTS();
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceCC();
+	}
+	else
+	{
+		bool rxAndTxTonesAreTheSame = (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
+		&& (currentChannelData->rxTone ==currentChannelData->txTone);
+		if (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
+		{
+			bool isCTCSS = codeplugGetCSSType(currentChannelData->rxTone)==CSS_TYPE_CTCSS;
+
+			buildCSSCodeVoicePrompts(currentChannelData->rxTone,
+			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->rxTone & CSS_TYPE_DCS_MASK) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), rxAndTxTonesAreTheSame? DIRECTION_NONE : DIRECTION_RECEIVE, true);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+		}
+
+		if (currentChannelData->txTone != CODEPLUG_CSS_TONE_NONE && !rxAndTxTonesAreTheSame)
+		{
+			bool isCTCSS = codeplugGetCSSType(currentChannelData->txTone)==CSS_TYPE_CTCSS;
+
+			buildCSSCodeVoicePrompts(currentChannelData->txTone,
+			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->txTone & CSS_TYPE_DCS_MASK ) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), DIRECTION_TRANSMIT, true);
+		}
+	}
+
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	announcePowerLevel(voicePromptWasPlaying);
+	if (currentChannelData->libreDMR_Power == 0)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->from_master);
+	}
+
+	voicePromptsPlay();
 }
 
 bool handleMonitorMode(uiEvent_t *ev)
@@ -2784,11 +2915,11 @@ static uint32_t dtmfGetToneDuration(uint32_t duration)
 	{
 		/*
 		 * First digit duration:
-		 *    - Example 1ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+		 *    - Example 1??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 		 *        The first digit time is set to 100 milliseconds. Thus, the actual length of the first digit duration is 150 milliseconds.
 		 *        However, if the launch starts with a "*" or "#" tone, the intercom will compare the duration with "* and #" and whichever
 		 *        is longer for both.
-		 *    - Example 2ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+		 *    - Example 2??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 		 *        The first digit time is set to 100 milliseconds. "* And # tone" is set to 500 milliseconds.
 		 *        Thus, the actual length of the first "*" or "#" tone is 550 milliseconds.
 		 */
@@ -2797,11 +2928,11 @@ static uint32_t dtmfGetToneDuration(uint32_t duration)
 
 	/*
 	 * '*' '#' Duration:
-	 *    - Example 1ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+	 *    - Example 1??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 	 *        "* And # tone" is set to 500 milliseconds. Thus, the actual length of "* and # sounds" is 550 milliseconds.
 	 *        However, if the launch starts with * and # sounds, the intercom compares the duration of the pitch with
 	 *        the "first digit time" and uses the longer one of the two.
-	 *    - Example 2ï¼š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
+	 *    - Example 2??š "DTMF rate" is set to 10 digits per second (duration is 50 milliseconds).
 	 *        The first digit time is set to 100 milliseconds. "* And # tone" is set to 500 milliseconds.
 	 *        Therefore, the actual number of the first digit * or # is 550 milliseconds.
 	 */

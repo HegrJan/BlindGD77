@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -123,24 +123,28 @@ static void redrawScreen(bool update, bool state)
 
 		voicePromptsInit();
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
-		if (lockState & LOCK_KEYPAD)
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 		{
-			voicePromptsAppendLanguageString(&currentLanguage->keypad);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-		}
+			if (lockState & LOCK_KEYPAD)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->keypad);
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+			}
 
-		if (lockState & LOCK_PTT)
-		{
-			voicePromptsAppendLanguageString(&currentLanguage->ptt);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			if (lockState & LOCK_PTT)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->ptt);
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+			}
 		}
-
 		voicePromptsAppendLanguageString(&currentLanguage->locked);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendLanguageString(&currentLanguage->press_blue_plus_star);
-		voicePromptsAppendLanguageString(&currentLanguage->to_unlock);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
+		{
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendLanguageString(&currentLanguage->press_blue_plus_star);
+			voicePromptsAppendLanguageString(&currentLanguage->to_unlock);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+		}
 		voicePromptsPlay();
 	}
 	else

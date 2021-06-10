@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019      Kai Ludwig, DG4KLU
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -49,6 +49,8 @@ extern const int MELODY_KEY_BEEP_FIRST_ITEM[];
 extern const int MELODY_LOW_BATTERY[];
 extern const int MELODY_QUICKKEYS_CLEAR_ACK_BEEP[];
 extern const int MELODY_RX_TGTSCC_WARNING_BEEP[];
+extern const int melody_sk1_beep[];
+extern const int melody_sk2_beep[];
 
 extern volatile int *melody_play;
 extern volatile int melody_idx;

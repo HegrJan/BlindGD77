@@ -1,5 +1,5 @@
 /* -*- coding: windows-1252-unix; -*- */
-/* 
+/*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *
  *
@@ -107,7 +107,7 @@ const stringsTable_t englishLanguage =
 .stepFreq				= "Step", // MaxLen: 7 (with ':' + xx.xxkHz fitted)
 .tot					= "TOT", // MaxLen: 16 (with ':' + .off or 15..3825)
 .off					= "Off", // MaxLen: 16 (with ':' + .timeout_beep, .calibration or .band_limits)
-.zone_skip				= "Zone Skip", // MaxLen: 16 (with ':' + .yes or .no) 
+.zone_skip				= "Zone Skip", // MaxLen: 16 (with ':' + .yes or .no)
 .all_skip				= "All Skip", // MaxLen: 16 (with ':' + .yes or .no)
 .yes					= "Yes", // MaxLen: 16 (with ':' + .zone_skip, .all_skip)
 .no					= "No", // MaxLen: 16 (with ':' + .zone_skip, .all_skip)
@@ -148,7 +148,7 @@ const stringsTable_t englishLanguage =
 .all_call				= "All Call", // MaxLen: 16
 .tone_scan				= "Tone scan", // MaxLen: 16
 .low_battery				= "LOW BATTERY !!!", // MaxLen: 16
-.Auto					= "Auto", // MaxLen 16 (with .mode + ':') 
+.Auto					= "Auto", // MaxLen 16 (with .mode + ':')
 .manual					= "Manual",  // MaxLen 16 (with .mode + ':')
 .ptt_toggle				= "PTT latch", // MaxLen 16 (with ':' + .on or .off)
 .private_call_handling			= "Allow PC", // MaxLen 16 (with ':' + .on or .off)
@@ -207,7 +207,11 @@ const stringsTable_t englishLanguage =
 .low					= "Low",
 .high					= "High",
 .dmr_id					= "DMR ID",
-.scan_on_boot				= "Scan On Boot"
+.scan_on_boot				= "Scan On Boot",
+.dtmf_entry = "DTMF entry",
+.name = "Name",
+.vox = "Vox",
+.sk2Latch="SK2 Latch"
 };
 /********************************************************************
  *

@@ -1,9 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
- *                         Colin Durbridge, G4EML
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -26,7 +25,6 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 #include "functions/codeplug.h"
 #include "functions/settings.h"
 #include "functions/trx.h"
@@ -175,6 +173,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 				switch (mNum)
 				{
 					case CONTACT_DETAILS_NAME:
+						leftSide = (char * const *)&currentLanguage->name;
 						strncpy(rightSideVar, contactName, 17);
 						break;
 					case CONTACT_DETAILS_TG:
@@ -211,7 +210,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 									break;
 								case CONTACT_CALLTYPE_ALL: // All Call
 									leftSide = (char * const *)&currentLanguage->all;
-									snprintf(rightSideVar, bufferLen, "%u", MAX_TG_OR_PC_VALUE);
+									snprintf(rightSideVar, bufferLen, "%d", 16777215);
 									leftSideConst = (char * const *)&currentLanguage->all_call;
 									break;
 							}
@@ -252,10 +251,10 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 									rightSideConst = (char * const *)&currentLanguage->none;
 									break;
 								case 0:
-									snprintf(rightSideVar, bufferLen, "%u", 1);
+									snprintf(rightSideVar, bufferLen, "%d", 1);
 									break;
 								case 2:
-									snprintf(rightSideVar, bufferLen, "%u", 2);
+									snprintf(rightSideVar, bufferLen, "%d", 2);
 									break;
 							}
 							break;
@@ -378,7 +377,7 @@ static void handleEvent(uiEvent_t *ev)
 							{
 								tmpContact.callType++;
 							}
-							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? MAX_TG_OR_PC_VALUE : tmpContact.tgNumber, digits, 10);
+							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? 16777215 : tmpContact.tgNumber, digits, 10);
 							break;
 						case CONTACT_DETAILS_TS:
 							if ((tmpContact.reserve1 & 0x01) && ((tmpContact.reserve1 & 0x02) == 0))
@@ -424,7 +423,7 @@ static void handleEvent(uiEvent_t *ev)
 							{
 								tmpContact.callType--;
 							}
-							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? MAX_TG_OR_PC_VALUE : tmpContact.tgNumber, digits, 10);
+							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? 16777215 : tmpContact.tgNumber, digits, 10);
 							break;
 						case CONTACT_DETAILS_TS:
 							if (((tmpContact.reserve1 & 0x01) == 0x0) || ((tmpContact.reserve1 & 0x03) == 0x00))
@@ -446,14 +445,14 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					if (tmpContact.callType == CONTACT_CALLTYPE_ALL)
 					{
-						tmpContact.tgNumber = MAX_TG_OR_PC_VALUE;
+						tmpContact.tgNumber = 16777215;
 					}
 					else
 					{
-						tmpContact.tgNumber = (uint32_t)atoi(digits);
+						tmpContact.tgNumber = atoi(digits);
 					}
 
-					if ((tmpContact.tgNumber >= MIN_TG_OR_PC_VALUE) && (tmpContact.tgNumber <= MAX_TG_OR_PC_VALUE))
+					if ((tmpContact.tgNumber > 0) && (tmpContact.tgNumber <= MAX_TG_OR_PC_VALUE))// 9999999)
 					{
 						codeplugUtilConvertStringToBuf(contactName, tmpContact.name, 16);
 						if ((contactDetailsIndex >= CODEPLUG_CONTACTS_MIN) && (contactDetailsIndex <= CODEPLUG_CONTACTS_MAX))
@@ -468,13 +467,13 @@ static void handleEvent(uiEvent_t *ev)
 									}
 									else
 									{
-										snprintf(buf, bufferLen, "%s %u", currentLanguage->pc, tmpContact.tgNumber);
+										snprintf(buf, bufferLen, "%s %d", currentLanguage->pc, tmpContact.tgNumber);
 										codeplugUtilConvertStringToBuf(buf, tmpContact.name, 16);
 									}
 								}
 								else
 								{
-									snprintf(buf, bufferLen, "%s %u", currentLanguage->tg, tmpContact.tgNumber);
+									snprintf(buf, bufferLen, "%s %d", currentLanguage->tg, tmpContact.tgNumber);
 									codeplugUtilConvertStringToBuf(buf, tmpContact.name, 16);
 								}
 							}

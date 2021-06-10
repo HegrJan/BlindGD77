@@ -44,7 +44,18 @@ menuStatus_t menuDisplayMenuList(uiEvent_t *ev, bool isFirstRun)
 		menuDataGlobal.endIndex = menuDataGlobal.data[currentMenuNumber]->numItems;
 
 		voicePromptsInit();
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
+		switch (menuSystemGetCurrentMenuNumber())
+		{
+			case MENU_CONTACTS_MENU:
+				voicePromptsAppendLanguageString(&currentLanguage->contacts);
+				if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->menu);
+				}
+				break;
+			default:
+				voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 		updateScreen(true);

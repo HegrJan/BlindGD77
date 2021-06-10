@@ -2,8 +2,8 @@
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Colin Durbridge, G4EML
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -99,12 +99,12 @@ menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
 		}
 
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->channel_details);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 		updateScreen(true, true);
 		updateCursor(true);
 
@@ -183,6 +183,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 				switch(mNum)
 				{
 					case CH_DETAILS_NAME:
+						leftSide = (char * const *)&currentLanguage->name;
 						strncpy(rightSideVar, channelName, 17);
 					break;
 					case CH_DETAILS_MODE:
@@ -356,6 +357,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						rightSideConst = (char * const *)(((tmpChannel.flag4 & CODEPLUG_CHANNEL_FLAG_ALL_SKIP) == CODEPLUG_CHANNEL_FLAG_ALL_SKIP) ? &currentLanguage->yes : &currentLanguage->no);
 						break;
 					case CH_DETAILS_VOX:
+						leftSide = (char * const *)&currentLanguage->vox;
 						rightSideConst = (char * const *)(((tmpChannel.flag4 & 0x40) == 0x40) ? &currentLanguage->on : &currentLanguage->off);
 						snprintf(rightSideVar, bufferLen, "VOX:%s", *rightSideConst);
 						break;
@@ -438,7 +440,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 					}
 					else if (mNum == CH_DETAILS_VOX)
 					{
-						voicePromptsAppendString("VOX");
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
 						voicePromptsAppendLanguageString((const char * const *)rightSideConst);
 					}
 					else if ((mNum == CH_DETAILS_POWER) &&

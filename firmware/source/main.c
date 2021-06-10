@@ -2,8 +2,8 @@
  * Copyright (C) 2019      Kai Ludwig, DG4KLU
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -347,6 +347,12 @@ void mainTask(void *data)
 
 	menuRadioInfosInit(); // Initialize circular buffer
 	watchdogInit(menuRadioInfosPushBackVoltage);
+	// If hash is held down during boot, ensure Voice Prompts are on if not already.
+	bool forceVoicePromptsOn=false;
+	if ((keyboardRead()&SCAN_HASH) && (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
+	{
+		forceVoicePromptsOn=true;
+	}
 
 	soundInitBeepTask();
 
@@ -371,7 +377,7 @@ void mainTask(void *data)
 	dmrIDCacheInit();
 	voicePromptsCacheInit();
 
-	if (wasRestoringDefaultsettings)
+	if (wasRestoringDefaultsettings || forceVoicePromptsOn)
 	{
 		enableVoicePromptsIfLoaded();
 	}
@@ -515,6 +521,37 @@ void mainTask(void *data)
 				button_event = EVENT_BUTTON_CHANGE;
 				buttons &= ~BUTTON_PTT;
 			}
+// SK2 latch.
+// if sk2 is being released with no other buttons, we'll latch it, otherwise we wil not latch it.
+#if !defined(PLATFORM_GD77S)
+	if (nonVolatileSettings.sk2Latch && ((buttons&BUTTON_SK2_SHORT_UP) ==BUTTON_SK2_SHORT_UP) && keys.key==0)
+	{
+		sk2Latch =!sk2Latch;
+		if (voicePromptsIsPlaying())
+			voicePromptsTerminate();
+		if (sk2Latch)
+			soundSetMelody(melody_sk2_beep);
+		else
+			soundSetMelody(melody_sk1_beep);
+		sk2LatchTimeout=3000;
+	}
+	if (sk2Latch)
+	{
+		buttons|=BUTTON_SK2;
+		if (sk2LatchTimeout && ((buttons&~BUTTON_SK2)==0 && keys.key==0))
+			sk2LatchTimeout--;
+#if !defined(PLATFORM_RD5R)
+		bool releaseSK2Latch=(buttons&(BUTTON_ORANGE_SHORT_UP|BUTTON_SK1_SHORT_UP)) || (keys.key!=0 && (keys.event&KEY_MOD_UP)) || (sk2LatchTimeout==0);
+#else
+		bool releaseSK2Latch=(buttons&(BUTTON_SK1_SHORT_UP)) || (keys.key!=0 && (keys.event&KEY_MOD_UP)) || (sk2LatchTimeout==0);
+#endif
+		if (releaseSK2Latch)
+		{
+			sk2Latch=false;
+			soundSetMelody(melody_sk1_beep);
+		}
+	}
+#endif // !defined(PLATFORM_GD77S)
 
 			// EVENT_*_CHANGED can be cleared later, so check this now as hasEvent has to be set anyway.
 			keyOrButtonChanged = ((key_event != NO_EVENT) || (button_event != NO_EVENT) || (rotary_event != NO_EVENT));
@@ -656,7 +693,9 @@ void mainTask(void *data)
 			}
 
 			// PTT toggle action
-			if (nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH)
+			bool pttLatchEnabled=((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) && (currentChannelData->tot != 0)) || dtmfPTTLatch;
+
+			if (pttLatchEnabled)
 			{
 				if (button_event == EVENT_BUTTON_CHANGE)
 				{
@@ -738,7 +777,7 @@ void mainTask(void *data)
 							// Mode was blinking, hence it needs to be redrawn as it could be in its hidden phase.
 							uiUtilityRedrawHeaderOnly(false);
 						}
-						else
+						//else // VK7js commented out to fix ptt not txing after scan stops.
 						{
 							if (((currentMenu == UI_MESSAGE_BOX) && (menuSystemGetPreviousMenuNumber() == UI_PRIVATE_CALL))
 									&& (nonVolatileSettings.privateCalls == ALLOW_PRIVATE_CALLS_PTT))

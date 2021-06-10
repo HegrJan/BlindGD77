@@ -2,8 +2,8 @@
  * Copyright (C) 2019      Kai Ludwig, DG4KLU
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -302,7 +302,7 @@ void settingsRestoreDefaultSettings(void)
 #else
 	if (voicePromptDataIsLoaded)
 	{
-		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
+		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 	}
 	else
 	{
@@ -333,7 +333,7 @@ void enableVoicePromptsIfLoaded(void)
 #if defined(PLATFORM_GD77S)
 		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #else
-		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
+		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #endif
 		settingsDirty = true;
 		settingsSaveSettings(false);

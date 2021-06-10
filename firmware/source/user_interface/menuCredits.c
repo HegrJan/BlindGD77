@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -39,10 +39,11 @@ static const int NUM_LINES_PER_SCREEN = 4;
 static const int NUM_LINES_PER_SCREEN = 6;
 #endif
 
-static const int NUM_CREDITS = 7;
-static const char *creditTexts[] = {"Roger VK3KYY","Daniel F1RMB","Dzmitry EW1ADG","Colin G4EML","Alex DL4LEX","Kai DG4KLU","Jason VK7ZJA"};
+static const int NUM_CREDITS = 9;
+static const char *creditTexts[] = {"Roger VK3KYY","Daniel F1RMB","Dzmitry EW1ADG","Colin G4EML","Alex DL4LEX","Kai DG4KLU","Jason VK7ZJA","Joseph VK7JS", "Jan OK1TE"};
 
 static menuStatus_t menuCreditsExitCode = MENU_STATUS_SUCCESS;
+static int voicePromptCreditIndex=0;
 
 menuStatus_t menuCredits(uiEvent_t *ev, bool isFirstRun)
 {
@@ -64,30 +65,31 @@ menuStatus_t menuCredits(uiEvent_t *ev, bool isFirstRun)
 
 static void updateScreen(bool isFirstRun)
 {
-
 	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
 	{
-		if (voicePromptsIsPlaying())
-		{
-			voicePromptsTerminate();
-		}
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->credits);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		promptsPlayNotAfterTx();
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 	}
 
 	ucClearBuf();
 	menuDisplayTitle(currentLanguage->credits);
 
-
 	for(int i = 0; i < NUM_LINES_PER_SCREEN; i++)
 	{
 		ucPrintCentered(i * 8 + 16, (char *)creditTexts[i + menuDataGlobal.currentItemIndex], FONT_SIZE_1);
+		if (i==0)
+		{
+			if (!isFirstRun)
+			{
+				voicePromptsInit();
+			}
+			voicePromptsAppendString((char *)creditTexts[voicePromptCreditIndex]);
+			promptsPlayNotAfterTx();
+		}
 	}
 
 	ucRender();
@@ -114,6 +116,8 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			menuDataGlobal.currentItemIndex++;
 		}
+		if (voicePromptCreditIndex < NUM_CREDITS-1)
+			voicePromptCreditIndex++;
 
 		updateScreen(false);
 	}
@@ -123,6 +127,8 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			menuDataGlobal.currentItemIndex--;
 		}
+		if (voicePromptCreditIndex > 0)
+			voicePromptCreditIndex--;
 
 		updateScreen(false);
 	}

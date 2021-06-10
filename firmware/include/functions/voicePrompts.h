@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -71,8 +71,8 @@ typedef enum
 	PROMPT_COLORCODE_MODE,
 	PROMPT_HERTZ,
 	PROMPT_SETTINGS_UPDATE,
-	PROMPT_UNUSED,
-	PROMPT_UNUSED2,
+	PROMPT_HASH,
+	PROMPT_STAR,
 	NUM_VOICE_PROMPTS
 } voicePrompt_t;
 

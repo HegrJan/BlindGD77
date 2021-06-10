@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -163,14 +163,16 @@ void voicePromptsTerminate(void)
 	if (voicePromptIsActive)
 	{
 		disableAudioAmp(AUDIO_AMP_MODE_PROMPT);
-		if (trxGetMode() == RADIO_MODE_ANALOG)
-		{
-			GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1); // connect AT1846S audio to speaker
-		}
 		voicePromptIsActive = false;
 		voicePromptsCurrentSequence.Pos = 0;
 		soundTerminateSound();
 		soundInit();
+		// Only do this if a carrier is detected to avoid squelch tail at end of voice prompt on DM1801 and RD5R.
+		// If squelch is open at time of vp, need to reconnect spkr or rf volume will be set to 0.
+		if (trxGetMode() == RADIO_MODE_ANALOG && trxCarrierDetected())
+		{
+			GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1); // connect AT1846S audio to speaker
+		}
 	}
 }
 
@@ -260,6 +262,14 @@ void voicePromptsAppendString(char *promptString)
 		else if (*promptString == '%')
 		{
 			voicePromptsAppendPrompt(PROMPT_PERCENT);
+		}
+		else if (*promptString == '*')
+		{
+			voicePromptsAppendPrompt(PROMPT_STAR);
+		}
+		else if (*promptString == '#')
+		{
+			voicePromptsAppendPrompt(PROMPT_HASH);
 		}
 		else
 		{

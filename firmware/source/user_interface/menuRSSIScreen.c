@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
+ * Joseph Stephen VK7JS
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
@@ -79,7 +79,7 @@ menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 // Returns S-Unit 0..9..10(S9+10dB)..15(S9+60)
 static int32_t getSignalStrength(int dbm)
 {
-	if (dbm)
+	if (dbm < DBM_LEVELS[1])
 	{
 		return 0;
 	}
@@ -105,16 +105,12 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 
 	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
 	{
-		if (voicePromptsIsPlaying())
-		{
-			voicePromptsTerminate();
-		}
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->rssi);
-		voicePromptsAppendLanguageString(&currentLanguage->menu);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
+		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		updateVoicePrompts(false, true);
 	}
@@ -230,6 +226,10 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 
 static void handleEvent(uiEvent_t *ev)
 {
+	if (handleMonitorMode(ev))
+	{
+		return;
+	}
 	if (ev->events & BUTTON_EVENT)
 	{
 		bool wasPlaying = false;

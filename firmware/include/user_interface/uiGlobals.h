@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -335,5 +335,10 @@ extern struct_codeplugContact_t currentContactData;
 extern LinkItem_t 				*LinkHead;
 
 extern bool 					PTTToggledDown;
+extern bool 					dtmfPTTLatch;
+#if !defined(PLATFORM_GD77S)
+extern bool sk2Latch;
+extern uint16_t sk2LatchTimeout;
+#endif // !defined(PLATFORM_GD77S)
 
 #endif

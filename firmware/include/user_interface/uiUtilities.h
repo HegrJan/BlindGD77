@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -77,6 +77,9 @@ typedef enum
 	PROMPT_SEQUENCE_BATTERY,
 	PROMPT_SQUENCE_SQUELCH,
 	PROMPT_SEQUENCE_TEMPERATURE,
+	PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME,
+	PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ,
+	PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ,
 	NUM_PROMPT_SEQUENCES
 } voicePromptItem_t;
 
@@ -160,6 +163,7 @@ void playNextSettingSequence(void);
 void uiUtilityBuildTgOrPCDisplayName(char *nameBuf, int bufferLen);
 void acceptPrivateCall(uint32_t id, int timeslot);
 bool repeatVoicePromptOnSK1(uiEvent_t *ev);
+void AnnounceChannelSummary(bool voicePromptWasPlaying);
 bool handleMonitorMode(uiEvent_t *ev);
 void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int8_t yOverride);
 void uiUtilityRenderQSODataAndUpdateScreen(void);

@@ -2,8 +2,8 @@
  * Copyright (C) 2019      Kai Ludwig, DG4KLU
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -115,6 +115,7 @@ typedef struct
 	int8_t			temperatureCalibration;// Units of 0.5 deg C
 	uint8_t			batteryCalibration; // Units of 0.01V
 	uint8_t			ecoLevel;// Power saving / economy level
+	uint8_t sk2Latch;
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

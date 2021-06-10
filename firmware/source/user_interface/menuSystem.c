@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
- *
+ * Joseph Stephen VK7JS
+ * Jan Hegr OK1TE
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
  *
@@ -92,6 +92,7 @@ menuDataGlobal_t menuDataGlobal =
 				NULL,// Language
 				NULL,// Private Call
 				NULL,// MessageBox
+				NULL,// New DTMF Contact
 		}
 };
 
@@ -128,7 +129,8 @@ static menuFunctionData_t menuFunctions[] =
 		{ menuContactDetails,       0 },
 		{ menuLanguage,             0 },
 		{ menuPrivateCall,          0 },
-		{ uiMessageBox,             0 }
+		{ uiMessageBox,             0 },
+		{ menuDTMFContactDetails,       0 }, // New DTMF contact
 };
 
 static void menuSystemCheckForFirstEntryAudible(menuStatus_t status)
@@ -384,12 +386,11 @@ static const menuItemNewData_t contactMenuItems[] =
 {
 	{ 15,  MENU_CONTACT_LIST      },
 	{ 139, MENU_DTMF_CONTACT_LIST },
-	{ 14,  MENU_CONTACT_NEW       },
 };
 
 const menuItemsList_t menuDataContact =
 {
-	.numItems = 3,
+	.numItems = 2,
 	.items = contactMenuItems
 };
 
