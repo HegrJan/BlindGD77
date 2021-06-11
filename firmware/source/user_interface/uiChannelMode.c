@@ -613,7 +613,7 @@ static bool AllowedToAnnounceChannelInfo(bool loadVoicePromptAnnouncement)
 		if (uiDataGlobal.Scan.active == false)
 			return true;
 
-		if (uiDataGlobal.Scan.state == SCAN_PAUSED)
+		if (uiDataGlobal.Scan.state == SCAN_PAUSED || uiDataGlobal.Scan.state == SCAN_SHORT_PAUSED)
 			return true;
 		return false;
 	}
@@ -2328,6 +2328,8 @@ static void scanning(void)
 			{
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
+				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
+
 				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 				{
 					loadChannelData(false, true);
@@ -2343,7 +2345,6 @@ static void scanning(void)
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN; // Force screen refresh
 
 					uiDataGlobal.Scan.timer = SCAN_SHORT_PAUSE_TIME;	//start short delay to allow full detection of signal
-					uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
 				}
 
 			}
