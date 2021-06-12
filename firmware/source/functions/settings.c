@@ -172,7 +172,10 @@ bool settingsLoadSettings(void)
 	{
 		settingsSet(nonVolatileSettings.initialMenuNumber, UI_CHANNEL_MODE);
 	}
-
+	if (nonVolatileSettings.sk2Latch > 10)
+		nonVolatileSettings.sk2Latch = 0;
+	else if (nonVolatileSettings.sk2Latch ==1) // convert old to new
+		nonVolatileSettings.sk2Latch =6; // 3 seconds.
 	return hasRestoredDefaultsettings;
 }
 

@@ -524,7 +524,7 @@ void mainTask(void *data)
 // SK2 latch.
 // if sk2 is being released with no other buttons, we'll latch it, otherwise we wil not latch it.
 #if !defined(PLATFORM_GD77S)
-	if (nonVolatileSettings.sk2Latch && ((buttons&BUTTON_SK2_SHORT_UP) ==BUTTON_SK2_SHORT_UP) && keys.key==0)
+	if (nonVolatileSettings.sk2Latch > 0 && ((buttons&BUTTON_SK2_SHORT_UP) ==BUTTON_SK2_SHORT_UP) && keys.key==0)
 	{
 		sk2Latch =!sk2Latch;
 		if (voicePromptsIsPlaying())
@@ -533,7 +533,7 @@ void mainTask(void *data)
 			soundSetMelody(melody_sk2_beep);
 		else
 			soundSetMelody(melody_sk1_beep);
-		sk2LatchTimeout=3000;
+		sk2LatchTimeout=nonVolatileSettings.sk2Latch *500; // units are in half seconds.
 	}
 	if (sk2Latch)
 	{

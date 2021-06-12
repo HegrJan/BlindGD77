@@ -196,8 +196,15 @@ static void updateScreen(bool isFirstRun)
 					break;
 #if !defined(PLATFORM_GD77S)
 				case OPTIONS_MENU_SK2_LATCH:
-								leftSide = (char * const *)&currentLanguage->sk2Latch;
-								rightSideConst = (char * const *)(nonVolatileSettings.sk2Latch ? &currentLanguage->on : &currentLanguage->off);
+					leftSide = (char * const *)&currentLanguage->sk2Latch;
+					if (nonVolatileSettings.sk2Latch > 0)
+					{
+						snprintf(rightSideVar, bufferLen, "%1d.%1d", nonVolatileSettings.sk2Latch/2, (nonVolatileSettings.sk2Latch*5)%10);
+						rightSideUnitsPrompt = PROMPT_SECONDS;
+						rightSideUnitsStr = "s";
+					}
+					else
+						rightSideConst = (char * const *)&currentLanguage->off;
 								break;
 #endif
 				case OPTIONS_MENU_HOTSPOT_TYPE:
@@ -547,9 +554,12 @@ static void handleEvent(uiEvent_t *ev)
 					break;
 					#if !defined(PLATFORM_GD77S)
 				case OPTIONS_MENU_SK2_LATCH:
-					if (nonVolatileSettings.sk2Latch==0)
+					if (nonVolatileSettings.sk2Latch < 10)
 					{
-						nonVolatileSettings.sk2Latch=1;
+						if (nonVolatileSettings.sk2Latch==0) // start at 1 s, not half a second.
+							nonVolatileSettings.sk2Latch=2;
+						else
+							settingsIncrement(nonVolatileSettings.sk2Latch,1);
 					}
 					break;
 #endif
@@ -685,10 +695,12 @@ static void handleEvent(uiEvent_t *ev)
 					break;
 #if !defined(PLATFORM_GD77S)
 				case OPTIONS_MENU_SK2_LATCH:
-					if (nonVolatileSettings.sk2Latch == 1)
+					if (nonVolatileSettings.sk2Latch > 2)
 					{
-						nonVolatileSettings.sk2Latch=0;
+						settingsDecrement(nonVolatileSettings.sk2Latch, 1);
 					}
+					else
+						nonVolatileSettings.sk2Latch=0; // off
 					break;
 #endif
 			}
