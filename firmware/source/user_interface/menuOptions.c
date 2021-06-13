@@ -44,6 +44,7 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_PTT_TOGGLE,
 #if !defined(PLATFORM_GD77S)
 							OPTIONS_MENU_SK2_LATCH,
+							OPTIONS_MENU_DTMF_LATCH,
 #endif
 							OPTIONS_MENU_HOTSPOT_TYPE, OPTIONS_MENU_TALKER_ALIAS_TX,
 							OPTIONS_MENU_PRIVATE_CALLS,
@@ -205,7 +206,18 @@ static void updateScreen(bool isFirstRun)
 					}
 					else
 						rightSideConst = (char * const *)&currentLanguage->off;
-								break;
+					break;
+				case OPTIONS_MENU_DTMF_LATCH:
+					leftSide = (char * const *)&currentLanguage->dtmfLatch;
+					if (nonVolatileSettings.dtmfLatch > 0)
+					{
+						snprintf(rightSideVar, bufferLen, "%1d.%1d", nonVolatileSettings.dtmfLatch/2, (nonVolatileSettings.dtmfLatch*5)%10);
+						rightSideUnitsPrompt = PROMPT_SECONDS;
+						rightSideUnitsStr = "s";
+					}
+					else
+						rightSideConst = (char * const *)&currentLanguage->off;
+					break;
 #endif
 				case OPTIONS_MENU_HOTSPOT_TYPE:
 					leftSide = (char * const *)&currentLanguage->hotspot_mode;
@@ -562,6 +574,15 @@ static void handleEvent(uiEvent_t *ev)
 							settingsIncrement(nonVolatileSettings.sk2Latch,1);
 					}
 					break;
+				case OPTIONS_MENU_DTMF_LATCH:
+					if (nonVolatileSettings.dtmfLatch < 6)
+					{
+						if (nonVolatileSettings.dtmfLatch==0) // start at 1 s, not half a second.
+							nonVolatileSettings.dtmfLatch=2;
+						else
+							settingsIncrement(nonVolatileSettings.dtmfLatch,1);
+					}
+					break;
 #endif
 			}
 		}
@@ -701,6 +722,14 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					else
 						nonVolatileSettings.sk2Latch=0; // off
+					break;
+				case OPTIONS_MENU_DTMF_LATCH:
+					if (nonVolatileSettings.dtmfLatch > 2)
+					{
+						settingsDecrement(nonVolatileSettings.dtmfLatch, 1);
+					}
+					else
+						nonVolatileSettings.dtmfLatch=0; // off
 					break;
 #endif
 			}

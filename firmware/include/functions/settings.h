@@ -115,7 +115,9 @@ typedef struct
 	int8_t			temperatureCalibration;// Units of 0.5 deg C
 	uint8_t			batteryCalibration; // Units of 0.01V
 	uint8_t			ecoLevel;// Power saving / economy level
-	uint8_t sk2Latch;
+	uint8_t sk2Latch; // 0 off, then increments of 500 ms, starting at 1 s to 5 s, i.e. valid vvalues 0, 2-10.
+	uint8_t dtmfLatch; // 0 off, then increments of 500 ms, valid values from 2 to 6 i.e. 1 to 3 seconds.
+	uint16_t		priorityChannel; // priority channel index.
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

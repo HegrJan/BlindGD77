@@ -421,10 +421,13 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				trxSetDTMF(keyval);
 				isTransmittingTone = true;
-				dtmfLatchState=dtmfTransmittingCode;
-				dtmfPTTLatchTimeout=0;
 				PTTToggledDown = true; // released after a timeout when the dtmf key is released.
-				dtmfPTTLatch=true;
+				if (nonVolatileSettings.dtmfLatch > 0)
+				{
+					dtmfLatchState=dtmfTransmittingCode;
+					dtmfPTTLatchTimeout=0;
+					dtmfPTTLatch=true;
+				}
 				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_DTMF);
 				enableAudioAmp(AUDIO_AMP_MODE_RF);
 				GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1);
@@ -439,7 +442,7 @@ static void handleEvent(uiEvent_t *ev)
 		if (dtmfLatchState==dtmfTransmittingCode)
 		{
 			dtmfLatchState=dtmfPTTLatched;
-			dtmfPTTLatchTimeout=1500;
+			dtmfPTTLatchTimeout=nonVolatileSettings.dtmfLatch * 500; // nonVolatileSettings.dtmfLatch 	is units of 500 ms.	
 		}
 		trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
 		disableAudioAmp(AUDIO_AMP_MODE_RF);

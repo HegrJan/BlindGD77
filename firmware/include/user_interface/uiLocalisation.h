@@ -222,6 +222,7 @@ typedef struct
    const char* name;
    const char* vox;
    const char* sk2Latch;
+   const char* dtmfLatch;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

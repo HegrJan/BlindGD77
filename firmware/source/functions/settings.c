@@ -176,6 +176,12 @@ bool settingsLoadSettings(void)
 		nonVolatileSettings.sk2Latch = 0;
 	else if (nonVolatileSettings.sk2Latch ==1) // convert old to new
 		nonVolatileSettings.sk2Latch =6; // 3 seconds.
+		// ensure dtmfLatch is set to a sensible value
+	if (nonVolatileSettings.dtmfLatch > 6)
+		nonVolatileSettings.dtmfLatch = 3; // defaults to 1.5 seconds.
+	else if (nonVolatileSettings.dtmfLatch < 2)
+		nonVolatileSettings.dtmfLatch =2; // 1 seconds.
+
 	return hasRestoredDefaultsettings;
 }
 

@@ -211,7 +211,8 @@ const stringsTable_t englishLanguage =
 .dtmf_entry = "DTMF entry",
 .name = "Name",
 .vox = "Vox",
-.sk2Latch="SK2 Latch"
+.sk2Latch="SK2 Latch",
+.dtmfLatch="DTMF Latch"
 };
 /********************************************************************
  *
