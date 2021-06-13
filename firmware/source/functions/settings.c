@@ -179,7 +179,7 @@ bool settingsLoadSettings(void)
 		// ensure dtmfLatch is set to a sensible value
 	if (nonVolatileSettings.dtmfLatch > 6)
 		nonVolatileSettings.dtmfLatch = 3; // defaults to 1.5 seconds.
-	else if (nonVolatileSettings.dtmfLatch < 2)
+	else if (nonVolatileSettings.dtmfLatch ==1)
 		nonVolatileSettings.dtmfLatch =2; // 1 seconds.
 
 	return hasRestoredDefaultsettings;
