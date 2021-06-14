@@ -385,7 +385,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #else
 						ucClearRows(0, 2, false);
 #endif
-						uiUtilityRenderHeader(false);
+						uiUtilityRenderHeader(notScanning);
 					}
 					else
 					{
@@ -773,7 +773,7 @@ void uiChannelModeUpdateScreen(int txTimeSecs)
 	}
 
 	ucClearBuf();
-	uiUtilityRenderHeader(dualWatchChannelData.dualWatchActive);
+	uiUtilityRenderHeader(dualWatchChannelData.dualWatchActive ? (dualWatchChannelData.initialChannelIndex==nonVolatileSettings.priorityChannel ? channelPriorityScan :  channelDualWatch) : notScanning);
 
 	switch(uiDataGlobal.displayQSOState)
 	{

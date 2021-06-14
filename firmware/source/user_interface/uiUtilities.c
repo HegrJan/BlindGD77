@@ -1444,18 +1444,24 @@ void uiUtilityRenderQSOData(void)
 	}
 }
 
-void uiUtilityRenderHeader(bool isVFODualWatchScanning)
+void uiUtilityRenderHeader(HeaderScanIndicatorType_t headerScanIndicatorType)
 {
 	const int MODE_TEXT_X_OFFSET = 1;
 	const int FILTER_TEXT_X_OFFSET = 25;
 	static const int bufferLen = 17;
 	char buffer[bufferLen];
+	char scanTypeIndicator[5]="";
+	if (headerScanIndicatorType == vfoDualWatch || headerScanIndicatorType == channelDualWatch)
+		strcpy(scanTypeIndicator, "[DW]");
+	else if (headerScanIndicatorType == channelPriorityScan)
+		strcpy(scanTypeIndicator, "[PR]");
+
 	static bool scanBlinkPhase = true;
 	static uint32_t blinkTime = 0;
 	int powerLevel = trxGetPowerLevel();
 	bool isPerChannelPower = (currentChannelData->libreDMR_Power != 0x00);
 
-	if (isVFODualWatchScanning == false)
+	if (headerScanIndicatorType == notScanning)
 	{
 		if (!trxTransmissionEnabled)
 		{
@@ -1492,9 +1498,9 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 	switch(trxGetMode())
 	{
 	case RADIO_MODE_ANALOG:
-		if (isVFODualWatchScanning)
+		if (headerScanIndicatorType != notScanning)
 		{
-			strcpy(buffer, "[DW]");
+			strcpy(buffer, scanTypeIndicator);
 		}
 		else
 		{
@@ -1548,7 +1554,7 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 				tsManOverride = (contactTSActive ? tsIsContactHasBeenOverriddenFromCurrentChannel() : (tsGetManualOverrideFromCurrentChannel() != 0));
 			}
 
-			if (isVFODualWatchScanning == false)
+			if (headerScanIndicatorType == notScanning)
 			{
 				if (!scanBlinkPhase && (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE))
 				{
@@ -1558,11 +1564,11 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 
 			if (!scanBlinkPhase)
 			{
-				bool isInverted = isVFODualWatchScanning ? false : (scanBlinkPhase ^ (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE));
-				ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, isVFODualWatchScanning ? "[DW]" : "DMR", ((nonVolatileSettings.hotspotType != HOTSPOT_TYPE_OFF) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, isInverted);
+				bool isInverted = headerScanIndicatorType ? false : (scanBlinkPhase ^ (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE));
+				ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, headerScanIndicatorType != notScanning ? scanTypeIndicator : "DMR", ((nonVolatileSettings.hotspotType != HOTSPOT_TYPE_OFF) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, isInverted);
 			}
 
-			if (isVFODualWatchScanning == false)
+			if (headerScanIndicatorType == notScanning)
 			{
 				bool tsInverted = false;
 
@@ -1584,7 +1590,7 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 			((isPerChannelPower && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH))) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_CENTER, false);
 
 	// In hotspot mode the CC is show as part of the rest of the display and in Analog mode the CC is meaningless
-	if((isVFODualWatchScanning == false) && (((settingsUsbMode == USB_MODE_HOTSPOT) || (trxGetMode() == RADIO_MODE_ANALOG)) == false))
+	if((headerScanIndicatorType == notScanning) && (((settingsUsbMode == USB_MODE_HOTSPOT) || (trxGetMode() == RADIO_MODE_ANALOG)) == false))
 	{
 		const int COLOR_CODE_X_POSITION = 84;
 		int ccode = trxGetDMRColourCode();
@@ -1623,14 +1629,14 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 	}
 }
 
-void uiUtilityRedrawHeaderOnly(bool isVFODualWatchScanning)
+void uiUtilityRedrawHeaderOnly(HeaderScanIndicatorType_t headerScanIndicatorType)
 {
 #if defined(PLATFORM_RD5R)
 	ucClearRows(0, 1, false);
 #else
 	ucClearRows(0, 2, false);
 #endif
-	uiUtilityRenderHeader(isVFODualWatchScanning);
+	uiUtilityRenderHeader(headerScanIndicatorType);
 	ucRenderRows(0, 2);
 }
 

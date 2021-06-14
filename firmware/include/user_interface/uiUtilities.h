@@ -95,6 +95,14 @@ typedef enum
 	DISPLAY_INFO_TX_TIMER,
 	DISPLAY_INFO_ZONE
 } displayInformation_t;
+typedef enum
+{
+	notScanning,
+	vfoDualWatch,
+	channelDualWatch,
+	channelPriorityScan
+	} HeaderScanIndicatorType_t;
+
 
 typedef struct
 {
@@ -124,8 +132,8 @@ void dmrIDCacheInit(void);
 bool dmrIDLookup(uint32_t targetId, dmrIdDataStruct_t *foundRecord);
 bool contactIDLookup(uint32_t id, uint32_t calltype, char *buffer);
 void uiUtilityRenderQSOData(void);
-void uiUtilityRenderHeader(bool isVFODualWatchScanning);
-void uiUtilityRedrawHeaderOnly(bool isVFODualWatchScanning);
+void uiUtilityRenderHeader(HeaderScanIndicatorType_t headerScanIndicatorType);
+void uiUtilityRedrawHeaderOnly(HeaderScanIndicatorType_t headerScanIndicatorType);
 LinkItem_t *lastheardFindInList(uint32_t id);
 void lastheardInitList(void);
 bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot);

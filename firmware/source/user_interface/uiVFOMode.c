@@ -190,7 +190,7 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 #else
 						ucClearRows(0, 2, false);
 #endif
-						uiUtilityRenderHeader(false);
+						uiUtilityRenderHeader(notScanning);
 					}
 					else
 					{
@@ -299,7 +299,7 @@ void uiVFOModeUpdateScreen(int txTimeSecs)
 	}
 
 	ucClearBuf();
-	uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning());
+	uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning() ? vfoDualWatch :	notScanning);
 
 	switch(uiDataGlobal.displayQSOState)
 	{
@@ -2421,7 +2421,7 @@ static void scanning(void)
 				uiVFOModeStopScanning();
 				// Just update the header (to prevent hidden mode)
 				ucClearRows(0, 2, false);
-				uiUtilityRenderHeader(false);
+				uiUtilityRenderHeader(notScanning);
 				ucRenderRows(0, 2);
 				return;
 			}
@@ -2445,7 +2445,7 @@ static void scanning(void)
 					uiVFOModeStopScanning();
 					// Just update the header (to prevent hidden mode)
 					ucClearRows(0, 2, false);
-					uiUtilityRenderHeader(false);
+					uiUtilityRenderHeader(notScanning);
 					ucRenderRows(0, 2);
 					return;
 				}
