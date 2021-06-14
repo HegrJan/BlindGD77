@@ -212,7 +212,9 @@ const stringsTable_t englishLanguage =
 .name = "Name",
 .vox = "Vox",
 .sk2Latch="SK2 Latch",
-.dtmfLatch="DTMF Latch"
+.dtmfLatch="DTMF Latch",
+.priorityChannel="Priority Channel",
+.priorityScan="Priority Scan"
 };
 /********************************************************************
  *

@@ -37,6 +37,8 @@ static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuOptionsExitCode = MENU_STATUS_SUCCESS;
+static struct_codeplugChannel_t priorityChannelData = { .rxFreq = 0 };
+
 enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_KEYPAD_TIMER_LONG, OPTIONS_MENU_KEYPAD_TIMER_REPEAT, OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT,
 							OPTIONS_MENU_SCAN_DELAY, OPTIONS_MENU_SCAN_STEP_TIME, OPTIONS_MENU_SCAN_MODE, OPTIONS_MENU_SCAN_ON_BOOT,
@@ -51,6 +53,7 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_USER_POWER,
 							OPTIONS_MENU_TEMPERATURE_CALIBRATON, OPTIONS_MENU_BATTERY_CALIBRATON,
 							OPTIONS_MENU_ECO_LEVEL,
+							OPTIONS_MENU_PRIORITY_CHANNEL,
 							NUM_OPTIONS_MENU_ITEMS};
 
 menuStatus_t menuOptions(uiEvent_t *ev, bool isFirstRun)
@@ -276,6 +279,24 @@ static void updateScreen(bool isFirstRun)
 				case OPTIONS_MENU_ECO_LEVEL:
 					leftSide = (char * const *)&currentLanguage->eco_level;
 					snprintf(rightSideVar, bufferLen, "%d", (nonVolatileSettings.ecoLevel));
+					break;
+				case OPTIONS_MENU_PRIORITY_CHANNEL:
+					leftSide = (char * const *)&currentLanguage->priorityChannel;
+					if (nonVolatileSettings.priorityChannel!=0xffff)
+					{//joe
+						int priorityChannelNumber = nonVolatileSettings.priorityChannel;
+						if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+							codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannel, &priorityChannelData );
+						else
+						{
+							codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.priorityChannel], &priorityChannelData );
+							// for announcement, zone channels are 0-based, allChannels are 1-based.
+							priorityChannelNumber++;
+						}
+						snprintf(rightSideVar, bufferLen, "%d %s", priorityChannelNumber, priorityChannelData.name );
+					}
+					else
+						rightSideConst = (char * const *)&currentLanguage->none;
 					break;
 			}
 
@@ -584,6 +605,12 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 #endif
+				case OPTIONS_MENU_PRIORITY_CHANNEL:
+					if (nonVolatileSettings.priorityChannel==0xffff) // none
+						nonVolatileSettings.priorityChannel = 0;
+					else if (nonVolatileSettings.priorityChannel < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
+						settingsIncrement(nonVolatileSettings.priorityChannel,1);
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -732,6 +759,12 @@ static void handleEvent(uiEvent_t *ev)
 						nonVolatileSettings.dtmfLatch=0; // off
 					break;
 #endif
+				case OPTIONS_MENU_PRIORITY_CHANNEL:
+					if (nonVolatileSettings.priorityChannel==0)
+						nonVolatileSettings.priorityChannel = 0xffff;
+					else if (nonVolatileSettings.priorityChannel > 0 && nonVolatileSettings.priorityChannel!=0xffff)
+						settingsDecrement(nonVolatileSettings.priorityChannel,1);
+					break;
 			}
 		}
 		else if ((ev->keys.event & KEY_MOD_PRESS) && (menuDataGlobal.menuOptionsTimeout > 0))

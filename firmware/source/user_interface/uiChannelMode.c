@@ -104,6 +104,7 @@ static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel con
 
 static menuStatus_t menuChannelExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickChannelExitStatus = MENU_STATUS_SUCCESS;
+
 struct DualWatchChannelData_t
 {
 bool dualWatchActive;
@@ -185,7 +186,10 @@ static void AnnounceDualWatchChannels(bool immediately)
 		dualWatchChannelNumber++; // for announcement, zone channels are 0-based, allChannels are 1-based.
 		dualWatchCurrentChannelNumber++;
 	}
-	voicePromptsAppendLanguageString(&currentLanguage->dual_watch);
+	if (dualWatchChannelData.initialChannelIndex==nonVolatileSettings.priorityChannel)
+		voicePromptsAppendLanguageString(&currentLanguage->priorityScan);
+	else
+		voicePromptsAppendLanguageString(&currentLanguage->dual_watch);
 	char dwChannels[17]="\0";
 	sprintf(dwChannels, "%d, %d", dualWatchCurrentChannelNumber, dualWatchChannelNumber);
 	voicePromptsAppendString(dwChannels);
@@ -1193,6 +1197,25 @@ static void handleEvent(uiEvent_t *ev)
 			}
 			return;
 		}
+		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED))
+		{// Switch between priority channel and last channel selected by user.
+			uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+
+			if (nonVolatileSettings.priorityChannel != 0xffff )
+			{//joe
+				if (nonVolatileSettings.priorityChannel != currentChannelIndex)
+				{
+					currentChannelIndex = nonVolatileSettings.priorityChannel ;
+				}
+				else if (dualWatchChannelData.currentChannelIndex < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
+					currentChannelIndex = dualWatchChannelData.currentChannelIndex;
+				if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+					settingsSet(nonVolatileSettings.currentChannelIndexInAllZone, currentChannelIndex);
+				else
+					settingsSet(nonVolatileSettings.currentChannelIndexInZone, currentChannelIndex);
+				loadChannelData(false, true);
+			}
+		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
 			if (dualWatchChannelData.dualWatchActive)
@@ -1519,7 +1542,6 @@ static void handleEvent(uiEvent_t *ev)
 						settingsSet(nonVolatileSettings.currentChannelIndexInAllZone, prevChan);
 						// Set this in the Dual Watch struct as the current channel just selected by the user.
 						SetDualWatchCurrentChannelIndex(prevChan);
-
 						if (nonVolatileSettings.currentChannelIndexInAllZone == 1)
 						{
 							menuChannelExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
@@ -1733,6 +1755,7 @@ enum CHANNEL_SCREEN_QUICK_MENU_ITEMS {  CH_SCREEN_QUICK_MENU_COPY2VFO = 0, CH_SC
 	CH_SCREEN_QUICK_MENU_FILTER_DMR_CC,
 	CH_SCREEN_QUICK_MENU_FILTER_DMR_TS,
 	CH_SCREEN_QUICK_MENU_DUAL_SCAN,
+	CH_SCREEN_QUICK_MENU_PRIORITY_SCAN,
 	NUM_CH_SCREEN_QUICK_MENU_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list
 
 menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
@@ -1882,6 +1905,9 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					break;
 				case CH_SCREEN_QUICK_MENU_DUAL_SCAN:
 					rightSideConst = (char * const *)&currentLanguage->dual_watch;
+					break;
+				case CH_SCREEN_QUICK_MENU_PRIORITY_SCAN:
+					rightSideConst = (char * const *)&currentLanguage->priorityScan;
 					break;
 				default:
 					buf[0] = 0;
@@ -2080,6 +2106,19 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 			{
 				uint16_t channelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
 				StartDualWatch(channelIndex, 1000, false);
+				menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
+				break;
+			}
+			case CH_SCREEN_QUICK_MENU_PRIORITY_SCAN:
+			{
+				uint16_t channelIndex= nonVolatileSettings.priorityChannel;
+				if (channelIndex != 0xffff)
+					StartDualWatch(channelIndex, 1000, false);
+				else
+				{
+					soundSetMelody(MELODY_ERROR_BEEP);
+					menuQuickChannelExitStatus |= MENU_STATUS_ERROR;
+				}
 				menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 				break;
 			}
