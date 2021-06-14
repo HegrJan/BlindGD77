@@ -2493,7 +2493,11 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
 
 	voicePromptsInit();
-	voicePromptsAppendPrompt(PROMPT_CHANNEL);
+	uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+	if (nonVolatileSettings.priorityChannel == channelIndex)
+		voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
+	else
+		voicePromptsAppendPrompt(PROMPT_CHANNEL);
 	// If the number and name differ, then append.
 	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
 	{
