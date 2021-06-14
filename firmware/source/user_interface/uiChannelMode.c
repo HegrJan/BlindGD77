@@ -1202,7 +1202,12 @@ static void handleEvent(uiEvent_t *ev)
 			uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
 
 			if (nonVolatileSettings.priorityChannel != 0xffff )
-			{//joe
+			{
+				if (dualWatchChannelData.dualWatchActive)
+				{
+					StopDualWatch(true); // Ensure dual watch is stopped.
+				}
+
 				if (nonVolatileSettings.priorityChannel != currentChannelIndex)
 				{
 					currentChannelIndex = nonVolatileSettings.priorityChannel ;
