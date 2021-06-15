@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
@@ -467,323 +468,329 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			isDirty = true;
 			menuDataGlobal.newOptionSelected = false;
-			switch(menuDataGlobal.currentItemIndex)
+			switch (menuDataGlobal.currentItemIndex)
 			{
-				case OPTIONS_MENU_TX_FREQ_LIMITS:
-					if (nonVolatileSettings.txFreqLimited < BAND_LIMITS_FROM_CPS)
-					{
-						settingsIncrement(nonVolatileSettings.txFreqLimited, 1);
-					}
-					break;
-				case OPTIONS_MENU_KEYPAD_TIMER_LONG:
-					if (nonVolatileSettings.keypadTimerLong < 90)
-					{
-						settingsIncrement(nonVolatileSettings.keypadTimerLong, 1);
-					}
-					break;
-				case OPTIONS_MENU_KEYPAD_TIMER_REPEAT:
-					if (nonVolatileSettings.keypadTimerRepeat < 90)
-					{
-						settingsIncrement(nonVolatileSettings.keypadTimerRepeat, 1);
-					}
-					break;
-				case OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT:
-					if (nonVolatileSettings.dmrCaptureTimeout < 90)
-					{
-						settingsIncrement(nonVolatileSettings.dmrCaptureTimeout, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_DELAY:
-					if (nonVolatileSettings.scanDelay < 30)
-					{
-						settingsIncrement(nonVolatileSettings.scanDelay, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_STEP_TIME:
-					if (nonVolatileSettings.scanStepTime < 15)  // <30> + (15 * 30ms) MAX
-					{
-						settingsIncrement(nonVolatileSettings.scanStepTime, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_MODE:
-					if (nonVolatileSettings.scanModePause < SCAN_MODE_STOP)
-					{
-						settingsIncrement(nonVolatileSettings.scanModePause, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_ON_BOOT:
-					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
-					{
-						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, true);
-						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
-					}
-					else if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == true && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
-					{
-						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, false);
-						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, true);
-					}
-					break;
-				case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:
-					if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] < CODEPLUG_MAX_VARIABLE_SQUELCH)
-					{
-						settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF], 1);
-					}
-					break;
-				case OPTIONS_MENU_SQUELCH_DEFAULT_220MHz:
-					if (nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] < CODEPLUG_MAX_VARIABLE_SQUELCH)
-					{
-						settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz], 1);
-					}
-					break;
-				case OPTIONS_MENU_SQUELCH_DEFAULT_UHF:
-					if (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] < CODEPLUG_MAX_VARIABLE_SQUELCH)
-					{
-						settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
-					}
-					break;
-				case OPTIONS_MENU_PTT_TOGGLE:
-					if (settingsIsOptionBitSet(BIT_PTT_LATCH) == false)
-					{
-						settingsSetOptionBit(BIT_PTT_LATCH, true);
-					}
-					break;
-				case OPTIONS_MENU_HOTSPOT_TYPE:
+			case OPTIONS_MENU_TX_FREQ_LIMITS:
+				if (nonVolatileSettings.txFreqLimited < BAND_LIMITS_FROM_CPS)
+				{
+					settingsIncrement(nonVolatileSettings.txFreqLimited, 1);
+				}
+				break;
+			case OPTIONS_MENU_KEYPAD_TIMER_LONG:
+				if (nonVolatileSettings.keypadTimerLong < 90)
+				{
+					settingsIncrement(nonVolatileSettings.keypadTimerLong, 1);
+				}
+				break;
+			case OPTIONS_MENU_KEYPAD_TIMER_REPEAT:
+				if (nonVolatileSettings.keypadTimerRepeat < 90)
+				{
+					settingsIncrement(nonVolatileSettings.keypadTimerRepeat, 1);
+				}
+				break;
+			case OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT:
+				if (nonVolatileSettings.dmrCaptureTimeout < 90)
+				{
+					settingsIncrement(nonVolatileSettings.dmrCaptureTimeout, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_DELAY:
+				if (nonVolatileSettings.scanDelay < 30)
+				{
+					settingsIncrement(nonVolatileSettings.scanDelay, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_STEP_TIME:
+				if (nonVolatileSettings.scanStepTime < 15)  // <30> + (15 * 30ms) MAX
+				{
+					settingsIncrement(nonVolatileSettings.scanStepTime, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_MODE:
+				if (nonVolatileSettings.scanModePause < SCAN_MODE_STOP)
+				{
+					settingsIncrement(nonVolatileSettings.scanModePause, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_ON_BOOT:
+				if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
+				{
+					settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, true);
+					settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
+				}
+				else if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == true && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
+				{
+					settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, false);
+					settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, true);
+				}
+				break;
+			case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] < CODEPLUG_MAX_VARIABLE_SQUELCH)
+				{
+					settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF], 1);
+				}
+				break;
+			case OPTIONS_MENU_SQUELCH_DEFAULT_220MHz:
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] < CODEPLUG_MAX_VARIABLE_SQUELCH)
+				{
+					settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz], 1);
+				}
+				break;
+			case OPTIONS_MENU_SQUELCH_DEFAULT_UHF:
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] < CODEPLUG_MAX_VARIABLE_SQUELCH)
+				{
+					settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
+				}
+				break;
+			case OPTIONS_MENU_PTT_TOGGLE:
+				if (settingsIsOptionBitSet(BIT_PTT_LATCH) == false)
+				{
+					settingsSetOptionBit(BIT_PTT_LATCH, true);
+				}
+				break;
+			case OPTIONS_MENU_HOTSPOT_TYPE:
 #if !defined(PLATFORM_RD5R)
-					if ((uiDataGlobal.dmrDisabled == false) && (nonVolatileSettings.hotspotType < HOTSPOT_TYPE_BLUEDV))
-					{
-						settingsIncrement(nonVolatileSettings.hotspotType, 1);
-					}
+				if ((uiDataGlobal.dmrDisabled == false) && (nonVolatileSettings.hotspotType < HOTSPOT_TYPE_BLUEDV))
+				{
+					settingsIncrement(nonVolatileSettings.hotspotType, 1);
+				}
 #endif
-					break;
-				case OPTIONS_MENU_TALKER_ALIAS_TX:
-					if (settingsIsOptionBitSet(BIT_TRANSMIT_TALKER_ALIAS) == false)
-					{
-						settingsSetOptionBit(BIT_TRANSMIT_TALKER_ALIAS, true);
-					}
-					break;
-				case OPTIONS_MENU_PRIVATE_CALLS:
-					// Note. Currently the "AUTO" option is not available
-					if (nonVolatileSettings.privateCalls < ALLOW_PRIVATE_CALLS_PTT)
-					{
-						settingsIncrement(nonVolatileSettings.privateCalls, 1);
-					}
-					break;
-				case OPTIONS_MENU_USER_POWER:
-					{
-						int newVal = (int)nonVolatileSettings.userPower;
+				break;
+			case OPTIONS_MENU_TALKER_ALIAS_TX:
+				if (settingsIsOptionBitSet(BIT_TRANSMIT_TALKER_ALIAS) == false)
+				{
+					settingsSetOptionBit(BIT_TRANSMIT_TALKER_ALIAS, true);
+				}
+				break;
+			case OPTIONS_MENU_PRIVATE_CALLS:
+				// Note. Currently the "AUTO" option is not available
+				if (nonVolatileSettings.privateCalls < ALLOW_PRIVATE_CALLS_PTT)
+				{
+					settingsIncrement(nonVolatileSettings.privateCalls, 1);
+				}
+				break;
+			case OPTIONS_MENU_USER_POWER:
+			{
+				int newVal = (int)nonVolatileSettings.userPower;
 
-						// Not the real max value of 4096, but trxUpdate_PA_DAC_Drive() will auto limit it to 4096
-						// and it makes the logic easier and there is no functional difference
-						newVal = SAFE_MIN((newVal + (BUTTONCHECK_DOWN(ev, BUTTON_SK2) ? 10 : 100)), 4100);
+				// Not the real max value of 4096, but trxUpdate_PA_DAC_Drive() will auto limit it to 4096
+				// and it makes the logic easier and there is no functional difference
+				newVal = SAFE_MIN((newVal + (BUTTONCHECK_DOWN(ev, BUTTON_SK2) ? 10 : 100)), 4100);
 
-						settingsSet(nonVolatileSettings.userPower, newVal);
-						trxUpdate_PA_DAC_Drive();
-					}
-					break;
-				case OPTIONS_MENU_TEMPERATURE_CALIBRATON:
-					if (nonVolatileSettings.temperatureCalibration < 20)
-					{
-						settingsIncrement(nonVolatileSettings.temperatureCalibration, 1);
-					}
-					break;
-				case OPTIONS_MENU_BATTERY_CALIBRATON:
-					if (nonVolatileSettings.batteryCalibration < 10) // = +0.5V as val is (batteryCalibration -5 ) /10
-					{
-						settingsIncrement(nonVolatileSettings.batteryCalibration,1);
-					}
-					break;
-				case OPTIONS_MENU_ECO_LEVEL:
-					if (nonVolatileSettings.ecoLevel < ECO_LEVEL_MAX)
-					{
-						settingsIncrement(nonVolatileSettings.ecoLevel, 1);
-					}
-					break;
-					#if !defined(PLATFORM_GD77S)
-				case OPTIONS_MENU_SK2_LATCH:
-					if (nonVolatileSettings.sk2Latch < 10)
-					{
-						if (nonVolatileSettings.sk2Latch==0) // start at 1 s, not half a second.
-							nonVolatileSettings.sk2Latch=2;
-						else
-							settingsIncrement(nonVolatileSettings.sk2Latch,1);
-					}
-					break;
-				case OPTIONS_MENU_DTMF_LATCH:
-					if (nonVolatileSettings.dtmfLatch < 6)
-					{
-						if (nonVolatileSettings.dtmfLatch==0) // start at 1 s, not half a second.
-							nonVolatileSettings.dtmfLatch=2;
-						else
-							settingsIncrement(nonVolatileSettings.dtmfLatch,1);
-					}
-					break;
+				settingsSet(nonVolatileSettings.userPower, newVal);
+				trxUpdate_PA_DAC_Drive();
+			}
+			break;
+			case OPTIONS_MENU_TEMPERATURE_CALIBRATON:
+				if (nonVolatileSettings.temperatureCalibration < 20)
+				{
+					settingsIncrement(nonVolatileSettings.temperatureCalibration, 1);
+				}
+				break;
+			case OPTIONS_MENU_BATTERY_CALIBRATON:
+				if (nonVolatileSettings.batteryCalibration < 10) // = +0.5V as val is (batteryCalibration -5 ) /10
+				{
+					settingsIncrement(nonVolatileSettings.batteryCalibration, 1);
+				}
+				break;
+			case OPTIONS_MENU_ECO_LEVEL:
+				if (nonVolatileSettings.ecoLevel < ECO_LEVEL_MAX)
+				{
+					settingsIncrement(nonVolatileSettings.ecoLevel, 1);
+				}
+				break;
+#if !defined(PLATFORM_GD77S)
+			case OPTIONS_MENU_SK2_LATCH:
+				if (nonVolatileSettings.sk2Latch < 10)
+				{
+					if (nonVolatileSettings.sk2Latch == 0) // start at 1 s, not half a second.
+						nonVolatileSettings.sk2Latch = 2;
+					else
+						settingsIncrement(nonVolatileSettings.sk2Latch, 1);
+				}
+				break;
+			case OPTIONS_MENU_DTMF_LATCH:
+				if (nonVolatileSettings.dtmfLatch < 6)
+				{
+					if (nonVolatileSettings.dtmfLatch == 0) // start at 1 s, not half a second.
+						nonVolatileSettings.dtmfLatch = 2;
+					else
+						settingsIncrement(nonVolatileSettings.dtmfLatch, 1);
+				}
+				break;
 #endif
-				case OPTIONS_MENU_PRIORITY_CHANNEL:
-					if (nonVolatileSettings.priorityChannel==0xffff) // none
-						nonVolatileSettings.priorityChannel = 0;
-					else if (nonVolatileSettings.priorityChannel < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
-						settingsIncrement(nonVolatileSettings.priorityChannel,1);
+			case OPTIONS_MENU_PRIORITY_CHANNEL:
+				{
+					uint16_t max = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone : currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1;
+					if (nonVolatileSettings.priorityChannel == 0xffff) // none
+						nonVolatileSettings.priorityChannel = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
+					else if (nonVolatileSettings.priorityChannel < max)
+						settingsIncrement(nonVolatileSettings.priorityChannel, 1);
 					break;
+				}
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
 		{
 			isDirty = true;
 			menuDataGlobal.newOptionSelected = false;
-			switch(menuDataGlobal.currentItemIndex)
+			switch (menuDataGlobal.currentItemIndex)
 			{
-				case OPTIONS_MENU_TX_FREQ_LIMITS:
-					if (nonVolatileSettings.txFreqLimited > BAND_LIMITS_NONE)
-					{
-						settingsDecrement(nonVolatileSettings.txFreqLimited, 1);
-					}
-					break;
-				case OPTIONS_MENU_KEYPAD_TIMER_LONG:
-					if (nonVolatileSettings.keypadTimerLong > 1)
-					{
-						settingsDecrement(nonVolatileSettings.keypadTimerLong, 1);
-					}
-					break;
-				case OPTIONS_MENU_KEYPAD_TIMER_REPEAT:
-					if (nonVolatileSettings.keypadTimerRepeat > 1) // Don't set it to zero, otherwise watchdog may kicks in.
-					{
-						settingsDecrement(nonVolatileSettings.keypadTimerRepeat, 1);
-					}
-					break;
-				case OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT:
-					if (nonVolatileSettings.dmrCaptureTimeout > 1)
-					{
-						settingsDecrement(nonVolatileSettings.dmrCaptureTimeout, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_DELAY:
-					if (nonVolatileSettings.scanDelay > 1)
-					{
-						settingsDecrement(nonVolatileSettings.scanDelay, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_STEP_TIME:
-					if (nonVolatileSettings.scanStepTime > 0)
-					{
-						settingsDecrement(nonVolatileSettings.scanStepTime, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_MODE:
-					if (nonVolatileSettings.scanModePause > SCAN_MODE_HOLD)
-					{
-						settingsDecrement(nonVolatileSettings.scanModePause, 1);
-					}
-					break;
-				case OPTIONS_MENU_SCAN_ON_BOOT:
-					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == true)
-					{
-						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, true);
-						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
-					}
-					else if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == true && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
-					{
-						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, false);
-						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
-					}
-					break;
-				case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:
-					if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] > 1)
-					{
-						settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF], 1);
-					}
-					break;
-				case OPTIONS_MENU_SQUELCH_DEFAULT_220MHz:
-					if (nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] > 1)
-					{
-						settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz], 1);
-					}
-					break;
-				case OPTIONS_MENU_SQUELCH_DEFAULT_UHF:
-					if (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] > 1)
-					{
-						settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
-					}
-					break;
-				case OPTIONS_MENU_PTT_TOGGLE:
-					if (settingsIsOptionBitSet(BIT_PTT_LATCH))
-					{
-						settingsSetOptionBit(BIT_PTT_LATCH, false);
-					}
-					break;
-				case OPTIONS_MENU_HOTSPOT_TYPE:
+			case OPTIONS_MENU_TX_FREQ_LIMITS:
+				if (nonVolatileSettings.txFreqLimited > BAND_LIMITS_NONE)
+				{
+					settingsDecrement(nonVolatileSettings.txFreqLimited, 1);
+				}
+				break;
+			case OPTIONS_MENU_KEYPAD_TIMER_LONG:
+				if (nonVolatileSettings.keypadTimerLong > 1)
+				{
+					settingsDecrement(nonVolatileSettings.keypadTimerLong, 1);
+				}
+				break;
+			case OPTIONS_MENU_KEYPAD_TIMER_REPEAT:
+				if (nonVolatileSettings.keypadTimerRepeat > 1) // Don't set it to zero, otherwise watchdog may kicks in.
+				{
+					settingsDecrement(nonVolatileSettings.keypadTimerRepeat, 1);
+				}
+				break;
+			case OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT:
+				if (nonVolatileSettings.dmrCaptureTimeout > 1)
+				{
+					settingsDecrement(nonVolatileSettings.dmrCaptureTimeout, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_DELAY:
+				if (nonVolatileSettings.scanDelay > 1)
+				{
+					settingsDecrement(nonVolatileSettings.scanDelay, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_STEP_TIME:
+				if (nonVolatileSettings.scanStepTime > 0)
+				{
+					settingsDecrement(nonVolatileSettings.scanStepTime, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_MODE:
+				if (nonVolatileSettings.scanModePause > SCAN_MODE_HOLD)
+				{
+					settingsDecrement(nonVolatileSettings.scanModePause, 1);
+				}
+				break;
+			case OPTIONS_MENU_SCAN_ON_BOOT:
+				if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == true)
+				{
+					settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, true);
+					settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
+				}
+				else if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == true && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
+				{
+					settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, false);
+					settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
+				}
+				break;
+			case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] > 1)
+				{
+					settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF], 1);
+				}
+				break;
+			case OPTIONS_MENU_SQUELCH_DEFAULT_220MHz:
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] > 1)
+				{
+					settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz], 1);
+				}
+				break;
+			case OPTIONS_MENU_SQUELCH_DEFAULT_UHF:
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] > 1)
+				{
+					settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
+				}
+				break;
+			case OPTIONS_MENU_PTT_TOGGLE:
+				if (settingsIsOptionBitSet(BIT_PTT_LATCH))
+				{
+					settingsSetOptionBit(BIT_PTT_LATCH, false);
+				}
+				break;
+			case OPTIONS_MENU_HOTSPOT_TYPE:
 #if !defined(PLATFORM_RD5R)
-					if ((uiDataGlobal.dmrDisabled == false) && (nonVolatileSettings.hotspotType > HOTSPOT_TYPE_OFF))
-					{
-						settingsDecrement(nonVolatileSettings.hotspotType, 1);
-					}
+				if ((uiDataGlobal.dmrDisabled == false) && (nonVolatileSettings.hotspotType > HOTSPOT_TYPE_OFF))
+				{
+					settingsDecrement(nonVolatileSettings.hotspotType, 1);
+				}
 #endif
-					break;
-				case OPTIONS_MENU_TALKER_ALIAS_TX:
-					if (settingsIsOptionBitSet(BIT_TRANSMIT_TALKER_ALIAS))
-					{
-						settingsSetOptionBit(BIT_TRANSMIT_TALKER_ALIAS, false);
-					}
-					break;
-				case OPTIONS_MENU_PRIVATE_CALLS:
-					if (nonVolatileSettings.privateCalls > 0)
-					{
-						settingsDecrement(nonVolatileSettings.privateCalls, 1);
-					}
-					break;
-				case OPTIONS_MENU_USER_POWER:
-					{
-						int newVal = (int)nonVolatileSettings.userPower;
+				break;
+			case OPTIONS_MENU_TALKER_ALIAS_TX:
+				if (settingsIsOptionBitSet(BIT_TRANSMIT_TALKER_ALIAS))
+				{
+					settingsSetOptionBit(BIT_TRANSMIT_TALKER_ALIAS, false);
+				}
+				break;
+			case OPTIONS_MENU_PRIVATE_CALLS:
+				if (nonVolatileSettings.privateCalls > 0)
+				{
+					settingsDecrement(nonVolatileSettings.privateCalls, 1);
+				}
+				break;
+			case OPTIONS_MENU_USER_POWER:
+			{
+				int newVal = (int)nonVolatileSettings.userPower;
 
-						// Not the real max value of 4096, but trxUpdate_PA_DAC_Drive() will auto limit it to 4096
-						// and it makes the logic easier and there is no functional difference
-						newVal = SAFE_MAX((newVal - (BUTTONCHECK_DOWN(ev, BUTTON_SK2) ? 10 : 100)), 0);
+				// Not the real max value of 4096, but trxUpdate_PA_DAC_Drive() will auto limit it to 4096
+				// and it makes the logic easier and there is no functional difference
+				newVal = SAFE_MAX((newVal - (BUTTONCHECK_DOWN(ev, BUTTON_SK2) ? 10 : 100)), 0);
 
-						settingsSet(nonVolatileSettings.userPower, newVal);
-						trxUpdate_PA_DAC_Drive();
-					}
-					break;
-				case OPTIONS_MENU_TEMPERATURE_CALIBRATON:
-					if (nonVolatileSettings.temperatureCalibration > -20)
-					{
-						settingsDecrement(nonVolatileSettings.temperatureCalibration, 1);
-					}
-					break;
-				case OPTIONS_MENU_BATTERY_CALIBRATON:
-					if (nonVolatileSettings.batteryCalibration > 0)
-					{
-						settingsDecrement(nonVolatileSettings.batteryCalibration, 1);
-					}
-					break;
-				case OPTIONS_MENU_ECO_LEVEL:
-					if (nonVolatileSettings.ecoLevel > 0)
-					{
-						settingsDecrement(nonVolatileSettings.ecoLevel, 1);
-					}
-					break;
+				settingsSet(nonVolatileSettings.userPower, newVal);
+				trxUpdate_PA_DAC_Drive();
+			}
+			break;
+			case OPTIONS_MENU_TEMPERATURE_CALIBRATON:
+				if (nonVolatileSettings.temperatureCalibration > -20)
+				{
+					settingsDecrement(nonVolatileSettings.temperatureCalibration, 1);
+				}
+				break;
+			case OPTIONS_MENU_BATTERY_CALIBRATON:
+				if (nonVolatileSettings.batteryCalibration > 0)
+				{
+					settingsDecrement(nonVolatileSettings.batteryCalibration, 1);
+				}
+				break;
+			case OPTIONS_MENU_ECO_LEVEL:
+				if (nonVolatileSettings.ecoLevel > 0)
+				{
+					settingsDecrement(nonVolatileSettings.ecoLevel, 1);
+				}
+				break;
 #if !defined(PLATFORM_GD77S)
-				case OPTIONS_MENU_SK2_LATCH:
-					if (nonVolatileSettings.sk2Latch > 2)
-					{
-						settingsDecrement(nonVolatileSettings.sk2Latch, 1);
-					}
-					else
-						nonVolatileSettings.sk2Latch=0; // off
-					break;
-				case OPTIONS_MENU_DTMF_LATCH:
-					if (nonVolatileSettings.dtmfLatch > 2)
-					{
-						settingsDecrement(nonVolatileSettings.dtmfLatch, 1);
-					}
-					else
-						nonVolatileSettings.dtmfLatch=0; // off
-					break;
+			case OPTIONS_MENU_SK2_LATCH:
+				if (nonVolatileSettings.sk2Latch > 2)
+				{
+					settingsDecrement(nonVolatileSettings.sk2Latch, 1);
+				}
+				else
+					nonVolatileSettings.sk2Latch = 0; // off
+				break;
+			case OPTIONS_MENU_DTMF_LATCH:
+				if (nonVolatileSettings.dtmfLatch > 2)
+				{
+					settingsDecrement(nonVolatileSettings.dtmfLatch, 1);
+				}
+				else
+					nonVolatileSettings.dtmfLatch = 0; // off
+				break;
 #endif
-				case OPTIONS_MENU_PRIORITY_CHANNEL:
-					if (nonVolatileSettings.priorityChannel==0)
+			case OPTIONS_MENU_PRIORITY_CHANNEL:
+				{
+					uint16_t min = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
+					if (nonVolatileSettings.priorityChannel == min)
 						nonVolatileSettings.priorityChannel = 0xffff;
-					else if (nonVolatileSettings.priorityChannel > 0 && nonVolatileSettings.priorityChannel!=0xffff)
-						settingsDecrement(nonVolatileSettings.priorityChannel,1);
+					else if (nonVolatileSettings.priorityChannel > min && nonVolatileSettings.priorityChannel != 0xffff)
+						settingsDecrement(nonVolatileSettings.priorityChannel, 1);
 					break;
+				}
 			}
 		}
 		else if ((ev->keys.event & KEY_MOD_PRESS) && (menuDataGlobal.menuOptionsTimeout > 0))
