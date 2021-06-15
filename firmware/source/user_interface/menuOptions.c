@@ -181,9 +181,9 @@ static void updateScreen(bool isFirstRun)
 				case OPTIONS_MENU_SCAN_ON_BOOT:
 					leftSide = (char * const *)&currentLanguage->scan_on_boot;
 					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED))
-						rightSideConst = (char * const *)&currentLanguage->scan;
+						rightSideConst = (char * const *)&currentLanguage->on;
 					else if (settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))
-						rightSideConst = (char * const *)&currentLanguage->priorityScan;
+						rightSideConst = (char * const *)&currentLanguage->priorityScan; // just shows Pri 
 					else
 						rightSideConst = (char * const *)&currentLanguage->off;
 					break;
@@ -288,7 +288,7 @@ static void updateScreen(bool isFirstRun)
 				case OPTIONS_MENU_PRIORITY_CHANNEL:
 					leftSide = (char * const *)&currentLanguage->priorityChannel;
 					if (nonVolatileSettings.priorityChannel!=0xffff)
-					{//joe
+					{
 						int priorityChannelNumber = nonVolatileSettings.priorityChannel;
 						if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 							codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannel, &priorityChannelData );
@@ -297,8 +297,10 @@ static void updateScreen(bool isFirstRun)
 							codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.priorityChannel], &priorityChannelData );
 							// for announcement, zone channels are 0-based, allChannels are 1-based.
 							priorityChannelNumber++;
-						}
-						snprintf(rightSideVar, bufferLen, "%d %s", priorityChannelNumber, priorityChannelData.name );
+						}//
+						char channelName[17]="\0";
+						codeplugUtilConvertBufToString(priorityChannelData.name, channelName, 16);
+						snprintf(rightSideVar, bufferLen, "%d %s", priorityChannelNumber, channelName);
 					}
 					else
 						rightSideConst = (char * const *)&currentLanguage->none;
