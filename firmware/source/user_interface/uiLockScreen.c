@@ -28,6 +28,7 @@
 #include "user_interface/menuSystem.h"
 #include "user_interface/uiLocalisation.h"
 #include "user_interface/uiUtilities.h"
+#include "user_interface/uiGlobals.h"
 #include "functions/settings.h"
 #include "functions/ticks.h"
 
