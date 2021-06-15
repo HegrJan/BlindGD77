@@ -63,7 +63,8 @@ typedef enum
 	BIT_SETTINGS_UPDATED            = (1 << 4),
 	BIT_TX_RX_FREQ_LOCK             = (1 << 5),
 	BIT_ALL_LEDS_DISABLED           = (1 << 6),
-	BIT_SCAN_ON_BOOT_ENABLED        = (1 << 7)
+	BIT_SCAN_ON_BOOT_ENABLED        = (1 << 7),
+	BIT_PRI_SCAN_ON_BOOT_ENABLED        = (1 << 8),
 } bitfieldOptions_t;
 
 typedef struct

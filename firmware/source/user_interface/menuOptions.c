@@ -180,7 +180,12 @@ static void updateScreen(bool isFirstRun)
 					break;
 				case OPTIONS_MENU_SCAN_ON_BOOT:
 					leftSide = (char * const *)&currentLanguage->scan_on_boot;
-					rightSideConst = settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) ? (char * const *)&currentLanguage->on : (char * const *)&currentLanguage->off;
+					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED))
+						rightSideConst = (char * const *)&currentLanguage->scan;
+					else if (settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))
+						rightSideConst = (char * const *)&currentLanguage->priorityScan;
+					else
+						rightSideConst = (char * const *)&currentLanguage->off;
 					break;
 				case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:
 					leftSide = (char * const *)&currentLanguage->squelch_VHF;
@@ -505,9 +510,15 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_SCAN_ON_BOOT:
-					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false)
+					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
 					{
 						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, true);
+						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
+					}
+					else if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == true && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
+					{
+						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, false);
+						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, true);
 					}
 					break;
 				case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:
@@ -662,9 +673,15 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_SCAN_ON_BOOT:
-					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED))
+					if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == false && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == true)
+					{
+						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, true);
+						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
+					}
+					else if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) == true && settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED) == false)
 					{
 						settingsSetOptionBit(BIT_SCAN_ON_BOOT_ENABLED, false);
+						settingsSetOptionBit(BIT_PRI_SCAN_ON_BOOT_ENABLED, false);
 					}
 					break;
 				case OPTIONS_MENU_SQUELCH_DEFAULT_VHF:

@@ -320,9 +320,16 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		}
 
 		// Scan On Boot is enabled, but has to be run only once.
-		if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) && (scobAlreadyTriggered == false))
-		{
-			scanStart(false);
+		if ((settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) || settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))&& (scobAlreadyTriggered == false))
+		{//joe
+			if (settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))
+			{
+				uint16_t channelIndex= nonVolatileSettings.priorityChannel;
+				if (channelIndex != 0xffff)
+					StartDualWatch(channelIndex, 1000, false);
+			}
+			else
+				scanStart(false);
 		}
 
 		// Disable ScOB for this session, and also prevent false triggering (like exiting the Options screen)
