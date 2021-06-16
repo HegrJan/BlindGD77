@@ -40,6 +40,20 @@ static bool lockDisplayed = false;
 static const uint32_t TIMEOUT_MS = 500;
 static int lockState = LOCK_NONE;
 
+static bool ShouldClearLockDisplayedFlag(uiEvent_t *ev, uint32_t m)
+{
+#if !defined(PLATFORM_GD77S)
+	if (sk2Latch)
+			return false;
+#endif
+
+	if ((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && (voicePromptsIsPlaying() == false))
+return true;
+	if ((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) && ((ev->time - m) > TIMEOUT_MS))
+		return true;
+	
+	return false;
+		}
 menuStatus_t menuLockScreen(uiEvent_t *ev, bool isFirstRun)
 {
 	static uint32_t m = 0;
@@ -52,9 +66,7 @@ menuStatus_t menuLockScreen(uiEvent_t *ev, bool isFirstRun)
 	}
 	else
 	{
-		if ((lockDisplayed) && (
-				((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && (voicePromptsIsPlaying() == false)) ||
-				((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) && ((ev->time - m) > TIMEOUT_MS))))
+		if ((lockDisplayed) && ShouldClearLockDisplayedFlag(ev, m))
 		{
 			lockDisplayed = false;
 			menuSystemPopPreviousMenu();
@@ -69,6 +81,33 @@ menuStatus_t menuLockScreen(uiEvent_t *ev, bool isFirstRun)
 		}
 	}
 	return MENU_STATUS_SUCCESS;
+}
+static void AnnounceLockMessage()
+{
+	voicePromptsInit();
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+	{
+		if (lockState & LOCK_KEYPAD)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->keypad);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+		}
+		if (lockState & LOCK_PTT)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->ptt);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+		}
+	}
+	voicePromptsAppendLanguageString(&currentLanguage->locked);
+	if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
+	{
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		voicePromptsAppendLanguageString(&currentLanguage->press_blue_plus_star);
+		voicePromptsAppendLanguageString(&currentLanguage->to_unlock);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
+	voicePromptsPlay();
 }
 
 static void redrawScreen(bool update, bool state)
@@ -120,32 +159,16 @@ static void redrawScreen(bool update, bool state)
 		ucPrintCentered(40, currentLanguage->press_blue_plus_star, FONT_SIZE_1);
 		ucPrintCentered(48, currentLanguage->to_unlock, FONT_SIZE_1);
 #endif
-
-		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+// if SK2 is latched, do not speak anything, let the beep occur.
+		bool allowedToSpeak=true;
+#if !defined(PLATFORM_GD77S)
+		if (sk2Latch)
+			allowedToSpeak=false;
+#endif
+		if (allowedToSpeak)
 		{
-			if (lockState & LOCK_KEYPAD)
-			{
-				voicePromptsAppendLanguageString(&currentLanguage->keypad);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-			}
-
-			if (lockState & LOCK_PTT)
-			{
-				voicePromptsAppendLanguageString(&currentLanguage->ptt);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-			}
+			AnnounceLockMessage();
 		}
-		voicePromptsAppendLanguageString(&currentLanguage->locked);
-		if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
-		{
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendLanguageString(&currentLanguage->press_blue_plus_star);
-			voicePromptsAppendLanguageString(&currentLanguage->to_unlock);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-		}
-		voicePromptsPlay();
 	}
 	else
 	{
