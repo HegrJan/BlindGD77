@@ -96,9 +96,16 @@ static void updateScreen(void)
 	voicePromptsAppendLanguageString(&currentLanguage->firmware_info);
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendLanguageString((const char * const *)radioModel);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendLanguageString(&currentLanguage->built);
 	voicePromptsAppendString(__TIME__);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendString(__DATE__);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendLanguageString(&currentLanguage->gitCommit);
 	voicePromptsAppendString(buf);
 	promptsPlayNotAfterTx();
