@@ -52,6 +52,7 @@ static struct_codeplugChannel_t tmpChannel =  // update a temporary copy of the 
 };
 static char channelName[17];
 static int namePos;
+static uint16_t savedPriorityChannel=0; // so we can restore it if red is pressed.
 
 static menuStatus_t menuChannelDetailsExitCode = MENU_STATUS_SUCCESS;
 
@@ -65,6 +66,7 @@ enum CHANNEL_DETAILS_DISPLAY_LIST { CH_DETAILS_NAME = 0,
 									CH_DETAILS_VOX,
 									CH_DETAILS_POWER,
 									CH_DETAILS_SQUELCH,
+									CH_DETAILS_PRIORITY,
 									NUM_CH_DETAILS_ITEMS};// The last item in the list is used so that we automatically get a total number of items in the list
 
 menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
@@ -91,7 +93,7 @@ menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
 
 		codeplugUtilConvertBufToString(tmpChannel.name, channelName, 16);
 		namePos = strlen(channelName);
-
+		savedPriorityChannel=nonVolatileSettings.priorityChannel;
 		if ((uiDataGlobal.currentSelectedChannelNumber == CH_DETAILS_VFO_CHANNEL) && (namePos == 0)) // In VFO, and VFO has no name in the codeplug
 		{
 			snprintf(channelName, 17, "VFO %s", (nonVolatileSettings.currentVFONumber == 0 ? "A" : "B"));
@@ -398,6 +400,20 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 							}
 						}
 						break;
+					case CH_DETAILS_PRIORITY:
+					{
+						leftSide = (char * const *)&currentLanguage->priorityChannel;
+						if (uiDataGlobal.currentSelectedChannelNumber == CH_DETAILS_VFO_CHANNEL)
+						{
+							rightSideConst = (char * const *)&currentLanguage->n_a;
+						}
+						else
+						{
+							uint16_t priorityChannelIndex= nonVolatileSettings.priorityChannel;
+							uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+							rightSideConst= (char * const *)((priorityChannelIndex==currentChannelIndex) ? (&currentLanguage->yes) : (&currentLanguage->no));
+						}
+					}
 				}
 
 				if (leftSide != NULL)
@@ -738,6 +754,7 @@ static void handleEvent(uiEvent_t *ev)
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
 			resetChannelData();
+			nonVolatileSettings.priorityChannel=savedPriorityChannel;// set back to what it was, user is cancelling.
 			menuSystemPopPreviousMenu();
 			return;
 		}
@@ -893,7 +910,13 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
-
+				case CH_DETAILS_PRIORITY:
+				{
+					uint16_t priorityChannelIndex= nonVolatileSettings.priorityChannel;
+					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+					if ((priorityChannelIndex!=currentChannelIndex) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
+						nonVolatileSettings.priorityChannel=currentChannelIndex;
+				}
 			}
 
 			if (ev->events & FUNCTION_EVENT)
@@ -1055,6 +1078,13 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case CH_DETAILS_PRIORITY:
+				{
+					uint16_t priorityChannelIndex= nonVolatileSettings.priorityChannel;
+					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+					if ((priorityChannelIndex==currentChannelIndex) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
+						nonVolatileSettings.priorityChannel=0xffff;// set to none.
+				}
 			}
 
 			if (ev->events & FUNCTION_EVENT)
