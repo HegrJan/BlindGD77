@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
@@ -288,14 +287,14 @@ static void updateScreen(bool isFirstRun)
 					break;
 				case OPTIONS_MENU_PRIORITY_CHANNEL:
 					leftSide = (char * const *)&currentLanguage->priorityChannel;
-					if (nonVolatileSettings.priorityChannel!=0xffff)
+					if (nonVolatileSettings.priorityChannelIndex!=NO_PRIORITY_CHANNEL)
 					{
-						int priorityChannelNumber = nonVolatileSettings.priorityChannel;
+						int priorityChannelNumber = nonVolatileSettings.priorityChannelIndex;
 						if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
-							codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannel, &priorityChannelData );
+							codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannelIndex, &priorityChannelData );
 						else
 						{
-							codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.priorityChannel], &priorityChannelData );
+							codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.priorityChannelIndex], &priorityChannelData );
 							// for announcement, zone channels are 0-based, allChannels are 1-based.
 							priorityChannelNumber++;
 						}//
@@ -622,10 +621,12 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
 					uint16_t max = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone : currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1;
-					if (nonVolatileSettings.priorityChannel == 0xffff) // none
-						nonVolatileSettings.priorityChannel = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
-					else if (nonVolatileSettings.priorityChannel < max)
-						settingsIncrement(nonVolatileSettings.priorityChannel, 1);
+					uint16_t min=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
+					if (nonVolatileSettings.priorityChannelIndex == NO_PRIORITY_CHANNEL) // none
+						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex,min);
+					else if (nonVolatileSettings.priorityChannelIndex < max)
+						settingsIncrement(nonVolatileSettings.priorityChannelIndex, 1);
+					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
 				}
 			}
@@ -785,10 +786,11 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
 					uint16_t min = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
-					if (nonVolatileSettings.priorityChannel == min)
-						nonVolatileSettings.priorityChannel = 0xffff;
-					else if (nonVolatileSettings.priorityChannel > min && nonVolatileSettings.priorityChannel != 0xffff)
-						settingsDecrement(nonVolatileSettings.priorityChannel, 1);
+					if (nonVolatileSettings.priorityChannelIndex == min)
+						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex , NO_PRIORITY_CHANNEL);
+					else if (nonVolatileSettings.priorityChannelIndex > min && nonVolatileSettings.priorityChannelIndex != NO_PRIORITY_CHANNEL)
+						settingsDecrement(nonVolatileSettings.priorityChannelIndex, 1);
+					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
 				}
 			}

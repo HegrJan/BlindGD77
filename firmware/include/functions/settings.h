@@ -48,6 +48,7 @@ extern const int ECO_LEVEL_MAX;
 extern const uint8_t BEEP_TX_NONE;
 extern const uint8_t BEEP_TX_START;
 extern const uint8_t BEEP_TX_STOP;
+extern const uint16_t NO_PRIORITY_CHANNEL;
 
 extern int settingsCurrentChannelNumber;
 extern int *nextKeyBeepMelody;
@@ -118,7 +119,7 @@ typedef struct
 	uint8_t			ecoLevel;// Power saving / economy level
 	uint8_t sk2Latch; // 0 off, then increments of 500 ms, starting at 1 s to 5 s, i.e. valid vvalues 0, 2-10.
 	uint8_t dtmfLatch; // 0 off, then increments of 500 ms, valid values from 2 to 6 i.e. 1 to 3 seconds.
-	uint16_t		priorityChannel; // priority channel index.
+	uint16_t		priorityChannelIndex; // priority channel index.
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

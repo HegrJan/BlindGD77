@@ -246,7 +246,7 @@ typedef struct
 	int					receivedPcTS;
 	bool				dmrDisabled;
 	uint32_t			manualOverrideDMRId;// This is a global so it will default to 0
-
+	uint16_t priorityChannelIndex;
 
 	struct
 	{

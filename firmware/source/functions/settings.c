@@ -63,6 +63,7 @@ struct_codeplugGeneralSettings_t settingsCodeplugGeneralSettings;
 
 monitorModeSettingsStruct_t monitorModeData = {.isEnabled = false};
 const int ECO_LEVEL_MAX = 5;
+const uint16_t NO_PRIORITY_CHANNEL=0xffffU;
 
 bool settingsSaveSettings(bool includeVFOs)
 {
@@ -181,7 +182,7 @@ bool settingsLoadSettings(void)
 		nonVolatileSettings.dtmfLatch = 3; // defaults to 1.5 seconds.
 	else if (nonVolatileSettings.dtmfLatch ==1)
 		nonVolatileSettings.dtmfLatch =2; // 1 seconds.
-
+	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 	return hasRestoredDefaultsettings;
 }
 
@@ -321,6 +322,9 @@ void settingsRestoreDefaultSettings(void)
 
 	nonVolatileSettings.temperatureCalibration = 0;
 	nonVolatileSettings.batteryCalibration = 5;
+	nonVolatileSettings.priorityChannelIndex = NO_PRIORITY_CHANNEL;
+	nonVolatileSettings.sk2Latch=0;
+	nonVolatileSettings.dtmfLatch=3; // 1.5 second.
 
 #if defined(PLATFORM_GD77S)
 	nonVolatileSettings.ecoLevel = 3;

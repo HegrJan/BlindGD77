@@ -2033,7 +2033,7 @@ ANNOUNCE_STATIC void announceChannelName(bool voicePromptWasPlaying)
 	if (!voicePromptWasPlaying)
 	{
 		uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
-		if (nonVolatileSettings.priorityChannel == channelIndex)
+		if (nonVolatileSettings.priorityChannelIndex == channelIndex)
 			voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
 		else
 			voicePromptsAppendPrompt(PROMPT_CHANNEL);
@@ -2498,7 +2498,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 
 	voicePromptsInit();
 	uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
-	if (nonVolatileSettings.priorityChannel == channelIndex)
+	if (nonVolatileSettings.priorityChannelIndex == channelIndex)
 		voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
 	else
 		voicePromptsAppendPrompt(PROMPT_CHANNEL);

@@ -52,7 +52,7 @@ static struct_codeplugChannel_t tmpChannel =  // update a temporary copy of the 
 };
 static char channelName[17];
 static int namePos;
-static uint16_t savedPriorityChannel=0; // so we can restore it if red is pressed.
+static uint16_t savedPriorityChannelIndex=0;
 
 static menuStatus_t menuChannelDetailsExitCode = MENU_STATUS_SUCCESS;
 
@@ -77,7 +77,7 @@ menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
 		menuDataGlobal.menuOptionsTimeout = 0;
 		menuDataGlobal.endIndex = NUM_CH_DETAILS_ITEMS;
 		uiDataGlobal.FreqEnter.index = 0;
-
+		savedPriorityChannelIndex=uiDataGlobal.priorityChannelIndex; // so we can restore it on Red.
 		if (memcmp(tmpChannel.name, CHANNEL_UNSET, 5) == 0) // Check if the channel was already loaded (TX Screen was triggered within this menu)
 		{
 			memcpy(&tmpChannel, currentChannelData, CHANNEL_DATA_STRUCT_SIZE);
@@ -93,7 +93,6 @@ menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
 
 		codeplugUtilConvertBufToString(tmpChannel.name, channelName, 16);
 		namePos = strlen(channelName);
-		savedPriorityChannel=nonVolatileSettings.priorityChannel;
 		if ((uiDataGlobal.currentSelectedChannelNumber == CH_DETAILS_VFO_CHANNEL) && (namePos == 0)) // In VFO, and VFO has no name in the codeplug
 		{
 			snprintf(channelName, 17, "VFO %s", (nonVolatileSettings.currentVFONumber == 0 ? "A" : "B"));
@@ -409,7 +408,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						}
 						else
 						{
-							uint16_t priorityChannelIndex= nonVolatileSettings.priorityChannel;
+							uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
 							uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
 							rightSideConst= (char * const *)((priorityChannelIndex==currentChannelIndex) ? (&currentLanguage->yes) : (&currentLanguage->no));
 						}
@@ -754,7 +753,7 @@ static void handleEvent(uiEvent_t *ev)
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
 			resetChannelData();
-			nonVolatileSettings.priorityChannel=savedPriorityChannel;// set back to what it was, user is cancelling.
+			uiDataGlobal.priorityChannelIndex = savedPriorityChannelIndex;// set back to what it was, user is cancelling.
 			menuSystemPopPreviousMenu();
 			return;
 		}
@@ -912,10 +911,10 @@ static void handleEvent(uiEvent_t *ev)
 					break;
 				case CH_DETAILS_PRIORITY:
 				{
-					uint16_t priorityChannelIndex= nonVolatileSettings.priorityChannel;
+					uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
 					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
 					if ((priorityChannelIndex!=currentChannelIndex) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
-						nonVolatileSettings.priorityChannel=currentChannelIndex;
+						uiDataGlobal.priorityChannelIndex = currentChannelIndex;
 				}
 			}
 
@@ -1080,10 +1079,10 @@ static void handleEvent(uiEvent_t *ev)
 					break;
 				case CH_DETAILS_PRIORITY:
 				{
-					uint16_t priorityChannelIndex= nonVolatileSettings.priorityChannel;
+					uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
 					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
 					if ((priorityChannelIndex==currentChannelIndex) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
-						nonVolatileSettings.priorityChannel=0xffff;// set to none.
+						uiDataGlobal.priorityChannelIndex = NO_PRIORITY_CHANNEL;// set to none.
 				}
 			}
 
@@ -1289,6 +1288,7 @@ static void saveChanges(uiEvent_t *ev)
 	if (!(ev->events & FUNCTION_EVENT) && ((uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
 	{
 		codeplugChannelSaveDataForIndex(uiDataGlobal.currentSelectedChannelNumber, currentChannelData);
+		settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex,uiDataGlobal.priorityChannelIndex);
 	}
 
 	if ((uiDataGlobal.currentSelectedChannelNumber == CH_DETAILS_VFO_CHANNEL) || (currentChannelData->libreDMR_Power == 0))

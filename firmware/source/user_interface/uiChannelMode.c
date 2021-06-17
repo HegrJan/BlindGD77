@@ -186,7 +186,7 @@ static void AnnounceDualWatchChannels(bool immediately)
 		dualWatchChannelNumber++; // for announcement, zone channels are 0-based, allChannels are 1-based.
 		dualWatchCurrentChannelNumber++;
 	}
-	if (dualWatchChannelData.initialChannelIndex==nonVolatileSettings.priorityChannel)
+	if (dualWatchChannelData.initialChannelIndex==uiDataGlobal.priorityChannelIndex)
 		voicePromptsAppendLanguageString(&currentLanguage->priorityScan);
 	else
 		voicePromptsAppendLanguageString(&currentLanguage->dual_watch);
@@ -324,8 +324,8 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		{//joe
 			if (settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))
 			{
-				uint16_t channelIndex= nonVolatileSettings.priorityChannel;
-				if (channelIndex != 0xffff)
+				uint16_t channelIndex= uiDataGlobal.priorityChannelIndex;
+				if (channelIndex != NO_PRIORITY_CHANNEL)
 					StartDualWatch(channelIndex, 1000, false);
 			}
 			else
@@ -780,7 +780,7 @@ void uiChannelModeUpdateScreen(int txTimeSecs)
 	}
 
 	ucClearBuf();
-	uiUtilityRenderHeader(dualWatchChannelData.dualWatchActive ? (dualWatchChannelData.initialChannelIndex==nonVolatileSettings.priorityChannel ? channelPriorityScan :  channelDualWatch) : notScanning);
+	uiUtilityRenderHeader(dualWatchChannelData.dualWatchActive ? (dualWatchChannelData.initialChannelIndex==uiDataGlobal.priorityChannelIndex ? channelPriorityScan :  channelDualWatch) : notScanning);
 
 	switch(uiDataGlobal.displayQSOState)
 	{
@@ -1208,16 +1208,16 @@ static void handleEvent(uiEvent_t *ev)
 		{// Switch between priority channel and last channel selected by user.
 			uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
 
-			if (nonVolatileSettings.priorityChannel != 0xffff )
+			if (uiDataGlobal.priorityChannelIndex != NO_PRIORITY_CHANNEL)
 			{
 				if (dualWatchChannelData.dualWatchActive)
 				{
 					StopDualWatch(true); // Ensure dual watch is stopped.
 				}
 
-				if (nonVolatileSettings.priorityChannel != currentChannelIndex)
+				if (uiDataGlobal.priorityChannelIndex != currentChannelIndex)
 				{
-					currentChannelIndex = nonVolatileSettings.priorityChannel ;
+					currentChannelIndex = uiDataGlobal.priorityChannelIndex;
 				}
 				else if (dualWatchChannelData.currentChannelIndex < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
 					currentChannelIndex = dualWatchChannelData.currentChannelIndex;
@@ -2123,8 +2123,8 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 			}
 			case CH_SCREEN_QUICK_MENU_PRIORITY_SCAN:
 			{
-				uint16_t channelIndex= nonVolatileSettings.priorityChannel;
-				if (channelIndex != 0xffff)
+				uint16_t channelIndex= uiDataGlobal.priorityChannelIndex;
+				if (channelIndex != NO_PRIORITY_CHANNEL)
 					StartDualWatch(channelIndex, 1000, false);
 				else
 				{
