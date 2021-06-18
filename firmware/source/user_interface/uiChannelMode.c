@@ -197,15 +197,14 @@ static void AnnounceDualWatchChannels(bool immediately)
 		voicePromptsPlay();
 }
 
-static void StartDualWatch(uint16_t initialChannelIndex, uint16_t startDelay, bool restarting)
+static void StartDualWatch(uint16_t initialChannelIndex, uint16_t currentChannelIndex, uint16_t startDelay)
 {
 	dualWatchChannelData.dualWatchActive=true;
 	dualWatchChannelData.allowedToAnnounceChannelDetails=true;
 		// Set all to the initial channel.
 		//When the user chooses a new current channel, the dual watch will begin automatically.
 	dualWatchChannelData.initialChannelIndex = initialChannelIndex;
-	if (!restarting) // do not overwrite current if restarting.
-		dualWatchChannelData.currentChannelIndex = initialChannelIndex;
+	dualWatchChannelData.currentChannelIndex = currentChannelIndex;
 	dualWatchChannelData.dualWatchChannelIndex = initialChannelIndex;
 
 	scanStart(false);
@@ -324,9 +323,13 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		{//joe
 			if (settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))
 			{
-				uint16_t channelIndex= uiDataGlobal.priorityChannelIndex;
-				if (channelIndex != NO_PRIORITY_CHANNEL)
-					StartDualWatch(channelIndex, 1000, false);
+				uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
+				uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+
+				if (priorityChannelIndex != NO_PRIORITY_CHANNEL)
+				{
+					StartDualWatch(priorityChannelIndex, currentChannelIndex, 1000);
+				}
 			}
 			else
 				scanStart(false);
@@ -414,7 +417,10 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 				if (dualWatchChannelData.dualWatchPauseCountdownTimer > 0)
 					dualWatchChannelData.dualWatchPauseCountdownTimer--;
 				else
-					StartDualWatch(dualWatchChannelData.initialChannelIndex, 1000, true);
+				{
+					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+					StartDualWatch(dualWatchChannelData.initialChannelIndex, currentChannelIndex, 1000);
+				}
 			}
 		}
 		else
@@ -2117,15 +2123,19 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 			case CH_SCREEN_QUICK_MENU_DUAL_SCAN:
 			{
 				uint16_t channelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
-				StartDualWatch(channelIndex, 1000, false);
+				StartDualWatch(channelIndex, channelIndex, 1000);
 				menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 				break;
 			}
 			case CH_SCREEN_QUICK_MENU_PRIORITY_SCAN:
 			{
-				uint16_t channelIndex= uiDataGlobal.priorityChannelIndex;
-				if (channelIndex != NO_PRIORITY_CHANNEL)
-					StartDualWatch(channelIndex, 1000, false);
+				uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
+
+				if (priorityChannelIndex != NO_PRIORITY_CHANNEL)
+				{
+					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+					StartDualWatch(priorityChannelIndex, currentChannelIndex, 1000);
+				}
 				else
 				{
 					soundSetMelody(MELODY_ERROR_BEEP);
