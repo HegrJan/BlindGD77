@@ -111,9 +111,9 @@ bool dualWatchActive;
 int16_t initialChannelIndex; // When Dual Watch is activated, this is the index of the channel on which it is activated.
 int16_t currentChannelIndex; // the index of the channel the user has switched to after activating Dual Watch.
 int16_t dualWatchChannelIndex; // When Dual Watch is active, this index toggles between the above two and holds the index of the channel currently being monitored.
-uint16_t dualWatchPauseCountdownTimer;
-bool allowedToAnnounceChannelDetails;
-bool restartDualWatch;
+uint16_t dualWatchPauseCountdownTimer; // this timer is used to give voice prompts time to announce the channel that the user selects after dual watch is activated.
+bool allowedToAnnounceChannelDetails; // To avoid white noise while scanning, only changes to the channel made by the user are allowed to be announced.
+bool restartDualWatch; // When the user releases PTT this flag indicates that the Dual Watch should be restarted.
 } dualWatchChannelData;
 
 static bool ToggleDualWatchChannelIndex()
