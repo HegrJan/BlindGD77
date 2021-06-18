@@ -231,6 +231,7 @@ enum MENU_SCREENS
 	UI_PRIVATE_CALL,
 	UI_MESSAGE_BOX,
 	MENU_CONTACT_NEW_DTMF,
+	MENU_LAST_HEARD_SUBMENU,
 	NUM_MENU_ENTRIES
 };
 
@@ -292,6 +293,7 @@ menuStatus_t menuNumericalEntry(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuTxScreen(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuRSSIScreen(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuLastHeard(uiEvent_t *event, bool isFirstRun);
+menuStatus_t menuLastHeardSubMenu(uiEvent_t *ev, bool isFirstRun);
 menuStatus_t menuOptions(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuDisplayOptions(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuSoundOptions(uiEvent_t *event, bool isFirstRun);

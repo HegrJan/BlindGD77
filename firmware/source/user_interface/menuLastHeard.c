@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
+ *                         Jan Hegr, OK1TE
  *
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
@@ -34,8 +35,10 @@ static const int DISPLAYED_LINES_MAX = 3;
 
 static bool displayLHDetails = false;
 static menuStatus_t menuLastHeardExitCode;
+static menuStatus_t menuLastHeardSubMenuExitCode;
 static LinkItem_t *selectedItem;
 static int lastHeardCount;
+static int submenuEntryCount;
 static int firstDisplayed;
 
 static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t now, uint32_t TGorPC, size_t maxLen, bool displayDetails, bool itemIsSelected, bool isFirstRun);
@@ -198,6 +201,117 @@ void menuLastHeardUpdateScreen(bool showTitleOrHeader, bool displayDetails, bool
 	uiDataGlobal.displayQSOState = QSO_DISPLAY_IDLE;
 }
 
+enum LAST_HEARD_SUBMENU_ITEMS
+{
+	LAST_HEARD_SUBMENU_CALLER = 0,
+	LAST_HEARD_SUBMENU_CALLIE,
+	NUM_LAST_HEARD_SUBMENU_ITEMS
+};
+
+static void updateSubMenuScreen(void)
+{
+	int mNum = 0;
+	char * const *langTextConst = NULL;
+
+	voicePromptsInit();
+	ucClearBuf();
+
+	menuDisplayTitle(currentLanguage->select_tx);
+
+	submenuEntryCount = NUM_LAST_HEARD_SUBMENU_ITEMS;
+	for(int i = -1; i <= 1; i++)
+	{
+		mNum = menuGetMenuOffset(submenuEntryCount, i);
+		switch(mNum)
+		{
+			case LAST_HEARD_SUBMENU_CALLER:
+				langTextConst = (char * const *)&currentLanguage->caller;
+				break;
+			case LAST_HEARD_SUBMENU_CALLIE:
+				langTextConst = (char * const *)&currentLanguage->callie;
+				break;
+		}
+
+		if ((i == 0) && (langTextConst != NULL))
+		{
+			voicePromptsAppendLanguageString((const char * const*)langTextConst);
+			promptsPlayNotAfterTx();
+		}
+
+		menuDisplayEntry(i, mNum, *langTextConst);
+	}
+
+	ucRender();
+}
+
+static void handleSubMenuEvent(uiEvent_t *ev)
+{
+	if (ev->events & BUTTON_EVENT)
+	{
+		if (repeatVoicePromptOnSK1(ev))
+		{
+			return;
+		}
+	}
+
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+	{
+		menuSystemPopPreviousMenu();
+	}
+	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+	{
+		switch (menuDataGlobal.currentItemIndex)
+		{
+			case LAST_HEARD_SUBMENU_CALLER:
+				setOverrideTGorPC(selectedItem->id, true);
+				break;
+			case LAST_HEARD_SUBMENU_CALLIE:
+				setOverrideTGorPC(selectedItem->talkGroupOrPcId, true);
+				break;
+		}
+		int timeslot = selectedItem->receivedTS;
+		if ((timeslot != -1) && (timeslot != trxGetDMRTimeSlot()))
+		{
+			trxSetDMRTimeSlot(timeslot);
+			tsSetManualOverride(((menuSystemGetRootMenuNumber() == UI_CHANNEL_MODE) ? CHANNEL_CHANNEL : (CHANNEL_VFO_A + nonVolatileSettings.currentVFONumber)), (timeslot + 1));
+		}
+		announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+		menuSystemPopAllAndDisplayRootMenu();
+	}
+	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
+	{
+		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
+		updateSubMenuScreen();
+	}
+	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
+	{
+		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
+		updateSubMenuScreen();
+	}
+}
+
+menuStatus_t menuLastHeardSubMenu(uiEvent_t *ev, bool isFirstRun)
+{
+	if (isFirstRun)
+	{
+		menuDataGlobal.currentItemIndex = 0;
+		updateSubMenuScreen();
+		keyboardInit();
+		menuLastHeardSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
+	}
+	else
+	{
+		menuLastHeardSubMenuExitCode = MENU_STATUS_SUCCESS;
+
+		if (ev->hasEvent)
+		{
+			handleSubMenuEvent(ev);
+		}
+	}
+
+	return menuLastHeardSubMenuExitCode;
+}
+
 void menuLastHeardHandleEvent(uiEvent_t *ev)
 {
 	bool isDirty = false;
@@ -276,17 +390,7 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 		}
 		else if ((currentMenu == MENU_LAST_HEARD) && KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
-			int timeslot = selectedItem->receivedTS;
-
-			setOverrideTGorPC(selectedItem->id, true);
-
-			if ((timeslot != -1) && (timeslot != trxGetDMRTimeSlot()))
-			{
-				trxSetDMRTimeSlot(timeslot);
-				tsSetManualOverride(((menuSystemGetRootMenuNumber() == UI_CHANNEL_MODE) ? CHANNEL_CHANNEL : (CHANNEL_VFO_A + nonVolatileSettings.currentVFONumber)), (timeslot + 1));
-			}
-			announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
-			menuSystemPopAllAndDisplayRootMenu();
+			menuSystemPushNewMenu(MENU_LAST_HEARD_SUBMENU);
 			return;
 		}
 	}

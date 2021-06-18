@@ -214,7 +214,9 @@ const stringsTable_t englishLanguage =
 .sk2Latch="SK2 Latch",
 .dtmfLatch="DTMF Latch",
 .priorityChannel="Pri",
-.priorityScan="Priority Scan"
+.priorityScan="Priority Scan",
+.caller					= "Caller",
+.callie					= "Callie",
 };
 /********************************************************************
  *
