@@ -40,6 +40,7 @@ static LinkItem_t *selectedItem;
 static int lastHeardCount;
 static int submenuEntryCount;
 static int firstDisplayed;
+static int savedLHIndex=0;
 
 static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t now, uint32_t TGorPC, size_t maxLen, bool displayDetails, bool itemIsSelected, bool isFirstRun);
 static void promptsInit(bool isFirstRun);
@@ -204,7 +205,7 @@ void menuLastHeardUpdateScreen(bool showTitleOrHeader, bool displayDetails, bool
 enum LAST_HEARD_SUBMENU_ITEMS
 {
 	LAST_HEARD_SUBMENU_CALLER = 0,
-	LAST_HEARD_SUBMENU_CALLIE,
+	LAST_HEARD_SUBMENU_CALLEE,
 	NUM_LAST_HEARD_SUBMENU_ITEMS
 };
 
@@ -227,8 +228,8 @@ static void updateSubMenuScreen(void)
 			case LAST_HEARD_SUBMENU_CALLER:
 				langTextConst = (char * const *)&currentLanguage->caller;
 				break;
-			case LAST_HEARD_SUBMENU_CALLIE:
-				langTextConst = (char * const *)&currentLanguage->callie;
+			case LAST_HEARD_SUBMENU_CALLEE:
+				langTextConst = (char * const *)&currentLanguage->callee;
 				break;
 		}
 
@@ -257,6 +258,7 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 	{
 		menuSystemPopPreviousMenu();
+		menuDataGlobal.currentItemIndex=savedLHIndex;
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 	{
@@ -265,7 +267,7 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 			case LAST_HEARD_SUBMENU_CALLER:
 				setOverrideTGorPC(selectedItem->id, true);
 				break;
-			case LAST_HEARD_SUBMENU_CALLIE:
+			case LAST_HEARD_SUBMENU_CALLEE:
 				setOverrideTGorPC(selectedItem->talkGroupOrPcId, true);
 				break;
 		}
@@ -390,6 +392,7 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 		}
 		else if ((currentMenu == MENU_LAST_HEARD) && KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
+			savedLHIndex=menuDataGlobal.currentItemIndex;
 			menuSystemPushNewMenu(MENU_LAST_HEARD_SUBMENU);
 			return;
 		}

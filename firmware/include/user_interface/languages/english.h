@@ -216,7 +216,7 @@ const stringsTable_t englishLanguage =
 .priorityChannel="Pri",
 .priorityScan="Priority Scan",
 .caller					= "Caller",
-.callie					= "Callie",
+.callee					= "Callee",
 };
 /********************************************************************
  *

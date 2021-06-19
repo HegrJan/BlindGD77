@@ -226,7 +226,7 @@ typedef struct
    const char* priorityChannel;
    const char* priorityScan;
    const char* caller;
-   const char* callie;
+   const char* callee;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
