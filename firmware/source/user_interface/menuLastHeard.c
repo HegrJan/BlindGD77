@@ -40,6 +40,7 @@ static LinkItem_t *selectedItem;
 static int lastHeardCount;
 static int submenuEntryCount;
 static int firstDisplayed;
+static bool restoreSavedIndex=false;
 static int savedLHIndex=0;
 
 static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t now, uint32_t TGorPC, size_t maxLen, bool displayDetails, bool itemIsSelected, bool isFirstRun);
@@ -258,7 +259,6 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 	{
 		menuSystemPopPreviousMenu();
-		menuDataGlobal.currentItemIndex=savedLHIndex;
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 	{
@@ -393,6 +393,7 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 		else if ((currentMenu == MENU_LAST_HEARD) && KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			savedLHIndex=menuDataGlobal.currentItemIndex;
+			restoreSavedIndex=true;
 			menuSystemPushNewMenu(MENU_LAST_HEARD_SUBMENU);
 			return;
 		}
@@ -445,7 +446,14 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 void menuLastHeardInit(void)
 {
 	menuDataGlobal.startIndex = LinkHead->id;// reuse this global to store the ID of the first item in the list
-	menuDataGlobal.currentItemIndex = 0;
+				savedLHIndex=menuDataGlobal.currentItemIndex;
+	if (restoreSavedIndex)
+	{
+		menuDataGlobal.currentItemIndex=savedLHIndex;
+		restoreSavedIndex=false;
+	}
+	else
+		menuDataGlobal.currentItemIndex = 0;
 	menuDataGlobal.endIndex = uiDataGlobal.lastHeardCount;
 	selectedItem = NULL;
 	firstDisplayed = 0;
