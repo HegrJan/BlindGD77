@@ -288,19 +288,9 @@ static void updateScreen(bool isFirstRun)
 				case OPTIONS_MENU_PRIORITY_CHANNEL:
 					leftSide = (char * const *)&currentLanguage->priorityChannel;
 					if (nonVolatileSettings.priorityChannelIndex!=NO_PRIORITY_CHANNEL)
-					{
-						int priorityChannelNumber = nonVolatileSettings.priorityChannelIndex;
-						if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
-							codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannelIndex, &priorityChannelData );
-						else
-						{
-							codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.priorityChannelIndex], &priorityChannelData );
-							// for announcement, zone channels are 0-based, allChannels are 1-based.
-							priorityChannelNumber++;
-						}//
-						char channelName[17]="\0";
-						codeplugUtilConvertBufToString(priorityChannelData.name, channelName, 16);
-						snprintf(rightSideVar, bufferLen, "%d %s", priorityChannelNumber, channelName);
+					{// Priority channel is always relative to allChannels zone.
+						codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannelIndex, &priorityChannelData );
+						codeplugUtilConvertBufToString(priorityChannelData.name, rightSideVar, bufferLen);
 					}
 					else
 						rightSideConst = (char * const *)&currentLanguage->none;
@@ -620,10 +610,12 @@ static void handleEvent(uiEvent_t *ev)
 #endif
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
-					uint16_t max = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone : currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1;
-					uint16_t min=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
+					// get max count.
+					struct_codeplugZone_t allChannels;
+					codeplugZoneGetDataForNumber(codeplugZonesGetCount() - 1, &allChannels);
+					int max=allChannels.NOT_IN_CODEPLUGDATA_numChannelsInZone;
 					if (nonVolatileSettings.priorityChannelIndex == NO_PRIORITY_CHANNEL) // none
-						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex,min);
+						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex, 1); // all channels zone begins at 1.
 					else if (nonVolatileSettings.priorityChannelIndex < max)
 						settingsIncrement(nonVolatileSettings.priorityChannelIndex, 1);
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
@@ -785,10 +777,9 @@ static void handleEvent(uiEvent_t *ev)
 #endif
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
-					uint16_t min = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? 1 : 0;
-					if (nonVolatileSettings.priorityChannelIndex == min)
+					if (nonVolatileSettings.priorityChannelIndex == 1)
 						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex , NO_PRIORITY_CHANNEL);
-					else if (nonVolatileSettings.priorityChannelIndex > min && nonVolatileSettings.priorityChannelIndex != NO_PRIORITY_CHANNEL)
+					else if (nonVolatileSettings.priorityChannelIndex > 1 && nonVolatileSettings.priorityChannelIndex != NO_PRIORITY_CHANNEL)
 						settingsDecrement(nonVolatileSettings.priorityChannelIndex, 1);
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;

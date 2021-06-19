@@ -409,7 +409,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						else
 						{
 							uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
-							uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+							uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
 							rightSideConst= (char * const *)((priorityChannelIndex==currentChannelIndex) ? (&currentLanguage->yes) : (&currentLanguage->no));
 						}
 					}
@@ -910,9 +910,9 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case CH_DETAILS_PRIORITY:
-				{
+				{// when comparing, we must compare relative to the all channels zone!
 					uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
-					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
 					if ((priorityChannelIndex!=currentChannelIndex) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
 						uiDataGlobal.priorityChannelIndex = currentChannelIndex;
 				}
@@ -1080,7 +1080,7 @@ static void handleEvent(uiEvent_t *ev)
 				case CH_DETAILS_PRIORITY:
 				{
 					uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
-					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
+					uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
 					if ((priorityChannelIndex==currentChannelIndex) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
 						uiDataGlobal.priorityChannelIndex = NO_PRIORITY_CHANNEL;// set to none.
 				}
