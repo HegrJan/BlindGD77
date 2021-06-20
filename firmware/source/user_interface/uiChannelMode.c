@@ -101,6 +101,7 @@ static bool nextChannelReady = false;
 static int nextChannelIndex = 0;
 static bool scobAlreadyTriggered = false;
 static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel confirmation window
+static bool shouldLoadPriorityChannel=false;
 
 static menuStatus_t menuChannelExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickChannelExitStatus = MENU_STATUS_SUCCESS;
@@ -249,6 +250,7 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	dualWatchChannelData.allowedToAnnounceChannelDetails=true;
 	dualWatchChannelData.currentChannelIndex=currentChannelIndex;
 	*dualWatchChannelData.currentChannelName=0; // force it to be retrieved.
+	shouldLoadPriorityChannel=false; // in case it was set by long press red.
 	SetNextChannelIndexAndData(currentChannelIndex); //ensure name is set immediatley. 
 	
 	uiDataGlobal.Scan.timer =500; // force scan to continue;
@@ -331,7 +333,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 
 		// Scan On Boot is enabled, but has to be run only once.
 		if ((settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) || settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))&& (scobAlreadyTriggered == false))
-		{//joe
+		{
 			if (settingsIsOptionBitSet(BIT_PRI_SCAN_ON_BOOT_ENABLED))
 			{
 				uint16_t priorityChannelIndex= uiDataGlobal.priorityChannelIndex;
@@ -655,8 +657,12 @@ static bool AllowedToAnnounceChannelInfo(bool loadVoicePromptAnnouncement)
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement)
 {
 	bool rxGroupValid = true;
-
-	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+	if (shouldLoadPriorityChannel)
+	{
+		codeplugChannelGetDataForIndex(uiDataGlobal.priorityChannelIndex, &channelScreenChannelData);
+		uiDataGlobal.currentSelectedChannelNumber=uiDataGlobal.priorityChannelIndex;
+	}
+	else if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 	{
 		// All Channels virtual zone
 		uiDataGlobal.currentSelectedChannelNumber = nonVolatileSettings.currentChannelIndexInAllZone;
@@ -1223,8 +1229,6 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED))
 		{// Switch between priority channel and last channel selected by user.
-			uint16_t currentChannelIndex= CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
-
 			if (uiDataGlobal.priorityChannelIndex != NO_PRIORITY_CHANNEL)
 			{
 				if (dualWatchChannelData.dualWatchActive)
@@ -1232,17 +1236,26 @@ static void handleEvent(uiEvent_t *ev)
 					StopDualWatch(true); // Ensure dual watch is stopped.
 				}
 
-				if (uiDataGlobal.priorityChannelIndex != currentChannelIndex)
+				shouldLoadPriorityChannel=!shouldLoadPriorityChannel;
+				if (shouldLoadPriorityChannel)
 				{
-					currentChannelIndex = uiDataGlobal.priorityChannelIndex;
+					if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+						nonVolatileSettings.currentChannelIndexInAllZone=uiDataGlobal.priorityChannelIndex;
+					else
+					{
+						uint16_t priorityChannelIndexInZone = FindPriorityChannelIndexInCurrentZone();
+						if (priorityChannelIndexInZone!=NO_PRIORITY_CHANNEL)
+							nonVolatileSettings.currentChannelIndexInZone=priorityChannelIndexInZone;
+					}
 				}
-				else if (dualWatchChannelData.currentChannelIndex < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
-					currentChannelIndex = dualWatchChannelData.currentChannelIndex;
-				if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
-					settingsSet(nonVolatileSettings.currentChannelIndexInAllZone, currentChannelIndex);
 				else
-					settingsSet(nonVolatileSettings.currentChannelIndexInZone, currentChannelIndex);
-				loadChannelData(false, true);
+				{// restore the prior channel from the dualWatchChannelData.currentChannelIndex as it may have been overridden by a screen update.
+					if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+						nonVolatileSettings.currentChannelIndexInAllZone=dualWatchChannelData.currentChannelIndex;
+					else
+						nonVolatileSettings.currentChannelIndexInZone=dualWatchChannelData.currentChannelIndex;
+				}
+				loadChannelData(shouldLoadPriorityChannel, true);
 			}
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))

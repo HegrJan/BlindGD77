@@ -2487,23 +2487,47 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	return false;
 }
 
+uint16_t FindPriorityChannelIndexInCurrentZone()
+{
+	if (uiDataGlobal.priorityChannelIndex==NO_PRIORITY_CHANNEL)
+		return NO_PRIORITY_CHANNEL;
+	
+	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+		return 					uiDataGlobal.priorityChannelIndex;
+	
+	for (int indexInZone=0; indexInZone < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone; ++indexInZone)
+	{
+		if (currentZone.channels[indexInZone]==uiDataGlobal.priorityChannelIndex)
+			return indexInZone;
+	}
+	return NO_PRIORITY_CHANNEL;
+}
+
 void AnnounceChannelSummary(bool voicePromptWasPlaying)
 {
 		char voiceBuf[17];
 	char voiceBufChNumber[5];
 	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
+	uint16_t channelIndexRelativeToAllChannels=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+	
+	bool thisIsThePriorityChannel=uiDataGlobal.priorityChannelIndex == channelIndexRelativeToAllChannels;
 
 	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
+	// We can't announce  the channel number if this is the priority channel but it does not exist in the current zone, otherwise it won't make sense.
+	bool announceChannelNumber=true;
+	if (thisIsThePriorityChannel && FindPriorityChannelIndexInCurrentZone()==NO_PRIORITY_CHANNEL)
+		announceChannelNumber=false;
+	
 	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
 
 	voicePromptsInit();
-	uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
-	if (nonVolatileSettings.priorityChannelIndex == channelIndex)
+	
+	if (thisIsThePriorityChannel)
 		voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
 	else
 		voicePromptsAppendPrompt(PROMPT_CHANNEL);
 	// If the number and name differ, then append.
-	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+	if (announceChannelNumber && strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
 	{
 		voicePromptsAppendString(voiceBufChNumber);
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
