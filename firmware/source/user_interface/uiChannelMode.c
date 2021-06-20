@@ -111,7 +111,7 @@ struct DualWatchChannelData_t
 	bool dualWatchActive;
 	int16_t watchChannelIndex; // When Dual Watch is activated, this is the index of the channel on which it is activated, i.e. the channel to watch (relative to allChannels zone).
 	char watchChannelName[17]; // saved off when initially loaded.
-	int16_t currentChannelIndex; // the index of the channel the user has switched to after activating Dual Watch.
+	int16_t currentChannelIndex; // the index of the channel the user has switched to after activating Dual Watch relative to the current zone.
 	int16_t dualWatchChannelIndex; // When Dual Watch is active, this index toggles between the above two and holds the index of the channel currently being monitored.
 	char currentChannelName[17]; // saved off when loaded.
 	bool dualWatchChannelIndexIsRelativeToAllChannelsZone;
@@ -120,9 +120,23 @@ struct DualWatchChannelData_t
 	bool restartDualWatch; // When the user releases PTT this flag indicates that the Dual Watch should be restarted.
 } dualWatchChannelData;
 
+static int GetChannelName(uint16_t index, bool indexIsRelativeToAllChannelsZone, char* buffer, int bufLen)
+{
+	if (!buffer) return 0;
+	*buffer='\0';
+	struct_codeplugChannel_t tmpChannelData = { .rxFreq = 0 };
+	
+	uint16_t indexRelativeToAllChannelsZone=indexIsRelativeToAllChannelsZone ? index : currentZone.channels[index];
+	codeplugChannelGetDataForIndex(indexRelativeToAllChannelsZone, &tmpChannelData);
+	codeplugUtilConvertBufToString(tmpChannelData.name, buffer, bufLen); // need to convert to zero terminated string
+	return strlen(buffer);
+	}
+
 static bool ToggleDualWatchChannelIndex()
 {
-	if (dualWatchChannelData.watchChannelIndex == dualWatchChannelData.currentChannelIndex)
+	uint16_t currentChannelIndexRelativeToAllChannelsZone=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ?dualWatchChannelData.currentChannelIndex : currentZone.channels[dualWatchChannelData.currentChannelIndex];
+	// The watch channel is always relative to all Channels zone.
+	if (dualWatchChannelData.watchChannelIndex == currentChannelIndexRelativeToAllChannelsZone)
 		return false; // User hasn't moved away from the initial channel yet.
 
 	if (dualWatchChannelData.dualWatchChannelIndex == dualWatchChannelData.watchChannelIndex)
@@ -139,19 +153,26 @@ static bool ToggleDualWatchChannelIndex()
 	return true;
 }
 
-static void SetNextChannelIndexAndData(uint16_t channelIndex)
+static void SetNextChannelIndexAndData(uint16_t channelIndex, bool indexIsRelativeToAllChannelsZone)
 {
-	nextChannelIndex =channelIndex;
-
-	if (dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone)
-		codeplugChannelGetDataForIndex(nextChannelIndex, &channelNextChannelData);
+	// nextChannelIndex is expected to be relative to the current zone.
+	// ScanApplyNextChannel saves this back to either nonVolatileSettings.currentChannelIndexInAllZone or nonVolatileSettings.currentChannelIndexInZone
+	// Thus if this is the dual watch or priority channel index, it is relative to the allChannelsZone and may not exist in the current zone.
+	if (indexIsRelativeToAllChannelsZone && !CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+	{
+		uint16_t indexRelativeToCurrentZone;
+		if (codeplugFindAllChannelsIndexInCurrentZone(channelIndex, &indexRelativeToCurrentZone))
+			nextChannelIndex=indexRelativeToCurrentZone;
+		else
+			nextChannelIndex=nonVolatileSettings.currentChannelIndexInZone; // leave it unchanged for the purposes of saving it.
+	}
 	else
-		codeplugChannelGetDataForIndex(currentZone.channels[nextChannelIndex], &channelNextChannelData);
-// save off the name if this is the watch channel and it hasn't yet been saved.
-	if (!*dualWatchChannelData.watchChannelName && channelIndex==dualWatchChannelData.watchChannelIndex && dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone)
-		codeplugUtilConvertBufToString(channelNextChannelData.name, dualWatchChannelData.watchChannelName, 17); // need to convert to zero terminated string
-	if (!*dualWatchChannelData.currentChannelName && channelIndex==dualWatchChannelData.currentChannelIndex)
-		codeplugUtilConvertBufToString(channelNextChannelData.name, dualWatchChannelData.currentChannelName, 17);
+		nextChannelIndex =channelIndex;
+
+	if (indexIsRelativeToAllChannelsZone)
+		codeplugChannelGetDataForIndex(channelIndex, &channelNextChannelData);
+	else
+		codeplugChannelGetDataForIndex(currentZone.channels[channelIndex], &channelNextChannelData);
 
 	nextChannelReady = true;
 }
@@ -173,7 +194,7 @@ static bool DoDualWatchScan()
 	return true; // User hasn't yet moved away from the initial channel, but no other scan mode should be handled.
 	// At this point we have set the dualWatchChannelData.dualWatchChannelIndex to the other channel to watch.
 	// Now load it's data.
-	SetNextChannelIndexAndData(dualWatchChannelData.dualWatchChannelIndex);
+	SetNextChannelIndexAndData(dualWatchChannelData.dualWatchChannelIndex, dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone);
 
 	return true;
 }
@@ -181,7 +202,8 @@ static bool DoDualWatchScan()
 static void EnsureDualWatchReturnsToCurrent()
 {
 	// return to the last channel selected by the user.
-	SetNextChannelIndexAndData(dualWatchChannelData.currentChannelIndex);
+	dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone);
+	SetNextChannelIndexAndData(dualWatchChannelData.currentChannelIndex, dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone);
 	scanApplyNextChannel();
 }
 
@@ -213,9 +235,10 @@ static void StartDualWatch(uint16_t watchChannelIndex, uint16_t currentChannelIn
 	//When the user chooses a new current channel, the dual watch will begin automatically.
 	dualWatchChannelData.watchChannelIndex = watchChannelIndex;
 	dualWatchChannelData.currentChannelIndex = currentChannelIndex;
-	dualWatchChannelData.dualWatchChannelIndex = watchChannelIndex;
-	dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone=true;
-	SetNextChannelIndexAndData(watchChannelIndex);
+	dualWatchChannelData.dualWatchChannelIndex = currentChannelIndex;
+	GetChannelName(watchChannelIndex, true, dualWatchChannelData.watchChannelName, 17);
+	GetChannelName(currentChannelIndex, CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone), dualWatchChannelData.currentChannelName, 17);
+	
 	scanStart(false);
 
 	uiDataGlobal.Scan.scanType = SCAN_TYPE_DUAL_WATCH;
@@ -249,9 +272,9 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	dualWatchChannelData.dualWatchPauseCountdownTimer=2000;
 	dualWatchChannelData.allowedToAnnounceChannelDetails=true;
 	dualWatchChannelData.currentChannelIndex=currentChannelIndex;
-	*dualWatchChannelData.currentChannelName=0; // force it to be retrieved.
+		
+	GetChannelName(currentChannelIndex, CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone), dualWatchChannelData.currentChannelName, 17);
 	shouldLoadPriorityChannel=false; // in case it was set by long press red.
-	SetNextChannelIndexAndData(currentChannelIndex); //ensure name is set immediatley. 
 	
 	uiDataGlobal.Scan.timer =500; // force scan to continue;
 	}
@@ -1243,8 +1266,8 @@ static void handleEvent(uiEvent_t *ev)
 						nonVolatileSettings.currentChannelIndexInAllZone=uiDataGlobal.priorityChannelIndex;
 					else
 					{
-						uint16_t priorityChannelIndexInZone = FindPriorityChannelIndexInCurrentZone();
-						if (priorityChannelIndexInZone!=NO_PRIORITY_CHANNEL)
+						uint16_t priorityChannelIndexInZone;
+						if (codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &priorityChannelIndexInZone) && priorityChannelIndexInZone!=NO_PRIORITY_CHANNEL)
 							nonVolatileSettings.currentChannelIndexInZone=priorityChannelIndexInZone;
 					}
 				}

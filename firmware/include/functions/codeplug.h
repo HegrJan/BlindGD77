@@ -335,4 +335,6 @@ bool codeplugSetQuickkeyFunctionID(char key, uint16_t functionId);
 
 int codeplugGetRepeaterWakeAttempts(void);
 int codeplugGetPasswordPin(int32_t *pinCode);
+uint16_t codeplugGetTotalNumberOfChannels();
+bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChannelsZone, uint16_t* indexRelativeToCurrentZone);
 #endif

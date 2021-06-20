@@ -171,7 +171,6 @@ void playNextSettingSequence(void);
 void uiUtilityBuildTgOrPCDisplayName(char *nameBuf, int bufferLen);
 void acceptPrivateCall(uint32_t id, int timeslot);
 bool repeatVoicePromptOnSK1(uiEvent_t *ev);
-uint16_t FindPriorityChannelIndexInCurrentZone();
 void AnnounceChannelSummary(bool voicePromptWasPlaying);
 bool handleMonitorMode(uiEvent_t *ev);
 void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int8_t yOverride);

@@ -2487,20 +2487,13 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	return false;
 }
 
-uint16_t FindPriorityChannelIndexInCurrentZone()
+static bool DoesPriorityChannelExistInCurrentZone()
 {
 	if (uiDataGlobal.priorityChannelIndex==NO_PRIORITY_CHANNEL)
-		return NO_PRIORITY_CHANNEL;
-	
-	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
-		return 					uiDataGlobal.priorityChannelIndex;
-	
-	for (int indexInZone=0; indexInZone < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone; ++indexInZone)
-	{
-		if (currentZone.channels[indexInZone]==uiDataGlobal.priorityChannelIndex)
-			return indexInZone;
-	}
-	return NO_PRIORITY_CHANNEL;
+		return false;
+
+	uint16_t indexRelativeToCurrentZone=NO_PRIORITY_CHANNEL;	
+	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone);
 }
 
 void AnnounceChannelSummary(bool voicePromptWasPlaying)
@@ -2515,7 +2508,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
 	// We can't announce  the channel number if this is the priority channel but it does not exist in the current zone, otherwise it won't make sense.
 	bool announceChannelNumber=true;
-	if (thisIsThePriorityChannel && FindPriorityChannelIndexInCurrentZone()==NO_PRIORITY_CHANNEL)
+	if (thisIsThePriorityChannel && !DoesPriorityChannelExistInCurrentZone())
 		announceChannelNumber=false;
 	
 	snprintf(voiceBufChNumber, 5, "%d", channelNumber);

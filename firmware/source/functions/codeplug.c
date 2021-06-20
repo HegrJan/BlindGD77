@@ -1476,3 +1476,30 @@ int codeplugGetPasswordPin(int32_t *pinCode)
 	}
 	return pinLength;
 }
+
+uint16_t codeplugGetTotalNumberOfChannels()
+{
+	return allChannelsTotalNumOfChannels;
+}
+
+bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChannelsZone, uint16_t* indexRelativeToCurrentZone)
+{
+	if (indexRelativeToAllChannelsZone > codeplugGetTotalNumberOfChannels())
+		return false;
+	
+	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+	{
+		*indexRelativeToCurrentZone=indexRelativeToAllChannelsZone;
+		return 					true;
+	}
+	for (int indexInZone=0; indexInZone < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone; ++indexInZone)
+	{
+		if (currentZone.channels[indexInZone]==indexRelativeToAllChannelsZone)
+		{
+			*indexRelativeToCurrentZone=indexInZone;
+			return true;
+		}
+	}
+	
+	return false;
+}

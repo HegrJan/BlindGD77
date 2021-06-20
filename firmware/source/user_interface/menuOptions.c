@@ -611,12 +611,9 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
 					// get max count.
-					struct_codeplugZone_t allChannels;
-					codeplugZoneGetDataForNumber(codeplugZonesGetCount() - 1, &allChannels);
-					int max=allChannels.NOT_IN_CODEPLUGDATA_numChannelsInZone;
 					if (nonVolatileSettings.priorityChannelIndex == NO_PRIORITY_CHANNEL) // none
 						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex, 1); // all channels zone begins at 1.
-					else if (nonVolatileSettings.priorityChannelIndex < max)
+					else if (nonVolatileSettings.priorityChannelIndex < codeplugGetTotalNumberOfChannels())
 						settingsIncrement(nonVolatileSettings.priorityChannelIndex, 1);
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
