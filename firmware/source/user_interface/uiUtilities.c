@@ -2247,10 +2247,11 @@ static void 		announceBandWidth(bool voicePromptWasPlaying)
 	bool wide=(currentChannelData->flag4&0x02) ? true : false;
 	char buffer[17]="\0";
 	if (wide)
-		strcpy(buffer, "25 khz");
+		strcpy(buffer, "25");
 	else
-		strcpy(buffer, "12.5 kHz");
+		strcpy(buffer, "12.5");
 	voicePromptsAppendString(buffer);
+	voicePromptsAppendPrompt(PROMPT_KILOHERTZ);
 }
 
 void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnounceThreshold)
@@ -2582,6 +2583,8 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 			buildCSSCodeVoicePrompts(currentChannelData->txTone,
 			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->txTone & CSS_TYPE_DCS_MASK ) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), DIRECTION_TRANSMIT, true);
 		}
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceBandWidth( false);
 	}
 
 	voicePromptsAppendPrompt(PROMPT_SILENCE);

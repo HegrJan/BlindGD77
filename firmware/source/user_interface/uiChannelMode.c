@@ -1497,6 +1497,8 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				if (currentChannelData->flag4&0x02)
+					menuChannelExitStatus |= MENU_STATUS_FORCE_FIRST;
 				uiChannelModeUpdateScreen(0);
 			}
 			else if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))  // Toggle Channel Mode
