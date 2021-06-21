@@ -2238,6 +2238,21 @@ static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool a
 	}
 }
 
+static void 		announceBandWidth(bool voicePromptWasPlaying)
+{
+	if (!voicePromptWasPlaying)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->bandwidth);
+	}
+	bool wide=(currentChannelData->flag4&0x02) ? true : false;
+	char buffer[17]="\0";
+	if (wide)
+		strcpy(buffer, "25 khz");
+	else
+		strcpy(buffer, "12.5 kHz");
+	voicePromptsAppendString(buffer);
+}
+
 void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnounceThreshold)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
@@ -2356,6 +2371,9 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	{
 		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
 		announceFrequencyEx(false, false, true);
+		break;
+	case PROMPT_SEQUENCE_BANDWIDTH:
+		announceBandWidth(voicePromptWasPlaying);
 		break;
 	}
 	default:
@@ -3158,4 +3176,29 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 void resetOriginalSettingsData(void)
 {
 	originalNonVolatileSettings.magicNumber = 0xDEADBEEF;
+}
+
+bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel)
+{
+	if (!channel)
+		return false;
+	
+	if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) || BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+		return false;
+	
+	if (!KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+		return false;
+	
+	if (channel->chMode != RADIO_MODE_ANALOG)
+		return false;
+	uint8_t mask=channel->flag4;
+	if (mask&0x02) // wide, set to narrow.
+	mask&=~0x02;
+	else // narrow, set to wide.
+	mask|=0x02;
+	channel->flag4=mask;
+	
+	trxSetModeAndBandwidth(channel->chMode, channel->flag4);
+	
+	return true;
 }

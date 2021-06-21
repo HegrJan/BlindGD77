@@ -80,6 +80,7 @@ typedef enum
 	PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME,
 	PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ,
 	PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ,
+	PROMPT_SEQUENCE_BANDWIDTH,
 	NUM_PROMPT_SEQUENCES
 } voicePromptItem_t;
 
@@ -159,12 +160,12 @@ int getBatteryPercentage(void);
 void getBatteryVoltage(int *volts, int *mvolts);
 bool decreasePowerLevel(void);
 bool increasePowerLevel(bool allowFullPower);
+bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel);
 
 void announceChar(char ch);
 
 void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Direction_t direction, bool announceType);
 void announceCSSCode(uint16_t tone, CodeplugCSSTypes_t cssType, Direction_t direction, bool announceType, audioPromptThreshold_t immediateAnnounceThreshold);
-
 void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnouceThreshold);
 void promptsPlayNotAfterTx(void);
 void playNextSettingSequence(void);

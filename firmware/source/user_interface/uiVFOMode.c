@@ -922,7 +922,12 @@ static void handleEvent(uiEvent_t *ev)
 			}
 			else if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
 			{
-				if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+								if ( ToggleFMBandwidth(ev, currentChannelData))
+				{
+					announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
+					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				}
+				else if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 				{
 					if (trxGetMode() == RADIO_MODE_ANALOG)
 					{
