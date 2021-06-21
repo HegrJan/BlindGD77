@@ -234,7 +234,8 @@ static void StartDualWatch(uint16_t watchChannelIndex, uint16_t currentChannelIn
 	//When the user chooses a new current channel, the dual watch will begin automatically.
 	dualWatchChannelData.watchChannelIndex = watchChannelIndex;
 	dualWatchChannelData.currentChannelIndex = currentChannelIndex;
-	dualWatchChannelData.dualWatchChannelIndex = currentChannelIndex;
+	dualWatchChannelData.dualWatchChannelIndex = watchChannelIndex;
+	dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone=true;
 	GetChannelName(watchChannelIndex, true, dualWatchChannelData.watchChannelName, 17);
 	GetChannelName(currentChannelIndex, CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone), dualWatchChannelData.currentChannelName, 17);
 	
@@ -242,7 +243,7 @@ static void StartDualWatch(uint16_t watchChannelIndex, uint16_t currentChannelIn
 
 	uiDataGlobal.Scan.scanType = SCAN_TYPE_DUAL_WATCH;
 
-	nextChannelIndex = dualWatchChannelData.currentChannelIndex;
+	nextChannelIndex = dualWatchChannelData.watchChannelIndex;
 	nextChannelReady = false;
 
 	int  currentPowerSavingLevel = rxPowerSavingGetLevel();
@@ -1257,7 +1258,10 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					StopDualWatch(true); // Ensure dual watch is stopped.
 				}
-
+				
+				uint16_t currentChannelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ?nonVolatileSettings.currentChannelIndexInAllZone :nonVolatileSettings.currentChannelIndexInZone;
+				if (!uiDataGlobal.priorityChannelActive && dualWatchChannelData.currentChannelIndex!=currentChannelIndex) // ensure current is saved off so it can be restored.
+					dualWatchChannelData.currentChannelIndex=currentChannelIndex;
 				uiDataGlobal.priorityChannelActive=!uiDataGlobal.priorityChannelActive;
 				if (uiDataGlobal.priorityChannelActive)
 				{
@@ -2417,7 +2421,7 @@ static void scanning(void)
 			// Reload the channel as voice prompts aren't set while scanning
 			if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 			{
-				loadChannelData(false, true);
+				loadChannelData(true, true);
 			}
 #endif
 
@@ -2443,7 +2447,7 @@ static void scanning(void)
 
 				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 				{
-					loadChannelData(false, true);
+					loadChannelData(true, true);
 				}
 #endif
 				if (scanMode == SCAN_MODE_STOP)
