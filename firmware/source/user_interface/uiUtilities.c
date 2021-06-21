@@ -2493,7 +2493,7 @@ static bool DoesPriorityChannelExistInCurrentZone()
 		return false;
 
 	uint16_t indexRelativeToCurrentZone=NO_PRIORITY_CHANNEL;	
-	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone);
+	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone) && indexRelativeToCurrentZone!=NO_PRIORITY_CHANNEL;
 }
 
 void AnnounceChannelSummary(bool voicePromptWasPlaying)
@@ -2503,7 +2503,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
 	uint16_t channelIndexRelativeToAllChannels=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
 	
-	bool thisIsThePriorityChannel=uiDataGlobal.priorityChannelIndex == channelIndexRelativeToAllChannels;
+	bool thisIsThePriorityChannel=(uiDataGlobal.priorityChannelIndex == channelIndexRelativeToAllChannels) || uiDataGlobal.priorityChannelActive;
 
 	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
 	// We can't announce  the channel number if this is the priority channel but it does not exist in the current zone, otherwise it won't make sense.
