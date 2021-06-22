@@ -215,8 +215,6 @@ const stringsTable_t englishLanguage =
 .dtmfLatch="DTMF Latch",
 .priorityChannel="Pri",
 .priorityScan="Priority Scan",
-.caller					= "Caller",
-.callee					= "Callee",
 };
 /********************************************************************
  *

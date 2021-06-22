@@ -40,8 +40,7 @@ static LinkItem_t *selectedItem;
 static int lastHeardCount;
 static int submenuEntryCount;
 static int firstDisplayed;
-static bool restoreSavedIndex=false;
-static int savedLHIndex=0;
+static bool returnedFromSubMenu = false;
 
 static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t now, uint32_t TGorPC, size_t maxLen, bool displayDetails, bool itemIsSelected, bool isFirstRun);
 static void promptsInit(bool isFirstRun);
@@ -108,7 +107,6 @@ menuStatus_t menuLastHeard(uiEvent_t *ev, bool isFirstRun)
 				menuLastHeardUpdateScreen(true, displayLHDetails, false);
 			}
 		}
-
 	}
 
 	return menuLastHeardExitCode;
@@ -213,7 +211,8 @@ enum LAST_HEARD_SUBMENU_ITEMS
 static void updateSubMenuScreen(void)
 {
 	int mNum = 0;
-	char * const *langTextConst = NULL;
+	static const int bufferLen = 17;
+	char contact[bufferLen];
 
 	voicePromptsInit();
 	ucClearBuf();
@@ -227,23 +226,37 @@ static void updateSubMenuScreen(void)
 		switch(mNum)
 		{
 			case LAST_HEARD_SUBMENU_CALLER:
-				langTextConst = (char * const *)&currentLanguage->caller;
+				strncpy(contact, selectedItem->contact, bufferLen);
 				break;
 			case LAST_HEARD_SUBMENU_CALLEE:
-				langTextConst = (char * const *)&currentLanguage->callee;
+				strncpy(contact, selectedItem->talkgroup, bufferLen);
 				break;
 		}
 
-		if ((i == 0) && (langTextConst != NULL))
+		if (i == 0)
 		{
-			voicePromptsAppendLanguageString((const char * const*)langTextConst);
+			voicePromptsAppendString(contact);
 			promptsPlayNotAfterTx();
 		}
 
-		menuDisplayEntry(i, mNum, *langTextConst);
+		menuDisplayEntry(i, mNum, contact);
 	}
 
 	ucRender();
+}
+
+void setContactAndTsUsed(uint32_t id)
+{
+	setOverrideTGorPC(id, true);
+
+	int timeslot = selectedItem->receivedTS;
+	if ((timeslot != -1) && (timeslot != trxGetDMRTimeSlot()))
+	{
+		trxSetDMRTimeSlot(timeslot);
+		tsSetManualOverride(((menuSystemGetRootMenuNumber() == UI_CHANNEL_MODE) ? CHANNEL_CHANNEL : (CHANNEL_VFO_A + nonVolatileSettings.currentVFONumber)), (timeslot + 1));
+	}
+	announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+	menuSystemPopAllAndDisplayRootMenu();
 }
 
 static void handleSubMenuEvent(uiEvent_t *ev)
@@ -258,6 +271,7 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 	{
+		returnedFromSubMenu = true;
 		menuSystemPopPreviousMenu();
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
@@ -265,20 +279,12 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 		switch (menuDataGlobal.currentItemIndex)
 		{
 			case LAST_HEARD_SUBMENU_CALLER:
-				setOverrideTGorPC(selectedItem->id, true);
+				setContactAndTsUsed(selectedItem->id);
 				break;
 			case LAST_HEARD_SUBMENU_CALLEE:
-				setOverrideTGorPC(selectedItem->talkGroupOrPcId, true);
+				setContactAndTsUsed(selectedItem->talkGroupOrPcId);
 				break;
 		}
-		int timeslot = selectedItem->receivedTS;
-		if ((timeslot != -1) && (timeslot != trxGetDMRTimeSlot()))
-		{
-			trxSetDMRTimeSlot(timeslot);
-			tsSetManualOverride(((menuSystemGetRootMenuNumber() == UI_CHANNEL_MODE) ? CHANNEL_CHANNEL : (CHANNEL_VFO_A + nonVolatileSettings.currentVFONumber)), (timeslot + 1));
-		}
-		announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
-		menuSystemPopAllAndDisplayRootMenu();
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 	{
@@ -392,9 +398,14 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 		}
 		else if ((currentMenu == MENU_LAST_HEARD) && KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
-			savedLHIndex=menuDataGlobal.currentItemIndex;
-			restoreSavedIndex=true;
-			menuSystemPushNewMenu(MENU_LAST_HEARD_SUBMENU);
+			if (*selectedItem->talkgroup)
+			{
+				menuSystemPushNewMenu(MENU_LAST_HEARD_SUBMENU);
+			}
+			else
+			{
+				setContactAndTsUsed(selectedItem->id);
+			}
 			return;
 		}
 	}
@@ -445,20 +456,20 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 
 void menuLastHeardInit(void)
 {
-	menuDataGlobal.startIndex = LinkHead->id;// reuse this global to store the ID of the first item in the list
-				savedLHIndex=menuDataGlobal.currentItemIndex;
-	if (restoreSavedIndex)
+	if (returnedFromSubMenu)
 	{
-		menuDataGlobal.currentItemIndex=savedLHIndex;
-		restoreSavedIndex=false;
+		returnedFromSubMenu = false;
 	}
 	else
+	{
 		menuDataGlobal.currentItemIndex = 0;
-	menuDataGlobal.endIndex = uiDataGlobal.lastHeardCount;
-	selectedItem = NULL;
-	firstDisplayed = 0;
-	displayLHDetails = false;
+		selectedItem = NULL;
+		firstDisplayed = 0;
+	}
+	menuDataGlobal.startIndex = LinkHead->id;// reuse this global to store the ID of the first item in the list
 	lastHeardCount = uiDataGlobal.lastHeardCount;
+	menuDataGlobal.endIndex = lastHeardCount;
+	displayLHDetails = false;
 	menuLastHeardExitCode = MENU_STATUS_SUCCESS;
 }
 
