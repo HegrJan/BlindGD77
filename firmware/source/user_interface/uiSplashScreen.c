@@ -138,11 +138,11 @@ static void updateScreen(void)
 		ucClearBuf();
 
 #if defined(PLATFORM_RD5R)
-		ucPrintCentered(0, "OpenRD5R", FONT_SIZE_3);
+		ucPrintCentered(0, "AccessibleRD5R", FONT_SIZE_3);
 #elif defined(PLATFORM_GD77)
-		ucPrintCentered(8, "OpenGD77", FONT_SIZE_3);
+		ucPrintCentered(8, "AccessibleGD77", FONT_SIZE_3);
 #elif defined(PLATFORM_DM1801)
-		ucPrintCentered(8, "OpenDM1801", FONT_SIZE_3);
+		ucPrintCentered(8, "AccessibleDM1801", FONT_SIZE_3);
 #endif
 		ucPrintCentered((DISPLAY_SIZE_Y / 4) * 2, line1, FONT_SIZE_3);
 		ucPrintCentered((DISPLAY_SIZE_Y / 4) * 3, line2, FONT_SIZE_3);
