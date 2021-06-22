@@ -1579,6 +1579,21 @@ static void handleEvent(uiEvent_t *ev)
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 				uiChannelModeUpdateScreen(0);
 			}
+			else
+			{
+				struct_codeplugChannel_t tempChannel;
+				if (uiDataGlobal.priorityChannelActive)
+					codeplugChannelGetDataForIndex(uiDataGlobal.priorityChannelIndex, &tempChannel);
+				else if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+					codeplugChannelGetDataForIndex(nonVolatileSettings.currentChannelIndexInAllZone, &tempChannel);
+				else
+					codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.currentChannelIndexInZone], &tempChannel);
+				currentChannelData->flag4=tempChannel.flag4;
+				trxSetModeAndBandwidth(currentChannelData->chMode, currentChannelData->flag4);
+				announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
+				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				uiChannelModeUpdateScreen(0);
+			}
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
 		{
