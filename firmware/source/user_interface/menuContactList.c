@@ -433,15 +433,16 @@ enum CONTACT_LIST_QUICK_MENU_ITEMS
 	NUM_CONTACT_LIST_QUICK_MENU_ITEMS    // The last item in the list is used so that we automatically get a total number of items in the list
 };
 
-static void updateSubMenuScreen(void)
+static void updateSubMenuScreen(bool isFirstRun)
 {
 	int mNum = 0;
 	static const int bufferLen = 17;
 	char buf[bufferLen];
 	char * const *langTextConst = NULL;// initialise to please the compiler
-
-	voicePromptsInit();
-
+	if (!isFirstRun)
+	{
+		voicePromptsInit();
+	}
 	ucClearBuf();
 
 	codeplugUtilConvertBufToString((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactListContactData.name : contactListDTMFContactData.name, buf, 16);
@@ -615,12 +616,12 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 	{
 		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
-		updateSubMenuScreen();
+		updateSubMenuScreen(false);
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 	{
 		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
-		updateSubMenuScreen();
+		updateSubMenuScreen(false);
 	}
 
 	if ((menuDataGlobal.currentItemIndex == CONTACT_LIST_QUICK_MENU_SELECT) && (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) &&
@@ -637,7 +638,12 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 	if (isFirstRun)
 	{
 		menuDataGlobal.currentItemIndex=0;
-		updateSubMenuScreen();
+		
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->quick_menu);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+		updateSubMenuScreen(isFirstRun);
 		keyboardInit();
 		menuContactListSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
