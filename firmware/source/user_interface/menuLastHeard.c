@@ -208,13 +208,16 @@ enum LAST_HEARD_SUBMENU_ITEMS
 	NUM_LAST_HEARD_SUBMENU_ITEMS
 };
 
-static void updateSubMenuScreen(void)
+static void updateSubMenuScreen(bool isFirstRun)
 {
 	int mNum = 0;
 	static const int bufferLen = 17;
 	char contact[bufferLen];
 
-	voicePromptsInit();
+	if (!isFirstRun)
+	{
+		voicePromptsInit();
+	}
 	ucClearBuf();
 
 	menuDisplayTitle(currentLanguage->select_tx);
@@ -289,12 +292,12 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 	{
 		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
-		updateSubMenuScreen();
+		updateSubMenuScreen(false);
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 	{
 		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
-		updateSubMenuScreen();
+		updateSubMenuScreen(false);
 	}
 }
 
@@ -303,7 +306,11 @@ menuStatus_t menuLastHeardSubMenu(uiEvent_t *ev, bool isFirstRun)
 	if (isFirstRun)
 	{
 		menuDataGlobal.currentItemIndex = 0;
-		updateSubMenuScreen();
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->quick_menu);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+		updateSubMenuScreen(isFirstRun);
 		keyboardInit();
 		menuLastHeardSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
