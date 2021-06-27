@@ -1887,6 +1887,10 @@ ANNOUNCE_STATIC void announceRadioMode(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->mode);
 	}
+		bool narrow=(currentChannelData->flag4&0x02)==0 ? true : false;
+	if (narrow && trxGetMode() == RADIO_MODE_ANALOG)
+		voicePromptsAppendPrompt(PROMPT_N);
+
 	voicePromptsAppendPrompt( (trxGetMode() == RADIO_MODE_DIGITAL) ? PROMPT_DMR : PROMPT_FM);
 }
 
@@ -2546,10 +2550,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 	}
 	voicePromptsAppendString(voiceBuf);
 
-	if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
-	{
-		announceRadioMode(voicePromptWasPlaying);
-	}
+	announceRadioMode(voicePromptWasPlaying);
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 	announceFrequency();
@@ -2584,7 +2585,6 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->txTone & CSS_TYPE_DCS_MASK ) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), DIRECTION_TRANSMIT, true);
 		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		announceBandWidth( false);
 	}
 
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
