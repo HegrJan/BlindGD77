@@ -1887,11 +1887,11 @@ ANNOUNCE_STATIC void announceRadioMode(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->mode);
 	}
-		bool narrow=(currentChannelData->flag4&0x02)==0 ? true : false;
-	if (narrow && trxGetMode() == RADIO_MODE_ANALOG)
-		voicePromptsAppendPrompt(PROMPT_N);
 
 	voicePromptsAppendPrompt( (trxGetMode() == RADIO_MODE_DIGITAL) ? PROMPT_DMR : PROMPT_FM);
+	bool narrow=(currentChannelData->flag4&0x02)==0 ? true : false;
+	if (narrow && trxGetMode() == RADIO_MODE_ANALOG)
+		voicePromptsAppendPrompt(PROMPT_N);
 }
 
 ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying)
