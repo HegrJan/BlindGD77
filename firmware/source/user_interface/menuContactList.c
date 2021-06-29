@@ -204,7 +204,8 @@ static void updateScreen(bool isFirstRun)
 				ucPrintCentered((DISPLAY_SIZE_Y / 2), currentLanguage->empty_list, FONT_SIZE_3);
 
 				voicePromptsAppendLanguageString(&currentLanguage->empty_list);
-				promptsPlayNotAfterTx();
+				if (!uiDataGlobal.VoicePrompts.inhibitInitial)
+					promptsPlayNotAfterTx();
 			}
 			else
 			{
@@ -226,7 +227,8 @@ static void updateScreen(bool isFirstRun)
 					if (i == 0)
 					{
 						voicePromptsAppendString(nameBuf);
-						promptsPlayNotAfterTx();
+						if (!uiDataGlobal.VoicePrompts.inhibitInitial)
+							promptsPlayNotAfterTx();
 					}
 				}
 			}
@@ -250,6 +252,8 @@ static void updateScreen(bool isFirstRun)
 			ucDrawChoice(CHOICE_DISMISS, false);
 			break;
 	}
+	if (uiDataGlobal.VoicePrompts.inhibitInitial)
+		uiDataGlobal.VoicePrompts.inhibitInitial=false;
 
 	ucRender();
 }
@@ -556,6 +560,7 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 				}
 				else
 				{
+					uiDataGlobal.VoicePrompts.inhibitInitial = true;
 					if (trxGetMode() == RADIO_MODE_ANALOG)
 					{
 						dtmfSequencePrepare(contactListDTMFContactData.code, true);
@@ -563,7 +568,6 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 					else
 					{
 						menuContactListSubMenuExitCode |= MENU_STATUS_ERROR;
-						uiDataGlobal.VoicePrompts.inhibitInitial = true;
 
 						return;
 					}
