@@ -208,7 +208,7 @@ static void updateScreen(bool isFirstRun)
 					leftSide = (char * const *)&currentLanguage->sk2Latch;
 					if (nonVolatileSettings.sk2Latch > 0)
 					{
-						snprintf(rightSideVar, bufferLen, "%1d.%1d", nonVolatileSettings.sk2Latch/2, (nonVolatileSettings.sk2Latch*5)%10);
+						snprintf(rightSideVar, bufferLen, "%d.%1d", nonVolatileSettings.sk2Latch/2, (nonVolatileSettings.sk2Latch*5)%10);
 						rightSideUnitsPrompt = PROMPT_SECONDS;
 						rightSideUnitsStr = "s";
 					}
@@ -590,7 +590,7 @@ static void handleEvent(uiEvent_t *ev)
 				break;
 #if !defined(PLATFORM_GD77S)
 			case OPTIONS_MENU_SK2_LATCH:
-				if (nonVolatileSettings.sk2Latch < 10)
+				if (nonVolatileSettings.sk2Latch < 20)
 				{
 					if (nonVolatileSettings.sk2Latch == 0) // start at 1 s, not half a second.
 						nonVolatileSettings.sk2Latch = 2;

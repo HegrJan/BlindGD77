@@ -2518,6 +2518,8 @@ static bool DoesPriorityChannelExistInCurrentZone()
 
 void AnnounceChannelSummary(bool voicePromptWasPlaying)
 {
+	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
+	
 		char voiceBuf[17];
 	char voiceBufChNumber[5];
 	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
@@ -2534,29 +2536,41 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
 
 	voicePromptsInit();
-	
-	if (thisIsThePriorityChannel)
-		voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
-	else
-		voicePromptsAppendPrompt(PROMPT_CHANNEL);
-	// If the number and name differ, then append.
-	if (announceChannelNumber && strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+	if (isChannelScreen)
 	{
-		voicePromptsAppendString(voiceBufChNumber);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		if (thisIsThePriorityChannel)
+			voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
+		else
+			voicePromptsAppendPrompt(PROMPT_CHANNEL);
+		// If the number and name differ, then append.
+		if (announceChannelNumber && strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+		{
+			voicePromptsAppendString(voiceBufChNumber);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+		}
+		voicePromptsAppendString(voiceBuf);
 	}
-	voicePromptsAppendString(voiceBuf);
+	
+	announceFrequency();
+	
+	uint32_t lFreq, hFreq;
 
+	if (!isChannelScreen && uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
+	{
+		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+		voicePromptsAppendLanguageString(&currentLanguage->low);
+		announceQRG(lFreq, true);
+		voicePromptsAppendLanguageString(&currentLanguage->high);
+		announceQRG(hFreq, true);
+	}
+	
 	announceRadioMode(voicePromptWasPlaying);
 	bool narrow=(currentChannelData->flag4&0x02)==0 ? true : false;
 	if (narrow && trxGetMode() == RADIO_MODE_ANALOG)
 		voicePromptsAppendPrompt(PROMPT_N);
 
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
-
-	announceFrequency();
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-
+	
 	if (trxGetMode() == RADIO_MODE_DIGITAL)
 	{
 		announceContactNameTgOrPc(voicePromptsIsPlaying());
