@@ -2604,7 +2604,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	announcePowerLevel(voicePromptWasPlaying);
-	if (currentChannelData->libreDMR_Power == 0)
+	if (isChannelScreen && currentChannelData->libreDMR_Power == 0)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->from_master);
 	}
