@@ -747,6 +747,7 @@ static void CycleRepeaterOffset()
 	{
 		repeaterOffsetDirection=0;
 		voicePromptsAppendLanguageString(&currentLanguage->none);
+		menuVFOExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 	}
 	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 		voicePromptsPlay();
