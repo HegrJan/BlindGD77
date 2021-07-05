@@ -2151,29 +2151,28 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 	switch(direction)
 	{
 	case DIRECTION_RECEIVE:
-		voicePromptsAppendString("RX");
+		//voicePromptsAppendString("RX");
+		voicePromptsAppendPrompt(PROMPT_RECEIVE);
 		break;
 	case DIRECTION_TRANSMIT:
-		voicePromptsAppendString("TX");
+		//voicePromptsAppendString("TX");
+		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
 		break;
 	default:
 		break;
 	}
 
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 	if (cssType == CSS_TYPE_NONE)
 	{
 		voicePromptsAppendString("CSS");
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->none);
 	}
 	else if (cssType == CSS_TYPE_CTCSS)
 	{
 		if (announceType)
 		{
-			voicePromptsAppendString("CTCSS");
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			//voicePromptsAppendString("CTCSS");
+			voicePromptsAppendLanguageString(&currentLanguage->tone);
 		}
 		snprintf(buf, BUFFER_LEN, "%d.%d", tone / 10, tone % 10);
 		voicePromptsAppendString(buf);
@@ -2184,7 +2183,6 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 		if (announceType)
 		{
 			voicePromptsAppendString("DCS");
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
 
 		dcsPrintf(buf, BUFFER_LEN, NULL, tone);

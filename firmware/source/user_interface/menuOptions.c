@@ -299,11 +299,15 @@ static void updateScreen(bool isFirstRun)
 					break;
 				case OPTIONS_MENU_VHF_RPT_OFFSET:
 					leftSide = (char * const *)&currentLanguage->vhfRptOffset;
-					snprintf(rightSideVar, bufferLen, "%d kHz", nonVolatileSettings.vhfOffset);
+					snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.vhfOffset);
+					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
+					rightSideUnitsStr = "kHz";
 					break;
 				case OPTIONS_MENU_UHF_RPT_OFFSET:
 					leftSide = (char * const *)&currentLanguage->uhfRptOffset;
-					snprintf(rightSideVar, bufferLen, "%d kHz", nonVolatileSettings.uhfOffset);
+					snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.uhfOffset);
+					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
+					rightSideUnitsStr = "kHz";
 					break;
 			}
 
@@ -800,11 +804,11 @@ static void handleEvent(uiEvent_t *ev)
 					break;
 				}
 			case OPTIONS_MENU_VHF_RPT_OFFSET:
-				if (nonVolatileSettings.vhfOffset > 0)
+				if (nonVolatileSettings.vhfOffset > 100)
 					settingsDecrement(nonVolatileSettings.vhfOffset, 100);
 				break;
 			case OPTIONS_MENU_UHF_RPT_OFFSET:
-				if (nonVolatileSettings.uhfOffset > 0)
+				if (nonVolatileSettings.uhfOffset > 100)
 					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
 				break;
 			}

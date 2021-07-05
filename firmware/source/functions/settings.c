@@ -183,6 +183,11 @@ bool settingsLoadSettings(void)
 	else if (nonVolatileSettings.dtmfLatch ==1)
 		nonVolatileSettings.dtmfLatch =2; // 1 seconds.
 	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
+	if (nonVolatileSettings.vhfOffset==0 || nonVolatileSettings.vhfOffset > 1000)
+		nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
+	if (nonVolatileSettings.uhfOffset==0 || nonVolatileSettings.uhfOffset > 9000) 
+		nonVolatileSettings.uhfOffset=5000; // repeater offset for 70 cm band.
+
 	return hasRestoredDefaultsettings;
 }
 

@@ -227,6 +227,7 @@ typedef struct
    const char* priorityScan;
    const char* vhfRptOffset;
    const char* uhfRptOffset;
+   const char* tone;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

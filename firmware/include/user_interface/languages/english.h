@@ -215,8 +215,9 @@ const stringsTable_t englishLanguage =
 .dtmfLatch="DTMF Latch",
 .priorityChannel="Pri",
 .priorityScan="Priority Scan",
-.vhfRptOffset="V.Off.",
-.uhfRptOffset="U.Off.",
+.vhfRptOffset="VHF Off",
+.uhfRptOffset="UHF Off",
+.tone="Tone"
 };
 /********************************************************************
  *
