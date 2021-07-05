@@ -77,7 +77,7 @@ static menuStatus_t menuVFOExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickVFOExitStatus = MENU_STATUS_SUCCESS;
 
 static bool quickmenuNewChannelHandled = false; // Quickmenu new channel confirmation window
-
+static int repeaterOffsetDirection=0;
 // Public interface
 menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 {
@@ -86,7 +86,7 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 	if (isFirstRun)
 	{
 		uiDataGlobal.FreqEnter.index = 0;
-
+		repeaterOffsetDirection=0;
 		uiDataGlobal.isDisplayingQSOData = false;
 		uiDataGlobal.reverseRepeater = false;
 		uiDataGlobal.displaySquelch = false;
@@ -570,6 +570,7 @@ void uiVFOModeStopScanning(void)
 
 static void updateFrequency(int frequency, bool announceImmediately)
 {
+	repeaterOffsetDirection=0;
 	if (selectedFreq == VFO_SELECTED_FREQUENCY_INPUT_TX)
 	{
 		if (trxGetBandFromFrequency(frequency) != -1)
@@ -683,6 +684,74 @@ void uiVFOLoadContact(struct_codeplugContact_t *contact)
 
 		codeplugContactGetDataForIndex(currentChannelData->contact, contact);
 	}
+}
+
+static void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeaterOffsetDirection)
+{
+	if (repeaterOffsetDirection==0)
+	{
+		*txFreq=*rxFreq;
+		return;	
+	}
+	int bandType=trxGetBandFromFrequency(*rxFreq);
+	bool isVHF=bandType==RADIO_BAND_VHF;
+	bool isUHF=bandType==RADIO_BAND_UHF;
+	
+	uint16_t offset=0;
+	if (isVHF)
+	{
+		offset=nonVolatileSettings.vhfOffset;
+	}
+	else if (isUHF)
+	{
+		offset=nonVolatileSettings.uhfOffset;
+	}
+	if (offset==0)
+	{
+		return;
+	}
+	
+	uint32_t newFreq=(*rxFreq);
+	if (repeaterOffsetDirection== 1)
+	{
+		newFreq+=(offset*100);
+	}
+	else
+	{
+		newFreq-=(offset*100);
+	}
+	
+	if (!trxCheckFrequencyInAmateurBand(newFreq))
+	{
+			return;
+	}
+	
+	(*txFreq)=newFreq;
+}
+
+static void CycleRepeaterOffset()
+{
+	voicePromptsInit();
+
+	if (repeaterOffsetDirection==0)
+	{
+		repeaterOffsetDirection=1;
+		voicePromptsAppendPrompt(PROMPT_PLUS);
+	}
+	else if (repeaterOffsetDirection == 1)
+	{
+		repeaterOffsetDirection=-1;
+		voicePromptsAppendPrompt(PROMPT_MINUS);
+	}
+	else
+	{
+		repeaterOffsetDirection=0;
+		voicePromptsAppendLanguageString(&currentLanguage->none);
+	}
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		voicePromptsPlay();
+	AdjustTXFreqByRepeaterOffset(&currentChannelData->rxFreq, &currentChannelData->txFreq, repeaterOffsetDirection);
+	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 }
 
 static void handleEvent(uiEvent_t *ev)
@@ -923,6 +992,10 @@ static void handleEvent(uiEvent_t *ev)
 					{
 						menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
 					}
+					else // analog, toggle between repeater offset 0, plus and minus.
+					{
+						CycleRepeaterOffset();
+					}
 				}
 				return;
 			}
@@ -1025,6 +1098,7 @@ static void handleEvent(uiEvent_t *ev)
 				}
 				else
 				{
+					repeaterOffsetDirection=0;
 					stepFrequency(VFO_FREQ_STEP_TABLE[(currentChannelData->VFOflag5 >> 4)] * -1);
 					uiVFOModeUpdateScreen(0);
 					settingsSetVFODirty();
@@ -1473,6 +1547,7 @@ static void handleUpKey(uiEvent_t *ev)
 		}
 		else
 		{
+			repeaterOffsetDirection=0;
 			stepFrequency(VFO_FREQ_STEP_TABLE[(currentChannelData->VFOflag5 >> 4)]);
 		}
 

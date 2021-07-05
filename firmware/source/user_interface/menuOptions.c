@@ -54,6 +54,8 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_TEMPERATURE_CALIBRATON, OPTIONS_MENU_BATTERY_CALIBRATON,
 							OPTIONS_MENU_ECO_LEVEL,
 							OPTIONS_MENU_PRIORITY_CHANNEL,
+							OPTIONS_MENU_VHF_RPT_OFFSET,
+							OPTIONS_MENU_UHF_RPT_OFFSET,
 							NUM_OPTIONS_MENU_ITEMS};
 
 menuStatus_t menuOptions(uiEvent_t *ev, bool isFirstRun)
@@ -294,6 +296,14 @@ static void updateScreen(bool isFirstRun)
 					}
 					else
 						rightSideConst = (char * const *)&currentLanguage->none;
+					break;
+				case OPTIONS_MENU_VHF_RPT_OFFSET:
+					leftSide = (char * const *)&currentLanguage->vhfRptOffset;
+					snprintf(rightSideVar, bufferLen, "%d kHz", nonVolatileSettings.vhfOffset);
+					break;
+				case OPTIONS_MENU_UHF_RPT_OFFSET:
+					leftSide = (char * const *)&currentLanguage->uhfRptOffset;
+					snprintf(rightSideVar, bufferLen, "%d kHz", nonVolatileSettings.uhfOffset);
 					break;
 			}
 
@@ -618,6 +628,14 @@ static void handleEvent(uiEvent_t *ev)
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
 				}
+			case OPTIONS_MENU_VHF_RPT_OFFSET:
+					if (nonVolatileSettings.vhfOffset < 1000)
+						settingsIncrement(nonVolatileSettings.vhfOffset, 100);
+					break;
+				case OPTIONS_MENU_UHF_RPT_OFFSET:
+					if (nonVolatileSettings.uhfOffset < 7000)
+						settingsIncrement(nonVolatileSettings.uhfOffset, 100);
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -781,6 +799,14 @@ static void handleEvent(uiEvent_t *ev)
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
 				}
+			case OPTIONS_MENU_VHF_RPT_OFFSET:
+				if (nonVolatileSettings.vhfOffset > 0)
+					settingsDecrement(nonVolatileSettings.vhfOffset, 100);
+				break;
+			case OPTIONS_MENU_UHF_RPT_OFFSET:
+				if (nonVolatileSettings.uhfOffset > 0)
+					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
+				break;
 			}
 		}
 		else if ((ev->keys.event & KEY_MOD_PRESS) && (menuDataGlobal.menuOptionsTimeout > 0))

@@ -225,6 +225,8 @@ typedef struct
    const char* dtmfLatch;
    const char* priorityChannel;
    const char* priorityScan;
+   const char* vhfRptOffset;
+   const char* uhfRptOffset;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
