@@ -3218,3 +3218,75 @@ bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel)
 	
 	return true;
 }
+void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeaterOffsetDirection)
+{
+	if (repeaterOffsetDirection==0)
+	{
+		*txFreq=*rxFreq;
+		return;	
+	}
+	int bandType=trxGetBandFromFrequency(*rxFreq);
+	bool isVHF=bandType==RADIO_BAND_VHF;
+	bool isUHF=bandType==RADIO_BAND_UHF;
+	
+	uint16_t offset=0;
+	if (isVHF)
+	{
+		offset=nonVolatileSettings.vhfOffset;
+	}
+	else if (isUHF)
+	{
+		offset=nonVolatileSettings.uhfOffset;
+	}
+	if (offset==0)
+	{
+		return;
+	}
+	
+	uint32_t newFreq=(*rxFreq);
+	if (repeaterOffsetDirection== 1)
+	{
+		newFreq+=(offset*100);
+	}
+	else
+	{
+		newFreq-=(offset*100);
+	}
+	
+	if (!trxCheckFrequencyInAmateurBand(newFreq))
+	{
+			return;
+	}
+	
+	(*txFreq)=newFreq;
+}
+
+void CycleRepeaterOffset(menuStatus_t* newMenuStatus)
+{
+	voicePromptsInit();
+
+	if (uiDataGlobal.repeaterOffsetDirection==0)
+	{
+		uiDataGlobal.repeaterOffsetDirection=1;
+		voicePromptsAppendPrompt(PROMPT_PLUS);
+	}
+	else if (uiDataGlobal.repeaterOffsetDirection == 1)
+	{
+		uiDataGlobal.repeaterOffsetDirection=-1;
+		voicePromptsAppendPrompt(PROMPT_MINUS);
+	}
+	else
+	{
+		uiDataGlobal.repeaterOffsetDirection=0;
+		voicePromptsAppendLanguageString(&currentLanguage->none);
+		if (newMenuStatus)
+		{
+			*newMenuStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
+		}
+	}
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		voicePromptsPlay();
+	AdjustTXFreqByRepeaterOffset(&currentChannelData->rxFreq, &currentChannelData->txFreq, uiDataGlobal.repeaterOffsetDirection);
+	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+}
+

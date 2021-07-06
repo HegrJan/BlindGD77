@@ -155,6 +155,8 @@ size_t dcsPrintf(char *dest, size_t maxLen, char *prefix, uint16_t tone);
 
 void freqEnterReset(void);
 int freqEnterRead(int startDigit, int endDigit, bool simpleDigits);
+void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeaterOffsetDirection);
+void CycleRepeaterOffset();
 
 int getBatteryPercentage(void);
 void getBatteryVoltage(int *volts, int *mvolts);

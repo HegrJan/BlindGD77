@@ -277,7 +277,8 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	uiDataGlobal.priorityChannelActive=false; // in case it was set by long press red.
 	
 	uiDataGlobal.Scan.timer =500; // force scan to continue;
-	}
+	uiDataGlobal.repeaterOffsetDirection=0; // reset this as the current channel just changed.
+}
 
 menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 {
@@ -295,7 +296,6 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		nextChannelReady = false;
 		uiDataGlobal.displaySquelch = false;
 		uiDataGlobal.Scan.refreshOnEveryStep = false;
-
 		// We're in digital mode, RXing, and current talker is already at the top of last heard list,
 		// hence immediately display complete contact/TG info on screen
 		// This mostly happens when getting out of a menu.
@@ -1247,7 +1247,11 @@ static void handleEvent(uiEvent_t *ev)
 
 					menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
 				}
-			}
+				else // analog, toggle between repeater offset 0, plus and minus.
+				{
+					CycleRepeaterOffset(&menuChannelExitStatus);
+				}
+							}
 			return;
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED))
