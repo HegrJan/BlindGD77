@@ -58,6 +58,32 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_UHF_RPT_OFFSET,
 							NUM_OPTIONS_MENU_ITEMS};
 
+static uint16_t GetNextValidChannelIndex(uint16_t start)
+{
+	uint16_t firstValidIndex=start+1;
+	while (firstValidIndex < codeplugGetTotalNumberOfChannels() && !codeplugAllChannelsIndexIsInUse(firstValidIndex))
+	{
+		firstValidIndex++;
+	}
+	if (codeplugAllChannelsIndexIsInUse(firstValidIndex))
+		return firstValidIndex;
+	else
+		return 0;
+}
+
+static uint16_t GetPrevValidChannelIndex(uint16_t start)
+{
+	uint16_t firstValidIndex=start-1;
+	while (firstValidIndex > 1 && !codeplugAllChannelsIndexIsInUse(firstValidIndex))
+	{
+		firstValidIndex--;
+	}
+	if (codeplugAllChannelsIndexIsInUse(firstValidIndex))
+		return firstValidIndex;
+	else
+		return 0;
+}
+
 menuStatus_t menuOptions(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
@@ -624,11 +650,18 @@ static void handleEvent(uiEvent_t *ev)
 #endif
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
-					// get max count.
-					if (nonVolatileSettings.priorityChannelIndex == NO_PRIORITY_CHANNEL) // none
-						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex, 1); // all channels zone begins at 1.
+					uint16_t firstValidIndex=GetNextValidChannelIndex(0);
+
+					if (nonVolatileSettings.priorityChannelIndex == NO_PRIORITY_CHANNEL && firstValidIndex > 0) // none
+						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex, firstValidIndex); // all channels zone begins at 1.
 					else if (nonVolatileSettings.priorityChannelIndex < codeplugGetTotalNumberOfChannels())
-						settingsIncrement(nonVolatileSettings.priorityChannelIndex, 1);
+					{
+						uint16_t nextValidIndex=GetNextValidChannelIndex(nonVolatileSettings.priorityChannelIndex);
+						if (nextValidIndex > 0)
+						{
+							settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex, nextValidIndex); // all channels zone begins at 1.
+						}
+					}
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
 				}
@@ -796,10 +829,18 @@ static void handleEvent(uiEvent_t *ev)
 #endif
 			case OPTIONS_MENU_PRIORITY_CHANNEL:
 				{
-					if (nonVolatileSettings.priorityChannelIndex == 1)
+					uint16_t firstValidIndex=GetNextValidChannelIndex(0);
+						
+					if (nonVolatileSettings.priorityChannelIndex <= firstValidIndex)
 						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex , NO_PRIORITY_CHANNEL);
-					else if (nonVolatileSettings.priorityChannelIndex > 1 && nonVolatileSettings.priorityChannelIndex != NO_PRIORITY_CHANNEL)
-						settingsDecrement(nonVolatileSettings.priorityChannelIndex, 1);
+					else if (firstValidIndex > 0 && nonVolatileSettings.priorityChannelIndex > firstValidIndex && nonVolatileSettings.priorityChannelIndex != NO_PRIORITY_CHANNEL)
+					{
+						uint16_t priorValidIndex=GetPrevValidChannelIndex(nonVolatileSettings.priorityChannelIndex);
+						if (priorValidIndex > 0)
+						{
+							settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex , priorValidIndex);
+						}
+					}
 					uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 					break;
 				}
