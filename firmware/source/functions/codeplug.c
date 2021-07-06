@@ -1482,6 +1482,10 @@ uint16_t codeplugGetTotalNumberOfChannels()
 	return allChannelsTotalNumOfChannels;
 }
 
+uint16_t codeplugGetAllChannelsHighestChannelIndex()
+{
+	return allChannelsHighestChannelIndex;
+}
 bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChannelsZone, uint16_t* indexRelativeToCurrentZone)
 {
 	if (indexRelativeToAllChannelsZone > codeplugGetTotalNumberOfChannels())

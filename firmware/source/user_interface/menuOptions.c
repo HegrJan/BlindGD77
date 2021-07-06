@@ -61,7 +61,7 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 static uint16_t GetNextValidChannelIndex(uint16_t start)
 {
 	uint16_t firstValidIndex=start+1;
-	while (firstValidIndex < codeplugGetTotalNumberOfChannels() && !codeplugAllChannelsIndexIsInUse(firstValidIndex))
+	while (firstValidIndex < codeplugGetAllChannelsHighestChannelIndex() && !codeplugAllChannelsIndexIsInUse(firstValidIndex))
 	{
 		firstValidIndex++;
 	}
@@ -654,7 +654,7 @@ static void handleEvent(uiEvent_t *ev)
 
 					if (nonVolatileSettings.priorityChannelIndex == NO_PRIORITY_CHANNEL && firstValidIndex > 0) // none
 						settingsSetUINT16(&nonVolatileSettings.priorityChannelIndex, firstValidIndex); // all channels zone begins at 1.
-					else if (nonVolatileSettings.priorityChannelIndex < codeplugGetTotalNumberOfChannels())
+					else if (nonVolatileSettings.priorityChannelIndex < codeplugGetAllChannelsHighestChannelIndex())
 					{
 						uint16_t nextValidIndex=GetNextValidChannelIndex(nonVolatileSettings.priorityChannelIndex);
 						if (nextValidIndex > 0)
