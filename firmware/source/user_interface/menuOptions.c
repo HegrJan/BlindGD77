@@ -637,7 +637,7 @@ static void handleEvent(uiEvent_t *ev)
 						settingsIncrement(nonVolatileSettings.vhfOffset, 100);
 					break;
 				case OPTIONS_MENU_UHF_RPT_OFFSET:
-					if (nonVolatileSettings.uhfOffset < 7000)
+					if (nonVolatileSettings.uhfOffset < 9900)
 						settingsIncrement(nonVolatileSettings.uhfOffset, 100);
 					break;
 			}
