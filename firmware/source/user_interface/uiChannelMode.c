@@ -104,6 +104,7 @@ static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel con
 
 static menuStatus_t menuChannelExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickChannelExitStatus = MENU_STATUS_SUCCESS;
+static uint16_t repeaterOffsetDisplayTimeout=0;
 
 struct DualWatchChannelData_t
 {
@@ -379,6 +380,20 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 	else
 	{
 		menuChannelExitStatus = MENU_STATUS_SUCCESS;
+		
+		if (uiDataGlobal.displayChannelSettings)
+		{
+			if (repeaterOffsetDisplayTimeout > 0)
+			{
+				repeaterOffsetDisplayTimeout--;
+			}
+			else
+			{
+				uiDataGlobal.displayChannelSettings=false;
+				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				uiChannelModeUpdateScreen(0);//joe
+			}
+		}
 
 #if defined(PLATFORM_GD77S)
 		uiChannelModeHeartBeatActivityForGD77S(ev);
@@ -1250,6 +1265,10 @@ static void handleEvent(uiEvent_t *ev)
 				else // analog, toggle between repeater offset 0, plus and minus.
 				{
 					CycleRepeaterOffset(&menuChannelExitStatus);
+					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+					uiDataGlobal.displayChannelSettings = true;
+					repeaterOffsetDisplayTimeout=2000;
+					uiChannelModeUpdateScreen(0);
 				}
 							}
 			return;

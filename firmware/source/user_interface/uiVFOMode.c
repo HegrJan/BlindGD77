@@ -925,6 +925,8 @@ static void handleEvent(uiEvent_t *ev)
 					else // analog, toggle between repeater offset 0, plus and minus.
 					{
 						CycleRepeaterOffset(&menuVFOExitStatus);
+						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+						uiVFOModeUpdateScreen(0);
 					}
 				}
 				return;
