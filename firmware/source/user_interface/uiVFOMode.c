@@ -937,6 +937,8 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+					if (currentChannelData->flag4&0x02)
+						menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
 				}
 				else if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 				{
@@ -1140,6 +1142,8 @@ static void handleEvent(uiEvent_t *ev)
 				currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 				menuSystemPopAllAndDisplayRootMenu(); // Force to set all TX/RX settings.
+				if (nonVolatileSettings.currentVFONumber==CHANNEL_VFO_A)
+					menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
 				return;
 			}
 			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT))

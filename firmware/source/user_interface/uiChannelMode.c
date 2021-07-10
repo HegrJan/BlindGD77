@@ -1305,6 +1305,7 @@ static void handleEvent(uiEvent_t *ev)
 						nonVolatileSettings.currentChannelIndexInAllZone=dualWatchChannelData.currentChannelIndex;
 					else
 						nonVolatileSettings.currentChannelIndexInZone=dualWatchChannelData.currentChannelIndex;
+					menuChannelExitStatus |= MENU_STATUS_FORCE_FIRST;
 				}
 				loadChannelData(uiDataGlobal.priorityChannelActive, true);
 			}
