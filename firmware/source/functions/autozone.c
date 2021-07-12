@@ -86,8 +86,6 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		case 	AutoZone_AU_UHFCB:
 		ApplyUHFCBRestrictions(index, channelBuf);
 		break;
-		//case AutoZone_AU_VHF_MARINE:
-//			break;
 		case AutoZone_NOAA:
 			channelBuf->flag4|=0x04; // RX only.
 			break;
@@ -96,8 +94,6 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 			if (index > 8)
 				channelBuf->txFreq=channelBuf->rxFreq;
 			break;
-		case AutoZone_FRS:
-		case AutoZone_MURS:
 		default:
 			return;
 	}	
@@ -162,15 +158,11 @@ void AutoZoneInitialize(AutoZoneType_t type)
 		case	AutoZone_AU_UHFCB:
 			InitializeAU_UHFCB();
 			break;
-//		case AutoZone_AU_VHF_MARINE:
 		case AutoZone_NOAA:
 			InitializeNOAA();
 			break;
 		case AutoZone_GMRS:
 			InitializeGMRS();
-			break;
-		case AutoZone_FRS:
-		case AutoZone_MURS:
 			break;
 		default:
 		break;
@@ -257,36 +249,10 @@ bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBu
 	channelBuf->rxTone=autoZone->rxTone;
 	channelBuf->txTone=autoZone->txTone;
 
-	/*channelBuf->txRefFreq;
-	channelBuf->tot;
-	channelBuf->totRekey;
-	channelBuf->admitCriteria;
-	channelBuf->rssiThreshold;
-	channelBuf->scanList;
-	channelBuf->voiceEmphasis;
-	channelBuf->txSignaling;
-	channelBuf->LibreDMR_flag1; // was unmuteRule. 0x80: Optional DMRID sets.
-	channelBuf->rxSignaling;    // +--
-	channelBuf->artsInterval;   // | These 3 bytes were repurposed for optional DMRID
-	channelBuf->encrypt;        // +--
-	channelBuf->rxColor;
-	channelBuf->rxGroupList;
-	channelBuf->txColor;
-	channelBuf->emgSystem;
-	channelBuf->contact;
-	channelBuf->flag1;
-	channelBuf->flag2;
-	channelBuf->flag3;// bits... 0x20 = DisableAllLeds
-	*/
 	if (autoZone->flags & AutoZoneNarrow)
 		channelBuf->flag4&=~0x02; // clear.
 	else
 		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
-	/*channelBuf->VFOoffsetFreq;
-	channelBuf->VFOflag5;// upper 4 bits are the step frequency 2.5,5,6.25,10,12.5,25,30,50kHz
-	channelBuf->sql=0;// Does not seem to be used in the official firmware and seems to be always set to 0
-	channelBuf->NOT_IN_CODEPLUG_flag=0; // bit 0x01 = vfo channel
-*/
 	AutoZoneApplyChannelRestrictions(index, channelBuf);
 	return true;
 }

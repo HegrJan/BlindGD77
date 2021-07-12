@@ -59,6 +59,26 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_AUTOZONE,
 							NUM_OPTIONS_MENU_ITEMS};
 
+static void ResetZoneAndChannelIfNeeded(bool disablingAutoZone)
+{
+	bool isAutoZone=AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber);
+	
+	if (isAutoZone)
+	{
+		if (disablingAutoZone)
+			settingsSet(nonVolatileSettings.currentZone, 0);
+		// Either way, reset the channel.
+		settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0); // Since we are switching zones the channel index should be reset
+		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	}
+	else if (!disablingAutoZone)
+	{// we're enabling and the autoZone is not currently active.
+		settingsSet(nonVolatileSettings.currentZone, codeplugZonesGetCount()-2);// set the AutoZone as the current zone.
+		settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0); // Since we are switching zones the channel index should be reset
+		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	}
+}
+
 static uint16_t GetNextValidChannelIndex(uint16_t start)
 {
 	uint16_t firstValidIndex=start+1;
@@ -689,11 +709,13 @@ static void handleEvent(uiEvent_t *ev)
 				if ((nonVolatileSettings.autoZone.flags&AutoZoneEnabled)==0)
 				{
 					AutoZoneInitialize(AutoZone_AU_UHFCB);
+					ResetZoneAndChannelIfNeeded(false);
 				}
 				else if (nonVolatileSettings.autoZone.type < AutoZone_TYPE_MAX)
 				{
 					settingsIncrement(nonVolatileSettings.autoZone.type, 1);
 					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
+					ResetZoneAndChannelIfNeeded(false);
 				}
 				break;
 			}
@@ -880,9 +902,13 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					settingsDecrement(nonVolatileSettings.autoZone.type, 1);
 					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
+					ResetZoneAndChannelIfNeeded(false);
 				}
 				else
+				{
 					nonVolatileSettings.autoZone.flags&=~AutoZoneEnabled;
+					ResetZoneAndChannelIfNeeded(true);
+				}
 				break;
 			}
 		}
