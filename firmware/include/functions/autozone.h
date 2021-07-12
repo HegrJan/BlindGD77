@@ -48,7 +48,7 @@ typedef enum
 typedef enum
 {
 	AutoZone_AU_UHFCB=1,
-	AutoZone_AU_VHF_MARINE,
+	//AutoZone_AU_VHF_MARINE,
 	AutoZone_NOAA,
 	AutoZone_MURS,
 	AutoZone_FRS,

@@ -86,8 +86,11 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		case 	AutoZone_AU_UHFCB:
 		ApplyUHFCBRestrictions(index, channelBuf);
 		break;
-		case AutoZone_AU_VHF_MARINE:
+		//case AutoZone_AU_VHF_MARINE:
+//			break;
 		case AutoZone_NOAA:
+			channelBuf->flag4|=0x04; // RX only.
+			break;
 		case AutoZone_MURS:
 		case AutoZone_FRS:
 		case AutoZone_GMRS:
@@ -117,6 +120,21 @@ void InitializeAU_UHFCB()
 	autoZone->totalChannels=totalChannels;
 }
 
+static void InitializeNOAA()
+{
+//162.400, 162.425, 162.450, 162.475, 162.500, 162.525, and 162.550	
+	strcpy(autoZone->name, "NOAA");
+	autoZone->flags=AutoZoneEnabled;
+	autoZone->type=AutoZone_NOAA;
+	autoZone->startFrequency=16240000; // mHz of first channel
+	autoZone->endFrequency=16255000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
+	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
+	autoZone->curChannelIndex=1;
+	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
+	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/autoZone->channelSpacing;
+	autoZone->totalChannels=totalChannels;
+}
+
 void AutoZoneInitialize(AutoZoneType_t type)
 {
 		memset(autoZone, 0, sizeof(struct_AutoZoneParams_t));
@@ -126,8 +144,10 @@ void AutoZoneInitialize(AutoZoneType_t type)
 		case	AutoZone_AU_UHFCB:
 			InitializeAU_UHFCB();
 			break;
-		case AutoZone_AU_VHF_MARINE:
+//		case AutoZone_AU_VHF_MARINE:
 		case AutoZone_NOAA:
+			InitializeNOAA();
+			break;
 		case AutoZone_MURS:
 		case AutoZone_FRS:
 		case AutoZone_GMRS:
