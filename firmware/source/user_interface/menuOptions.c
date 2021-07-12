@@ -355,7 +355,14 @@ static void updateScreen(bool isFirstRun)
 
 				if (!wasPlaying || menuDataGlobal.newOptionSelected)
 				{
-					voicePromptsAppendLanguageString((const char * const *)leftSide);
+					// hackhack for autoZones until I add its own vp.
+					if (mNum==OPTIONS_MENU_AUTOZONE)
+					{
+						voicePromptsAppendLanguageString(&currentLanguage->Auto);
+						voicePromptsAppendLanguageString(&currentLanguage->zone);
+					}
+					else
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
 				}
 
 				if ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL)))

@@ -1,0 +1,250 @@
+/*
+ * Copyright (C) 2021
+ * Joseph Stephen VK7JS
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer
+ *    in the documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * 4. Use of this source code or binary releases for commercial purposes is strictly forbidden. This includes, without limitation,
+ *    incorporation in a commercial product or incorporation into a product or project which allows commercial use.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+#include <stdio.h>
+#include "functions/autozone.h"
+#include "utils.h"
+#include "functions/settings.h"
+#include "functions/sound.h"
+
+static struct_AutoZoneParams_t* autoZone = &nonVolatileSettings.autoZone;
+
+uint16_t AutoZoneGetTotalChannels()
+{
+	return autoZone->totalChannels;
+}
+
+bool AutoZoneIsValid()
+{
+	if ((autoZone->flags & AutoZoneEnabled)==0) // turned off.
+	return false;
+	if (autoZone->name[0]==0xff || autoZone->name[0]==0)
+		return false;
+	if (autoZone->endFrequency <= autoZone->startFrequency)
+		return false;
+	if (autoZone->channelSpacing==0)
+		return false;
+	
+	return true;	
+}
+
+bool AutoZoneIsCurrentZone(int zoneIndex)
+{
+	return zoneIndex == -2; // allchannels is -1, AutoZones are -2, -3, etc.
+}
+
+static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	// Channels 22, 23, 61, 62 & 63 are rx only.
+	switch (index)
+	{
+		case 22:
+		case 23:
+		case 61:
+		case 62:
+		case 63:
+			channelBuf->flag4 |= 0x04;// rx only. 
+			break;
+		default:
+			break;
+	}
+	if ((index > 8 && index < 41) || (index > 48)) // force simplex since repeaters are only allowed on 1-8 and 41-48.
+	{
+		channelBuf->txFreq=channelBuf->rxFreq;
+	}
+}
+
+/*
+Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band are RX only.
+*/
+ void AutoZoneApplyChannelRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	switch (autoZone->type)
+	{
+		case 	AutoZone_AU_UHFCB:
+		ApplyUHFCBRestrictions(index, channelBuf);
+		break;
+		case AutoZone_AU_VHF_MARINE:
+		case AutoZone_NOAA:
+		case AutoZone_MURS:
+		case AutoZone_FRS:
+		case AutoZone_GMRS:
+		default:
+			return;
+	}	
+}	
+
+void InitializeAU_UHFCB()
+{
+	strcpy(autoZone->name, "AU UHF CB");
+	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels|AutoZoneOffsetDirectionPlus |AutoZoneNarrow;
+	autoZone->type=AutoZone_AU_UHFCB;
+	autoZone->startFrequency=47642500; // mHz of first channel
+	autoZone->endFrequency=47740000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
+	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
+	autoZone->repeaterOffset=750; // kHz.
+	autoZone->priorityChannelIndex=5;// ch5
+	autoZone->curChannelIndex=1;
+	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
+	uint16_t adjacentChannelSpacing=autoZone->channelSpacing;
+	if (autoZone->flags & AutoZoneInterleaveChannels)
+		adjacentChannelSpacing/=2; // for the purposes of calculating the number of channels.
+	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/adjacentChannelSpacing;
+	if (totalChannels > codeplugChannelsPerZone)
+		totalChannels=codeplugChannelsPerZone; // max 80.
+	autoZone->totalChannels=totalChannels;
+}
+
+void AutoZoneInitialize(AutoZoneType_t type)
+{
+		memset(autoZone, 0, sizeof(struct_AutoZoneParams_t));
+	
+	switch (type)
+	{
+		case	AutoZone_AU_UHFCB:
+			InitializeAU_UHFCB();
+			break;
+		case AutoZone_AU_VHF_MARINE:
+		case AutoZone_NOAA:
+		case AutoZone_MURS:
+		case AutoZone_FRS:
+		case AutoZone_GMRS:
+			break;
+		default:
+		break;
+	}
+}
+
+bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf)
+{
+	if (zoneNum != (codeplugZonesGetCount() - 2) || !AutoZoneIsValid())
+		return false;
+	
+	// This is the autogenerated zone.
+	int nameLen = SAFE_MIN(((int)sizeof(returnBuf->name)), ((int)strlen(autoZone->name)));
+	// Codeplug name is 0xff filled, codeplugUtilConvertBufToString() handles the conversion
+	memset(returnBuf->name, 0xff, sizeof(returnBuf->name));
+	memcpy(returnBuf->name, autoZone->name, nameLen);
+	for (uint16_t channelIndex=0; channelIndex < autoZone->totalChannels; ++channelIndex)
+	{
+		returnBuf->channels[channelIndex]=channelIndex+1;
+	}
+	returnBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone = autoZone->totalChannels;
+	returnBuf->NOT_IN_CODEPLUGDATA_highestIndex = autoZone->totalChannels;
+	returnBuf->NOT_IN_CODEPLUGDATA_indexNumber = -2;// Set as -2 as this is not a real zone. Its the autogenerated zone.
+	
+	return true;
+}
+
+bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
+{
+	if (!rxFreq || !txFreq)
+		return false;
+	if (!AutoZoneIsValid())
+		return false;
+	if (index > autoZone->totalChannels)
+		return false;
+	
+	uint16_t multiplier=(index-1);
+	// If interleaved, first half of channels start at startFrequency and are every 25 kHz.
+	// Second half are offset by 12.5 kHz between the first half of the channels.
+	uint16_t interleaveOffset=0;
+	if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > autoZone->totalChannels/2))
+	{
+		interleaveOffset=autoZone->channelSpacing/2;
+		multiplier -= (autoZone->totalChannels/2);
+	}
+	*rxFreq = autoZone->startFrequency+interleaveOffset+(multiplier * autoZone->channelSpacing);
+	*txFreq = *rxFreq;
+	// adjust by repeater offset if duplex is on.
+	if ((autoZone->flags&AutoZoneDuplexEnabled) && autoZone->repeaterOffset > 0)
+	{
+		if (autoZone->flags&AutoZoneOffsetDirectionPlus)
+			(*txFreq)+=(autoZone->repeaterOffset*100);
+		else
+			(*txFreq)-=(autoZone->repeaterOffset*100);
+	}
+	return true;
+}
+
+bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	if (!channelBuf)
+	{
+		return false;
+	}
+	
+	uint32_t rxFreq=0;
+	uint32_t txFreq=0;
+	
+	if (!AutoZoneGetFrequenciesForIndex(index, &rxFreq, &txFreq))
+	{
+		return false;
+	}
+
+	// generate the channel name.
+	memset(channelBuf->name, 0xff, 16);
+	snprintf(channelBuf->name, 16, "%d", index);
+	channelBuf->rxFreq=rxFreq;
+	channelBuf->txFreq=txFreq;
+	channelBuf->chMode=(autoZone->flags & AutoZoneModeDigital) ? RADIO_MODE_DIGITAL : RADIO_MODE_ANALOG;
+	channelBuf->libreDMR_Power=0; // From master unless overridden by restriction.
+	channelBuf->rxTone=autoZone->rxTone;
+	channelBuf->txTone=autoZone->txTone;
+
+	/*channelBuf->txRefFreq;
+	channelBuf->tot;
+	channelBuf->totRekey;
+	channelBuf->admitCriteria;
+	channelBuf->rssiThreshold;
+	channelBuf->scanList;
+	channelBuf->voiceEmphasis;
+	channelBuf->txSignaling;
+	channelBuf->LibreDMR_flag1; // was unmuteRule. 0x80: Optional DMRID sets.
+	channelBuf->rxSignaling;    // +--
+	channelBuf->artsInterval;   // | These 3 bytes were repurposed for optional DMRID
+	channelBuf->encrypt;        // +--
+	channelBuf->rxColor;
+	channelBuf->rxGroupList;
+	channelBuf->txColor;
+	channelBuf->emgSystem;
+	channelBuf->contact;
+	channelBuf->flag1;
+	channelBuf->flag2;
+	channelBuf->flag3;// bits... 0x20 = DisableAllLeds
+	*/
+	if (autoZone->flags & AutoZoneNarrow)
+		channelBuf->flag4&=~0x02; // clear.
+	else
+		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
+	/*channelBuf->VFOoffsetFreq;
+	channelBuf->VFOflag5;// upper 4 bits are the step frequency 2.5,5,6.25,10,12.5,25,30,50kHz
+	channelBuf->sql=0;// Does not seem to be used in the official firmware and seems to be always set to 0
+	channelBuf->NOT_IN_CODEPLUG_flag=0; // bit 0x01 = vfo channel
+*/
+	AutoZoneApplyChannelRestrictions(index, channelBuf);
+	return true;
+}
+
