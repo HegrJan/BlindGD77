@@ -80,4 +80,5 @@ bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf);
 // indices are 0-based.
 bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq);
 bool AutoZoneGetChannelData(uint16_t index, struct_codeplugChannel_t *channelBuf);
+void AutoZoneApplyChannelRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 #endif //_OPENGD77_AUTOZONE_H_

@@ -3298,6 +3298,7 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 		voicePromptsPlay();
 	AdjustTXFreqByRepeaterOffset(&currentChannelData->rxFreq, &currentChannelData->txFreq, direction);
+	AutoZoneApplyChannelRestrictions(uiDataGlobal.currentSelectedChannelNumber, currentChannelData);
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 	return true;
 }
