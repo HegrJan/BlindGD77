@@ -62,7 +62,7 @@ typedef struct
 	uint16_t flags; // See AutoZoneFlags_t enum.
 	AutoZoneType_t type;
 	uint32_t startFrequency; // mHz of first channel
-	uint32_t endFrequency; // mHz of last channel
+	uint32_t endFrequency; // mHz of last non-interstitial/interleaved channel
 	uint16_t channelSpacing; // kHz channel step x 100.
 	uint16_t repeaterOffset; // kHz.
 	uint16_t priorityChannelIndex;

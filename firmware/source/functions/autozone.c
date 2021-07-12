@@ -91,9 +91,13 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		case AutoZone_NOAA:
 			channelBuf->flag4|=0x04; // RX only.
 			break;
-		case AutoZone_MURS:
-		case AutoZone_FRS:
 		case AutoZone_GMRS:
+			// interstitial channels must be simplex.
+			if (index > 8)
+				channelBuf->txFreq=channelBuf->rxFreq;
+			break;
+		case AutoZone_FRS:
+		case AutoZone_MURS:
 		default:
 			return;
 	}	
@@ -138,15 +142,15 @@ static void InitializeNOAA()
 		static void InitializeGMRS()
 		{// 462.55 through 462.725 25 kHz steps.
 	strcpy(autoZone->name, "GMRS");
-	autoZone->flags=AutoZoneEnabled;
+	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow;
+	autoZone->repeaterOffset=5000; // kHz.
 	autoZone->type=AutoZone_GMRS;
 	autoZone->startFrequency=46255000; // mHz of first channel
 	autoZone->endFrequency=46272500; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
 	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
 	autoZone->curChannelIndex=1;
 	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/autoZone->channelSpacing;
-	autoZone->totalChannels=totalChannels;
+	autoZone->totalChannels=15; // 8 primary plus 7 interstitial.
 }
 
 void AutoZoneInitialize(AutoZoneType_t type)
@@ -207,10 +211,13 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 	// If interleaved, first half of channels start at startFrequency and are every 25 kHz.
 	// Second half are offset by 12.5 kHz between the first half of the channels.
 	uint16_t interleaveOffset=0;
-	if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > autoZone->totalChannels/2))
+	uint16_t totalChannelsRoundedUpToEven=autoZone->totalChannels;
+	if ((totalChannelsRoundedUpToEven%2)==1)
+		totalChannelsRoundedUpToEven++; // so when we divide by 2, if odd number, we round up.
+	if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2))
 	{
 		interleaveOffset=autoZone->channelSpacing/2;
-		multiplier -= (autoZone->totalChannels/2);
+		multiplier -= (totalChannelsRoundedUpToEven/2);
 	}
 	*rxFreq = autoZone->startFrequency+interleaveOffset+(multiplier * autoZone->channelSpacing);
 	*txFreq = *rxFreq;
