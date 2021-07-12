@@ -134,6 +134,20 @@ static void InitializeNOAA()
 	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/autoZone->channelSpacing;
 	autoZone->totalChannels=totalChannels;
 }
+		
+		static void InitializeGMRS()
+		{// 462.55 through 462.725 25 kHz steps.
+	strcpy(autoZone->name, "GMRS");
+	autoZone->flags=AutoZoneEnabled;
+	autoZone->type=AutoZone_GMRS;
+	autoZone->startFrequency=46255000; // mHz of first channel
+	autoZone->endFrequency=46272500; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
+	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
+	autoZone->curChannelIndex=1;
+	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
+	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/autoZone->channelSpacing;
+	autoZone->totalChannels=totalChannels;
+}
 
 void AutoZoneInitialize(AutoZoneType_t type)
 {
@@ -148,9 +162,11 @@ void AutoZoneInitialize(AutoZoneType_t type)
 		case AutoZone_NOAA:
 			InitializeNOAA();
 			break;
-		case AutoZone_MURS:
-		case AutoZone_FRS:
 		case AutoZone_GMRS:
+			InitializeGMRS();
+			break;
+		case AutoZone_FRS:
+		case AutoZone_MURS:
 			break;
 		default:
 		break;
