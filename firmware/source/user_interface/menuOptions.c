@@ -690,6 +690,11 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					AutoZoneInitialize(AutoZone_AU_UHFCB);
 				}
+				else if (nonVolatileSettings.autoZone.type < AutoZone_TYPE_MAX)
+				{
+					settingsIncrement(nonVolatileSettings.autoZone.type, 1);
+					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
+				}
 				break;
 			}
 		}
@@ -871,7 +876,12 @@ static void handleEvent(uiEvent_t *ev)
 					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
 				break;
 			case OPTIONS_MENU_AUTOZONE:
-				if (nonVolatileSettings.autoZone.flags&AutoZoneEnabled)
+				if (nonVolatileSettings.autoZone.type > AutoZone_AU_UHFCB)
+				{
+					settingsDecrement(nonVolatileSettings.autoZone.type, 1);
+					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
+				}
+				else
 					nonVolatileSettings.autoZone.flags&=~AutoZoneEnabled;
 				break;
 			}
