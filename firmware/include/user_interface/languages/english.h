@@ -217,7 +217,8 @@ const stringsTable_t englishLanguage =
 .priorityScan="Priority Scan",
 .vhfRptOffset="VHF Off",
 .uhfRptOffset="UHF Off",
-.tone="Tone"
+.tone="Tone",
+.autoZone="AutoZn"
 };
 /********************************************************************
  *

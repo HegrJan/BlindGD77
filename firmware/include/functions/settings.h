@@ -32,7 +32,7 @@
 
 #include "functions/codeplug.h"
 #include "functions/trx.h"
-
+#include "functions/autozone.h"
 enum USB_MODE { USB_MODE_CPS, USB_MODE_HOTSPOT, USB_MODE_DEBUG };
 enum SETTINGS_UI_MODE { SETTINGS_CHANNEL_MODE = 0, SETTINGS_VFO_A_MODE, SETTINGS_VFO_B_MODE };
 enum BACKLIGHT_MODE { BACKLIGHT_MODE_AUTO = 0, BACKLIGHT_MODE_SQUELCH, BACKLIGHT_MODE_MANUAL, BACKLIGHT_MODE_BUTTONS, BACKLIGHT_MODE_NONE };
@@ -122,6 +122,7 @@ typedef struct
 	uint16_t		priorityChannelIndex; // priority channel index.
 	uint16_t vhfOffset; // repeater offset for 2m band.
 	uint16_t uhfOffset; // repeater offset for 2m band.
+	struct_AutoZoneParams_t autoZone;
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

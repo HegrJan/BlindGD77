@@ -36,6 +36,7 @@
 #include "hardware/SPI_Flash.h"
 #include "functions/ticks.h"
 #include "functions/trx.h"
+#include "functions/autozone.h"
 
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
 
@@ -3228,9 +3229,14 @@ void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeate
 	int bandType=trxGetBandFromFrequency(*rxFreq);
 	bool isVHF=bandType==RADIO_BAND_VHF;
 	bool isUHF=bandType==RADIO_BAND_UHF;
+	bool IsAutoZone= AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && AutoZoneIsValid();
 	
 	uint16_t offset=0;
-	if (isVHF)
+	if (IsAutoZone)
+	{
+		offset=nonVolatileSettings.autoZone.repeaterOffset;
+	}
+	else if (isVHF)
 	{
 		offset=nonVolatileSettings.vhfOffset;
 	}
@@ -3261,10 +3267,47 @@ void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeate
 	(*txFreq)=newFreq;
 }
 
+static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
+{
+	bool IsAutoZone= AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && AutoZoneIsValid();
+
+	if (!IsAutoZone)
+		return false;
+	
+	voicePromptsInit();
+	
+	int direction=(nonVolatileSettings.autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
+
+	if ((nonVolatileSettings.autoZone.flags&AutoZoneDuplexEnabled)==0)
+		nonVolatileSettings.autoZone.flags|=AutoZoneDuplexEnabled;
+	else
+		nonVolatileSettings.autoZone.flags&=~AutoZoneDuplexEnabled;
+	if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)
+	{
+		if (direction > 0)
+			voicePromptsAppendPrompt(PROMPT_PLUS);
+		else
+			voicePromptsAppendPrompt(PROMPT_MINUS);
+	}		
+	else
+	{
+		direction=0;
+		voicePromptsAppendLanguageString(&currentLanguage->none);
+		*newMenuStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
+	}
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		voicePromptsPlay();
+	AdjustTXFreqByRepeaterOffset(&currentChannelData->rxFreq, &currentChannelData->txFreq, direction);
+	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+	return true;
+}
+	
 void CycleRepeaterOffset(menuStatus_t* newMenuStatus)
 {
+	if (AutoZoneCycleRepeaterOffset(newMenuStatus))
+		return;
+	
 	voicePromptsInit();
-
 	if (uiDataGlobal.repeaterOffsetDirection==0)
 	{
 		uiDataGlobal.repeaterOffsetDirection=1;

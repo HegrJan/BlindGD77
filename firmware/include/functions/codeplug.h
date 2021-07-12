@@ -113,8 +113,7 @@ typedef enum
 } Channel_t;
 
 // AllChannels zone indexNumber is -1
-#define CODEPLUG_ZONE_IS_ALLCHANNELS(z) ((z).NOT_IN_CODEPLUGDATA_indexNumber < 0)
-
+#define CODEPLUG_ZONE_IS_ALLCHANNELS(z) ((z).NOT_IN_CODEPLUGDATA_indexNumber ==-1)
 
 typedef struct
 {
@@ -125,7 +124,7 @@ typedef struct
 	int			NOT_IN_CODEPLUGDATA_indexNumber;// This property is not part of the codeplug data, its initialised by the code. Index > 0 are real zone. -1 indicates the virtual "All channels" zone
 } struct_codeplugZone_t;
 
-typedef struct
+ typedef struct
 {
 	char name[16];
 	uint32_t rxFreq;
@@ -338,4 +337,9 @@ int codeplugGetPasswordPin(int32_t *pinCode);
 uint16_t codeplugGetTotalNumberOfChannels();
 uint16_t codeplugGetAllChannelsHighestChannelIndex();
 bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChannelsZone, uint16_t* indexRelativeToCurrentZone);
+bool codeplugIsAutozoneValid();
+uint16_t codeplugAutozoneGetTotalChannels();
+bool codeplugAutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq);
+bool codeplugAutoZoneGetChannelData(struct_codeplugChannel_t *channelBuf, uint16_t index);
+
 #endif

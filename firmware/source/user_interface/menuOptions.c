@@ -32,7 +32,7 @@
 #include "interfaces/wdog.h"
 #include "utils.h"
 #include "functions/rxPowerSaving.h"
-
+#include "functions/autozone.h"
 static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
 
@@ -56,6 +56,7 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_PRIORITY_CHANNEL,
 							OPTIONS_MENU_VHF_RPT_OFFSET,
 							OPTIONS_MENU_UHF_RPT_OFFSET,
+							OPTIONS_MENU_AUTOZONE,
 							NUM_OPTIONS_MENU_ITEMS};
 
 static uint16_t GetNextValidChannelIndex(uint16_t start)
@@ -149,7 +150,6 @@ static void updateScreen(bool isFirstRun)
 			rightSideVar[0] = 0;
 			rightSideUnitsPrompt = PROMPT_SILENCE;// use PROMPT_SILENCE as flag that the unit has not been set
 			rightSideUnitsStr = NULL;
-
 			switch(mNum)
 			{
 				case OPTIONS_MENU_TX_FREQ_LIMITS:// Tx Freq limits
@@ -335,10 +335,15 @@ static void updateScreen(bool isFirstRun)
 					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
 					rightSideUnitsStr = "kHz";
 					break;
+				case OPTIONS_MENU_AUTOZONE:
+					leftSide = (char * const *)&currentLanguage->autoZone;
+					if (nonVolatileSettings.autoZone.flags&AutoZoneEnabled)
+						snprintf(rightSideVar, bufferLen, "%s", nonVolatileSettings.autoZone.name);
+					else
+						rightSideConst = (char * const *)&currentLanguage->off;
+					break;
 			}
-
 			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
-
 			if (i == 0)
 			{
 				bool wasPlaying = voicePromptsIsPlaying();
@@ -673,6 +678,12 @@ static void handleEvent(uiEvent_t *ev)
 					if (nonVolatileSettings.uhfOffset < 9900)
 						settingsIncrement(nonVolatileSettings.uhfOffset, 100);
 					break;
+				case OPTIONS_MENU_AUTOZONE:
+				if ((nonVolatileSettings.autoZone.flags&AutoZoneEnabled)==0)
+				{
+					AutoZoneInitialize(AutoZone_AU_UHFCB);
+				}
+				break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -851,6 +862,10 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_UHF_RPT_OFFSET:
 				if (nonVolatileSettings.uhfOffset > 100)
 					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
+				break;
+			case OPTIONS_MENU_AUTOZONE:
+				if (nonVolatileSettings.autoZone.flags&AutoZoneEnabled)
+					nonVolatileSettings.autoZone.flags&=~AutoZoneEnabled;
 				break;
 			}
 		}
