@@ -242,10 +242,11 @@ static void updateScreen(bool isFirstRun)
 
 					clearNonLatinChar((uint8_t *)&buffer[0]);
 
-					if (!isFirstRun)
+					if (isFirstRun == false)
 					{
 						voicePromptsInit();
 					}
+
 					voicePromptsAppendString(buffer);
 					promptsPlayNotAfterTx();
 				}

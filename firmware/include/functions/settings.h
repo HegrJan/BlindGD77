@@ -123,6 +123,7 @@ typedef struct
 	uint16_t vhfOffset; // repeater offset for 2m band.
 	uint16_t uhfOffset; // repeater offset for 2m band.
 	struct_AutoZoneParams_t autoZone;
+	uint16_t		vfoSweepSettings; // 3bits: channel step | 5 bits: RSSI noise floor | 7bits: gain
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
@@ -175,14 +176,17 @@ typedef enum PROMPT_AUTOPLAY_THRESHOLD
 
 typedef struct
 {
-	bool 	isEnabled;
-	int 	DMRTimeout;
-	int 	savedRadioMode;
-	uint8_t savedSquelch;
-	int 	savedDMRCcTsFilter;
-	int 	savedDMRDestinationFilter;
-	int 	savedDMRCc;
-	int 	savedDMRTs;
+	volatile bool	isEnabled;
+	volatile bool	qsoInfoUpdated;
+	volatile bool   dmrIsValid;
+	int				dmrTimeout;
+	uint8_t			dmrFrameSkip;
+	int 			savedRadioMode;
+	uint8_t			savedSquelch;
+	int 			savedDMRCcTsFilter;
+	int 			savedDMRDestinationFilter;
+	int 			savedDMRCc;
+	int 			savedDMRTs;
 } monitorModeSettingsStruct_t;
 
 extern settingsStruct_t nonVolatileSettings;
@@ -270,7 +274,7 @@ bool settingsLoadSettings(void);
 void settingsRestoreDefaultSettings(void);
 void settingsEraseCustomContent(void);
 void settingsInitVFOChannel(int vfoNumber);
-void enableVoicePromptsIfLoaded(void);
+void enableVoicePromptsIfLoaded(bool enableFullPrompts);
 int settingsGetScanStepTimeMilliseconds(void);
 
 #endif

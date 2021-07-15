@@ -57,11 +57,14 @@ static int contactListType;
 static int contactCallType;
 static contactListState_t contactListDisplayState;
 static contactListState_t contactListOverrideState = MENU_CONTACT_LIST_DISPLAY;
-static int contactListTimeout;
+static int menuContactListTimeout; // Action result screen autohide timeout (or it will instantly disappear if RED or GREEN is pressed)
 static menuStatus_t menuContactListExitCode = MENU_STATUS_SUCCESS;
 static menuStatus_t menuContactListSubMenuExitCode = MENU_STATUS_SUCCESS;
 static int contactListEntryCount;
 static int submenuEntryCount;
+
+
+static const char * const *calltypeVoices[3] = { NULL, NULL, NULL };
 
 // Apply contact + its TS on selection for TX (contact list of quick list).
 static void overrideWithSelectedContact(void)
@@ -101,6 +104,12 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+		calltypeVoices[0] = &currentLanguage->group_call;
+		calltypeVoices[1] = &currentLanguage->private_call;
+		calltypeVoices[2] = &currentLanguage->all_call;
+
+		menuContactListTimeout = 0;
+
 		if (contactListOverrideState == MENU_CONTACT_LIST_DISPLAY)
 		{
 			if (uiDataGlobal.currentSelectedContactIndex == 0)
@@ -131,17 +140,59 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 			contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
 
 			voicePromptsInit();
+<<<<<<< HEAD
 			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+||||||| merged common ancestors
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+=======
+			if (menuSystemGetCurrentMenuNumber() == MENU_CONTACT_QUICKLIST)
+>>>>>>> OpenGD77
 			{
+<<<<<<< HEAD
 				voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
+||||||| merged common ancestors
+				voicePromptsAppendLanguageString(&currentLanguage->contacts);
+				voicePromptsAppendLanguageString(&currentLanguage->menu);
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+=======
+				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+					voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
+				}
+				else
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
+				}
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+>>>>>>> OpenGD77
 			}
 			else
 			{
+<<<<<<< HEAD
 				voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
 			}
 			if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 			{
 				voicePromptsAppendLanguageString(&currentLanguage->menu);
+||||||| merged common ancestors
+				if (menuSystemGetCurrentMenuNumber() == MENU_CONTACT_QUICKLIST)
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+				}
+=======
+				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
+				{
+					voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+				}
+>>>>>>> OpenGD77
 			}
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
@@ -166,7 +217,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 	{
 		menuContactListExitCode = MENU_STATUS_SUCCESS;
 
-		if (ev->hasEvent || (contactListTimeout > 0))
+		if (ev->hasEvent || (menuContactListTimeout > 0))
 		{
 			handleEvent(ev);
 		}
@@ -194,18 +245,18 @@ static void updateScreen(bool isFirstRun)
 		case MENU_CONTACT_LIST_DISPLAY:
 			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactCallType : 3)]);
 
-			if (!isFirstRun)
-			{
-				voicePromptsInit();
-			}
-
 			if (menuDataGlobal.endIndex == 0)
 			{
 				ucPrintCentered((DISPLAY_SIZE_Y / 2), currentLanguage->empty_list, FONT_SIZE_3);
 
 				voicePromptsAppendLanguageString(&currentLanguage->empty_list);
+<<<<<<< HEAD
 				if (!uiDataGlobal.VoicePrompts.inhibitInitial)
 					promptsPlayNotAfterTx();
+||||||| merged common ancestors
+				promptsPlayNotAfterTx();
+=======
+>>>>>>> OpenGD77
 			}
 			else
 			{
@@ -226,12 +277,30 @@ static void updateScreen(bool isFirstRun)
 
 					if (i == 0)
 					{
+<<<<<<< HEAD
 						voicePromptsAppendString(nameBuf);
 						if (!uiDataGlobal.VoicePrompts.inhibitInitial)
 							promptsPlayNotAfterTx();
+||||||| merged common ancestors
+						voicePromptsAppendString(nameBuf);
+						promptsPlayNotAfterTx();
+=======
+						if (strlen(nameBuf))
+						{
+							voicePromptsAppendString(nameBuf);
+						}
+						else
+						{
+							voicePromptsAppendLanguageString(&currentLanguage->name);
+							voicePromptsAppendPrompt(PROMPT_SILENCE);
+							voicePromptsAppendLanguageString(&currentLanguage->none);
+						}
+>>>>>>> OpenGD77
 					}
 				}
+
 			}
+			promptsPlayNotAfterTx();
 			break;
 		case MENU_CONTACT_LIST_CONFIRM:
 			codeplugUtilConvertBufToString(contactListContactData.name, nameBuf, 16);
@@ -269,13 +338,14 @@ static void handleEvent(uiEvent_t *ev)
 	}
 
 	// DTMF sequence is playing, stop it.
-	if (uiDataGlobal.DTMFContactList.isKeying && ((ev->keys.key != 0) || BUTTONCHECK_DOWN(ev, BUTTON_PTT)
+	if (dtmfSequenceIsKeying() && ((ev->keys.key != 0) || BUTTONCHECK_DOWN(ev, BUTTON_PTT)
 #if ! defined(PLATFORM_RD5R)
 													|| BUTTONCHECK_DOWN(ev, BUTTON_ORANGE)
 #endif
 	))
 	{
-		uiDataGlobal.DTMFContactList.poLen = 0U;
+		dtmfSequenceStop();
+		keyboardReset();
 		return;
 	}
 
@@ -288,6 +358,7 @@ static void handleEvent(uiEvent_t *ev)
 				uiDataGlobal.currentSelectedContactIndex = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 						? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, contactCallType, &contactListContactData)
 						: codeplugDTMFContactGetDataForNumber(menuDataGlobal.currentItemIndex + 1, &contactListDTMFContactData);
+				voicePromptsInit();
 				updateScreen(false);
 				menuContactListExitCode |= MENU_STATUS_LIST_TYPE;
 			}
@@ -297,6 +368,7 @@ static void handleEvent(uiEvent_t *ev)
 				uiDataGlobal.currentSelectedContactIndex = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 						? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, contactCallType, &contactListContactData)
 						: codeplugDTMFContactGetDataForNumber(menuDataGlobal.currentItemIndex + 1, &contactListDTMFContactData);
+				voicePromptsInit();
 				updateScreen(false);
 				menuContactListExitCode |= MENU_STATUS_LIST_TYPE;
 			}
@@ -304,8 +376,13 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
-					contactCallType = (contactCallType + 1) % 3;
+					contactCallType = (contactCallType + 1) % (CONTACT_CALLTYPE_ALL + 1);
 					reloadContactList(contactListType);
+
+					voicePromptsInit();
+					voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+
 					updateScreen(false);
 				}
 			}
@@ -400,7 +477,7 @@ static void handleEvent(uiEvent_t *ev)
 					codeplugContactSaveDTMFDataForIndex(uiDataGlobal.currentSelectedContactIndex, &dtmfContact);
 				}
 				uiDataGlobal.currentSelectedContactIndex = 0;
-				contactListTimeout = 2000;
+				menuContactListTimeout = 2000;
 				contactListDisplayState = MENU_CONTACT_LIST_DELETED;
 				reloadContactList(contactListType);
 				updateScreen(false);
@@ -417,13 +494,14 @@ static void handleEvent(uiEvent_t *ev)
 
 		case MENU_CONTACT_LIST_DELETED:
 		case MENU_CONTACT_LIST_TG_IN_RXGROUP:
-			contactListTimeout--;
-			if ((contactListTimeout == 0) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+			menuContactListTimeout--;
+			if ((menuContactListTimeout == 0) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 			{
+				menuContactListTimeout = 0;
 				contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
 				reloadContactList(contactListType);
+				updateScreen(false);
 			}
-			updateScreen(false);
 			break;
 	}
 }
@@ -440,8 +518,7 @@ enum CONTACT_LIST_QUICK_MENU_ITEMS
 static void updateSubMenuScreen(bool isFirstRun)
 {
 	int mNum = 0;
-	static const int bufferLen = 17;
-	char buf[bufferLen];
+	char buf[SCREEN_LINE_BUFFER_SIZE];
 	char * const *langTextConst = NULL;// initialise to please the compiler
 	if (!isFirstRun)
 	{
@@ -479,11 +556,11 @@ static void updateSubMenuScreen(bool isFirstRun)
 
 		if (langTextConst != NULL && renderOption)
 		{
-			strncpy(buf, *langTextConst, 17);
+			strncpy(buf, *langTextConst, SCREEN_LINE_BUFFER_SIZE);
 		}
 		else
 		{
-			strncpy(buf, " ", 17);
+			strncpy(buf, " ", SCREEN_LINE_BUFFER_SIZE);
 		}
 
 		if ((i == 0) && (langTextConst != NULL))
@@ -590,21 +667,21 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 				{
 					if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 					{
+						voicePromptsInit();
 						if ((contactListContactData.callType == CONTACT_CALLTYPE_TG) &&
 								codeplugContactGetRXGroup(contactListContactData.NOT_IN_CODEPLUGDATA_indexNumber))
 						{
-							contactListTimeout = 2000;
+							menuContactListTimeout = 2000;
 							contactListOverrideState = MENU_CONTACT_LIST_TG_IN_RXGROUP;
 							voicePromptsAppendLanguageString(&currentLanguage->contact_used);
 							voicePromptsAppendLanguageString(&currentLanguage->in_rx_group);
-							voicePromptsPlay();
 						}
 						else
 						{
 							contactListOverrideState = MENU_CONTACT_LIST_CONFIRM;
 							voicePromptsAppendLanguageString(&currentLanguage->delete_contact_qm);
-							voicePromptsPlay();
 						}
+						voicePromptsPlay();
 					}
 					else
 					{//DTMF
@@ -641,6 +718,7 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+<<<<<<< HEAD
 		menuDataGlobal.currentItemIndex=0;
 		
 		voicePromptsInit();
@@ -648,6 +726,12 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 		updateSubMenuScreen(isFirstRun);
+||||||| merged common ancestors
+		updateSubMenuScreen();
+=======
+		menuDataGlobal.currentItemIndex = 0;
+		updateSubMenuScreen();
+>>>>>>> OpenGD77
 		keyboardInit();
 		menuContactListSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}

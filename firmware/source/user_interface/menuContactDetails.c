@@ -35,11 +35,12 @@
 static void updateScreen(bool isFirstRun, bool updateScreen);
 static void updateCursor(bool moved);
 static void handleEvent(uiEvent_t *ev);
+static bool contactIsNewOrAtSameIndex(struct_codeplugContact_t *ct, int index);
 
 static menuStatus_t menuContactDetailsExitCode = MENU_STATUS_SUCCESS;
 
 static struct_codeplugContact_t tmpContact;
-static const char *callTypeString[3];// = { "Group", "Private", "All" };
+static const char *callTypeString[3];
 static int contactDetailsIndex;
 static char digits[9];
 static char contactName[20];
@@ -51,12 +52,14 @@ enum CONTACT_DETAILS_DISPLAY_LIST { CONTACT_DETAILS_NAME = 0, CONTACT_DETAILS_TG
 
 static int menuContactDetailsState;
 static int menuContactDetailsTimeout;
-enum MENU_CONTACT_DETAILS_STATE { MENU_CONTACT_DETAILS_DISPLAY = 0, MENU_CONTACT_DETAILS_SAVED, MENU_CONTACT_DETAILS_EXISTS };
+enum MENU_CONTACT_DETAILS_STATE { MENU_CONTACT_DETAILS_DISPLAY = 0, MENU_CONTACT_DETAILS_SAVED, MENU_CONTACT_DETAILS_EXISTS, MENU_CONTACT_DETAILS_FULL };
 
 menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+		menuContactDetailsTimeout = 0;
+
 		callTypeString[0] = currentLanguage->group;
 		callTypeString[1] = currentLanguage->private;
 		callTypeString[2] = currentLanguage->all;
@@ -74,7 +77,15 @@ menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
 			memset(contactName, 0, 20);
 			namePos = 0;
 			numPos = 0;
-			voicePromptsAppendLanguageString(&currentLanguage->new_contact);
+
+			if (contactDetailsIndex == 0)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->list_full);
+			}
+			else
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->new_contact);
+			}
 		}
 		else
 		{
@@ -86,7 +97,7 @@ menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
 			numPos = 0;
 		}
 
-		menuContactDetailsState = MENU_CONTACT_DETAILS_DISPLAY;
+		menuContactDetailsState = (contactDetailsIndex == 0) ? MENU_CONTACT_DETAILS_FULL : MENU_CONTACT_DETAILS_DISPLAY;
 		menuDataGlobal.currentItemIndex = CONTACT_DETAILS_NAME;
 		menuDataGlobal.endIndex = NUM_CONTACT_DETAILS_ITEMS;
 
@@ -110,34 +121,37 @@ menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
 
 static void updateCursor(bool moved)
 {
-	switch (menuDataGlobal.currentItemIndex)
+	// Only display the cursor when the fields are displayed
+	if (menuContactDetailsState == MENU_CONTACT_DETAILS_DISPLAY)
 	{
-		case CONTACT_DETAILS_NAME:
-			menuUpdateCursor(namePos, moved, true);
-			break;
-		case CONTACT_DETAILS_TG:
-			menuUpdateCursor(numPos, moved, true);
-			break;
+		switch (menuDataGlobal.currentItemIndex)
+		{
+			case CONTACT_DETAILS_NAME:
+				menuUpdateCursor(namePos, moved, true);
+				break;
+			case CONTACT_DETAILS_TG:
+				menuUpdateCursor(numPos, moved, true);
+				break;
+		}
 	}
 }
 
 static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 {
 	int mNum = 0;
-	static const int bufferLen = 17;
-	char buf[bufferLen];
+	char buf[SCREEN_LINE_BUFFER_SIZE];
 	char * const *leftSide = NULL;// initialise to please the compiler
 	char * const *leftSideConst = NULL;// initialise to please the compiler
 	voicePrompt_t leftSidePrompt;
 	char * const *rightSideConst = NULL;// initialise to please the compiler
-	char rightSideVar[bufferLen];
+	char rightSideVar[SCREEN_LINE_BUFFER_SIZE];
 	voicePrompt_t rightSidePrompt;
 
 	ucClearBuf();
 
 	if (tmpContact.name[0] == 0x00)
 	{
-		snprintf(buf, bufferLen, "%s", currentLanguage->new_contact);
+		snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s", currentLanguage->new_contact);
 	}
 	else
 	{
@@ -174,7 +188,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 				{
 					case CONTACT_DETAILS_NAME:
 						leftSide = (char * const *)&currentLanguage->name;
-						strncpy(rightSideVar, contactName, 17);
+						strncpy(rightSideVar, contactName, SCREEN_LINE_BUFFER_SIZE);
 						break;
 					case CONTACT_DETAILS_TG:
 						{
@@ -192,7 +206,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 									}
 									else
 									{
-										snprintf(rightSideVar, bufferLen, "%s", digits);
+										snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", digits);
 									}
 									break;
 								case CONTACT_CALLTYPE_PC: // Private
@@ -205,12 +219,12 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 									}
 									else
 									{
-										snprintf(rightSideVar, bufferLen, "%s", digits);
+										snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", digits);
 									}
 									break;
 								case CONTACT_CALLTYPE_ALL: // All Call
 									leftSide = (char * const *)&currentLanguage->all;
-									snprintf(rightSideVar, bufferLen, "%d", 16777215);
+									snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", MAX_TG_OR_PC_VALUE);
 									leftSideConst = (char * const *)&currentLanguage->all_call;
 									break;
 							}
@@ -224,7 +238,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						case CONTACT_DETAILS_CALLTYPE:
 							leftSide = (char * const *)&currentLanguage->type;
 							leftSideConst = (char * const *)&currentLanguage->type;
-							snprintf(rightSideVar, bufferLen, "%s", callTypeString[tmpContact.callType]);
+							snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", callTypeString[tmpContact.callType]);
 
 							switch (tmpContact.callType)
 							{
@@ -247,14 +261,14 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 							{
 								case 1:
 								case 3:
-									snprintf(rightSideVar, bufferLen, "%s", currentLanguage->none);
+									snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", currentLanguage->none);
 									rightSideConst = (char * const *)&currentLanguage->none;
 									break;
 								case 0:
-									snprintf(rightSideVar, bufferLen, "%d", 1);
+									snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", 1);
 									break;
 								case 2:
-									snprintf(rightSideVar, bufferLen, "%d", 2);
+									snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", 2);
 									break;
 							}
 							break;
@@ -262,14 +276,14 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 
 				if (leftSide != NULL)
 				{
-					snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+					snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 				}
 				else
 				{
 					strcpy(buf, rightSideVar);
 				}
 
-				if ((i == 0) && allowedToSpeakUpdate)
+				if ((i == 0) && (allowedToSpeakUpdate))
 				{
 					if (!isFirstRun)
 					{
@@ -298,6 +312,12 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 					{
 						voicePromptsAppendString(rightSideVar);
 					}
+					else if ((rightSideVar[0] == 0) && (menuDataGlobal.currentItemIndex == CONTACT_DETAILS_NAME))
+					{
+						voicePromptsAppendLanguageString(&currentLanguage->name);
+						voicePromptsAppendPrompt(PROMPT_SILENCE);
+						voicePromptsAppendLanguageString(&currentLanguage->none);
+					}
 
 					promptsPlayNotAfterTx();
 				}
@@ -314,6 +334,11 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 			ucPrintCentered(32, currentLanguage->contact, FONT_SIZE_3);
 			ucDrawChoice(CHOICE_OK, false);
 			break;
+		case MENU_CONTACT_DETAILS_FULL:
+			ucPrintCentered(16, currentLanguage->list_full, FONT_SIZE_3);
+			ucDrawChoice(CHOICE_OK, false);
+			promptsPlayNotAfterTx();
+			break;
 	}
 	ucRender();
 }
@@ -321,8 +346,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 static void handleEvent(uiEvent_t *ev)
 {
 	dmrIdDataStruct_t foundRecord;
-	static const int bufferLen = 17;
-	char buf[bufferLen];
+	char buf[SCREEN_LINE_BUFFER_SIZE];
 	int sLen = strlen(digits);
 
 	if (ev->events & BUTTON_EVENT)
@@ -368,7 +392,7 @@ static void handleEvent(uiEvent_t *ev)
 						case CONTACT_DETAILS_NAME:
 							moveCursorRightInString(contactName, &namePos, 16, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
 							updateCursor(true);
-							allowedToSpeakUpdate = false;
+							allowedToSpeakUpdate = (strlen(contactName) == 0);
 							break;
 						case CONTACT_DETAILS_TG:
 							break;
@@ -377,7 +401,11 @@ static void handleEvent(uiEvent_t *ev)
 							{
 								tmpContact.callType++;
 							}
-							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? 16777215 : tmpContact.tgNumber, digits, 10);
+							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? MAX_TG_OR_PC_VALUE : tmpContact.tgNumber, digits, 10);
+							if (tmpContact.tgNumber == 0)
+							{
+								digits[0] = 0;
+							}
 							break;
 						case CONTACT_DETAILS_TS:
 							if ((tmpContact.reserve1 & 0x01) && ((tmpContact.reserve1 & 0x02) == 0))
@@ -409,7 +437,7 @@ static void handleEvent(uiEvent_t *ev)
 						case CONTACT_DETAILS_NAME:
 							moveCursorLeftInString(contactName, &namePos, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
 							updateCursor(true);
-							allowedToSpeakUpdate = false;
+							allowedToSpeakUpdate = (strlen(contactName) == 0);
 							break;
 						case CONTACT_DETAILS_TG:
 							if (sLen > 0)
@@ -423,7 +451,11 @@ static void handleEvent(uiEvent_t *ev)
 							{
 								tmpContact.callType--;
 							}
-							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? 16777215 : tmpContact.tgNumber, digits, 10);
+							itoa(tmpContact.callType == CONTACT_CALLTYPE_ALL ? MAX_TG_OR_PC_VALUE : tmpContact.tgNumber, digits, 10);
+							if (tmpContact.tgNumber == 0)
+							{
+								digits[0] = 0;
+							}
 							break;
 						case CONTACT_DETAILS_TS:
 							if (((tmpContact.reserve1 & 0x01) == 0x0) || ((tmpContact.reserve1 & 0x03) == 0x00))
@@ -467,25 +499,36 @@ static void handleEvent(uiEvent_t *ev)
 									}
 									else
 									{
-										snprintf(buf, bufferLen, "%s %d", currentLanguage->pc, tmpContact.tgNumber);
+										snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s %u", currentLanguage->pc, tmpContact.tgNumber);
 										codeplugUtilConvertStringToBuf(buf, tmpContact.name, 16);
 									}
 								}
 								else
 								{
-									snprintf(buf, bufferLen, "%s %d", currentLanguage->tg, tmpContact.tgNumber);
+									snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s %u", currentLanguage->tg, tmpContact.tgNumber);
 									codeplugUtilConvertStringToBuf(buf, tmpContact.name, 16);
 								}
 							}
-							codeplugContactSaveDataForIndex(contactDetailsIndex, &tmpContact);
-							menuContactDetailsTimeout = 2000;
-							menuContactDetailsState = MENU_CONTACT_DETAILS_SAVED;
+
 							voicePromptsInit();
-							voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
+							if (contactIsNewOrAtSameIndex(&tmpContact, contactDetailsIndex))
+							{
+								codeplugContactSaveDataForIndex(contactDetailsIndex, &tmpContact);
+								menuContactDetailsTimeout = 2000;
+								menuContactDetailsState = MENU_CONTACT_DETAILS_SAVED;
+								voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
+							}
+							else
+							{
+								menuContactDetailsTimeout = 2000;
+								menuContactDetailsState = MENU_CONTACT_DETAILS_EXISTS;
+								voicePromptsAppendLanguageString(&currentLanguage->duplicate);
+							}
 							voicePromptsPlay();
 						}
 					}
 					updateScreen(false, allowedToSpeakUpdate);
+					return;
 				}
 				else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 				{
@@ -543,19 +586,72 @@ static void handleEvent(uiEvent_t *ev)
 			menuContactDetailsTimeout--;
 			if ((menuContactDetailsTimeout == 0) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 			{
+				menuContactDetailsTimeout = 0;
 				menuSystemPopPreviousMenu();
 				return;
 			}
-			updateScreen(false, allowedToSpeakUpdate);
 			break;
 
 		case MENU_CONTACT_DETAILS_EXISTS:
 			menuContactDetailsTimeout--;
 			if ((menuContactDetailsTimeout == 0) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 			{
+				menuContactDetailsTimeout = 0;
 				menuContactDetailsState = MENU_CONTACT_DETAILS_DISPLAY;
+				updateScreen(false, allowedToSpeakUpdate);
 			}
-			updateScreen(false, allowedToSpeakUpdate);
+			break;
+
+		case MENU_CONTACT_DETAILS_FULL:
+			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+			{
+				menuSystemPopPreviousMenu();
+			}
 			break;
 	}
 }
+
+// Check if the contact ct already exists in the codeplug contact list, at the same index, or if it's new
+// Used to avoid duplicates
+// Three contacts with the same TG/TC number can exist: no TS override, or TS1 || TS2 set
+static bool contactIsNewOrAtSameIndex(struct_codeplugContact_t *ct, int index)
+{
+	struct_codeplugContact_t ct2;
+	uint8_t ctTs = (((ct->reserve1 & 0x01) == 0x00) ? (((ct->reserve1 & 0x02) >> 1) + 1) : 0);
+
+	int ct2Index = codeplugContactIndexByTGorPC(ct->tgNumber, ct->callType, &ct2, ctTs);
+
+	if ((ct2Index == -1) || // Doesn't exist yet
+			(ct2.NOT_IN_CODEPLUGDATA_indexNumber == index)) // We are editing the contact, this is not a duplicate
+	{
+		return true;
+	}
+
+	if (ctTs == 0) // the contact don't have an override, so we need the two possible overridden contacts
+	{
+		// At least one contact exist, but we need to check TS override
+		do
+		{
+			// Compare the TS override values
+			if ((((ct2.reserve1 & 0x01) == 0x00) ? (((ct2.reserve1 & 0x02) >> 1) + 1) : 0) == ctTs)
+			{
+				// We are editing the contact, this is not a duplicate
+				if (ct2.NOT_IN_CODEPLUGDATA_indexNumber == index)
+				{
+					return true;
+				}
+
+				return false;
+			}
+
+			// Pick the next available and identical (by tgpc, type) contact in the list
+			ct2Index = codeplugContactIndexByTGorPCFromNumber((ct2Index + 1), ct->tgNumber, ct->callType, &ct2, ctTs);
+		}
+		while (ct2Index != -1);
+
+		return true;
+	}
+
+	return false;
+}
+

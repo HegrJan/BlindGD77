@@ -81,16 +81,15 @@ menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
 static void updateScreen(bool isFirstRun)
 {
 	int mNum = 0;
-	static const int bufferLen = 17;
-	char buf[bufferLen];
+	char buf[SCREEN_LINE_BUFFER_SIZE];
 	char * const *leftSide = NULL;// initialise to please the compiler
 	char * const *rightSideConst = NULL;// initialise to please the compiler
-	char rightSideVar[bufferLen];
+	char rightSideVar[SCREEN_LINE_BUFFER_SIZE];
 	voicePrompt_t rightSideUnitsPrompt;
 	const char * rightSideUnitsStr;
 
 	ucClearBuf();
-	bool settingOption = uiShowQuickKeysChoices(buf, bufferLen,currentLanguage->sound_options);
+	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE, currentLanguage->sound_options);
 
 	// Can only display 3 of the options at a time menu at -1, 0 and +1
 	for(int i = -1; i <= 1; i++)
@@ -117,7 +116,7 @@ static void updateScreen(bool isFirstRun)
 					{
 						if (nonVolatileSettings.txTimeoutBeepX5Secs != 0)
 						{
-							snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.txTimeoutBeepX5Secs * 5);
+							snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.txTimeoutBeepX5Secs * 5);
 							rightSideUnitsPrompt = PROMPT_SECONDS;
 							rightSideUnitsStr = "s";
 						}
@@ -135,7 +134,7 @@ static void updateScreen(bool isFirstRun)
 					}
 					else
 					{
-						snprintf(rightSideVar, bufferLen, "%ddB", (2 - nonVolatileSettings.beepVolumeDivider) * 3);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%ddB", (2 - nonVolatileSettings.beepVolumeDivider) * 3);
 						soundBeepVolumeDivider = nonVolatileSettings.beepVolumeDivider;
 					}
 
@@ -154,15 +153,15 @@ static void updateScreen(bool isFirstRun)
 					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
 					leftSide = (char * const *)&currentLanguage->dmr_mic_gain;
-					snprintf(rightSideVar, bufferLen, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
 					break;
 				case OPTIONS_MIC_GAIN_FM: // FM Mic gain
 					leftSide = (char * const *)&currentLanguage->fm_mic_gain;
-					snprintf(rightSideVar, bufferLen, "%d", (nonVolatileSettings.micGainFM - 16));
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", (nonVolatileSettings.micGainFM - 16));
 					break;
 				case OPTIONS_VOX_THRESHOLD:
 					leftSide = (char * const *)&currentLanguage->vox_threshold;
-					snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.voxThreshold);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.voxThreshold);
 					break;
 				case OPTIONS_VOX_TAIL:
 					leftSide = (char * const *)&currentLanguage->vox_tail;
@@ -172,7 +171,7 @@ static void updateScreen(bool isFirstRun)
 						uint8_t secs = (uint8_t)tail;
 						uint8_t fracSec = (tail - secs) * 10;
 
-						snprintf(rightSideVar, bufferLen, "%d.%d", secs, fracSec);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d.%d", secs, fracSec);
 						rightSideUnitsPrompt = PROMPT_SECONDS;
 						rightSideUnitsStr = "s";
 					}
@@ -191,7 +190,7 @@ static void updateScreen(bool isFirstRun)
 					break;
 			}
 
-			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 
 			if (i == 0)
 			{
@@ -223,7 +222,7 @@ static void updateScreen(bool isFirstRun)
 
 				if (rightSideUnitsStr != NULL)
 				{
-					strncat(rightSideVar, rightSideUnitsStr, bufferLen);
+					strncat(rightSideVar, rightSideUnitsStr, SCREEN_LINE_BUFFER_SIZE);
 				}
 
 				if (menuDataGlobal.menuOptionsTimeout != -1)
@@ -245,7 +244,7 @@ static void updateScreen(bool isFirstRun)
 			{
 				if (rightSideUnitsStr != NULL)
 				{
-					strncat(buf, rightSideUnitsStr, bufferLen);
+					strncat(buf, rightSideUnitsStr, SCREEN_LINE_BUFFER_SIZE);
 				}
 
 				menuDisplayEntry(i, mNum, buf);

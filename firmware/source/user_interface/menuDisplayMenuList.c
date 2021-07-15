@@ -39,22 +39,34 @@ menuStatus_t menuDisplayMenuList(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+		char **menuName = NULL;
 		int currentMenuNumber = menuSystemGetCurrentMenuNumber();
+
 		menuDataGlobal.currentMenuList = (menuItemNewData_t *)menuDataGlobal.data[currentMenuNumber]->items;
 		menuDataGlobal.endIndex = menuDataGlobal.data[currentMenuNumber]->numItems;
 
-		voicePromptsInit();
-		switch (menuSystemGetCurrentMenuNumber())
+		if ((currentMenuNumber != MENU_MAIN_MENU) && (menuDataGlobal.controlData.stackPosition >= 1))
 		{
-			case MENU_CONTACTS_MENU:
-				voicePromptsAppendLanguageString(&currentLanguage->contacts);
-				if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+			if (menuDataGlobal.data[menuDataGlobal.controlData.stack[menuDataGlobal.controlData.stackPosition - 1]] != NULL)
+			{
+				int lastIndex = menuSystemGetLastItemIndex(menuDataGlobal.controlData.stackPosition - 1);
+
+				if (lastIndex != -1)
 				{
-					voicePromptsAppendLanguageString(&currentLanguage->menu);
+					menuName = (char **)((int)&currentLanguage->LANGUAGE_NAME +
+							(menuDataGlobal.data[menuDataGlobal.controlData.stack[menuDataGlobal.controlData.stackPosition - 1]]->items[lastIndex].stringOffset * sizeof(char *)));
 				}
-				break;
-			default:
-				voicePromptsAppendLanguageString(&currentLanguage->menu);
+			}
+		}
+
+		voicePromptsInit();
+		if (menuName)
+		{
+			voicePromptsAppendLanguageString((const char * const *)menuName);
+		}
+		if (!menuName || nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->menu);
 		}
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
@@ -108,6 +120,7 @@ static void updateScreen(bool isFirstRun)
 					{
 						voicePromptsInit();
 					}
+
 					voicePromptsAppendLanguageString((const char * const *)menuName);
 					promptsPlayNotAfterTx();
 				}
