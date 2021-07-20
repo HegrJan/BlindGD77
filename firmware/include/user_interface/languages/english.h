@@ -210,6 +210,7 @@ const stringsTable_t englishLanguage =
 .scan_on_boot				= "Scan On Boot",
 .dtmf_entry				= "DTMF entry",
 .name					= "Name",
+.openDM1801A 				= "Acc. DM1801A", // Do not translate
 .sk2Latch="SK2 Latch",
 .dtmfLatch="DTMF Latch",
 .priorityChannel="Pri",
@@ -217,8 +218,7 @@ const stringsTable_t englishLanguage =
 .vhfRptOffset="VHF Off",
 .uhfRptOffset="UHF Off",
 .tone="Tone",
-.autoZone="AutoZn",
-.openDM1801A 				= "Acc. DM1801A" // Do not translate
+.autoZone="AutoZn"
 };
 /********************************************************************
  *

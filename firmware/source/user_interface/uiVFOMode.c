@@ -769,22 +769,6 @@ void uiVFOLoadContact(struct_codeplugContact_t *contact)
 	}
 }
 
-static void toggleAnalogBandwidth(void)
-{
-	if ((currentChannelData->flag4 & 0x02) == 0x02)
-	{
-		currentChannelData->flag4 &= ~0x02;// clear 25kHz bit
-	}
-	else
-	{
-		currentChannelData->flag4 |= 0x02;// set 25kHz bit
-		nextKeyBeepMelody = (int *)MELODY_KEY_BEEP_FIRST_ITEM;
-	}
-	// ToDo announce VP for bandwidth perhaps
-	trxSetModeAndBandwidth(RADIO_MODE_ANALOG, ((currentChannelData->flag4 & 0x02) == 0x02));
-}
-
-
 static void handleEvent(uiEvent_t *ev)
 {
 	if (uiDataGlobal.Scan.active && (ev->events & KEY_EVENT))

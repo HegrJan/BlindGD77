@@ -220,6 +220,7 @@ typedef struct
    const char *scan_on_boot;
    const char* dtmf_entry;
    const char* name;
+   const char *openDM1801A;
    const char* sk2Latch;
    const char* dtmfLatch;
    const char* priorityChannel;
@@ -228,7 +229,6 @@ typedef struct
    const char* uhfRptOffset;
    const char* tone;
    const char * autoZone;
-   const char *openDM1801A;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
