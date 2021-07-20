@@ -56,6 +56,16 @@ typedef enum
 	SWEEP_SETTING_RSSI,
 	SWEEP_SETTING_GAIN
 } sweepSetting_t;
+//joe
+ HeaderScanIndicatorType_t uiVFOGetHeaderScanIndicatorType()
+{
+	if (uiVFOModeDualWatchIsScanning())
+		return vfoDualWatch;
+	if (uiVFOModeSweepScanning(true))
+		return vfoSweepScan;
+	
+	return notScanning;
+}
 
 // internal prototypes
 static void handleEvent(uiEvent_t *ev);
@@ -91,10 +101,6 @@ static menuStatus_t menuVFOExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickVFOExitStatus = MENU_STATUS_SUCCESS;
 
 static bool quickmenuNewChannelHandled = false; // Quickmenu new channel confirmation window
-<<<<<<< HEAD
-||||||| merged common ancestors
-
-=======
 
 static const int VFO_SWEEP_STEP_TIME  = 250;// 25ms
 
@@ -114,7 +120,6 @@ static bool vfoSweepSavedBandwidth;
 const int VFO_SWEEP_SCAN_FREQ_STEP_TABLE[7] 		= {125,250,500,1000,2500,5000,10000};
 
 
->>>>>>> OpenGD77
 // Public interface
 menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 {
@@ -180,16 +185,8 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 				((uiDataGlobal.Scan.active == false) ||
 						(uiDataGlobal.Scan.active && ((uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED) || (uiDataGlobal.Scan.state = SCAN_PAUSED)))))
 		{
-<<<<<<< HEAD
 			uiDataGlobal.VoicePrompts.inhibitInitial = false;
 			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || (nextMenu == UI_LOCK_SCREEN)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
-||||||| merged common ancestors
-			uiDataGlobal.VoicePrompts.inhibitInitial = false;
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_3);
-=======
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE,
-					((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL)) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
->>>>>>> OpenGD77
 		}
 
 		if (screenOperationMode[nonVolatileSettings.currentVFONumber] == VFO_SCREEN_OPERATION_SCAN)
@@ -247,20 +244,14 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 #else
 						ucClearRows(0, 2, false);
 #endif
-<<<<<<< HEAD
 						uiUtilityRenderHeader(notScanning);
-||||||| merged common ancestors
-						uiUtilityRenderHeader(false);
-=======
-						uiUtilityRenderHeader(false, false);
->>>>>>> OpenGD77
 					}
 					else
 					{
 						if (uiVFOModeDualWatchIsScanning())
 						{
 							// Header needs to be updated, if Dual Watch is scanning
-							uiUtilityRedrawHeaderOnly(true, false);
+							uiUtilityRedrawHeaderOnly(uiVFOGetHeaderScanIndicatorType());
 							doRendering = false;
 						}
 						else if (uiVFOModeSweepScanning(true) == false)
@@ -361,7 +352,7 @@ void uiVFOModeUpdateScreen(int txTimeSecs)
 	if ((trxGetMode() == RADIO_MODE_DIGITAL) && (HRC6000GetReceivedTgOrPcId() == 0) &&
 			((uiDataGlobal.displayQSOState == QSO_DISPLAY_CALLER_DATA) || (uiDataGlobal.displayQSOState == QSO_DISPLAY_CALLER_DATA_UPDATE)))
 	{
-		uiUtilityRedrawHeaderOnly(uiVFOModeDualWatchIsScanning(), uiVFOModeSweepScanning(true));
+		uiUtilityRedrawHeaderOnly(uiVFOGetHeaderScanIndicatorType());
 		return;
 	}
 
@@ -375,13 +366,7 @@ void uiVFOModeUpdateScreen(int txTimeSecs)
 	}
 
 	ucClearBuf();
-<<<<<<< HEAD
-	uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning() ? vfoDualWatch :	notScanning);
-||||||| merged common ancestors
-	uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning());
-=======
-	uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning(), uiVFOModeSweepScanning(true));
->>>>>>> OpenGD77
+	uiUtilityRenderHeader(uiVFOGetHeaderScanIndicatorType());
 
 	switch(uiDataGlobal.displayQSOState)
 	{
@@ -1062,7 +1047,6 @@ static void handleEvent(uiEvent_t *ev)
 				}
 				else
 				{
-<<<<<<< HEAD
 					if (trxGetMode() == RADIO_MODE_DIGITAL)
 					{
 						menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
@@ -1073,33 +1057,21 @@ static void handleEvent(uiEvent_t *ev)
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiVFOModeUpdateScreen(0);
 					}
-||||||| merged common ancestors
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
-					}
-=======
-					menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
->>>>>>> OpenGD77
 				}
 				return;
 			}
 			else if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
 			{
-<<<<<<< HEAD
 								if ( ToggleFMBandwidth(ev, currentChannelData))
 				{
 					announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 					if (currentChannelData->flag4&0x02)
 						menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
+					headerRowIsDirty = true;
+					uiVFOModeUpdateScreen(0);
 				}
-				else if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
-||||||| merged common ancestors
-				if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
-=======
 				if (uiVFOModeSweepScanning(true) == false)
->>>>>>> OpenGD77
 				{
 					if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 					{
@@ -1135,61 +1107,18 @@ static void handleEvent(uiEvent_t *ev)
 								tsSetContactHasBeenOverriden(((Channel_t)nonVolatileSettings.currentVFONumber), true);
 							}
 
-<<<<<<< HEAD
-					announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
-					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				}
-				else
-				{
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						// Toggle TimeSlot
-						trxSetDMRTimeSlot(1 - trxGetDMRTimeSlot());
-						tsSetManualOverride(((Channel_t)nonVolatileSettings.currentVFONumber), (trxGetDMRTimeSlot() + 1));
-||||||| merged common ancestors
-					announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_3);
-					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				}
-				else
-				{
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						// Toggle TimeSlot
-						trxSetDMRTimeSlot(1 - trxGetDMRTimeSlot());
-						tsSetManualOverride(((Channel_t)nonVolatileSettings.currentVFONumber), (trxGetDMRTimeSlot() + 1));
-=======
 							disableAudioAmp(AUDIO_AMP_MODE_RF);
 							clearActiveDMRID();
 							lastHeardClearLastID();
 							uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 							uiVFOModeUpdateScreen(0);
->>>>>>> OpenGD77
 
 							if (trxGetDMRTimeSlot() == 0)
 							{
 								menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
 							}
-							announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_3);
+							announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
 						}
-						else
-						{
-							toggleAnalogBandwidth();
-							headerRowIsDirty = true;
-							uiVFOModeUpdateScreen(0);
-						}
-<<<<<<< HEAD
-						announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
-||||||| merged common ancestors
-						announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_3);
-=======
->>>>>>> OpenGD77
-					}
-				}
-				else
-				{
-					if (trxGetMode() == RADIO_MODE_ANALOG)
-					{
-						toggleAnalogBandwidth();
 					}
 				}
 			}
@@ -1217,7 +1146,7 @@ static void handleEvent(uiEvent_t *ev)
 					lastHeardClearLastID();
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 					uiVFOModeUpdateScreen(0);
-					announceItem(PROMPT_SEQUENCE_TS, PROMPT_THRESHOLD_1);
+					announceItem(PROMPT_SEQUENCE_TS, PROMPT_THRESHOLD_2);
 				}
 			}
 			else if(uiVFOModeSweepScanning(true) &&  // Reset Sweep noise floor or Sweep Gain
@@ -1233,37 +1162,14 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (uiVFOModeSweepScanning(true) == false)
 				{
-<<<<<<< HEAD
-					// Don't permit to switch from RX/TX while scanning
-					if ((screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SCAN) ||
-							(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_DUAL_SCAN))
-					{
-						selectedFreq = VFO_SELECTED_FREQUENCY_INPUT_TX;
-						announceItem(PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
-					}
-||||||| merged common ancestors
-					// Don't permit to switch from RX/TX while scanning
-					if ((screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SCAN) ||
-							(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_DUAL_SCAN))
-					{
-						selectedFreq = VFO_SELECTED_FREQUENCY_INPUT_TX;
-					}
-=======
 					handleDownKey(ev);
->>>>>>> OpenGD77
 				}
 				else
 				{
-<<<<<<< HEAD
 					uiDataGlobal.repeaterOffsetDirection=0;
 					stepFrequency(VFO_FREQ_STEP_TABLE[(currentChannelData->VFOflag5 >> 4)] * -1);
 					uiVFOModeUpdateScreen(0);
 					settingsSetVFODirty();
-||||||| merged common ancestors
-					stepFrequency(VFO_FREQ_STEP_TABLE[(currentChannelData->VFOflag5 >> 4)] * -1);
-					uiVFOModeUpdateScreen(0);
-					settingsSetVFODirty();
-=======
 					if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 					{
 						// Sweep noise floor
@@ -1275,7 +1181,6 @@ static void handleEvent(uiEvent_t *ev)
 						setSweepIncDecSetting(SWEEP_SETTING_GAIN, false);
 					}
 					return;
->>>>>>> OpenGD77
 				}
 			}
 			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_DOWN))
@@ -1415,15 +1320,14 @@ static void handleEvent(uiEvent_t *ev)
 					// End Trick
 				}
 
-<<<<<<< HEAD
-			return;
-		}
+				return;
+			}
 #endif
 			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED)
 #if defined(PLATFORM_DM1801)
-			|| KEYCHECK_SHORTUP(ev->keys, KEY_A_B)
+		|| 	KEYCHECK_SHORTUP(ev->keys, KEY_A_B)
 #endif
-)
+			)
 			{
 				settingsSet(nonVolatileSettings.currentVFONumber, (1 - nonVolatileSettings.currentVFONumber));// Switch to other VFO
 				currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];
@@ -1431,19 +1335,6 @@ static void handleEvent(uiEvent_t *ev)
 				menuSystemPopAllAndDisplayRootMenu(); // Force to set all TX/RX settings.
 				if (nonVolatileSettings.currentVFONumber==CHANNEL_VFO_A)
 					menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
-||||||| merged common ancestors
-			return;
-		}
-#endif
-#if defined(PLATFORM_DM1801)
-			else if (KEYCHECK_SHORTUP(ev->keys, KEY_A_B))
-			{
-				settingsSet(nonVolatileSettings.currentVFONumber, (1 - nonVolatileSettings.currentVFONumber));// Switch to other VFO
-				currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];
-				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				menuSystemPopAllAndDisplayRootMenu(); // Force to set all TX/RX settings.
-=======
->>>>>>> OpenGD77
 				return;
 			}
 			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT))
@@ -1516,23 +1407,7 @@ static void handleEvent(uiEvent_t *ev)
 							uiVFOModeUpdateScreen(0);
 							announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
 						}
-<<<<<<< HEAD
-						uiVFOModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
-					}
-					else
-					{
-						if(currentChannelData->sql == 0) //If we were using default squelch level
-||||||| merged common ancestors
-						uiVFOModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
-					}
-					else
-					{
-						if(currentChannelData->sql == 0) //If we were using default squelch level
-=======
 						else
->>>>>>> OpenGD77
 						{
 							if(currentChannelData->sql == 0) //If we were using default squelch level
 							{
@@ -1544,13 +1419,7 @@ static void handleEvent(uiEvent_t *ev)
 								currentChannelData->sql++;
 							}
 
-<<<<<<< HEAD
 						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
-||||||| merged common ancestors
-						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
-=======
-							announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
->>>>>>> OpenGD77
 
 							uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 							uiDataGlobal.displaySquelch = true;
@@ -1589,14 +1458,8 @@ static void handleEvent(uiEvent_t *ev)
 						{
 							menuVFOExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 						}
-<<<<<<< HEAD
 						uiVFOModeUpdateScreen(0);
 						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
-||||||| merged common ancestors
-						uiVFOModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
-=======
->>>>>>> OpenGD77
 					}
 					else
 					{
@@ -1643,29 +1506,17 @@ static void handleEvent(uiEvent_t *ev)
 								currentChannelData->sql = nonVolatileSettings.squelchDefaults[trxCurrentBand[TRX_RX_FREQ_BAND]];//start the adjustment from that point.
 							}
 
-<<<<<<< HEAD
-						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
-						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-						uiDataGlobal.displaySquelch = true;
-						uiVFOModeUpdateScreen(0);
-||||||| merged common ancestors
-						announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
-						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-						uiDataGlobal.displaySquelch = true;
-						uiVFOModeUpdateScreen(0);
-=======
 							if (currentChannelData->sql > CODEPLUG_MIN_VARIABLE_SQUELCH)
 							{
 								currentChannelData->sql--;
 							}
 
-							announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_3);
+							announceItem(PROMPT_SQUENCE_SQUELCH,PROMPT_THRESHOLD_2);
 
 							uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 							uiDataGlobal.displaySquelch = true;
 							uiVFOModeUpdateScreen(0);
 						}
->>>>>>> OpenGD77
 					}
 				}
 			}
@@ -1849,12 +1700,7 @@ static void handleUpKey(uiEvent_t *ev)
 				(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SWEEP))
 		{
 			selectedFreq = VFO_SELECTED_FREQUENCY_INPUT_RX;
-<<<<<<< HEAD
 			announceItem(PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
-||||||| merged common ancestors
-=======
-			announceItem(PROMPT_SEQUENCE_DIRECTION_RX, PROMPT_THRESHOLD_1);
->>>>>>> OpenGD77
 		}
 	}
 	else
@@ -1898,7 +1744,7 @@ static void handleDownKey(uiEvent_t *ev)
 				(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SWEEP))
 		{
 			selectedFreq = VFO_SELECTED_FREQUENCY_INPUT_TX;
-			announceItem(PROMPT_SEQUENCE_DIRECTION_TX, PROMPT_THRESHOLD_1);
+			announceItem(PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 		}
 	}
 	else
@@ -2342,133 +2188,17 @@ static void updateQuickMenuScreen(bool isFirstRun)
 	int prompt;// For voice prompts
 
 	ucClearBuf();
-	bool settingOption = uiShowQuickKeysChoices(buf, bufferLen,currentLanguage->quick_menu);
+	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE,currentLanguage->quick_menu);
 
 	for(int i = -1; i <= 1; i++)
 	{
 		if ((settingOption == false) || (i == 0))
 		{
-<<<<<<< HEAD
 			mNum = menuGetMenuOffset(NUM_VFO_SCREEN_QUICK_MENU_ITEMS, i);
 			prompt = -1;// Prompt not used
 			rightSideVar[0] = 0;
 			rightSideConst = NULL;
 			leftSide = NULL;
-||||||| merged common ancestors
-#if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S) || defined(PLATFORM_RD5R)
-			case VFO_SCREEN_QUICK_MENU_VFO_A_B:
-				sprintf(rightSideVar, "VFO %c", ((uiDataGlobal.QuickMenu.tmpVFONumber == 0) ? 'A' : 'B'));
-				break;
-#endif
-			case VFO_SCREEN_QUICK_MENU_TX_SWAP_RX:
-				prompt = PROMPT_VFO_EXCHANGE_TX_RX;
-				strcpy(rightSideVar, "Tx <--> Rx");
-				break;
-			case VFO_SCREEN_QUICK_MENU_BOTH_TO_RX:
-				prompt = PROMPT_VFO_COPY_RX_TO_TX;
-				strcpy(rightSideVar, "Rx --> Tx");
-				break;
-			case VFO_SCREEN_QUICK_MENU_BOTH_TO_TX:
-				prompt = PROMPT_VFO_COPY_TX_TO_RX;
-				strcpy(rightSideVar, "Tx --> Rx");
-				break;
-			case VFO_SCREEN_QUICK_MENU_FILTER_FM:
-				leftSide = (char * const *)&currentLanguage->filter;
-				if (uiDataGlobal.QuickMenu.tmpAnalogFilterLevel == 0)
-				{
-					rightSideConst = (char * const *)&currentLanguage->none;
-				}
-				else
-				{
-					snprintf(rightSideVar, bufferLen, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
-				}
-				break;
-			case VFO_SCREEN_QUICK_MENU_FILTER_DMR:
-				leftSide = (char * const *)&currentLanguage->dmr_filter;
-				if (uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel == 0)
-				{
-					rightSideConst = (char * const *)&currentLanguage->none;
-				}
-				else
-				{
-					snprintf(rightSideVar, bufferLen, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
-				}
-				break;
-			case VFO_SCREEN_QUICK_MENU_DMR_CC_FILTER:
-				leftSide = (char * const *)&currentLanguage->dmr_cc_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_CC_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			case VFO_SCREEN_QUICK_MENU_DMR_TS_FILTER:
-				leftSide = (char * const *)&currentLanguage->dmr_ts_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_TS_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-		    case VFO_SCREEN_QUICK_MENU_VFO_TO_NEW:
-		    	rightSideConst = (char * const *)&currentLanguage->vfoToNewChannel;
-		    	break;
-			case VFO_SCREEN_TONE_SCAN:
-				leftSide = (char * const *)&currentLanguage->tone_scan;
-				if(trxGetMode() == RADIO_MODE_ANALOG)
-				{
-					const char *scanCSS[] = { currentLanguage->all, "CTCSS", "DCS", "iDCS" };
-					uint8_t offset = 0;
-=======
-#if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S) || defined(PLATFORM_RD5R) || defined(PLATFORM_DM1801A)
-			case VFO_SCREEN_QUICK_MENU_VFO_A_B:
-				sprintf(rightSideVar, "VFO %c", ((uiDataGlobal.QuickMenu.tmpVFONumber == 0) ? 'A' : 'B'));
-				break;
-#endif
-			case VFO_SCREEN_QUICK_MENU_TX_SWAP_RX:
-				prompt = PROMPT_VFO_EXCHANGE_TX_RX;
-				strcpy(rightSideVar, "Tx <--> Rx");
-				break;
-			case VFO_SCREEN_QUICK_MENU_BOTH_TO_RX:
-				prompt = PROMPT_VFO_COPY_RX_TO_TX;
-				strcpy(rightSideVar, "Rx --> Tx");
-				break;
-			case VFO_SCREEN_QUICK_MENU_BOTH_TO_TX:
-				prompt = PROMPT_VFO_COPY_TX_TO_RX;
-				strcpy(rightSideVar, "Tx --> Rx");
-				break;
-			case VFO_SCREEN_QUICK_MENU_FILTER_FM:
-				leftSide = (char * const *)&currentLanguage->filter;
-				if (uiDataGlobal.QuickMenu.tmpAnalogFilterLevel == 0)
-				{
-					rightSideConst = (char * const *)&currentLanguage->none;
-				}
-				else
-				{
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
-				}
-				break;
-			case VFO_SCREEN_QUICK_MENU_FILTER_DMR:
-				leftSide = (char * const *)&currentLanguage->dmr_filter;
-				if (uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel == 0)
-				{
-					rightSideConst = (char * const *)&currentLanguage->none;
-				}
-				else
-				{
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
-				}
-				break;
-			case VFO_SCREEN_QUICK_MENU_DMR_CC_FILTER:
-				leftSide = (char * const *)&currentLanguage->dmr_cc_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_CC_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			case VFO_SCREEN_QUICK_MENU_DMR_TS_FILTER:
-				leftSide = (char * const *)&currentLanguage->dmr_ts_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_TS_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-		    case VFO_SCREEN_QUICK_MENU_VFO_TO_NEW:
-		    	rightSideConst = (char * const *)&currentLanguage->vfoToNewChannel;
-		    	break;
-			case VFO_SCREEN_TONE_SCAN:
-				leftSide = (char * const *)&currentLanguage->tone_scan;
-				if(trxGetMode() == RADIO_MODE_ANALOG)
-				{
-					const char *scanCSS[] = { currentLanguage->all, "CTCSS", "DCS", "iDCS" };
-					uint8_t offset = 0;
->>>>>>> OpenGD77
 
 			switch(mNum)
 			{
@@ -2497,7 +2227,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					}
 					else
 					{
-						snprintf(rightSideVar, bufferLen, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
 					}
 					break;
 				case VFO_SCREEN_QUICK_MENU_FILTER_DMR:
@@ -2508,7 +2238,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					}
 					else
 					{
-						snprintf(rightSideVar, bufferLen, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
 					}
 					break;
 				case VFO_SCREEN_QUICK_MENU_DMR_CC_FILTER:
@@ -2546,13 +2276,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 							offset = 3;
 						}
 
-<<<<<<< HEAD
-						snprintf(rightSideVar, bufferLen, "%s", scanCSS[offset]);
-||||||| merged common ancestors
-					snprintf(rightSideVar, bufferLen, "%s", scanCSS[offset]);
-=======
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", scanCSS[offset]);
->>>>>>> OpenGD77
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", scanCSS[offset]);
 
 						if (uiDataGlobal.QuickMenu.tmpToneScanCSS == CSS_TYPE_NONE)
 						{
@@ -2563,7 +2287,6 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					{
 						rightSideConst = (char * const *)&currentLanguage->n_a;
 					}
-<<<<<<< HEAD
 					break;
 				case VFO_SCREEN_DUAL_SCAN:
 					rightSideConst = (char * const *)&currentLanguage->dual_watch;
@@ -2575,82 +2298,15 @@ static void updateQuickMenuScreen(bool isFirstRun)
 				default:
 					strcpy(buf, "");
 					break;
-||||||| merged common ancestors
-				}
-				else
-				{
-					rightSideConst = (char * const *)&currentLanguage->n_a;
-				}
-				break;
-			case VFO_SCREEN_DUAL_SCAN:
-				rightSideConst = (char * const *)&currentLanguage->dual_watch;
-				break;
-			case VFO_SCREEN_QUICK_MENU_FREQ_BIND_MODE:
-				leftSide = (char * const *)&currentLanguage->vfo_freq_bind_mode;
-				rightSideConst = (!uiDataGlobal.QuickMenu.tmpTxRxLockMode)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			default:
-				strcpy(buf, "");
-				break;
-		}
-
-		if (leftSide != NULL)
-		{
-			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-		else
-		{
-			snprintf(buf, bufferLen, "%s", ((rightSideVar[0] != 0) ? rightSideVar : *rightSideConst));
-		}
-
-		if (i == 0)
-		{
-			if (!isFirstRun)
-			{
-				voicePromptsInit();
-=======
-				}
-				else
-				{
-					rightSideConst = (char * const *)&currentLanguage->n_a;
-				}
-				break;
-			case VFO_SCREEN_DUAL_SCAN:
-				rightSideConst = (char * const *)&currentLanguage->dual_watch;
-				break;
-			case VFO_SCREEN_QUICK_MENU_FREQ_BIND_MODE:
-				leftSide = (char * const *)&currentLanguage->vfo_freq_bind_mode;
-				rightSideConst = (!uiDataGlobal.QuickMenu.tmpTxRxLockMode)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			default:
-				strcpy(buf, "");
-				break;
-		}
-
-		if (leftSide != NULL)
-		{
-			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-		else
-		{
-			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s", ((rightSideVar[0] != 0) ? rightSideVar : *rightSideConst));
-		}
-
-		if (i == 0)
-		{
-			if (!isFirstRun)
-			{
-				voicePromptsInit();
->>>>>>> OpenGD77
 			}
-
+			
 			if (leftSide != NULL)
 			{
-				snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
+				snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
 			else
 			{
-				snprintf(buf, bufferLen, "%s", ((rightSideVar[0] != 0) ? rightSideVar : *rightSideConst));
+				snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s", ((rightSideVar[0] != 0) ? rightSideVar : *rightSideConst));
 			}
 
 			if (i == 0)
@@ -2750,7 +2406,6 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 	{
-<<<<<<< HEAD
 		if ((menuDataGlobal.menuOptionsSetQuickkey != 0) && (menuDataGlobal.menuOptionsTimeout == 0))
 		{
 			saveQuickkeyMenuIndex(menuDataGlobal.menuOptionsSetQuickkey, menuSystemGetCurrentMenuNumber(), menuDataGlobal.currentItemIndex, 0);
@@ -2760,12 +2415,7 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 			return;
 		}
 
-#if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S) || defined(PLATFORM_RD5R)
-||||||| merged common ancestors
-#if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S) || defined(PLATFORM_RD5R)
-=======
 #if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S) || defined(PLATFORM_RD5R) || defined(PLATFORM_DM1801A)
->>>>>>> OpenGD77
 		if (nonVolatileSettings.currentVFONumber != uiDataGlobal.QuickMenu.tmpVFONumber)
 		{
 			settingsSet(nonVolatileSettings.currentVFONumber, uiDataGlobal.QuickMenu.tmpVFONumber);
@@ -3380,13 +3030,7 @@ static void scanning(void)
 				uiVFOModeStopScanning();
 				// Just update the header (to prevent hidden mode)
 				ucClearRows(0, 2, false);
-<<<<<<< HEAD
-				uiUtilityRenderHeader(notScanning);
-||||||| merged common ancestors
-				uiUtilityRenderHeader(false);
-=======
-				uiUtilityRenderHeader(false, false);
->>>>>>> OpenGD77
+				uiUtilityRenderHeader(uiVFOGetHeaderScanIndicatorType());
 				ucRenderRows(0, 2);
 				return;
 			}
@@ -3410,13 +3054,7 @@ static void scanning(void)
 					uiVFOModeStopScanning();
 					// Just update the header (to prevent hidden mode)
 					ucClearRows(0, 2, false);
-<<<<<<< HEAD
-					uiUtilityRenderHeader(notScanning);
-||||||| merged common ancestors
-					uiUtilityRenderHeader(false);
-=======
-					uiUtilityRenderHeader(false, false);
->>>>>>> OpenGD77
+					uiUtilityRenderHeader(uiVFOGetHeaderScanIndicatorType());
 					ucRenderRows(0, 2);
 					return;
 				}

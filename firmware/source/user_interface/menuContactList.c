@@ -140,59 +140,18 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 			contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
 
 			voicePromptsInit();
-<<<<<<< HEAD
 			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-||||||| merged common ancestors
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-=======
-			if (menuSystemGetCurrentMenuNumber() == MENU_CONTACT_QUICKLIST)
->>>>>>> OpenGD77
 			{
-<<<<<<< HEAD
 				voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
-||||||| merged common ancestors
-				voicePromptsAppendLanguageString(&currentLanguage->contacts);
-				voicePromptsAppendLanguageString(&currentLanguage->menu);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-=======
-				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-				{
-					voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-					voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
-				}
-				else
-				{
-					voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
-				}
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
->>>>>>> OpenGD77
+				voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
 			}
 			else
 			{
-<<<<<<< HEAD
 				voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
 			}
 			if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 			{
 				voicePromptsAppendLanguageString(&currentLanguage->menu);
-||||||| merged common ancestors
-				if (menuSystemGetCurrentMenuNumber() == MENU_CONTACT_QUICKLIST)
-				{
-					voicePromptsAppendLanguageString(&currentLanguage->dtmf_contact_list);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-				}
-=======
-				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-				{
-					voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
-					voicePromptsAppendPrompt(PROMPT_SILENCE);
-				}
->>>>>>> OpenGD77
 			}
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
@@ -250,13 +209,8 @@ static void updateScreen(bool isFirstRun)
 				ucPrintCentered((DISPLAY_SIZE_Y / 2), currentLanguage->empty_list, FONT_SIZE_3);
 
 				voicePromptsAppendLanguageString(&currentLanguage->empty_list);
-<<<<<<< HEAD
 				if (!uiDataGlobal.VoicePrompts.inhibitInitial)
 					promptsPlayNotAfterTx();
-||||||| merged common ancestors
-				promptsPlayNotAfterTx();
-=======
->>>>>>> OpenGD77
 			}
 			else
 			{
@@ -277,14 +231,6 @@ static void updateScreen(bool isFirstRun)
 
 					if (i == 0)
 					{
-<<<<<<< HEAD
-						voicePromptsAppendString(nameBuf);
-						if (!uiDataGlobal.VoicePrompts.inhibitInitial)
-							promptsPlayNotAfterTx();
-||||||| merged common ancestors
-						voicePromptsAppendString(nameBuf);
-						promptsPlayNotAfterTx();
-=======
 						if (strlen(nameBuf))
 						{
 							voicePromptsAppendString(nameBuf);
@@ -295,12 +241,12 @@ static void updateScreen(bool isFirstRun)
 							voicePromptsAppendPrompt(PROMPT_SILENCE);
 							voicePromptsAppendLanguageString(&currentLanguage->none);
 						}
->>>>>>> OpenGD77
 					}
 				}
 
 			}
-			promptsPlayNotAfterTx();
+			if (!uiDataGlobal.VoicePrompts.inhibitInitial)
+				promptsPlayNotAfterTx();
 			break;
 		case MENU_CONTACT_LIST_CONFIRM:
 			codeplugUtilConvertBufToString(contactListContactData.name, nameBuf, 16);
@@ -718,7 +664,6 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
-<<<<<<< HEAD
 		menuDataGlobal.currentItemIndex=0;
 		
 		voicePromptsInit();
@@ -726,12 +671,6 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 		updateSubMenuScreen(isFirstRun);
-||||||| merged common ancestors
-		updateSubMenuScreen();
-=======
-		menuDataGlobal.currentItemIndex = 0;
-		updateSubMenuScreen();
->>>>>>> OpenGD77
 		keyboardInit();
 		menuContactListSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}

@@ -195,6 +195,15 @@ typedef enum
 	SCAN_TYPE_DUAL_WATCH
 } ScanType_t;
 
+typedef enum
+{
+	notScanning,
+	vfoDualWatch,
+	channelDualWatch,
+	channelPriorityScan,
+	vfoSweepScan
+} HeaderScanIndicatorType_t;
+
 typedef struct
 {
 	uint32_t			id;

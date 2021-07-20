@@ -1349,7 +1349,7 @@ void uiUtilityRenderQSODataAndUpdateScreen(void)
 	if (isQSODataAvailableForCurrentTalker())
 	{
 		ucClearBuf();
-		uiUtilityRenderHeader(false, false);
+		uiUtilityRenderHeader(notScanning);
 		uiUtilityRenderQSOData();
 		ucRender();
 	}

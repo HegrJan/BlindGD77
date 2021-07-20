@@ -102,15 +102,6 @@ typedef enum
 	DISPLAY_INFO_TX_TIMER,
 	DISPLAY_INFO_ZONE
 } displayInformation_t;
-typedef enum
-{
-	notScanning,
-	vfoDualWatch,
-	channelDualWatch,
-	channelPriorityScan,
-	vfoSweepScan
-} HeaderScanIndicatorType_t;
-
 
 typedef struct
 {

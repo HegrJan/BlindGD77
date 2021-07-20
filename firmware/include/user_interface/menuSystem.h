@@ -114,7 +114,6 @@ typedef struct
 	const menuItemNewData_t *items;
 } menuItemsList_t;
 
-
 void menuDisplayTitle(const char *title);
 void menuDisplayEntry(int loopOffset, int focusedItem,const char *entryText);
 
@@ -131,6 +130,7 @@ bool uiVFOModeDualWatchIsScanning(void);
 bool uiVFOModeSweepScanning(bool includePaused);
 void uiVFOSweepScanModePause(bool pause, bool forceDigitalOnPause);
 bool uiVFOModeFrequencyScanningIsActiveAndEnabled(uint32_t *lowFreq, uint32_t *highFreq);
+ HeaderScanIndicatorType_t uiVFOGetHeaderScanIndicatorType();
 void uiChannelModeStopScanning(void);
 bool uiChannelModeIsScanning(void);
 

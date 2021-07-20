@@ -453,13 +453,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #else
 						ucClearRows(0, 2, false);
 #endif
-<<<<<<< HEAD
 						uiUtilityRenderHeader(notScanning);
-||||||| merged common ancestors
-						uiUtilityRenderHeader(false);
-=======
-						uiUtilityRenderHeader(false, false);
->>>>>>> OpenGD77
 					}
 					else
 					{
@@ -707,23 +701,13 @@ static bool AllowedToAnnounceChannelInfo(bool loadVoicePromptAnnouncement)
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement)
 {
 	bool rxGroupValid = true;
-<<<<<<< HEAD
+
 	if (uiDataGlobal.priorityChannelActive)
 	{
 		codeplugChannelGetDataForIndex(uiDataGlobal.priorityChannelIndex, &channelScreenChannelData);
 		uiDataGlobal.currentSelectedChannelNumber=uiDataGlobal.priorityChannelIndex;
 	}
 	else if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
-||||||| merged common ancestors
-
-	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
-=======
-#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
-	bool wasLoadingZone = (currentChannelData->rxFreq == 0);
-#endif
-
-	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
->>>>>>> OpenGD77
 	{
 		// All Channels virtual zone
 		uiDataGlobal.currentSelectedChannelNumber = nonVolatileSettings.currentChannelIndexInAllZone;
@@ -824,29 +808,10 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 	}
 
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
-<<<<<<< HEAD
 	if (AllowedToAnnounceChannelInfo(loadVoicePromptAnnouncement))
-||||||| merged common ancestors
-	int nextMenu = menuSystemGetPreviouslyPushedMenuNumber(); // used to determine if this screen has just been loaded after Tx ended (in loadChannelData()))
-	if ((!uiDataGlobal.VoicePrompts.inhibitInitial || loadVoicePromptAnnouncement) &&
-			((uiDataGlobal.Scan.active == false) ||
-					(uiDataGlobal.Scan.active && ((uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED) || (uiDataGlobal.Scan.state = SCAN_PAUSED)))))
-=======
-	int nextMenu = menuSystemGetPreviouslyPushedMenuNumber(); // used to determine if this screen has just been loaded after Tx ended (in loadChannelData()))
-	if (((uiDataGlobal.VoicePrompts.inhibitInitial == false) || loadVoicePromptAnnouncement) &&
-			((uiDataGlobal.Scan.active == false) ||
-					(uiDataGlobal.Scan.active && ((uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED) || (uiDataGlobal.Scan.state = SCAN_PAUSED)))))
->>>>>>> OpenGD77
 	{
-<<<<<<< HEAD
 		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, AnnounceChannelInfoImmediately() ? PROMPT_THRESHOLD_2 : PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
 		dualWatchChannelData.allowedToAnnounceChannelDetails=false;// once announced, disallow until user explicitly changes the channel.
-||||||| merged common ancestors
-			announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, ((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || uiDataGlobal.Scan.active) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_3);
-=======
-		announceItem((wasLoadingZone ? PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE : PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE),
-				((nextMenu == UI_TX_SCREEN) || (nextMenu == UI_PRIVATE_CALL) || uiDataGlobal.Scan.active) ? PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY : PROMPT_THRESHOLD_2);
->>>>>>> OpenGD77
 	}
 #else
 	// Force GD77S to always use the Master power level
@@ -867,7 +832,7 @@ void uiChannelModeUpdateScreen(int txTimeSecs)
 	if ((trxGetMode() == RADIO_MODE_DIGITAL) && (HRC6000GetReceivedTgOrPcId() == 0) &&
 			((uiDataGlobal.displayQSOState == QSO_DISPLAY_CALLER_DATA) || (uiDataGlobal.displayQSOState == QSO_DISPLAY_CALLER_DATA_UPDATE)))
 	{
-		uiUtilityRedrawHeaderOnly(false, false);
+		uiUtilityRedrawHeaderOnly(notScanning);
 		return;
 	}
 
@@ -881,13 +846,7 @@ void uiChannelModeUpdateScreen(int txTimeSecs)
 	}
 
 	ucClearBuf();
-<<<<<<< HEAD
 	uiUtilityRenderHeader(dualWatchChannelData.dualWatchActive ? (dualWatchChannelData.watchChannelIndex==uiDataGlobal.priorityChannelIndex ? channelPriorityScan :  channelDualWatch) : notScanning);
-||||||| merged common ancestors
-	uiUtilityRenderHeader(false);
-=======
-	uiUtilityRenderHeader(false, false);
->>>>>>> OpenGD77
 
 	switch(uiDataGlobal.displayQSOState)
 	{
@@ -1100,7 +1059,6 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & BUTTON_EVENT)
 	{
-<<<<<<< HEAD
 		// long hold sk1 now summarizes channel for all models.
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 		{
@@ -1112,14 +1070,11 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 
-||||||| merged common ancestors
-=======
 		if (rebuildVoicePromptOnExtraLongSK1(ev))
 		{
 			return;
 		}
 
->>>>>>> OpenGD77
 		if (repeatVoicePromptOnSK1(ev))
 		{
 			return;
@@ -1305,18 +1260,13 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
-<<<<<<< HEAD
 				StopDualWatch(true); // Ensure dual watch is stopped.
 
-||||||| merged common ancestors
-=======
 				// Assignment for SK2 + #
->>>>>>> OpenGD77
 				menuSystemPushNewMenu(MENU_CONTACT_QUICKLIST);
 			}
 			else
 			{
-<<<<<<< HEAD
 				if (trxGetMode() == RADIO_MODE_DIGITAL)
 				{
 					StopDualWatch(true); // Ensure dual watch is stopped.
@@ -1331,17 +1281,7 @@ static void handleEvent(uiEvent_t *ev)
 					repeaterOffsetDisplayTimeout=2000;
 					uiChannelModeUpdateScreen(0);
 				}
-							}
-||||||| merged common ancestors
-				if (trxGetMode() == RADIO_MODE_DIGITAL)
-				{
-					menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
-				}
 			}
-=======
-				menuSystemPushNewMenu(MENU_NUMERICAL_ENTRY);
-			}
->>>>>>> OpenGD77
 			return;
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED))
@@ -1454,7 +1394,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (increasePowerLevel(true))
 				{
-					uiUtilityRedrawHeaderOnly(false, false);
+					uiUtilityRedrawHeaderOnly(notScanning);
 				}
 			}
 		}
@@ -1464,7 +1404,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (increasePowerLevel(false))
 				{
-					uiUtilityRedrawHeaderOnly(false, false);
+					uiUtilityRedrawHeaderOnly(notScanning);
 				}
 			}
 			else
@@ -1523,7 +1463,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (decreasePowerLevel())
 				{
-					uiUtilityRedrawHeaderOnly(false, false);
+					uiUtilityRedrawHeaderOnly(notScanning);
 				}
 
 				if (trxGetPowerLevel() == 0)
@@ -1614,13 +1554,7 @@ static void handleEvent(uiEvent_t *ev)
 					trxSetRxCSS(currentChannelData->rxTone);
 				}
 
-<<<<<<< HEAD
 				announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
-||||||| merged common ancestors
-				announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_3);
-=======
-				announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_1);
->>>>>>> OpenGD77
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 				uiChannelModeUpdateScreen(0);
 			}
@@ -2062,7 +1996,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 	char rightSideVar[SCREEN_LINE_BUFFER_SIZE];
 
 	ucClearBuf();
-	bool settingOption = uiShowQuickKeysChoices(buf, bufferLen,currentLanguage->quick_menu);
+	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE,currentLanguage->quick_menu);
 
 	for(int i =- 1; i <= 1; i++)
 	{
@@ -2090,7 +2024,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					}
 					else
 					{
-						snprintf(rightSideVar, bufferLen, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
 					}
 					break;
 				case CH_SCREEN_QUICK_MENU_FILTER_DMR:
@@ -2101,7 +2035,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					}
 					else
 					{
-						snprintf(rightSideVar, bufferLen, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
 					}
 					break;
 				case CH_SCREEN_QUICK_MENU_FILTER_DMR_CC:
@@ -2124,11 +2058,11 @@ static void updateQuickMenuScreen(bool isFirstRun)
 
 			if (leftSide != NULL)
 			{
-				snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
+				snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
 			else
 			{
-				snprintf(buf, bufferLen, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
+				snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
 
 			if (i == 0)
@@ -2140,13 +2074,8 @@ static void updateQuickMenuScreen(bool isFirstRun)
 
 				if (leftSide != NULL)
 				{
-<<<<<<< HEAD
 					voicePromptsAppendLanguageString((const char * const *)leftSide);
-||||||| merged common ancestors
-					snprintf(rightSideVar, bufferLen, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
-=======
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
->>>>>>> OpenGD77
 				}
 
 				if (rightSideVar[0] != 0)
@@ -2155,61 +2084,9 @@ static void updateQuickMenuScreen(bool isFirstRun)
 				}
 				else
 				{
-<<<<<<< HEAD
 					voicePromptsAppendLanguageString((const char * const *)rightSideConst);
-||||||| merged common ancestors
-					snprintf(rightSideVar, bufferLen, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
-=======
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
->>>>>>> OpenGD77
 				}
-<<<<<<< HEAD
-||||||| merged common ancestors
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR_CC:
-				leftSide = (char * const *)&currentLanguage->dmr_cc_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_CC_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR_TS:
-				leftSide = (char * const *)&currentLanguage->dmr_ts_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_TS_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			default:
-				buf[0] = 0;
-		}
-
-		if (leftSide != NULL)
-		{
-			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-		else
-		{
-			snprintf(buf, bufferLen, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-=======
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR_CC:
-				leftSide = (char * const *)&currentLanguage->dmr_cc_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_CC_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			case CH_SCREEN_QUICK_MENU_FILTER_DMR_TS:
-				leftSide = (char * const *)&currentLanguage->dmr_ts_filter;
-				rightSideConst = (uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel & DMR_TS_FILTER_PATTERN)?(char * const *)&currentLanguage->on:(char * const *)&currentLanguage->off;
-				break;
-			default:
-				buf[0] = 0;
-		}
-
-		if (leftSide != NULL)
-		{
-			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
-		else
-		{
-			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s", (rightSideVar[0] ? rightSideVar : *rightSideConst));
-		}
->>>>>>> OpenGD77
-
 				if (menuDataGlobal.menuOptionsTimeout != -1)
 				{
 					promptsPlayNotAfterTx();

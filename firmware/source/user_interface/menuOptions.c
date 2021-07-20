@@ -255,7 +255,7 @@ static void updateScreen(bool isFirstRun)
 					leftSide = (char * const *)&currentLanguage->sk2Latch;
 					if (nonVolatileSettings.sk2Latch > 0)
 					{
-						snprintf(rightSideVar, bufferLen, "%d.%1d", nonVolatileSettings.sk2Latch/2, (nonVolatileSettings.sk2Latch*5)%10);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d.%1d", nonVolatileSettings.sk2Latch/2, (nonVolatileSettings.sk2Latch*5)%10);
 						rightSideUnitsPrompt = PROMPT_SECONDS;
 						rightSideUnitsStr = "s";
 					}
@@ -266,7 +266,7 @@ static void updateScreen(bool isFirstRun)
 					leftSide = (char * const *)&currentLanguage->dtmfLatch;
 					if (nonVolatileSettings.dtmfLatch > 0)
 					{
-						snprintf(rightSideVar, bufferLen, "%1d.%1d", nonVolatileSettings.dtmfLatch/2, (nonVolatileSettings.dtmfLatch*5)%10);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%1d.%1d", nonVolatileSettings.dtmfLatch/2, (nonVolatileSettings.dtmfLatch*5)%10);
 						rightSideUnitsPrompt = PROMPT_SECONDS;
 						rightSideUnitsStr = "s";
 					}
@@ -337,27 +337,27 @@ static void updateScreen(bool isFirstRun)
 					if (nonVolatileSettings.priorityChannelIndex!=NO_PRIORITY_CHANNEL)
 					{// Priority channel is always relative to allChannels zone.
 						codeplugChannelGetDataForIndex(nonVolatileSettings.priorityChannelIndex, &priorityChannelData );
-						codeplugUtilConvertBufToString(priorityChannelData.name, rightSideVar, bufferLen);
+						codeplugUtilConvertBufToString(priorityChannelData.name, rightSideVar, SCREEN_LINE_BUFFER_SIZE);
 					}
 					else
 						rightSideConst = (char * const *)&currentLanguage->none;
 					break;
 				case OPTIONS_MENU_VHF_RPT_OFFSET:
 					leftSide = (char * const *)&currentLanguage->vhfRptOffset;
-					snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.vhfOffset);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.vhfOffset);
 					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
 					rightSideUnitsStr = "kHz";
 					break;
 				case OPTIONS_MENU_UHF_RPT_OFFSET:
 					leftSide = (char * const *)&currentLanguage->uhfRptOffset;
-					snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.uhfOffset);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.uhfOffset);
 					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
 					rightSideUnitsStr = "kHz";
 					break;
 				case OPTIONS_MENU_AUTOZONE:
 					leftSide = (char * const *)&currentLanguage->autoZone;
 					if (nonVolatileSettings.autoZone.flags&AutoZoneEnabled)
-						snprintf(rightSideVar, bufferLen, "%s", nonVolatileSettings.autoZone.name);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", nonVolatileSettings.autoZone.name);
 					else
 						rightSideConst = (char * const *)&currentLanguage->off;
 					break;

@@ -133,7 +133,7 @@ void menuLastHeardUpdateScreen(bool showTitleOrHeader, bool displayDetails, bool
 	}
 	else
 	{
-		uiUtilityRenderHeader(false, false);
+		uiUtilityRenderHeader(notScanning);
 	}
 
 	// skip over the first menuDataGlobal.currentItemIndex in the listing

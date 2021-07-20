@@ -590,8 +590,7 @@ void mainTask(void *data)
 
 				if ((currentMenu == UI_CHANNEL_MODE) || (currentMenu == UI_VFO_MODE))
 				{
-					bool sweeping;
-					if ((sweeping = uiVFOModeSweepScanning(true)))
+					if (uiVFOModeSweepScanning(true))
 					{
 						ucFillRect(0, 0, DISPLAY_SIZE_X, 9, true);
 					}
@@ -603,7 +602,7 @@ void mainTask(void *data)
 						ucClearRows(0, 2, false);
 #endif
 					}
-					uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning(), sweeping);
+					uiUtilityRenderHeader(uiVFOGetHeaderScanIndicatorType());
 					ucRenderRows(0, 2);
 				}
 
@@ -838,7 +837,7 @@ void mainTask(void *data)
 						if (wasScanning)
 						{
 							// Mode was blinking, hence it needs to be redrawn as it could be in its hidden phase.
-							uiUtilityRedrawHeaderOnly(false, false);
+							uiUtilityRedrawHeaderOnly(uiVFOGetHeaderScanIndicatorType());
 						}
 						//else // VK7js commented out to fix ptt not txing after scan stops.
 						{

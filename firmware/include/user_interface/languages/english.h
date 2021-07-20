@@ -172,10 +172,10 @@ const stringsTable_t englishLanguage =
 .squelch_220				= "220 Squelch",// Maxlen 16 (with : + XX%)
 .squelch_UHF				= "UHF Squelch", // Maxlen 16 (with : + XX%)
 .display_background_colour 		= "Colour", // Maxlen 16 (with : + .colour_normal or .colour_invert)
-.openGD77 				= "AccessibleGD77",// Do not translate
-.openGD77S 				= "AccessibleGD77S",// Do not translate
-.openDM1801 				= "AccessibleDM1801",// Do not translate
-.openRD5R 				= "AccessibleRD5R",// Do not translate
+.openGD77 				= "Acc. GD77",// Do not translate
+.openGD77S 				= "Acc. GD77S",// Do not translate
+.openDM1801 				= "Acc. DM1801",// Do not translate
+.openRD5R 				= "Acc. RD5R",// Do not translate
 .gitCommit				= "Git commit",
 .voice_prompt_level_2			= "Voice L2", // Maxlen 16 (with : + audio_prompt)
 .voice_prompt_level_3			= "Voice L3", // Maxlen 16 (with : + audio_prompt)
@@ -217,9 +217,8 @@ const stringsTable_t englishLanguage =
 .vhfRptOffset="VHF Off",
 .uhfRptOffset="UHF Off",
 .tone="Tone",
-.autoZone="AutoZn"
-.openDM1801A 				= "OpenDM1801A" // Do not translate
->>>>>>> OpenGD77
+.autoZone="AutoZn",
+.openDM1801A 				= "Acc. DM1801A" // Do not translate
 };
 /********************************************************************
  *
