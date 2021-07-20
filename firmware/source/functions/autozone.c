@@ -68,12 +68,16 @@ static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 			channelBuf->flag4 |= 0x04;// rx only. 
 			break;
 		default:
+			channelBuf->flag4 &=~0x04;// turn off rx only flag in case it was on due to visiting channels 22, 23, etc. 
 			break;
 	}
 	if ((index > 8 && index < 41) || (index > 48)) // force simplex since repeaters are only allowed on 1-8 and 41-48.
 	{
 		channelBuf->txFreq=channelBuf->rxFreq;
+		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
 	}
+	else
+		autoZone->flags |=AutoZoneDuplexAvailable;
 }
 
 /*
@@ -102,7 +106,7 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 void InitializeAU_UHFCB()
 {
 	strcpy(autoZone->name, "AU UHF CB");
-	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels|AutoZoneOffsetDirectionPlus |AutoZoneNarrow;
+	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels | AutoZoneOffsetDirectionPlus | AutoZoneNarrow;
 	autoZone->type=AutoZone_AU_UHFCB;
 	autoZone->startFrequency=47642500; // mHz of first channel
 	autoZone->endFrequency=47740000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
