@@ -391,7 +391,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			{
 				uiDataGlobal.displayChannelSettings=false;
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				uiChannelModeUpdateScreen(0);//joe
+				uiChannelModeUpdateScreen(0);
 			}
 		}
 
@@ -1288,8 +1288,14 @@ static void handleEvent(uiEvent_t *ev)
 				uiDataGlobal.priorityChannelActive=!uiDataGlobal.priorityChannelActive;
 				if (uiDataGlobal.priorityChannelActive)
 				{
-					if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+					if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+					{
+						nonVolatileSettings.currentChannelIndexInZone=uiDataGlobal.priorityChannelIndex; // already relative to the autoZone.
+					}
+					else if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+					{
 						nonVolatileSettings.currentChannelIndexInAllZone=uiDataGlobal.priorityChannelIndex;
+					}
 					else
 					{
 						uint16_t priorityChannelIndexInZone;
@@ -1788,6 +1794,19 @@ static void selectPrevNextZone(bool nextZone)
 */
 	settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0);// Since we are switching zones the channel index should be reset
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	
+	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+	if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+	{
+		if (nonVolatileSettings.autoZone.priorityChannelIndex > 0)
+			uiDataGlobal.priorityChannelIndex=nonVolatileSettings.autoZone.priorityChannelIndex;
+		else
+			uiDataGlobal.priorityChannelIndex=NO_PRIORITY_CHANNEL;
+	}
+	else
+	{
+	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
+	}
 }
 
 static void handleUpKey(uiEvent_t *ev)
