@@ -220,7 +220,7 @@ typedef struct
    const char *scan_on_boot;
    const char* dtmf_entry;
    const char* name;
-   const char* vox;
+   const char *openDM1801A;
    const char* sk2Latch;
    const char* dtmfLatch;
    const char* priorityChannel;
