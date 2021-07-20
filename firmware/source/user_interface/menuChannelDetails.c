@@ -358,6 +358,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						rightSideConst = (char * const *)(((tmpChannel.flag4 & CODEPLUG_CHANNEL_FLAG_ALL_SKIP) == CODEPLUG_CHANNEL_FLAG_ALL_SKIP) ? &currentLanguage->yes : &currentLanguage->no);
 						break;
 					case CH_DETAILS_VOX:
+						leftSide = (char * const *)&currentLanguage->vox;
 						rightSideConst = (char * const *)(((tmpChannel.flag4 & 0x40) == 0x40) ? &currentLanguage->on : &currentLanguage->off);
 						snprintf(rightSideVar, bufferLen, "VOX:%s", *rightSideConst);
 						break;
@@ -454,7 +455,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 					}
 					else if (mNum == CH_DETAILS_VOX)
 					{
-						voicePromptsAppendPrompt(PROMPT_VOX);
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
 						voicePromptsAppendLanguageString((const char * const *)rightSideConst);
 					}
 					else if ((mNum == CH_DETAILS_POWER) &&
