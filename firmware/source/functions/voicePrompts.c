@@ -214,7 +214,7 @@ void voicePromptsInit(void)
 	voicePromptsCurrentSequence.Pos = 0;
 }
 
-void voicePromptsAppendPrompt(voicePrompt_t prompt)
+void voicePromptsAppendPrompt(uint16_t prompt)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
