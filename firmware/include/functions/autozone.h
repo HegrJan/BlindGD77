@@ -41,7 +41,8 @@ typedef enum
 	AutoZoneInterleaveChannels=0x04, // 0 off, 1 on,
 	AutoZoneDuplexEnabled=0x08,
 	AutoZoneOffsetDirectionPlus=0x10, // unset is minus, set is plus. For simplex, unset prior bit.
-	AutoZoneNarrow=0x20, // if not set, assumed wide.
+	AutoZoneDuplexAvailable=0x20,
+	AutoZoneNarrow=0x40, // if not set, assumed wide.
 	AutoZonePowerMask=0xf000, // 0 all rx, or max wattage allowed in increments of 0.5 w (up to 5 w).
 } AutoZoneFlags_t;
 

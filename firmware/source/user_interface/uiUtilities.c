@@ -3461,20 +3461,25 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	
 	voicePromptsInit();
 	
-	int direction=(nonVolatileSettings.autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
-
-	if ((nonVolatileSettings.autoZone.flags&AutoZoneDuplexEnabled)==0)
-		nonVolatileSettings.autoZone.flags|=AutoZoneDuplexEnabled;
-	else
-		nonVolatileSettings.autoZone.flags&=~AutoZoneDuplexEnabled;
-	if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)
+	int direction=0;
+	if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)
 	{
-		if (direction > 0)
-			voicePromptsAppendPrompt(PROMPT_PLUS);
+		direction =(nonVolatileSettings.autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
+	
+		if ((nonVolatileSettings.autoZone.flags&AutoZoneDuplexEnabled)==0)
+			nonVolatileSettings.autoZone.flags|=AutoZoneDuplexEnabled;
 		else
-			voicePromptsAppendPrompt(PROMPT_MINUS);
-	}		
-	else
+			nonVolatileSettings.autoZone.flags&=~AutoZoneDuplexEnabled;
+	
+		if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)
+		{
+			if (direction > 0)
+				voicePromptsAppendPrompt(PROMPT_PLUS);
+			else
+				voicePromptsAppendPrompt(PROMPT_MINUS);
+		}		
+	}
+	if ((nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)==0 || (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)==0)
 	{
 		direction=0;
 		voicePromptsAppendLanguageString(&currentLanguage->none);
