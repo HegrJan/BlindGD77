@@ -1375,7 +1375,7 @@ static void handleEvent(uiEvent_t *ev)
 								addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, UI_VFO_MODE, true);
 							}
 							uiVFOModeUpdateScreen(0);
-							announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
+							announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 						}
 						else
 						{
@@ -1467,7 +1467,7 @@ static void handleEvent(uiEvent_t *ev)
 								addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, UI_VFO_MODE, true);
 							}
 							uiVFOModeUpdateScreen(0);
-							announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
+							announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 						}
 						else
 						{
