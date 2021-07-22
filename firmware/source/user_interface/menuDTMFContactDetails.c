@@ -266,7 +266,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						strncpy(rightSideVar, contactName, DTMF_NAME_MAX_LEN);
 						break;
 					case CONTACT_DETAILS_DTMF_CODE:
-						leftSide = (char * const *)&currentLanguage->dtmf_entry;
+						leftSide = (char * const *)&currentLanguage->dtmf_code;
 						strncpy(rightSideVar, dtmfCodeChars, DTMF_CODE_MAX_LEN);
 						break;
 				}

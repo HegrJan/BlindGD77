@@ -229,6 +229,7 @@ typedef struct
    const char* uhfRptOffset;
    const char* tone;
    const char * autoZone;
+   const char* dtmf_code;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

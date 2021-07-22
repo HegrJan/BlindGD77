@@ -2094,7 +2094,6 @@ static void updateQuickMenuScreen(bool isFirstRun)
 				if (leftSide != NULL)
 				{
 					voicePromptsAppendLanguageString((const char * const *)leftSide);
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", ANALOG_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpAnalogFilterLevel - 1]);
 				}
 
 				if (rightSideVar[0] != 0)
@@ -2104,7 +2103,6 @@ static void updateQuickMenuScreen(bool isFirstRun)
 				else
 				{
 					voicePromptsAppendLanguageString((const char * const *)rightSideConst);
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", DMR_DESTINATION_FILTER_LEVELS[uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel - 1]);
 				}
 				if (menuDataGlobal.menuOptionsTimeout != -1)
 				{
