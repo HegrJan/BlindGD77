@@ -458,6 +458,7 @@ enum CONTACT_LIST_QUICK_MENU_ITEMS
 	CONTACT_LIST_QUICK_MENU_NEW,
 	CONTACT_LIST_QUICK_MENU_EDIT,
 	CONTACT_LIST_QUICK_MENU_DELETE,
+	CONTACT_LIST_QUICK_MENU_DTMF_ENTRY, // should be the last so we can choose not to show it.
 	NUM_CONTACT_LIST_QUICK_MENU_ITEMS    // The last item in the list is used so that we automatically get a total number of items in the list
 };
 
@@ -474,16 +475,19 @@ static void updateSubMenuScreen(bool isFirstRun)
 
 	codeplugUtilConvertBufToString((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactListContactData.name : contactListDTMFContactData.name, buf, 16);
 	menuDisplayTitle(buf);
+	
+	submenuEntryCount = contactListEntryCount > 0 ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1; // only render New Contact if list is empty.
+
+	if ((contactListType ==MENU_CONTACT_LIST_CONTACT_DIGITAL || trxGetMode() == RADIO_MODE_DIGITAL) && (submenuEntryCount > 1))
+		submenuEntryCount--; // Do not include DTMF_ENTRY.
 
 	for(int i = -1; i <= 1; i++)
 	{
-		submenuEntryCount = contactListEntryCount > 0 ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1; // only render New Contact if list is empty.
-
 		mNum = submenuEntryCount ==1? CONTACT_LIST_QUICK_MENU_NEW : menuGetMenuOffset(submenuEntryCount, i);
 		bool renderOption= submenuEntryCount > 1 ?true : mNum==CONTACT_LIST_QUICK_MENU_NEW;
 
 		buf[0] = 0;
-
+		
 		switch(mNum)
 		{
 			case CONTACT_LIST_QUICK_MENU_SELECT:
@@ -497,6 +501,9 @@ static void updateSubMenuScreen(bool isFirstRun)
 				break;
 			case CONTACT_LIST_QUICK_MENU_DELETE:
 				langTextConst = (char * const *)&currentLanguage->delete_contact;
+				break;
+			case CONTACT_LIST_QUICK_MENU_DTMF_ENTRY:
+				langTextConst = (char * const *)&currentLanguage->dtmf_entry;
 				break;
 		}
 
@@ -637,6 +644,9 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 					}
 					menuSystemPopPreviousMenu();
 				}
+				break;
+			case CONTACT_LIST_QUICK_MENU_DTMF_ENTRY:
+				menuSystemSetCurrentMenu(MENU_NUMERICAL_ENTRY);
 				break;
 		}
 	}

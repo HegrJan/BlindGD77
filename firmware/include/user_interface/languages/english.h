@@ -208,7 +208,7 @@ const stringsTable_t englishLanguage =
 .high					= "High",
 .dmr_id					= "DMR ID",
 .scan_on_boot				= "Scan On Boot",
-.dtmf_entry				= "Code",
+.dtmf_entry				= "DTMF Entry",
 .name					= "Name",
 .openDM1801A 				= "Acc. DM1801A", // Do not translate
 .sk2Latch="SK2 Latch",
@@ -218,7 +218,8 @@ const stringsTable_t englishLanguage =
 .vhfRptOffset="VHF Off",
 .uhfRptOffset="UHF Off",
 .tone="Tone",
-.autoZone="AutoZn"
+.autoZone="AutoZn",
+.dtmf_code="Code"
 };
 /********************************************************************
  *
