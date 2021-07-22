@@ -1307,20 +1307,6 @@ static void handleEvent(uiEvent_t *ev)
 				return;
 			}
 #endif
-			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED)
-#if defined(PLATFORM_DM1801)
-		|| 	KEYCHECK_SHORTUP(ev->keys, KEY_A_B)
-#endif
-			)
-			{
-				settingsSet(nonVolatileSettings.currentVFONumber, (1 - nonVolatileSettings.currentVFONumber));// Switch to other VFO
-				currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];
-				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				menuSystemPopAllAndDisplayRootMenu(); // Force to set all TX/RX settings.
-				if (nonVolatileSettings.currentVFONumber==CHANNEL_VFO_A)
-					menuVFOExitStatus |= MENU_STATUS_FORCE_FIRST;
-				return;
-			}
 			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT))
 			{
 				// Long press allows the 5W+ power setting to be selected immediately
