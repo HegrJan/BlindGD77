@@ -71,12 +71,6 @@ static void ResetZoneAndChannelIfNeeded(bool disablingAutoZone)
 		settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0); // Since we are switching zones the channel index should be reset
 		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 	}
-	else if (!disablingAutoZone)
-	{// we're enabling and the autoZone is not currently active.
-		settingsSet(nonVolatileSettings.currentZone, codeplugZonesGetCount()-2);// set the AutoZone as the current zone.
-		settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0); // Since we are switching zones the channel index should be reset
-		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-	}
 }
 
 static uint16_t GetNextValidChannelIndex(uint16_t start)
@@ -703,9 +697,8 @@ static void handleEvent(uiEvent_t *ev)
 				if ((nonVolatileSettings.autoZone.flags&AutoZoneEnabled)==0)
 				{
 					AutoZoneInitialize(AutoZone_AU_UHFCB);
-					ResetZoneAndChannelIfNeeded(false);
 				}
-				else if (nonVolatileSettings.autoZone.type < AutoZone_TYPE_MAX)
+				else if (nonVolatileSettings.autoZone.type < AutoZone_TYPE_MAX-1)
 				{
 					settingsIncrement(nonVolatileSettings.autoZone.type, 1);
 					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
