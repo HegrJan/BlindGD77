@@ -476,22 +476,24 @@ static void updateSubMenuScreen(bool isFirstRun)
 	codeplugUtilConvertBufToString((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactListContactData.name : contactListDTMFContactData.name, buf, 16);
 	menuDisplayTitle(buf);
 	
-	submenuEntryCount = contactListEntryCount > 0 ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 1; // only render New Contact if list is empty.
-
+	submenuEntryCount = contactListEntryCount > 0 ? NUM_CONTACT_LIST_QUICK_MENU_ITEMS : 2; // only render DTMF Entry and New Contact if list is empty.
 	if ((contactListType ==MENU_CONTACT_LIST_CONTACT_DIGITAL || trxGetMode() == RADIO_MODE_DIGITAL) && (submenuEntryCount > 1))
 		submenuEntryCount--; // Do not include DTMF_ENTRY.
+	bool replaceSelectWithDTMFEntry=(submenuEntryCount==2);
 
 	for(int i = -1; i <= 1; i++)
 	{
-		mNum = submenuEntryCount ==1? CONTACT_LIST_QUICK_MENU_NEW : menuGetMenuOffset(submenuEntryCount, i);
-		bool renderOption= submenuEntryCount > 1 ?true : mNum==CONTACT_LIST_QUICK_MENU_NEW;
+		mNum = menuGetMenuOffset(submenuEntryCount, i);
 
 		buf[0] = 0;
 		
 		switch(mNum)
 		{
 			case CONTACT_LIST_QUICK_MENU_SELECT:
-				langTextConst = (char * const *)&currentLanguage->select_tx;
+				if (replaceSelectWithDTMFEntry)
+					langTextConst = (char * const *)&currentLanguage->dtmf_entry;
+				else
+					langTextConst = (char * const *)&currentLanguage->select_tx;
 				break;
 			case CONTACT_LIST_QUICK_MENU_NEW:
 				langTextConst = (char * const *)&currentLanguage->new_contact;
@@ -507,7 +509,7 @@ static void updateSubMenuScreen(bool isFirstRun)
 				break;
 		}
 
-		if (langTextConst != NULL && renderOption)
+		if (langTextConst != NULL)
 		{
 			strncpy(buf, *langTextConst, SCREEN_LINE_BUFFER_SIZE);
 		}
@@ -567,8 +569,8 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 						menuSystemSetCurrentMenu(MENU_CONTACT_DETAILS);
 					}
 					else
-					{
-						menuSystemSetCurrentMenu(MENU_CONTACT_NEW_DTMF);
+					{// Activate the DTMF Entry screen.
+						menuSystemSetCurrentMenu(MENU_NUMERICAL_ENTRY);
 					}
 					return;
 				}

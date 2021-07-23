@@ -135,6 +135,7 @@ menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
 	{
+		menuDTMFContactDetailsTimeout = 0;
 		voicePromptsInit();
 
 		if (uiDataGlobal.currentSelectedContactIndex == 0)
@@ -523,6 +524,7 @@ static void handleEvent(uiEvent_t *ev)
 			menuDTMFContactDetailsTimeout--;
 			if ((menuDTMFContactDetailsTimeout == 0) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 			{
+				menuDTMFContactDetailsTimeout=0;
 				menuSystemPopPreviousMenu();
 				return;
 			}
