@@ -743,7 +743,7 @@ void mainTask(void *data)
 			}
 
 			// PTT toggle action
-			bool pttLatchEnabled=((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) && (currentChannelData->tot != 0)) || dtmfPTTLatch;
+			bool pttLatchEnabled=((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) && (currentChannelData->tot != 0 || nonVolatileSettings.totMaster!=0)) || dtmfPTTLatch;
 
 			if (pttLatchEnabled)
 			{
@@ -754,14 +754,16 @@ void mainTask(void *data)
 						if (PTTToggledDown == false)
 						{
 							// PTT toggle works only if a TOT value is defined.
-							if (currentChannelData->tot != 0)
+							if (currentChannelData->tot != 0 || nonVolatileSettings.totMaster !=0)
 							{
 								PTTToggledDown = true;
+								soundSetMelody(melody_sk2_beep);
 							}
 						}
 						else
 						{
 							PTTToggledDown = false;
+							soundSetMelody(melody_sk1_beep);
 						}
 					}
 				}

@@ -345,7 +345,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						}
 						else
 						{
-							rightSideConst = (char * const *)&currentLanguage->off;
+							rightSideConst = (char * const *)&currentLanguage->from_master;
 						}
 						break;
 					case CH_DETAILS_RXONLY:

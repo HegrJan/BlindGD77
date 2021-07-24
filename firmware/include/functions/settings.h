@@ -124,6 +124,7 @@ typedef struct
 	uint16_t uhfOffset; // repeater offset for 2m band.
 	struct_AutoZoneParams_t autoZone;
 	uint16_t		vfoSweepSettings; // 3bits: channel step | 5 bits: RSSI noise floor | 7bits: gain
+	uint8_t totMaster; // Master timeout timer value.
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

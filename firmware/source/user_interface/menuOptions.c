@@ -43,8 +43,9 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_KEYPAD_TIMER_LONG, OPTIONS_MENU_KEYPAD_TIMER_REPEAT, OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT,
 							OPTIONS_MENU_SCAN_DELAY, OPTIONS_MENU_SCAN_STEP_TIME, OPTIONS_MENU_SCAN_MODE, OPTIONS_MENU_SCAN_ON_BOOT,
 							OPTIONS_MENU_SQUELCH_DEFAULT_VHF, OPTIONS_MENU_SQUELCH_DEFAULT_220MHz, OPTIONS_MENU_SQUELCH_DEFAULT_UHF,
+							OPTIONS_MENU_TOT_MASTER,
 							OPTIONS_MENU_PTT_TOGGLE,
-#if !defined(PLATFORM_GD77S)
+							#if !defined(PLATFORM_GD77S)
 							OPTIONS_MENU_SK2_LATCH,
 							OPTIONS_MENU_DTMF_LATCH,
 #endif
@@ -239,6 +240,19 @@ static void updateScreen(bool isFirstRun)
 				case OPTIONS_MENU_SQUELCH_DEFAULT_UHF:
 					leftSide = (char * const *)&currentLanguage->squelch_UHF;
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] - 1) * 5);// 5% steps
+					break;
+				case OPTIONS_MENU_TOT_MASTER:
+					leftSide = (char * const *)&currentLanguage->tot;
+					if (nonVolatileSettings.totMaster != 0)
+					{
+						rightSideUnitsPrompt = PROMPT_SECONDS;
+						rightSideUnitsStr = "s";
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", nonVolatileSettings.totMaster * 15);
+					}
+					else
+					{
+						rightSideConst = (char * const *)&currentLanguage->off;
+					}
 					break;
 				case OPTIONS_MENU_PTT_TOGGLE:
 					leftSide = (char * const *)&currentLanguage->ptt_toggle;
@@ -591,6 +605,12 @@ static void handleEvent(uiEvent_t *ev)
 					settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
 				}
 				break;
+			case OPTIONS_MENU_TOT_MASTER:
+				if (nonVolatileSettings.totMaster < 255)
+				{
+					settingsIncrement(nonVolatileSettings.totMaster,1);
+				}
+				break;
 			case OPTIONS_MENU_PTT_TOGGLE:
 				if (settingsIsOptionBitSet(BIT_PTT_LATCH) == false)
 				{
@@ -783,6 +803,12 @@ static void handleEvent(uiEvent_t *ev)
 				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] > 1)
 				{
 					settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
+				}
+				break;
+			case OPTIONS_MENU_TOT_MASTER:
+				if (nonVolatileSettings.totMaster > 0)
+				{
+					settingsDecrement(nonVolatileSettings.totMaster,1);
 				}
 				break;
 			case OPTIONS_MENU_PTT_TOGGLE:

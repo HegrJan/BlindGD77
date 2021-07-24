@@ -58,6 +58,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason);
 
 static const int PIT_COUNTS_PER_SECOND = 10000;
 static int timeInSeconds;
+static int timeout;
 static uint32_t nextSecondPIT;
 static bool isShowingLastHeard;
 static bool startBeepPlayed;
@@ -103,7 +104,9 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		{
 			nextSecondPIT = PITCounter + PIT_COUNTS_PER_SECOND;
 			timeInSeconds = currentChannelData->tot * 15;
-
+			if (timeInSeconds==0)
+				timeInSeconds=nonVolatileSettings.totMaster*15;
+			timeout=timeInSeconds;
 			LEDs_PinWrite(GPIO_LEDgreen, Pin_LEDgreen, 0);
 			LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, 1);
 
@@ -164,7 +167,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		{
 			if (PITCounter >= nextSecondPIT)
 			{
-				if (currentChannelData->tot == 0)
+				if (timeout == 0)
 				{
 					timeInSeconds++;
 				}
@@ -180,7 +183,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 					}
 				}
 
-				if ((currentChannelData->tot != 0) && (timeInSeconds == 0))
+				if ((timeout != 0) && (timeInSeconds == 0))
 				{
 					handleTxTermination(ev, TXSTOP_TIMEOUT);
 					keepScreenShownOnError = true;
@@ -216,7 +219,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 				// Do not update Mic level on Timeout.
 #if !defined(PLATFORM_GD77S)
-				if ((((currentChannelData->tot != 0) && (timeInSeconds == 0)) == false) && (ev->time - micm) > 100)
+				if ((((timeout != 0) && (timeInSeconds == 0)) == false) && (ev->time - micm) > 100)
 				{
 					if (mode == RADIO_MODE_DIGITAL)
 					{
@@ -248,7 +251,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 		// Timeout happened, postpone going further otherwise timeout
 		// screen won't be visible at all.
-		if (((currentChannelData->tot != 0) && (timeInSeconds == 0)) || keepScreenShownOnError)
+		if (((timeout != 0) && (timeInSeconds == 0)) || keepScreenShownOnError)
 		{
 			// Wait the voice ends, then count-down 500ms;
 			if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
@@ -288,7 +291,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 		// Got an event, or
 		if (ev->hasEvent || // PTT released, Timeout triggered,
-				( (((ev->buttons & BUTTON_PTT) == 0) || ((currentChannelData->tot != 0) && (timeInSeconds == 0))) ||
+				( (((ev->buttons & BUTTON_PTT) == 0) || ((timeout != 0) && (timeInSeconds == 0))) ||
 						// or waiting for DMR ending (meanwhile, updating every 100ms)
 						((trxTransmissionEnabled == false) && ((ev->time - m) > 100))))
 		{
@@ -337,7 +340,7 @@ static void handleEvent(uiEvent_t *ev)
 {
 	// Xmiting ends (normal or timeouted)
 	if ((((ev->buttons & BUTTON_PTT) == 0) && (dtmfLatchState==dtmfNotLatched))
-			|| ((currentChannelData->tot != 0) && (timeInSeconds == 0)))
+			|| ((timeout != 0) && (timeInSeconds == 0)))
 	{
 		if (trxTransmissionEnabled)
 		{
