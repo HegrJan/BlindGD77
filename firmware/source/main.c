@@ -540,7 +540,7 @@ void mainTask(void *data)
 				buttons &= ~BUTTON_PTT;
 			}
 // SK2 latch.
-// if sk2 is being released with no other buttons, we'll latch it, otherwise we wil not latch it.
+// if sk2 is being released with no other buttons, we'll latch it, otherwise we will not latch it.
 #if !defined(PLATFORM_GD77S)
 
 			if (nonVolatileSettings.sk2Latch > 0 && ((buttons & BUTTON_SK2_SHORT_UP) == BUTTON_SK2_SHORT_UP) && keys.key == 0 && !trxTransmissionEnabled)

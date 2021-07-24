@@ -253,8 +253,12 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 	}
-
-	if (KEYCHECK_DOWN(ev->keys, KEY_STAR) && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+	if (ev->keys.key==0 && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+	{// Do not speak the lock msg.
+		voicePromptsTerminate();
+		return;
+	}
+	else if (KEYCHECK_DOWN(ev->keys, KEY_STAR) && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 	{
 #if !defined(PLATFORM_GD77S)
 		sk2Latch = false;
