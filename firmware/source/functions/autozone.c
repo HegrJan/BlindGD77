@@ -83,15 +83,18 @@ static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	// Need to force simplex on non duplex channels.
-	// Fix offset on non-standard channels.
-	if (index==autoZone->priorityChannelIndex)
+	bool duplexAllowed=(index >=1 && index <=7) 
+	|| (index >=18 && index <=26) 
+	|| (index >=29 && index <=35) // Physical indices 29 to 35 correspond to named channels 60 to 66.
+	|| (index >=47 && index <=55); // physical channels 47 to 55 correspond to named channels 78 to 86.
+	if (duplexAllowed)
+	{
+		autoZone->flags |=AutoZoneDuplexAvailable;
+	}
+	else
 	{	// Force simplex.
 		channelBuf->rxFreq=channelBuf->txFreq;
 		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
-	}
-	else
-	{
-		autoZone->flags |=AutoZoneDuplexAvailable;
 	}
 }
 
