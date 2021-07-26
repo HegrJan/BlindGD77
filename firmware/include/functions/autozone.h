@@ -43,14 +43,18 @@ typedef enum
 	AutoZoneOffsetDirectionPlus=0x10, // unset is minus, set is plus. For simplex, unset prior bit.
 	AutoZoneDuplexAvailable=0x20,
 	AutoZoneNarrow=0x40, // if not set, assumed wide.
+	AutoZoneHasBaseIndex=0x80, // channel numbers do not begin at 1, see 	baseChannelNumberStart and interleaveChannelNumberStart;
+	AutoZoneInterleavingStartsPrior=0x100, // Start the interleaving count prior rather than after start frequency.
+	AutoZoneSimplexUsesTXFrequency=0x200,
 	AutoZonePowerMask=0xf000, // 0 all rx, or max wattage allowed in increments of 0.5 w (up to 5 w).
 } AutoZoneFlags_t;
 
 typedef enum
 {
 	AutoZone_AU_UHFCB=1,
-	AutoZone_NOAA,
+	AutoZone_MRN, // International Marine.
 	AutoZone_GMRS,
+	AutoZone_NOAA,
 	AutoZone_TYPE_MAX
 } AutoZoneType_t;
 
@@ -68,6 +72,8 @@ typedef struct
 	uint16_t totalChannels;
 	uint16_t rxTone;
 	uint16_t txTone;
+	uint8_t baseChannelNumberStart;
+	uint8_t interleaveChannelNumberStart;
 } struct_AutoZoneParams_t;
 
 uint16_t AutoZoneGetTotalChannels();

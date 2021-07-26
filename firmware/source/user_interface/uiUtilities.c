@@ -3414,14 +3414,9 @@ void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeate
 	int bandType=trxGetBandFromFrequency(*rxFreq);
 	bool isVHF=bandType==RADIO_BAND_VHF;
 	bool isUHF=bandType==RADIO_BAND_UHF;
-	bool IsAutoZone= AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && AutoZoneIsValid();
 	
 	uint16_t offset=0;
-	if (IsAutoZone)
-	{
-		offset=nonVolatileSettings.autoZone.repeaterOffset;
-	}
-	else if (isVHF)
+	if (isVHF)
 	{
 		offset=nonVolatileSettings.vhfOffset;
 	}
@@ -3487,7 +3482,7 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	}
 	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 		voicePromptsPlay();
-	AdjustTXFreqByRepeaterOffset(&currentChannelData->rxFreq, &currentChannelData->txFreq, direction);
+	AutoZoneGetFrequenciesForIndex(uiDataGlobal.currentSelectedChannelNumber, &currentChannelData->rxFreq, &currentChannelData->txFreq);
 	AutoZoneApplyChannelRestrictions(uiDataGlobal.currentSelectedChannelNumber, currentChannelData);
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 	return true;

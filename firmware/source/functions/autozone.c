@@ -80,6 +80,21 @@ static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 		autoZone->flags |=AutoZoneDuplexAvailable;
 }
 
+static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	// Need to force simplex on non duplex channels.
+	// Fix offset on non-standard channels.
+	if (index==autoZone->priorityChannelIndex)
+	{	// Force simplex.
+		channelBuf->rxFreq=channelBuf->txFreq;
+		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
+	}
+	else
+	{
+		autoZone->flags |=AutoZoneDuplexAvailable;
+	}
+}
+
 /*
 Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band are RX only.
 */
@@ -90,6 +105,9 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		case 	AutoZone_AU_UHFCB:
 		ApplyUHFCBRestrictions(index, channelBuf);
 		break;
+		case AutoZone_MRN:
+			ApplyMarineRestrictions(index, channelBuf);
+			break;
 		case AutoZone_NOAA:
 			channelBuf->flag4|=0x04; // RX only.
 			break;
@@ -103,7 +121,7 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 	}	
 }	
 
-void InitializeAU_UHFCB()
+static void InitializeAU_UHFCB()
 {
 	strcpy(autoZone->name, "AU UHF CB");
 	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels | AutoZoneOffsetDirectionPlus | AutoZoneNarrow;
@@ -124,6 +142,30 @@ void InitializeAU_UHFCB()
 	autoZone->totalChannels=totalChannels;
 }
 
+static void InitializeMarine()
+{
+	strcpy(autoZone->name, "INT MRN");
+	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels | AutoZoneInterleavingStartsPrior | AutoZoneHasBaseIndex | AutoZoneSimplexUsesTXFrequency | AutoZoneDuplexAvailable;
+
+	autoZone->type=AutoZone_MRN;
+	autoZone->startFrequency=16065000; // mHz of first channel
+	autoZone->endFrequency=16200000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
+	autoZone->channelSpacing=5000; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
+	autoZone->repeaterOffset=4600; // kHz. Relevant for ch 01-07 and ch18-28, and 60-66, and 78-86
+	autoZone->priorityChannelIndex=16;// ch5
+	autoZone->curChannelIndex=1;
+	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
+	uint16_t adjacentChannelSpacing=autoZone->channelSpacing;
+	if (autoZone->flags & AutoZoneInterleaveChannels)
+		adjacentChannelSpacing/=2; // for the purposes of calculating the number of channels.
+	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/adjacentChannelSpacing;
+	if (totalChannels > codeplugChannelsPerZone)
+		totalChannels=codeplugChannelsPerZone; // max 80.
+	autoZone->totalChannels=totalChannels;
+	autoZone->baseChannelNumberStart=1;
+	autoZone->interleaveChannelNumberStart=60-28; // Because index is added to base, so channel 29 physical is to be called channel 60.
+}
+
 static void InitializeNOAA()
 {
 //162.400, 162.425, 162.450, 162.475, 162.500, 162.525, and 162.550	
@@ -139,8 +181,8 @@ static void InitializeNOAA()
 	autoZone->totalChannels=totalChannels;
 }
 		
-		static void InitializeGMRS()
-		{// 462.55 through 462.725 25 kHz steps.
+static void InitializeGMRS()
+{// 462.55 through 462.725 25 kHz steps.
 	strcpy(autoZone->name, "GMRS");
 	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow;
 	autoZone->repeaterOffset=5000; // kHz.
@@ -161,6 +203,9 @@ void AutoZoneInitialize(AutoZoneType_t type)
 	{
 		case	AutoZone_AU_UHFCB:
 			InitializeAU_UHFCB();
+			break;
+		case AutoZone_MRN:
+			InitializeMarine();
 			break;
 		case AutoZone_NOAA:
 			InitializeNOAA();
@@ -204,8 +249,9 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 		return false;
 	
 	uint16_t multiplier=(index-1);
-	// If interleaved, first half of channels start at startFrequency and are every 25 kHz.
-	// Second half are offset by 12.5 kHz between the first half of the channels.
+	// If interleaved, first half of channels start at startFrequency and the channel step is defined by autoZone->channelSpacing kHz.
+	// Second half are offset by autoZone->channelSpacing/2 kHz between the first half of the channels
+	// and may start prior.
 	uint16_t interleaveOffset=0;
 	uint16_t totalChannelsRoundedUpToEven=autoZone->totalChannels;
 	if ((totalChannelsRoundedUpToEven%2)==1)
@@ -215,7 +261,10 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 		interleaveOffset=autoZone->channelSpacing/2;
 		multiplier -= (totalChannelsRoundedUpToEven/2);
 	}
-	*rxFreq = autoZone->startFrequency+interleaveOffset+(multiplier * autoZone->channelSpacing);
+	if (autoZone->flags&AutoZoneInterleavingStartsPrior)
+		*rxFreq = autoZone->startFrequency-interleaveOffset+(multiplier * autoZone->channelSpacing);
+	else
+		*rxFreq = autoZone->startFrequency+interleaveOffset+(multiplier * autoZone->channelSpacing);
 	*txFreq = *rxFreq;
 	// adjust by repeater offset if duplex is on.
 	if ((autoZone->flags&AutoZoneDuplexEnabled) && autoZone->repeaterOffset > 0)
@@ -225,7 +274,33 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 		else
 			(*txFreq)-=(autoZone->repeaterOffset*100);
 	}
+	else if (autoZone->flags&AutoZoneSimplexUsesTXFrequency)
+	{
+		if (autoZone->flags&AutoZoneOffsetDirectionPlus)
+			(*txFreq)+=(autoZone->repeaterOffset*100);
+		else
+			(*txFreq)-=(autoZone->repeaterOffset*100);
+		*rxFreq=*txFreq;
+	}
 	return true;
+}
+
+static void AutoZoneGetChannelNameForIndex(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	memset(channelBuf->name, 0xff, 16);
+	uint16_t channelNumber=index;
+	
+	if (autoZone->flags &AutoZoneHasBaseIndex)
+	{
+		uint16_t totalChannelsRoundedUpToEven=autoZone->totalChannels;
+		if ((totalChannelsRoundedUpToEven%2)==1)
+			totalChannelsRoundedUpToEven++; // so when we divide by 2, if odd number, we round up.
+		if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2))
+			channelNumber+=autoZone->interleaveChannelNumberStart-1;
+		else
+			channelNumber+=autoZone->baseChannelNumberStart-1;
+	}
+	snprintf(channelBuf->name, 16, "%d", channelNumber);
 }
 
 bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBuf)
@@ -244,8 +319,7 @@ bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBu
 	}
 
 	// generate the channel name.
-	memset(channelBuf->name, 0xff, 16);
-	snprintf(channelBuf->name, 16, "%d", index);
+	AutoZoneGetChannelNameForIndex(index, channelBuf);
 	channelBuf->rxFreq=rxFreq;
 	channelBuf->txFreq=txFreq;
 	channelBuf->chMode=(autoZone->flags & AutoZoneModeDigital) ? RADIO_MODE_DIGITAL : RADIO_MODE_ANALOG;
