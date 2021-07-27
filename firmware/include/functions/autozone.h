@@ -36,16 +36,17 @@ E.g. The Australian UHF CB band has 80 channels.
 
 typedef enum
 {
-	AutoZoneEnabled=0x01,
-	AutoZoneModeDigital=0x02, // 0 FM, 1 DMR.
-	AutoZoneInterleaveChannels=0x04, // 0 off, 1 on,
-	AutoZoneDuplexEnabled=0x08,
-	AutoZoneOffsetDirectionPlus=0x10, // unset is minus, set is plus. For simplex, unset prior bit.
-	AutoZoneDuplexAvailable=0x20,
-	AutoZoneNarrow=0x40, // if not set, assumed wide.
-	AutoZoneHasBaseIndex=0x80, // channel numbers do not begin at 1, see 	baseChannelNumberStart and interleaveChannelNumberStart;
-	AutoZoneInterleavingStartsPrior=0x100, // Start the interleaving count prior rather than after start frequency.
-	AutoZoneSimplexUsesTXFrequency=0x200,
+	AutoZoneEnabled = 0x01,
+	AutoZoneModeDigital = 0x02, // 0 FM, 1 DMR.
+	AutoZoneInterleaveChannels = 0x04, // 0 off, 1 on,
+	AutoZoneDuplexEnabled = 0x08,
+	AutoZoneOffsetDirectionPlus = 0x10, // unset is minus, set is plus. For simplex, unset prior bit.
+	AutoZoneDuplexAvailable = 0x20,
+	AutoZoneNarrow = 0x40, // if not set, assumed wide.
+	AutoZoneHasBaseIndex = 0x80, // channel numbers do not begin at 1, see 	baseChannelNumberStart and interleaveChannelNumberStart;
+	AutoZoneInterleavingStartsPrior = 0x100, // Start the interleaving count prior rather than after start frequency.
+	AutoZoneSimplexUsesTXFrequency = 0x200,
+	AutoZoneHasBankAtOffset = 0x400, // GMRS has second bank of channels starting at base freq plus repeater offset which can be used for simplex.
 	AutoZonePowerMask=0xf000, // 0 all rx, or max wattage allowed in increments of 0.5 w (up to 5 w).
 } AutoZoneFlags_t;
 
@@ -69,11 +70,13 @@ typedef struct
 	uint16_t repeaterOffset; // kHz.
 	uint16_t priorityChannelIndex;
 	uint16_t curChannelIndex;
-	uint16_t totalChannels;
+	uint8_t totalChannels; // total number of channels in AutoZone
 	uint16_t rxTone;
 	uint16_t txTone;
 	uint8_t baseChannelNumberStart;
 	uint8_t interleaveChannelNumberStart;
+	uint8_t offsetBankChannelNumberStart;
+	uint8_t offsetBankInterleavedChannelNumberStart;
 } struct_AutoZoneParams_t;
 
 uint16_t AutoZoneGetTotalChannels();
