@@ -115,6 +115,11 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 			channelBuf->flag4|=0x04; // RX only.
 			break;
 		case AutoZone_GMRS:
+			// duplex is not allowed on interstitials
+			if (index < 9)
+				autoZone->flags|=AutoZoneDuplexAvailable;
+			else
+				autoZone->flags&=~AutoZoneDuplexAvailable;
 			break;
 		default:
 			return;
@@ -163,7 +168,7 @@ static void InitializeMarine()
 		totalChannels=codeplugChannelsPerZone; // max 80.
 	autoZone->totalChannels=totalChannels;
 	autoZone->baseChannelNumberStart=1;
-	autoZone->interleaveChannelNumberStart=60-28; // Because index is added to base, so channel 29 physical is to be called channel 60.
+	autoZone->interleaveChannelNumberStart=60;
 }
 
 static void InitializeNOAA()
@@ -184,15 +189,18 @@ static void InitializeNOAA()
 static void InitializeGMRS()
 {// 462.55 through 462.725 25 kHz steps.
 	strcpy(autoZone->name, "GMRS");
-	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow | AutoZoneDuplexAvailable;
+	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow | AutoZoneHasBaseIndex;
 	autoZone->repeaterOffset=5000; // kHz.
 	autoZone->type=AutoZone_GMRS;
 	autoZone->startFrequency=46255000; // mHz of first channel
 	autoZone->endFrequency=46272500; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
 	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->curChannelIndex=1;
+	autoZone->curChannelIndex=9;
 	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	autoZone->totalChannels=15; // 8 primary plus 7 interstitial.
+	uint16_t adjacentChannelSpacing=autoZone->channelSpacing;
+	autoZone->totalChannels= 15;
+	autoZone->baseChannelNumberStart=15;
+	autoZone->interleaveChannelNumberStart=1; // Because index is added to base, so physical channel 9 should be 1.
 }
 
 void AutoZoneInitialize(AutoZoneType_t type)
@@ -296,7 +304,7 @@ static void AutoZoneGetChannelNameForIndex(uint16_t index, struct_codeplugChanne
 		if ((totalChannelsRoundedUpToEven%2)==1)
 			totalChannelsRoundedUpToEven++; // so when we divide by 2, if odd number, we round up.
 		if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2))
-			channelNumber+=autoZone->interleaveChannelNumberStart-1;
+			channelNumber=(index - totalChannelsRoundedUpToEven/2)+autoZone->interleaveChannelNumberStart-1;
 		else
 			channelNumber+=autoZone->baseChannelNumberStart-1;
 	}
