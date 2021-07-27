@@ -115,16 +115,6 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 			channelBuf->flag4|=0x04; // RX only.
 			break;
 		case AutoZone_GMRS:
-			// interstitial channels must be simplex.
-			if (index > 8)
-			{
-				channelBuf->txFreq=channelBuf->rxFreq;
-				autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
-			}
-			else
-			{
-				autoZone->flags |=AutoZoneDuplexAvailable;
-			}
 			break;
 		default:
 			return;
@@ -154,7 +144,7 @@ static void InitializeAU_UHFCB()
 
 static void InitializeMarine()
 {
-	strcpy(autoZone->name, "INT MRN");
+	strcpy(autoZone->name, "MRN");
 	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels | AutoZoneInterleavingStartsPrior | AutoZoneHasBaseIndex | AutoZoneSimplexUsesTXFrequency | AutoZoneDuplexAvailable;
 
 	autoZone->type=AutoZone_MRN;
@@ -194,7 +184,7 @@ static void InitializeNOAA()
 static void InitializeGMRS()
 {// 462.55 through 462.725 25 kHz steps.
 	strcpy(autoZone->name, "GMRS");
-	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow;
+	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow | AutoZoneDuplexAvailable;
 	autoZone->repeaterOffset=5000; // kHz.
 	autoZone->type=AutoZone_GMRS;
 	autoZone->startFrequency=46255000; // mHz of first channel
