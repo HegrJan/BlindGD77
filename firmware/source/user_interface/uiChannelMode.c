@@ -284,6 +284,20 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	uiDataGlobal.repeaterOffsetDirection=0; // reset this as the current channel just changed.
 }
 
+static void EnsurePriorityChannelIsSet()
+{
+		if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+	{
+		if (nonVolatileSettings.autoZone.priorityChannelIndex > 0)
+			uiDataGlobal.priorityChannelIndex=nonVolatileSettings.autoZone.priorityChannelIndex;
+		else
+			uiDataGlobal.priorityChannelIndex=NO_PRIORITY_CHANNEL;
+	}
+	else
+	{
+	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
+	}
+}
 menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 {
 	static uint32_t m = 0, sqm = 0;
@@ -1286,6 +1300,7 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RED))
 		{// Switch between priority channel and last channel selected by user.
+			EnsurePriorityChannelIsSet();
 			if (uiDataGlobal.priorityChannelIndex != NO_PRIORITY_CHANNEL)
 			{
 				if (dualWatchChannelData.dualWatchActive)
@@ -1301,7 +1316,7 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
 					{
-						nonVolatileSettings.currentChannelIndexInZone=uiDataGlobal.priorityChannelIndex; // already relative to the autoZone.
+						nonVolatileSettings.currentChannelIndexInZone=uiDataGlobal.priorityChannelIndex-1;
 					}
 					else if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 					{
@@ -1823,17 +1838,8 @@ static void selectPrevNextZone(bool nextZone)
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 	
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
-	if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
-	{
-		if (nonVolatileSettings.autoZone.priorityChannelIndex > 0)
-			uiDataGlobal.priorityChannelIndex=nonVolatileSettings.autoZone.priorityChannelIndex;
-		else
-			uiDataGlobal.priorityChannelIndex=NO_PRIORITY_CHANNEL;
-	}
-	else
-	{
-	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
-	}
+	EnsurePriorityChannelIsSet();
+	uiDataGlobal.priorityChannelActive=false;
 }
 
 static void handleUpKey(uiEvent_t *ev)
