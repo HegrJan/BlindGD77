@@ -117,7 +117,14 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		case AutoZone_GMRS:
 			// interstitial channels must be simplex.
 			if (index > 8)
+			{
 				channelBuf->txFreq=channelBuf->rxFreq;
+				autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
+			}
+			else
+			{
+				autoZone->flags |=AutoZoneDuplexAvailable;
+			}
 			break;
 		default:
 			return;
