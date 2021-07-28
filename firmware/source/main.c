@@ -757,13 +757,11 @@ void mainTask(void *data)
 							if (currentChannelData->tot != 0 || nonVolatileSettings.totMaster !=0)
 							{
 								PTTToggledDown = true;
-								soundSetMelody(melody_sk2_beep);
 							}
 						}
 						else
 						{
 							PTTToggledDown = false;
-							soundSetMelody(melody_sk1_beep);
 						}
 					}
 				}

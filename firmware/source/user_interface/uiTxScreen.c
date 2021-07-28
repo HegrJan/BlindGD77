@@ -69,6 +69,17 @@ static bool pttWasReleased = false;
 static bool isTransmittingTone = false;
 
 
+static bool ShouldPlayStartStopBeep()
+{
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_BEEP)
+		return false;
+	if ((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) == 0)
+		return false;	
+	if (currentChannelData->tot==0 && nonVolatileSettings.totMaster==0)
+		return false;
+	
+	return true;
+}
 
 menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 {
@@ -113,7 +124,15 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 			txstopdelay = 0;
 			clearIsWakingState();
 			if (trxGetMode() == RADIO_MODE_ANALOG)
-			{
+			{// If PTT Latch is on, play a beep to alert the user.
+				if (ShouldPlayStartStopBeep())
+				{
+					soundSetMelody(MELODY_DMR_TX_START_BEEP);
+					while (soundMelodyIsPlaying())
+					{// wait for beep to stop before tx!
+						soundTickMelody();
+					}
+				}
 				trxSetTxCSS(currentChannelData->txTone);
 				trxSetTX();
 			}
@@ -360,6 +379,10 @@ static void handleEvent(uiEvent_t *ev)
 				trxActivateRx();
 				trxIsTransmitting = false;
 				//taskEXIT_CRITICAL();
+				if (ShouldPlayStartStopBeep())
+				{
+					soundSetMelody(MELODY_DMR_TX_STOP_BEEP);
+				}
 
 				menuSystemPopPreviousMenu();
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN; // we need immediate redraw
