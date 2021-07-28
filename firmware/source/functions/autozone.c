@@ -101,6 +101,15 @@ static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 	else
 		autoZone->flags&=~AutoZoneDuplexAvailable;
 }
+	
+static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	channelBuf->libreDMR_Power=6; // max 2 watts.
+	if (index > 3)
+		channelBuf->flag4&=~0x02; // clear.
+	else
+		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
+}
 
 /*
 Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band are RX only.
@@ -119,7 +128,7 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 			ApplyGMRSRestrictions(index, channelBuf);
 			break;
 		case AutoZone_MURS: // power restrictions.
-			channelBuf->libreDMR_Power=6; // max 2 watts.
+			ApplyMURSRestrictions(index, channelBuf);
 			break;
 		case AutoZone_NOAA:
 			channelBuf->flag4|=0x04; // RX only.
