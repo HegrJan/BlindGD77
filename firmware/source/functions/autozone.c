@@ -223,7 +223,7 @@ static void InitializeMURS()
 	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
 	autoZone->totalChannelsInBaseBank= 5; // in each bank.
 }
-	
+
 static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
 {
 	if (index==4)
@@ -244,7 +244,7 @@ static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* tx
 static void InitializePMR446()
 {
 	strcpy(autoZone->name, "PMR446");
-	autoZone->flags=AutoZoneEnabled;
+	autoZone->flags=AutoZoneEnabled | AutoZoneNarrow;
 	autoZone->type=AutoZone_PMR446;
 	autoZone->startFrequency=44600625; // mHz of first channel
 	autoZone->endFrequency=44619375; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
