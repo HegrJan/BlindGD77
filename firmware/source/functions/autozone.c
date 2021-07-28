@@ -105,7 +105,7 @@ static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	channelBuf->libreDMR_Power=6; // max 2 watts.
-	if (index > 3)
+	if (index <=3)
 		channelBuf->flag4&=~0x02; // clear.
 	else
 		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
