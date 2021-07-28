@@ -52,8 +52,8 @@ typedef enum
 
 typedef enum
 {
-	AutoZone_MRN, // International Marine.
-	AutoZone_AU_UHFCB=1,
+	AutoZone_MRN=1, // International Marine.
+	AutoZone_AU_UHFCB,
 	AutoZone_GMRS,
 	AutoZone_MURS,
 	AutoZone_NOAA,
