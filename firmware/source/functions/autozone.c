@@ -124,6 +124,9 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		case AutoZone_NOAA:
 			channelBuf->flag4|=0x04; // RX only.
 			break;
+		case AutoZone_PMR446: // power restrictions.
+			channelBuf->libreDMR_Power=3; // max 0.5 watts.
+			break;
 		default:
 			return;
 	}	
@@ -238,6 +241,19 @@ static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* tx
 	}		
 }
 
+static void InitializePMR446()
+{
+	strcpy(autoZone->name, "PMR446");
+	autoZone->flags=AutoZoneEnabled;
+	autoZone->type=AutoZone_PMR446;
+	autoZone->startFrequency=44600000; // mHz of first channel
+	autoZone->endFrequency=44620000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
+	autoZone->channelSpacing=1250; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
+	autoZone->curChannelIndex=1;
+	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
+	autoZone->totalChannelsInBaseBank= 16; // in each bank.
+}
+
 void AutoZoneInitialize(AutoZoneType_t type)
 {
 		memset(autoZone, 0, sizeof(struct_AutoZoneParams_t));
@@ -259,7 +275,10 @@ void AutoZoneInitialize(AutoZoneType_t type)
 		case AutoZone_NOAA:
 			InitializeNOAA();
 			break;
-	default:
+		case AutoZone_PMR446:
+			InitializePMR446();
+			break;
+		default:
 		break;
 	}
 }

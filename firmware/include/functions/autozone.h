@@ -57,6 +57,7 @@ typedef enum
 	AutoZone_GMRS,
 	AutoZone_MURS,
 	AutoZone_NOAA,
+	AutoZone_PMR446,
 	AutoZone_TYPE_MAX
 } AutoZoneType_t;
 
