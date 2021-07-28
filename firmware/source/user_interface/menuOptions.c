@@ -716,7 +716,7 @@ static void handleEvent(uiEvent_t *ev)
 				case OPTIONS_MENU_AUTOZONE:
 				if ((nonVolatileSettings.autoZone.flags&AutoZoneEnabled)==0)
 				{
-					AutoZoneInitialize(AutoZone_AU_UHFCB);
+					AutoZoneInitialize(1);
 				}
 				else if (nonVolatileSettings.autoZone.type < AutoZone_TYPE_MAX-1)
 				{
@@ -911,7 +911,7 @@ static void handleEvent(uiEvent_t *ev)
 					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
 				break;
 			case OPTIONS_MENU_AUTOZONE:
-				if (nonVolatileSettings.autoZone.type > AutoZone_AU_UHFCB)
+				if (nonVolatileSettings.autoZone.type > 1)
 				{
 					settingsDecrement(nonVolatileSettings.autoZone.type, 1);
 					AutoZoneInitialize(nonVolatileSettings.autoZone.type);

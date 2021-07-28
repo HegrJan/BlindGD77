@@ -38,23 +38,24 @@ typedef enum
 {
 	AutoZoneEnabled = 0x01,
 	AutoZoneModeDigital = 0x02, // 0 FM, 1 DMR.
-	AutoZoneInterleaveChannels = 0x04, // 0 off, 1 on,
+	AutoZoneInterleaveChannels = 0x04, // 0 off, 1 on, bank 2 is interleaved with bank 1 
 	AutoZoneDuplexEnabled = 0x08,
 	AutoZoneOffsetDirectionPlus = 0x10, // unset is minus, set is plus. For simplex, unset prior bit.
 	AutoZoneDuplexAvailable = 0x20,
 	AutoZoneNarrow = 0x40, // if not set, assumed wide.
 	AutoZoneHasBaseIndex = 0x80, // channel numbers do not begin at 1, see 	baseChannelNumberStart and interleaveChannelNumberStart;
-	AutoZoneInterleavingStartsPrior = 0x100, // Start the interleaving count prior rather than after start frequency.
-	AutoZoneSimplexUsesTXFrequency = 0x200,
-	AutoZoneHasBankAtOffset = 0x400, // GMRS has second bank of channels starting at base freq plus repeater offset which can be used for simplex.
+	AutoZoneInterleavingStartsPrior = 0x100, // Start the interleaving  prior rather than after start frequency.
+	AutoZoneSimplexUsesTXFrequency = 0x200, // usually a duplex channel when  set to simplex uses the rx freq for both rx and tx, this allows the use of the tx freq instead.
+	AutoZoneHasBankAtOffset = 0x400, // GMRS has second bank of channels starting at base freq plus repeater offset which can be used for simplex. So, allowing for 4 banks, bank at base, interleaved bank at base, bank at offset and interleaved bank at offset.
 	AutoZonePowerMask=0xf000, // 0 all rx, or max wattage allowed in increments of 0.5 w (up to 5 w).
 } AutoZoneFlags_t;
 
 typedef enum
 {
-	AutoZone_AU_UHFCB=1,
 	AutoZone_MRN, // International Marine.
+	AutoZone_AU_UHFCB=1,
 	AutoZone_GMRS,
+	AutoZone_MURS,
 	AutoZone_NOAA,
 	AutoZone_TYPE_MAX
 } AutoZoneType_t;
@@ -64,22 +65,22 @@ typedef struct
 	char name[16];
 	uint16_t flags; // See AutoZoneFlags_t enum.
 	AutoZoneType_t type;
-	uint32_t startFrequency; // mHz of first channel
-	uint32_t endFrequency; // mHz of last non-interstitial/interleaved channel
-	uint16_t channelSpacing; // kHz channel step x 100.
+	uint32_t startFrequency; // mHz of first channel of base bank
+	uint32_t endFrequency; // mHz of last non-interstitial/interleaved channel of base bank
+	uint16_t channelSpacing; // kHz channel step x 100 between channels in base bank.
 	uint16_t repeaterOffset; // kHz.
 	uint16_t priorityChannelIndex;
 	uint16_t curChannelIndex;
-	uint8_t totalChannels; // total number of channels in AutoZone
+	uint8_t totalChannelsInBaseBank;
 	uint16_t rxTone;
 	uint16_t txTone;
+	// The next four are used for display purposes, e.g. to give a particular physical channel an appropriate display channel number. 
 	uint8_t baseChannelNumberStart;
 	uint8_t interleaveChannelNumberStart;
 	uint8_t offsetBankChannelNumberStart;
 	uint8_t offsetBankInterleavedChannelNumberStart;
 } struct_AutoZoneParams_t;
 
-uint16_t AutoZoneGetTotalChannels();
 bool AutoZoneIsValid();
 bool AutoZoneIsCurrentZone(int zoneIndex);
 void AutoZoneInitialize(AutoZoneType_t type);
