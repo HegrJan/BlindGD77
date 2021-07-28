@@ -246,8 +246,8 @@ static void InitializePMR446()
 	strcpy(autoZone->name, "PMR446");
 	autoZone->flags=AutoZoneEnabled;
 	autoZone->type=AutoZone_PMR446;
-	autoZone->startFrequency=44600000; // mHz of first channel
-	autoZone->endFrequency=44620000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
+	autoZone->startFrequency=44600625; // mHz of first channel
+	autoZone->endFrequency=44619375; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
 	autoZone->channelSpacing=1250; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
 	autoZone->curChannelIndex=1;
 	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
