@@ -100,6 +100,26 @@ static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 		autoZone->flags|=AutoZoneDuplexAvailable;
 	else
 		autoZone->flags&=~AutoZoneDuplexAvailable;
+	if (index >= 24)
+		channelBuf->flag4&=~0x02; // narrow.
+	else
+		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
+	if (index >=24)
+		channelBuf->libreDMR_Power=3; // max 0.5 watts.
+	else
+		channelBuf->libreDMR_Power=0; // From Master.
+}
+	
+	static  void ApplyFRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	// duplex is never allowed
+	autoZone->flags&=~AutoZoneDuplexAvailable;
+	channelBuf->flag4&=~0x02; // narrow.
+	// channels 8-14 must use 0.5 w, the rest 2 w.
+	if (index >=24)
+		channelBuf->libreDMR_Power=3; // max 0.5 watts.
+	else
+		channelBuf->libreDMR_Power=6; // max 2 watts.
 }
 	
 static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
@@ -126,6 +146,9 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 			break;
 		case AutoZone_GMRS:
 			ApplyGMRSRestrictions(index, channelBuf);
+			break;
+		case AutoZone_FRS:
+			ApplyFRSRestrictions(index, channelBuf);
 			break;
 		case AutoZone_MURS: // power restrictions.
 			ApplyMURSRestrictions(index, channelBuf);
@@ -219,6 +242,13 @@ static void InitializeGMRS()
 	autoZone->offsetBankInterleavedChannelNumberStart=8;
 }
 
+static void InitializeFRS()
+{
+	InitializeGMRS();
+	strcpy(autoZone->name, "FRS");
+	autoZone->type=AutoZone_FRS;
+}
+
 static void InitializeMURS()
 {// 151.820, 151.880, 151.940, 154.570, 154.600.
 	strcpy(autoZone->name, "MURS");
@@ -278,6 +308,9 @@ void AutoZoneInitialize(AutoZoneType_t type)
 		case AutoZone_GMRS:
 			InitializeGMRS();
 			break;
+		case AutoZone_FRS:
+			InitializeFRS(); // restricted further but basically the same.
+			break;
 		case AutoZone_MURS:
 			InitializeMURS();
 			break;
@@ -326,9 +359,8 @@ static uint16_t GetDisplayChannelNumber(uint16_t index)
 	return channelNumber;
 }
 
-static bool 		GetGMRSZoneChannelIndices(struct_codeplugZone_t *returnBuf)
+static bool 		GetGMRSZoneChannelIndices(struct_codeplugZone_t *returnBuf, bool restrictToFRS)
 {
-	int total=returnBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone;
 	// physical order is 15-22, 1-7, 23-30, 8-14.
 	// remember zone is 0-based, but channels are 1-based
 	for (uint16_t channelIndex=1; channelIndex <=7; ++channelIndex)
@@ -343,20 +375,27 @@ static bool 		GetGMRSZoneChannelIndices(struct_codeplugZone_t *returnBuf)
 	{
 		returnBuf->channels[channelIndex-1] = channelIndex -14; // channels 1 to 8 move to 15 to 22.
 	}	
-	for (uint16_t channelIndex=23; channelIndex <= total; ++channelIndex)
+	if (restrictToFRS)
+		returnBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone=22;
+	else
 	{
-		returnBuf->channels[channelIndex-1] = channelIndex-7; // channels 16 to 23 move to 23 to 30.
+		for (uint16_t channelIndex=23; channelIndex <= 30; ++channelIndex)
+		{
+			returnBuf->channels[channelIndex-1] = channelIndex-7; // channels 16 to 23 move to 23 to 30.
+		}
+		returnBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone=30;
 	}
 	
 	return true;
-	}
+}
 
 static bool 	AutoZoneGetChannelIndices(struct_codeplugZone_t *returnBuf)
 {
 	switch (autoZone->type)
 	{
 		case AutoZone_GMRS:
-			return GetGMRSZoneChannelIndices(returnBuf);
+		case AutoZone_FRS:
+			return GetGMRSZoneChannelIndices(returnBuf, autoZone->type==AutoZone_FRS);
 			break;
 		default:
 		break;

@@ -55,6 +55,7 @@ typedef enum
 	AutoZone_MRN=1, // International Marine.
 	AutoZone_AU_UHFCB,
 	AutoZone_GMRS,
+	AutoZone_FRS,
 	AutoZone_MURS,
 	AutoZone_NOAA,
 	AutoZone_PMR446,
