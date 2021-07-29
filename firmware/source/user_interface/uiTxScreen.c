@@ -69,10 +69,24 @@ static bool pttWasReleased = false;
 static bool isTransmittingTone = false;
 
 
-static bool ShouldPlayStartStopBeep()
+static bool ShouldPlayStartStopBeep(bool isTxStop, bool isDMR)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_BEEP)
 		return false;
+	if (isDMR)
+	{
+		if ((nonVolatileSettings.beepOptions & BEEP_TX_START) && !isTxStop)
+			return true;
+		if ((nonVolatileSettings.beepOptions & BEEP_TX_STOP) && isTxStop)
+			return true;
+	}
+	else
+	{	// first check fm tx //joe
+		if ((nonVolatileSettings.beepOptions&BEEP_FM_TX_START) && !isTxStop)
+			return true;
+		if (!isDMR && (nonVolatileSettings.beepOptions&BEEP_FM_TX_STOP) && isTxStop)
+			return true;
+	}
 	if ((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) == 0)
 		return false;	
 	if (currentChannelData->tot==0 && nonVolatileSettings.totMaster==0)
@@ -125,7 +139,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 			clearIsWakingState();
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{// If PTT Latch is on, play a beep to alert the user.
-				if (ShouldPlayStartStopBeep())
+				if (ShouldPlayStartStopBeep(false, false))
 				{
 					soundSetMelody(MELODY_DMR_TX_START_BEEP);
 					while (soundMelodyIsPlaying())
@@ -223,7 +237,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 				if (mode == RADIO_MODE_DIGITAL)
 				{
-					if ((nonVolatileSettings.beepOptions & BEEP_TX_START) &&
+					if (ShouldPlayStartStopBeep(false,true) &&
 							(startBeepPlayed == false) && (trxIsTransmitting == true)
 							&& (melody_play == NULL))
 					{
@@ -379,7 +393,7 @@ static void handleEvent(uiEvent_t *ev)
 				trxActivateRx();
 				trxIsTransmitting = false;
 				//taskEXIT_CRITICAL();
-				if (ShouldPlayStartStopBeep())
+				if (ShouldPlayStartStopBeep(true, false))
 				{
 					soundSetMelody(MELODY_DMR_TX_STOP_BEEP);
 				}
@@ -403,7 +417,7 @@ static void handleEvent(uiEvent_t *ev)
 			// In DMR mode, wait for the DMR system to finish before exiting
 			if (trxIsTransmitting == false)
 			{
-				if ((nonVolatileSettings.beepOptions & BEEP_TX_STOP) && (melody_play == NULL))
+				if (ShouldPlayStartStopBeep(true, true) && (melody_play == NULL))
 				{
 					soundSetMelody(MELODY_DMR_TX_STOP_BEEP);
 				}

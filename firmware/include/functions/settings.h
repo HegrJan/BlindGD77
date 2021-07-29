@@ -48,6 +48,8 @@ extern const int ECO_LEVEL_MAX;
 extern const uint8_t BEEP_TX_NONE;
 extern const uint8_t BEEP_TX_START;
 extern const uint8_t BEEP_TX_STOP;
+extern const uint8_t BEEP_FM_TX_START;
+extern const uint8_t BEEP_FM_TX_STOP;
 extern const uint16_t NO_PRIORITY_CHANNEL;
 
 extern int settingsCurrentChannelNumber;

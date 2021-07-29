@@ -43,6 +43,8 @@ static const int STORAGE_MAGIC_NUMBER 		= 0x475E; // NOTE: never use 0xDEADBEEF,
 const uint8_t BEEP_TX_NONE  = 0x00;
 const uint8_t BEEP_TX_START = 0x01;
 const uint8_t BEEP_TX_STOP  = 0x02;
+const uint8_t BEEP_FM_TX_START = 0x04;
+const uint8_t BEEP_FM_TX_STOP = 0x08;
 
 #if defined(PLATFORM_RD5R)
 static uint32_t dirtyTime = 0;
