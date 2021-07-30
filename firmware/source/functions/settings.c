@@ -340,6 +340,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
 	nonVolatileSettings.uhfOffset=5000; // repeater offset for 70 cm band.
 	nonVolatileSettings.totMaster=0;
+	nonVolatileSettings.autoZone.flags=0;
 	
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
 
