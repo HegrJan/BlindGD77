@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "functions/settings.h"
 #include "functions/sound.h"
+
 static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
@@ -149,6 +150,23 @@ static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
 }
 
+static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
+{
+	if (index==4)
+	{
+		*rxFreq=15457000;
+		*txFreq=*rxFreq;
+		return;
+	}		
+				
+	if (index==5)
+	{
+		*rxFreq=15460000;
+		*txFreq=*rxFreq;
+		return;
+	}		
+}
+
 static void 	ApplyNOAARestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	channelBuf->flag4|=0x04; // RX only.
@@ -170,23 +188,6 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 		return;
 	AutoZoneData[autoZone->type-1].ApplyChannelRestrictionsFunc(index, channelBuf);
 }	
-
-static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
-{
-	if (index==4)
-	{
-		*rxFreq=15457000;
-		*txFreq=*rxFreq;
-		return;
-	}		
-				
-	if (index==5)
-	{
-		*rxFreq=15460000;
-		*txFreq=*rxFreq;
-		return;
-	}		
-}
 
 void AutoZoneInitialize(AutoZoneType_t type)
 {
