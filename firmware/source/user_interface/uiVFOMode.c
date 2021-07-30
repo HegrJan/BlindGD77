@@ -2731,6 +2731,8 @@ static void toneScan(void)
 		uiVFOModeUpdateScreen(0);
 		prevCSSTone = (CODEPLUG_CSS_TONE_NONE - 1);
 		uiDataGlobal.Scan.toneActive = false;
+		announceCSSCode(currentChannelData->rxTone, toneScanType, DIRECTION_NONE, true, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+
 		return;
 	}
 
