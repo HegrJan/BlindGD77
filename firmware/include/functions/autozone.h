@@ -63,6 +63,8 @@ typedef enum
 	AutoZone_TYPE_MAX
 } AutoZoneType_t;
 
+typedef void (*AutoZoneFunctionPointer_t)(uint16_t index, struct_codeplugChannel_t *channelBuf); // Typedef for AutoZone function pointer for applying restrictions to an autoZone channel.
+
 typedef struct
 {
 	AutoZoneType_t type;
@@ -79,6 +81,7 @@ typedef struct
 	uint8_t interleaveChannelNumberStart;
 	uint8_t offsetBankChannelNumberStart;
 	uint8_t offsetBankInterleavedChannelNumberStart;
+	const AutoZoneFunctionPointer_t ApplyChannelRestrictionsFunc;
 } struct_AutoZoneParams_t;
 
 bool AutoZoneIsValid();

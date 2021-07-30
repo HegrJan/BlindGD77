@@ -28,16 +28,23 @@
 #include "utils.h"
 #include "functions/settings.h"
 #include "functions/sound.h"
+static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static  void ApplyFRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static void 	ApplyNOAARestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static void 	ApplyPMR446Restrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 
 const struct_AutoZoneParams_t AutoZoneData[AutoZone_TYPE_MAX]=
-{// type, name, flags, start freq, end freq, spacing, rpt offset, pri index, totalInBase, baseChn, interChn, offsetChn, offInterChn
-	{AutoZone_MRN, "MRN", 0x03a5, 16065000, 16200000, 5000, 4600, 16, 56, 1, 60, 0, 0},
-		{AutoZone_AU_UHFCB, "UHF CB", 0x55, 47642500, 47740000, 2500, 750, 5, 80, 0, 0, 0, 0},
-			{AutoZone_GMRS, "GMRS", 0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8},
-				{AutoZone_FRS, "FRS",  0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8},
-					{AutoZone_MURS, "MURS", 0x01, 15182000, 15206000, 6000, 0, 0, 5, 0, 0, 0, 0},
-						{AutoZone_NOAA, "NOAA", 0x01, 16240000, 16255000, 2500, 0, 0, 7, 0, 0, 0, 0},
-							{AutoZone_PMR446, "PMR446", 0x41,  44600625, 44619375, 1250, 0, 0, 16, 0, 0, 0, 0}
+{// type, name, flags, start freq, end freq, spacing, rpt offset, pri index, totalInBase, baseChn, interChn, offsetChn, offInterChn, func
+	{AutoZone_MRN, "MRN", 0x03a5, 16065000, 16200000, 5000, 4600, 16, 56, 1, 60, 0, 0, &ApplyMarineRestrictions},
+		{AutoZone_AU_UHFCB, "UHF CB", 0x55, 47642500, 47740000, 2500, 750, 5, 80, 0, 0, 0, 0, &ApplyUHFCBRestrictions},
+			{AutoZone_GMRS, "GMRS", 0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8, &ApplyGMRSRestrictions},
+				{AutoZone_FRS, "FRS",  0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8, &ApplyFRSRestrictions},
+					{AutoZone_MURS, "MURS", 0x01, 15182000, 15206000, 6000, 0, 0, 5, 0, 0, 0, 0, &ApplyMURSRestrictions},
+						{AutoZone_NOAA, "NOAA", 0x01, 16240000, 16255000, 2500, 0, 0, 7, 0, 0, 0, 0, &ApplyNOAARestrictions},
+							{AutoZone_PMR446, "PMR446", 0x41,  44600625, 44619375, 1250, 0, 0, 16, 0, 0, 0, 0, &ApplyPMR446Restrictions}
 };
 
 static struct_AutoZoneParams_t* autoZone=&nonVolatileSettings.autoZone;
@@ -59,6 +66,24 @@ bool AutoZoneIsValid()
 bool AutoZoneIsCurrentZone(int zoneIndex)
 {
 	return zoneIndex == -2; // allchannels is -1, AutoZones are -2, -3, etc.
+}
+
+static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	// Need to force simplex on non duplex channels.
+	bool duplexAllowed=(index >=1 && index <=7) 
+	|| (index >=18 && index <=26) 
+	|| (index >=29 && index <=35) // Physical indices 29 to 35 correspond to named channels 60 to 66.
+	|| (index >=47 && index <=55); // physical channels 47 to 55 correspond to named channels 78 to 86.
+	if (duplexAllowed)
+	{
+		autoZone->flags |=AutoZoneDuplexAvailable;
+	}
+	else
+	{	// Force simplex.
+		channelBuf->rxFreq=channelBuf->txFreq;
+		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
+	}
 }
 
 static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
@@ -86,24 +111,6 @@ static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 		autoZone->flags |=AutoZoneDuplexAvailable;
 }
 
-static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
-{
-	// Need to force simplex on non duplex channels.
-	bool duplexAllowed=(index >=1 && index <=7) 
-	|| (index >=18 && index <=26) 
-	|| (index >=29 && index <=35) // Physical indices 29 to 35 correspond to named channels 60 to 66.
-	|| (index >=47 && index <=55); // physical channels 47 to 55 correspond to named channels 78 to 86.
-	if (duplexAllowed)
-	{
-		autoZone->flags |=AutoZoneDuplexAvailable;
-	}
-	else
-	{	// Force simplex.
-		channelBuf->rxFreq=channelBuf->txFreq;
-		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
-	}
-}
-
 static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	// duplex is not allowed on interstitials
@@ -121,7 +128,7 @@ static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 		channelBuf->libreDMR_Power=0; // From Master.
 }
 	
-	static  void ApplyFRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+static  void ApplyFRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	// duplex is never allowed
 	autoZone->flags&=~AutoZoneDuplexAvailable;
@@ -142,37 +149,26 @@ static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
 }
 
+static void 	ApplyNOAARestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	channelBuf->flag4|=0x04; // RX only.
+}
+
+static void 	ApplyPMR446Restrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	channelBuf->libreDMR_Power=3; // max 0.5 watts.
+}
+
 /*
 Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band are RX only.
 */
  void AutoZoneApplyChannelRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
-	switch (autoZone->type)
-	{
-		case AutoZone_MRN:
-			ApplyMarineRestrictions(index, channelBuf);
-			break;
-		case 	AutoZone_AU_UHFCB:
-			ApplyUHFCBRestrictions(index, channelBuf);
-			break;
-		case AutoZone_GMRS:
-			ApplyGMRSRestrictions(index, channelBuf);
-			break;
-		case AutoZone_FRS:
-			ApplyFRSRestrictions(index, channelBuf);
-			break;
-		case AutoZone_MURS: // power restrictions.
-			ApplyMURSRestrictions(index, channelBuf);
-			break;
-		case AutoZone_NOAA:
-			channelBuf->flag4|=0x04; // RX only.
-			break;
-		case AutoZone_PMR446: // power restrictions.
-			channelBuf->libreDMR_Power=3; // max 0.5 watts.
-			break;
-		default:
-			return;
-	}	
+	if (autoZone->type <1 || autoZone->type >=AutoZone_TYPE_MAX)
+		return;
+	if (!AutoZoneData[autoZone->type].ApplyChannelRestrictionsFunc)
+		return;
+	AutoZoneData[autoZone->type-1].ApplyChannelRestrictionsFunc(index, channelBuf);
 }	
 
 static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
