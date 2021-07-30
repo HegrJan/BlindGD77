@@ -29,7 +29,18 @@
 #include "functions/settings.h"
 #include "functions/sound.h"
 
-static struct_AutoZoneParams_t* autoZone = &nonVolatileSettings.autoZone;
+const struct_AutoZoneParams_t AutoZoneData[AutoZone_TYPE_MAX]=
+{// type, name, flags, start freq, end freq, spacing, rpt offset, pri index, totalInBase, baseChn, interChn, offsetChn, offInterChn
+	{AutoZone_MRN, "MRN", 0x03a5, 16065000, 16200000, 5000, 4600, 16, 56, 1, 60, 0, 0},
+		{AutoZone_AU_UHFCB, "UHF CB", 0x55, 47642500, 47740000, 2500, 750, 5, 80, 0, 0, 0, 0},
+			{AutoZone_GMRS, "GMRS", 0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8},
+				{AutoZone_FRS, "FRS",  0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8},
+					{AutoZone_MURS, "MURS", 0x01, 15182000, 15206000, 6000, 0, 0, 5, 0, 0, 0, 0},
+						{AutoZone_NOAA, "NOAA", 0x01, 16240000, 16255000, 2500, 0, 0, 7, 0, 0, 0, 0},
+							{AutoZone_PMR446, "PMR446", 0x41,  44600625, 44619375, 1250, 0, 0, 16, 0, 0, 0, 0}
+};
+
+static struct_AutoZoneParams_t* autoZone=&nonVolatileSettings.autoZone;
 
 bool AutoZoneIsValid()
 {
@@ -164,105 +175,6 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 	}	
 }	
 
-static void InitializeAU_UHFCB()
-{
-	strcpy(autoZone->name, "AU UHF CB");
-	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels | AutoZoneOffsetDirectionPlus | AutoZoneNarrow;
-	autoZone->type=AutoZone_AU_UHFCB;
-	autoZone->startFrequency=47642500; // mHz of first channel
-	autoZone->endFrequency=47740000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
-	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->repeaterOffset=750; // kHz.
-	autoZone->priorityChannelIndex=5;// ch5
-	autoZone->curChannelIndex=1;
-	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	uint16_t adjacentChannelSpacing=autoZone->channelSpacing;
-	if (autoZone->flags & AutoZoneInterleaveChannels)
-		adjacentChannelSpacing/=2; // for the purposes of calculating the number of channels.
-	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/adjacentChannelSpacing;
-	if (totalChannels > codeplugChannelsPerZone)
-		totalChannels=codeplugChannelsPerZone; // max 80.
-	autoZone->totalChannelsInBaseBank=totalChannels;
-}
-
-static void InitializeMarine()
-{
-	strcpy(autoZone->name, "MRN");
-	autoZone->flags=AutoZoneEnabled|AutoZoneInterleaveChannels | AutoZoneInterleavingStartsPrior | AutoZoneHasBaseIndex | AutoZoneSimplexUsesTXFrequency | AutoZoneDuplexAvailable;
-
-	autoZone->type=AutoZone_MRN;
-	autoZone->startFrequency=16065000; // mHz of first channel
-	autoZone->endFrequency=16200000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
-	autoZone->channelSpacing=5000; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->repeaterOffset=4600; // kHz. Relevant for ch 01-07 and ch18-28, and 60-66, and 78-86
-	autoZone->priorityChannelIndex=16;// ch5
-	autoZone->curChannelIndex=1;
-	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	uint16_t adjacentChannelSpacing=autoZone->channelSpacing;
-	if (autoZone->flags & AutoZoneInterleaveChannels)
-		adjacentChannelSpacing/=2; // for the purposes of calculating the number of channels.
-	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/adjacentChannelSpacing;
-	if (totalChannels > codeplugChannelsPerZone)
-		totalChannels=codeplugChannelsPerZone; // max 80.
-	autoZone->totalChannelsInBaseBank=totalChannels;
-	autoZone->baseChannelNumberStart=1;
-	autoZone->interleaveChannelNumberStart=60;
-}
-
-static void InitializeNOAA()
-{
-//162.400, 162.425, 162.450, 162.475, 162.500, 162.525, and 162.550	
-	strcpy(autoZone->name, "NOAA");
-	autoZone->flags=AutoZoneEnabled;
-	autoZone->type=AutoZone_NOAA;
-	autoZone->startFrequency=16240000; // mHz of first channel
-	autoZone->endFrequency=16255000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
-	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->curChannelIndex=1;
-	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	uint16_t totalChannels =  ((autoZone->endFrequency+autoZone->channelSpacing) - autoZone->startFrequency)/autoZone->channelSpacing;
-	autoZone->totalChannelsInBaseBank=totalChannels;
-}
-		
-static void InitializeGMRS()
-{// 462.55 through 462.725 25 kHz steps.
-	strcpy(autoZone->name, "GMRS");
-	autoZone->flags=AutoZoneEnabled | AutoZoneOffsetDirectionPlus | AutoZoneInterleaveChannels | AutoZoneNarrow | AutoZoneHasBaseIndex | AutoZoneHasBankAtOffset;
-	autoZone->repeaterOffset=5000; // kHz.
-	autoZone->type=AutoZone_GMRS;
-	autoZone->startFrequency=46255000; // mHz of first channel
-	autoZone->endFrequency=46272500; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
-	autoZone->channelSpacing=2500; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->curChannelIndex=1;
-	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	autoZone->totalChannelsInBaseBank= 15; // in each bank.
-	autoZone->baseChannelNumberStart=15;
-	autoZone->interleaveChannelNumberStart=1; // Because index is added to base, so physical channel 9 should be 1.
-	autoZone->offsetBankChannelNumberStart=23;
-	autoZone->offsetBankInterleavedChannelNumberStart=8;
-}
-
-static void InitializeFRS()
-{
-	InitializeGMRS();
-	strcpy(autoZone->name, "FRS");
-	autoZone->type=AutoZone_FRS;
-}
-
-static void InitializeMURS()
-{// 151.820, 151.880, 151.940, 154.570, 154.600.
-	strcpy(autoZone->name, "MURS");
-	autoZone->flags=AutoZoneEnabled;
-	autoZone->type=AutoZone_MURS;
-	autoZone->startFrequency=15182000; // mHz of first channel
-	// We have to fudge this, we'll pretend that channels 4 and 5 are in the same range but overwrite if those indices are requested.
-	autoZone->endFrequency=15194000+12000; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
-	autoZone->channelSpacing=6000; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->curChannelIndex=1;
-	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	autoZone->totalChannelsInBaseBank= 5; // in each bank.
-}
-
 static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
 {
 	if (index==4)
@@ -280,49 +192,11 @@ static void AdjustMURSFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* tx
 	}		
 }
 
-static void InitializePMR446()
-{
-	strcpy(autoZone->name, "PMR446");
-	autoZone->flags=AutoZoneEnabled | AutoZoneNarrow;
-	autoZone->type=AutoZone_PMR446;
-	autoZone->startFrequency=44600625; // mHz of first channel
-	autoZone->endFrequency=44619375; // mHz of last channel (not including interleaving, channelspacing will be added to this to get absolute end).
-	autoZone->channelSpacing=1250; // kHz channel step x 100 (so for narrow we can divide by 2 without using float).
-	autoZone->curChannelIndex=1;
-	autoZone->rxTone=autoZone->txTone=CODEPLUG_CSS_TONE_NONE;
-	autoZone->totalChannelsInBaseBank= 16; // in each bank.
-}
-
 void AutoZoneInitialize(AutoZoneType_t type)
 {
-		memset(autoZone, 0, sizeof(struct_AutoZoneParams_t));
-	
-	switch (type)
-	{
-		case AutoZone_MRN:
-			InitializeMarine();
-			break;
-		case	AutoZone_AU_UHFCB:
-			InitializeAU_UHFCB();
-			break;
-		case AutoZone_GMRS:
-			InitializeGMRS();
-			break;
-		case AutoZone_FRS:
-			InitializeFRS(); // restricted further but basically the same.
-			break;
-		case AutoZone_MURS:
-			InitializeMURS();
-			break;
-		case AutoZone_NOAA:
-			InitializeNOAA();
-			break;
-		case AutoZone_PMR446:
-			InitializePMR446();
-			break;
-		default:
-		break;
-	}
+	if (type >=AutoZone_TYPE_MAX)
+		return;
+	memcpy(autoZone, &AutoZoneData[type-1], sizeof(struct_AutoZoneParams_t));
 }
 
 static uint16_t GetDisplayChannelNumber(uint16_t index)
@@ -515,8 +389,8 @@ bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBu
 	channelBuf->txFreq=txFreq;
 	channelBuf->chMode=(autoZone->flags & AutoZoneModeDigital) ? RADIO_MODE_DIGITAL : RADIO_MODE_ANALOG;
 	channelBuf->libreDMR_Power=0; // From master unless overridden by restriction.
-	channelBuf->rxTone=autoZone->rxTone;
-	channelBuf->txTone=autoZone->txTone;
+	channelBuf->rxTone=CODEPLUG_CSS_TONE_NONE;
+	channelBuf->txTone=CODEPLUG_CSS_TONE_NONE;
 
 	if (autoZone->flags & AutoZoneNarrow)
 		channelBuf->flag4&=~0x02; // clear.
@@ -525,4 +399,3 @@ bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBu
 	AutoZoneApplyChannelRestrictions(index, channelBuf);
 	return true;
 }
-

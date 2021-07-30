@@ -52,6 +52,7 @@ typedef enum
 
 typedef enum
 {
+	AutoZone_NONE=0,
 	AutoZone_MRN=1, // International Marine.
 	AutoZone_AU_UHFCB,
 	AutoZone_GMRS,
@@ -64,18 +65,15 @@ typedef enum
 
 typedef struct
 {
-	char name[16];
-	uint16_t flags; // See AutoZoneFlags_t enum.
 	AutoZoneType_t type;
+	const char* name;
+	uint16_t flags; // See AutoZoneFlags_t enum.
 	uint32_t startFrequency; // mHz of first channel of base bank
 	uint32_t endFrequency; // mHz of last non-interstitial/interleaved channel of base bank
 	uint16_t channelSpacing; // kHz channel step x 100 between channels in base bank.
 	uint16_t repeaterOffset; // kHz.
 	uint16_t priorityChannelIndex;
-	uint16_t curChannelIndex;
 	uint8_t totalChannelsInBaseBank;
-	uint16_t rxTone;
-	uint16_t txTone;
 	// The next four are used for display purposes, e.g. to give a particular physical channel an appropriate display channel number. 
 	uint8_t baseChannelNumberStart;
 	uint8_t interleaveChannelNumberStart;
