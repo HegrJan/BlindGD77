@@ -2103,7 +2103,7 @@ static bool validateNewChannel(void)
 			}
 
 			// check if its real zone and or the virtual zone "All Channels" whose index is -1
-			if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+			if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) || AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
 			{
 				// All Channels virtual zone
 				settingsSet(nonVolatileSettings.currentZone, (int16_t) (codeplugZonesGetCount() - 1));//set zone to all channels and channel index to free channel found
