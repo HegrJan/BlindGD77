@@ -1800,7 +1800,7 @@ static void handleEvent(uiEvent_t *ev)
 static void selectPrevNextZone(bool nextZone)
 {
 	int numZones = codeplugZonesGetCount();
-
+	nonVolatileSettings.zoneChannelIndices[nonVolatileSettings.currentZone]=nonVolatileSettings.currentChannelIndexInZone;
 	if (nextZone)
 	{
 		settingsIncrement(nonVolatileSettings.currentZone, 1);
@@ -1834,7 +1834,8 @@ static void selectPrevNextZone(bool nextZone)
 
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
-	settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0);// Since we are switching zones the channel index should be reset
+	nonVolatileSettings.currentChannelIndexInZone=nonVolatileSettings.zoneChannelIndices[nonVolatileSettings.currentZone];
+	settingsSetDirty();
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 	
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);

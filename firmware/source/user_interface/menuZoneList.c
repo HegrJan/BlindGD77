@@ -177,8 +177,11 @@ static void handleEvent(uiEvent_t *ev)
 static void setZoneToUserSelection(void)
 {
 	settingsSet(nonVolatileSettings.overrideTG, 0); // remove any TG override
+	nonVolatileSettings.zoneChannelIndices[nonVolatileSettings.currentZone]=nonVolatileSettings.currentChannelIndexInZone;
+
 	settingsSet(nonVolatileSettings.currentZone, (int16_t) menuDataGlobal.currentItemIndex);
-	settingsSet(nonVolatileSettings.currentChannelIndexInZone , 0);// Since we are switching zones the channel index should be reset
+	nonVolatileSettings.currentChannelIndexInZone=nonVolatileSettings.zoneChannelIndices[nonVolatileSettings.currentZone];
+	settingsSetDirty();
 	settingsSet(nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE], 0);// Since we are switching zones the TRx Group index should be reset
 	channelScreenChannelData.rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 
