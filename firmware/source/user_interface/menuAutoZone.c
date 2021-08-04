@@ -181,6 +181,8 @@ static void handleEvent(uiEvent_t *ev)
 		nonVolatileSettings.autoZonesEnabled=autoZonesEnabled;
 		if (autoZonesEnabled==0)
 			nonVolatileSettings.autoZone.flags&=~AutoZoneEnabled;
+		if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+			currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 		settingsSetDirty();
 		menuSystemPopPreviousMenu();
 		return;

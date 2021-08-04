@@ -2641,6 +2641,10 @@ void uiChannelInitializeCurrentZone(void)
 {
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
 	codeplugUtilConvertBufToString(currentZone.name, currentZoneName, 16);// need to convert to zero terminated string
+	EnsurePriorityChannelIsSet();
+	// Ensure stored channel number is within range.
+	if (nonVolatileSettings.currentChannelIndexInZone >= currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
+		nonVolatileSettings.currentChannelIndexInZone=0;
 }
 
 #if defined(PLATFORM_GD77S)
