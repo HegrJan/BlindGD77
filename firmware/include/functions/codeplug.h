@@ -277,6 +277,7 @@ void codeplugZoneGetSelected(int *selectedZone,int *selectedChannel);
 void codeplugZoneSetSelected(int selectedZone,int selectedChannel);
  */
 int codeplugZonesGetCount(void);
+int codeplugZonesGetRealCount(void); // just real zones, excluding allChannels and autoZones.
 bool codeplugZoneGetDataForNumber(int indexNum,struct_codeplugZone_t *returnBuf);
 uint32_t codeplugChannelGetOptionalDMRID(struct_codeplugChannel_t *channelBuf);
 void codeplugChannelSetOptionalDMRID(uint32_t dmrID, struct_codeplugChannel_t *channelBuf);

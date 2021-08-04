@@ -241,6 +241,7 @@ enum MENU_SCREENS
 	UI_MESSAGE_BOX,
 	MENU_CONTACT_NEW_DTMF,
 	MENU_LAST_HEARD_SUBMENU,
+	MENU_AUTOZONE,
 	NUM_MENU_ENTRIES
 };
 
@@ -318,6 +319,6 @@ menuStatus_t menuLanguage(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuPrivateCall(uiEvent_t *event, bool isFirstRun);
 
 menuStatus_t uiMessageBox(uiEvent_t *event, bool isFirstRun);
-
+menuStatus_t menuAutoZone(uiEvent_t *ev, bool isFirstRun);
 
 #endif

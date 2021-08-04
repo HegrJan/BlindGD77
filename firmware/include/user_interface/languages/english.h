@@ -218,7 +218,7 @@ const stringsTable_t englishLanguage =
 .vhfRptOffset="VHF Off",
 .uhfRptOffset="UHF Off",
 .tone="Tone",
-.autoZone="AutoZn",
+.autoZone="Auto Zone",
 .dtmf_code="Code"
 };
 /********************************************************************

@@ -94,6 +94,7 @@ menuDataGlobal_t menuDataGlobal =
 				NULL,// MessageBox
 				NULL,// New DTMF Contact
 				NULL,// Last Heard SubMenu
+				NULL, // AutoZone
 		}
 };
 
@@ -133,6 +134,7 @@ static menuFunctionData_t menuFunctions[] =
 		{ uiMessageBox,             0 },
 		{ menuDTMFContactDetails,   0 }, // New DTMF contact
 		{ menuLastHeardSubMenu,     0 },
+		{ menuAutoZone,             0 },
 };
 
 static void menuSystemCheckForFirstEntryAudible(menuStatus_t status)
@@ -381,11 +383,12 @@ const menuItemNewData_t mainMenuItems[] =
 	{  12, MENU_CHANNEL_DETAILS },
 	{  13, MENU_LANGUAGE        },
 	{   2, MENU_CREDITS         },
+	{   175, MENU_AUTOZONE        },
 };
 
 const menuItemsList_t menuDataMainMenu =
 {
-	.numItems = 12,
+	.numItems = 13,
 	.items = mainMenuItems
 };
 

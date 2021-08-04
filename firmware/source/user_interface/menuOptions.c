@@ -32,7 +32,6 @@
 #include "interfaces/wdog.h"
 #include "utils.h"
 #include "functions/rxPowerSaving.h"
-#include "functions/autozone.h"
 static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
 
@@ -57,22 +56,7 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_PRIORITY_CHANNEL,
 							OPTIONS_MENU_VHF_RPT_OFFSET,
 							OPTIONS_MENU_UHF_RPT_OFFSET,
-							OPTIONS_MENU_AUTOZONE,
 							NUM_OPTIONS_MENU_ITEMS};
-
-static void ResetZoneAndChannelIfNeeded(bool disablingAutoZone)
-{
-	bool isAutoZone=AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber);
-	
-	if (isAutoZone)
-	{
-		if (disablingAutoZone)
-			settingsSet(nonVolatileSettings.currentZone, 0);
-		// Either way, reset the channel.
-		settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0); // Since we are switching zones the channel index should be reset
-		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-	}
-}
 
 static uint16_t GetNextValidChannelIndex(uint16_t start)
 {
@@ -361,13 +345,6 @@ static void updateScreen(bool isFirstRun)
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.uhfOffset);
 					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
 					rightSideUnitsStr = "kHz";
-					break;
-				case OPTIONS_MENU_AUTOZONE:
-					leftSide = (char * const *)&currentLanguage->autoZone;
-					if (nonVolatileSettings.autoZone.flags&AutoZoneEnabled)
-						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s", nonVolatileSettings.autoZone.name);
-					else
-						rightSideConst = (char * const *)&currentLanguage->off;
 					break;
 			}
 
@@ -713,18 +690,6 @@ static void handleEvent(uiEvent_t *ev)
 					if (nonVolatileSettings.uhfOffset < 9900)
 						settingsIncrement(nonVolatileSettings.uhfOffset, 100);
 					break;
-				case OPTIONS_MENU_AUTOZONE:
-				if ((nonVolatileSettings.autoZone.flags&AutoZoneEnabled)==0)
-				{
-					AutoZoneInitialize(1);
-				}
-				else if (nonVolatileSettings.autoZone.type < AutoZone_TYPE_MAX-1)
-				{
-					settingsIncrement(nonVolatileSettings.autoZone.type, 1);
-					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
-					ResetZoneAndChannelIfNeeded(false);
-				}
-				break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -909,19 +874,6 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_UHF_RPT_OFFSET:
 				if (nonVolatileSettings.uhfOffset > 100)
 					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
-				break;
-			case OPTIONS_MENU_AUTOZONE:
-				if (nonVolatileSettings.autoZone.type > 1)
-				{
-					settingsDecrement(nonVolatileSettings.autoZone.type, 1);
-					AutoZoneInitialize(nonVolatileSettings.autoZone.type);
-					ResetZoneAndChannelIfNeeded(false);
-				}
-				else
-				{
-					nonVolatileSettings.autoZone.flags&=~AutoZoneEnabled;
-					ResetZoneAndChannelIfNeeded(true);
-				}
 				break;
 			}
 		}

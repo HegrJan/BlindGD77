@@ -36,6 +36,19 @@ E.g. The Australian UHF CB band has 80 channels.
 
 typedef enum
 {
+	AutoZone_NONE=0,
+	AutoZone_MRN=1, // International Marine.
+	AutoZone_AU_UHFCB,
+	AutoZone_GMRS,
+	AutoZone_FRS,
+	AutoZone_MURS,
+	AutoZone_NOAA,
+	AutoZone_PMR446,
+	AutoZone_TYPE_MAX
+} AutoZoneType_t;
+
+typedef enum
+{
 	AutoZoneEnabled = 0x01,
 	AutoZoneModeDigital = 0x02, // 0 FM, 1 DMR.
 	AutoZoneInterleaveChannels = 0x04, // 0 off, 1 on, bank 2 is interleaved with bank 1 
@@ -49,19 +62,6 @@ typedef enum
 	AutoZoneHasBankAtOffset = 0x400, // GMRS has second bank of channels starting at base freq plus repeater offset which can be used for simplex. So, allowing for 4 banks, bank at base, interleaved bank at base, bank at offset and interleaved bank at offset.
 	AutoZonePowerMask=0xf000, // 0 all rx, or max wattage allowed in increments of 0.5 w (up to 5 w).
 } AutoZoneFlags_t;
-
-typedef enum
-{
-	AutoZone_NONE=0,
-	AutoZone_MRN=1, // International Marine.
-	AutoZone_AU_UHFCB,
-	AutoZone_GMRS,
-	AutoZone_FRS,
-	AutoZone_MURS,
-	AutoZone_NOAA,
-	AutoZone_PMR446,
-	AutoZone_TYPE_MAX
-} AutoZoneType_t;
 
 typedef void (*AutoZoneFunctionPointer_t)(uint16_t index, struct_codeplugChannel_t *channelBuf); // Typedef for AutoZone function pointer for applying restrictions to an autoZone channel.
 
@@ -92,4 +92,6 @@ bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf);
 bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq);
 bool AutoZoneGetChannelData(uint16_t index, struct_codeplugChannel_t *channelBuf);
 void AutoZoneApplyChannelRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+bool AutoZoneGetData(AutoZoneType_t type, struct_AutoZoneParams_t* autoZone);
+uint8_t AutoZoneGetEnabledCount(); // Count the number of autoZones actually enabled.
 #endif //_OPENGD77_AUTOZONE_H_
