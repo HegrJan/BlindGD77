@@ -49,16 +49,6 @@ const struct_AutoZoneParams_t AutoZoneData[AutoZone_TYPE_MAX]=
 };
 
 static struct_AutoZoneParams_t* autoZone=&nonVolatileSettings.autoZone;
-static uint8_t CountSetBits(uint8_t bits)
-{
-	uint8_t counter=0;
-	for (uint8_t i=0; i < 8; ++i)
-	{
-	if (bits&1<<i)
-		counter++;
-	}
-	return counter;
-}
 
 bool AutoZoneIsValid()
 {
@@ -468,5 +458,5 @@ bool AutoZoneGetData(AutoZoneType_t type, struct_AutoZoneParams_t* autoZone)
 
 uint8_t AutoZoneGetEnabledCount()
 {
-	return CountSetBits(nonVolatileSettings.autoZonesEnabled);
+	return __builtin_popcount(nonVolatileSettings.autoZonesEnabled);
 }

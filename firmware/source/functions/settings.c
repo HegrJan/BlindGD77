@@ -37,7 +37,8 @@
 #include "functions/rxPowerSaving.h"
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
-static const int STORAGE_MAGIC_NUMBER 		= 0x475E; // NOTE: never use 0xDEADBEEF, it's reserved value
+// VK7JS updated on Aug 2021 after adding AutoZone menu option and the ability to save zone channel indices.
+static const int STORAGE_MAGIC_NUMBER 		= 0x2108; // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
@@ -52,6 +53,8 @@ static uint32_t dirtyTime = 0;
 
 static bool settingsDirty = false;
 static bool settingsVFODirty = false;
+static int16_t ZoneChannelIndexMax=0;
+
 settingsStruct_t nonVolatileSettings;
 struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
@@ -165,7 +168,7 @@ bool settingsLoadSettings(void)
 	trxSetAnalogFilterLevel(nonVolatileSettings.analogFilterLevel);
 
 	codeplugInitChannelsPerZone();// Initialise the codeplug channels per zone
-
+	ZoneChannelIndexMax=sizeof(nonVolatileSettings.zoneChannelIndices)/sizeof(int16_t);
 	settingsVFODirty = false;
 
 	rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
@@ -541,4 +544,21 @@ void settingsSaveIfNeeded(bool immediately)
 int settingsGetScanStepTimeMilliseconds(void)
 {
 	return TIMESLOT_DURATION + (nonVolatileSettings.scanStepTime * TIMESLOT_DURATION);
+}
+
+void settingsSetCurrentChannelIndexForZone(int16_t channelIndex, int16_t zoneIndex)
+{
+	if (zoneIndex >= ZoneChannelIndexMax)
+		return; // can't save it.
+	
+	nonVolatileSettings.zoneChannelIndices[zoneIndex]=channelIndex;
+	settingsSetDirty();
+}
+
+int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex)
+{
+	if (zoneIndex >= ZoneChannelIndexMax)
+		return 0;
+	
+	return nonVolatileSettings.zoneChannelIndices[zoneIndex];
 }

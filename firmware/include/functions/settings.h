@@ -128,7 +128,7 @@ typedef struct
 	uint8_t autoZonesEnabled;// 1-bit per autozone type.
 	uint16_t		vfoSweepSettings; // 3bits: channel step | 5 bits: RSSI noise floor | 7bits: gain
 	uint8_t totMaster; // Master timeout timer value.
-	int16_t			zoneChannelIndices[32]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, the rest are in this array.
+	int16_t			zoneChannelIndices[32]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, but 32 out of a possible 250  zone channel indices are in this array.
 	// Currently this struct is 200 bytes. It can be a maximum of 256 bytes JKS 4 August 2021. 
 } settingsStruct_t;
 
@@ -282,5 +282,7 @@ void settingsEraseCustomContent(void);
 void settingsInitVFOChannel(int vfoNumber);
 void enableVoicePromptsIfLoaded(bool enableFullPrompts);
 int settingsGetScanStepTimeMilliseconds(void);
+void settingsSetCurrentChannelIndexForZone(int16_t channelIndex, int16_t zoneIndex);
+int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex);
 
 #endif

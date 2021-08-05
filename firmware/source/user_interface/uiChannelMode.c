@@ -1800,7 +1800,7 @@ static void handleEvent(uiEvent_t *ev)
 static void selectPrevNextZone(bool nextZone)
 {
 	int numZones = codeplugZonesGetCount();
-	nonVolatileSettings.zoneChannelIndices[nonVolatileSettings.currentZone]=nonVolatileSettings.currentChannelIndexInZone;
+	settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 	if (nextZone)
 	{
 		settingsIncrement(nonVolatileSettings.currentZone, 1);
@@ -1834,8 +1834,7 @@ static void selectPrevNextZone(bool nextZone)
 
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
-	nonVolatileSettings.currentChannelIndexInZone=nonVolatileSettings.zoneChannelIndices[nonVolatileSettings.currentZone];
-	settingsSetDirty();
+	settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 	
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
@@ -2641,10 +2640,11 @@ void uiChannelInitializeCurrentZone(void)
 {
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
 	codeplugUtilConvertBufToString(currentZone.name, currentZoneName, 16);// need to convert to zero terminated string
-	EnsurePriorityChannelIsSet();
+	settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
 	// Ensure stored channel number is within range.
 	if (nonVolatileSettings.currentChannelIndexInZone >= currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
-		nonVolatileSettings.currentChannelIndexInZone=0;
+		settingsSet(nonVolatileSettings.currentChannelIndexInZone, 0);
+	EnsurePriorityChannelIsSet();
 }
 
 #if defined(PLATFORM_GD77S)
