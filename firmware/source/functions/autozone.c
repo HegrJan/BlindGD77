@@ -301,20 +301,7 @@ static uint8_t AutoZoneGetBitFromIndex(int index)
 // Assuming a single bit is set.
 static uint8_t AutoZoneGetTypeFromBit(uint8_t bit)
 {
-	if (bit == 0)
-		return 0;
-	
-	uint8_t counter=1;
-	uint8_t bitPos=bit;
-	while (bitPos > 1)
-	{
-		if (bitPos &0x01)
-			break;
-		counter++;
-		bitPos>>=1;
-	}
-	
-	return counter;
+	return __builtin_ffs(bit); 
 }
 
 bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf)
