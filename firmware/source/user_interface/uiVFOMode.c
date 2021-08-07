@@ -1423,13 +1423,6 @@ static void handleEvent(uiEvent_t *ev)
 						{
 							headerRowIsDirty = true;
 						}
-
-						if (trxGetPowerLevel() == 0)
-						{
-							menuVFOExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
-						}
-						uiVFOModeUpdateScreen(0);
-						announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_2);
 					}
 					else
 					{
