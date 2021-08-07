@@ -1242,6 +1242,7 @@ static void handleEvent(uiEvent_t *ev)
 					if ((directChannelNumber - 1) < currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
 					{
 						settingsSet(nonVolatileSettings.currentChannelIndexInZone, (int16_t) (directChannelNumber - 1));
+						settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 						// Save this in the dual watch as the currently selected channel.
 						SetDualWatchCurrentChannelIndex(directChannelNumber - 1);
 						loadChannelData(false, true);
@@ -1720,6 +1721,7 @@ static void handleEvent(uiEvent_t *ev)
 						prevChan = ((nonVolatileSettings.currentChannelIndexInZone + currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone);
 
 						settingsSet(nonVolatileSettings.currentChannelIndexInZone, prevChan);
+						settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 						// Set this in the Dual Watch struct as the current channel just selected by the user.
 						SetDualWatchCurrentChannelIndex(prevChan);
 
@@ -1896,6 +1898,7 @@ static void handleUpKey(uiEvent_t *ev)
 				nextChan = ((nonVolatileSettings.currentChannelIndexInZone + 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone);
 
 				settingsSet(nonVolatileSettings.currentChannelIndexInZone, nextChan);
+				settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 				// Set this in the Dual Watch struct as the current channel just selected by the user.
 				SetDualWatchCurrentChannelIndex(nextChan);
 
