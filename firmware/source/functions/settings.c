@@ -548,6 +548,7 @@ int settingsGetScanStepTimeMilliseconds(void)
 
 void settingsSetCurrentChannelIndexForZone(int16_t channelIndex, int16_t zoneIndex)
 {
+	settingsSet(nonVolatileSettings.currentChannelIndexInZone, channelIndex);
 	if (zoneIndex >= ZoneChannelIndexMax)
 		return; // can't save it.
 	
