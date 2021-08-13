@@ -50,6 +50,7 @@ typedef enum
 	GD77S_UIMODE_ZONE,
 	GD77S_UIMODE_POWER,
 	GD77S_UIMODE_ECO,
+	GD77S_UIMODE_KBD,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
 
@@ -202,6 +203,7 @@ static bool DoDualWatchScan()
 	return true;
 }
 
+#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 static void EnsureDualWatchReturnsToCurrent()
 {
 	// return to the last channel selected by the user.
@@ -209,12 +211,14 @@ static void EnsureDualWatchReturnsToCurrent()
 	SetNextChannelIndexAndData(dualWatchChannelData.currentChannelIndex, dualWatchChannelData.dualWatchChannelIndexIsRelativeToAllChannelsZone);
 	scanApplyNextChannel();
 }
+#endif // ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 
 static void InitDualWatchData()
 {
 	memset(&dualWatchChannelData, 0, sizeof(dualWatchChannelData));
 }
 
+#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 static void AnnounceDualWatchChannels(bool immediately)
 {
 	voicePromptsInit();
@@ -230,6 +234,7 @@ static void AnnounceDualWatchChannels(bool immediately)
 	if (immediately)
 		voicePromptsPlay();
 }
+#endif // ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 
 static void StartDualWatch(uint16_t watchChannelIndex, uint16_t currentChannelIndex, uint16_t startDelay)
 {
@@ -258,6 +263,7 @@ static void StartDualWatch(uint16_t watchChannelIndex, uint16_t currentChannelIn
 	dualWatchChannelData.dualWatchPauseCountdownTimer=startDelay; // give time for initial voice prompt to speak.
 }
 
+#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 static void StopDualWatch(bool returnToCurrentChannel)
 {
 	if (dualWatchChannelData.dualWatchActive==false)
@@ -283,6 +289,7 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	uiDataGlobal.Scan.timer =500; // force scan to continue;
 	uiDataGlobal.repeaterOffsetDirection=0; // reset this as the current channel just changed.
 }
+#endif // ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 
 static void EnsurePriorityChannelIsSet()
 {
@@ -425,7 +432,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
-			if ((uiDataGlobal.Scan.active == false) && ((rotarySwitchGetPosition() != getCurrentChannelInCurrentZoneForGD77S()) || (GD77SParameters.firstRun == true)))
+			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KBD) && (rotarySwitchGetPosition() != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
 			{
 				if (voicePromptsIsPlaying() == false)
 				{
@@ -676,6 +683,7 @@ static void scanApplyNextChannel(void)
 	nextChannelReady = false;
 }
 
+#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 static bool AnnounceChannelInfoImmediately()
 {
 	int nextMenu = menuSystemGetPreviouslyPushedMenuNumber();
@@ -711,6 +719,7 @@ static bool AllowedToAnnounceChannelInfo(bool loadVoicePromptAnnouncement)
 
 	return dualWatchChannelData.allowedToAnnounceChannelDetails;
 }
+#endif // ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement)
 {
@@ -2933,6 +2942,55 @@ static void buildSpeechChannelDetailsForGD77S()
 	}
 }
 
+#define GD77S_KBD_BUF_MAX 16
+static const char *GD77S_KBD_ALLOWED_CHARS = "0123456789ABCD*#"; // The order is mandatory
+static int GD77sSelectedCharIndex=0;
+static char GD77S_KBD_Buffer[GD77S_KBD_BUF_MAX]="\0";
+static int GD77S_KBD_pos=0;
+
+static void 			AnnounceGD77sKbdChar(bool init)
+{
+	char buf[2] = {0,0};
+	buf[0]=GD77S_KBD_ALLOWED_CHARS[GD77sSelectedCharIndex];
+	if (init)
+		voicePromptsInit();
+
+	voicePromptsAppendString(buf);
+	voicePromptsPlay();
+}
+
+static void 			AnnounceGD77sKbdBuffer(void)
+{
+	voicePromptsInit();
+	voicePromptsAppendString(GD77S_KBD_Buffer);
+	voicePromptsPlay();
+}
+
+static void AddGD77sKbdChar(void)
+{
+	if (GD77S_KBD_pos >=GD77S_KBD_BUF_MAX-1)
+		return;
+	
+	GD77S_KBD_Buffer[GD77S_KBD_pos++]= GD77S_KBD_ALLOWED_CHARS[GD77sSelectedCharIndex];
+	AnnounceGD77sKbdChar(true);
+	GD77S_KBD_Buffer[GD77S_KBD_pos]='\0';
+}
+
+static void BackspaceGD77sKbdChar(void)
+{
+	if (GD77S_KBD_pos <= 0)
+		return;
+	GD77S_KBD_pos--;
+	announceChar(GD77S_KBD_Buffer[GD77S_KBD_pos]);
+	GD77S_KBD_Buffer[GD77S_KBD_pos]= '\0';
+}
+
+static void ClearGD77sKbdBuffer(void)
+{
+	GD77S_KBD_pos = 0;
+	GD77S_KBD_Buffer[GD77S_KBD_pos]= '\0';
+}
+
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 {
 	char buf[17];
@@ -3030,14 +3088,50 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 		case GD77S_UIMODE_ECO:
 			announceEcoLevel(voicePromptsIsPlaying());
 			break;
-
+		case GD77S_UIMODE_KBD:
+			AnnounceGD77sKbdChar(false);
+			break;
 		case GD77S_UIMODE_MAX:
 			break;
 	}
 }
 
+static bool HandleGD77sKbdEvent(uiEvent_t *ev)
+{//joe
+	if (GD77SParameters.uiMode!=GD77S_UIMODE_KBD)
+		return false;
+	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE) || BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
+		return false;
+	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
+	{
+		GD77sSelectedCharIndex=ev->rotary-1;
+		AnnounceGD77sKbdChar(true);
+	}
+	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
+	{
+		ClearGD77sKbdBuffer();
+	}
+	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+	{
+		BackspaceGD77sKbdChar();
+	}
+	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
+	{
+		AnnounceGD77sKbdBuffer();
+	}
+	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
+	{
+		AddGD77sKbdChar();
+	}
+	
+	return true;
+}
+
 static void handleEventForGD77S(uiEvent_t *ev)
 {
+	if (HandleGD77sKbdEvent(ev))
+		return;
+	
 	if (ev->events & ROTARY_EVENT)
 	{
 		if (dtmfSequenceIsKeying())
@@ -3160,7 +3254,9 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				case GD77S_UIMODE_ECO:
 					vp = PROMPT_ECO_MODE;
 					break;
-
+				case GD77S_UIMODE_KBD:
+					vpString = (char * const *)&currentLanguage->keypad;
+					break;
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -3336,7 +3432,8 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
 					voicePromptsPlay();
 					break;
-
+				case GD77S_UIMODE_KBD:
+					break; // handled by separate handler.
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -3538,7 +3635,8 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
 					voicePromptsPlay();
 					break;
-
+				case GD77S_UIMODE_KBD:
+					break;// handled by separate handler
 				case GD77S_UIMODE_MAX:
 					break;
 			}
