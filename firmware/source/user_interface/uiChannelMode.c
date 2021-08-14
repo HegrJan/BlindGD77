@@ -3133,21 +3133,21 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
 	{
-		ClearGD77sKeypadBuffer();
+		AnnounceGD77sKeypadBuffer();
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
 	{
-		BackspaceGD77sKeypadChar();
+		AddGD77sKeypadChar();
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
 	{
-		AnnounceGD77sKeypadBuffer();
+		ClearGD77sKeypadBuffer();
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
 	{
-		AddGD77sKeypadChar();
+		BackspaceGD77sKeypadChar();
 	}
-	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
+	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 	{// copy first 8 digits to receive and second 8 digits to transmit.
 		char rxBuf[9]="\0";
 		char txBuf[9]="\0";
