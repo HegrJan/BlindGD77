@@ -2943,7 +2943,6 @@ static void buildSpeechChannelDetailsForGD77S()
 }
 
 #define GD77S_KBD_BUF_MAX 16
-static const char *GD77S_KBD_ALLOWED_CHARS = "0123456789ABCD*#"; // The order is mandatory
 static int GD77sSelectedCharIndex=0;
 static char GD77S_KBD_Buffer[GD77S_KBD_BUF_MAX]="\0";
 static int GD77S_KBD_pos=0;
@@ -2951,7 +2950,7 @@ static int GD77S_KBD_pos=0;
 static void 			AnnounceGD77sKbdChar(bool init)
 {
 	char buf[2] = {0,0};
-	buf[0]=GD77S_KBD_ALLOWED_CHARS[GD77sSelectedCharIndex];
+	buf[0]=DTMF_AllowedChars[GD77sSelectedCharIndex];
 	if (init)
 		voicePromptsInit();
 
@@ -2971,7 +2970,7 @@ static void AddGD77sKbdChar(void)
 	if (GD77S_KBD_pos >=GD77S_KBD_BUF_MAX-1)
 		return;
 	
-	GD77S_KBD_Buffer[GD77S_KBD_pos++]= GD77S_KBD_ALLOWED_CHARS[GD77sSelectedCharIndex];
+	GD77S_KBD_Buffer[GD77S_KBD_pos++]= DTMF_AllowedChars[GD77sSelectedCharIndex];
 	AnnounceGD77sKbdChar(true);
 	GD77S_KBD_Buffer[GD77S_KBD_pos]='\0';
 }
