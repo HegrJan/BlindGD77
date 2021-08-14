@@ -33,8 +33,6 @@
 #include "user_interface/uiUtilities.h"
 #include "user_interface/uiLocalisation.h"
 
-#define DTMF_CODE_MAX_LEN 16 // should match the max size of the struct_codeplugDTMFContact_t .code field in codeplug.h.
-#define DTMF_NAME_MAX_LEN 16 // should match the max size of the struct_codeplugDTMFContact_t .name field in codeplug.h.
 #define MAX_CHAR_BUF_LEN 33 // include null.
 
 static void updateScreen(bool isFirstRun, bool updateScreen);
@@ -88,49 +86,6 @@ static bool DTMFContactExists(char* name)
 	return false;
 	}
 
-static const char *DTMF_AllowedChars = "0123456789ABCD*#"; // The order is mandatory
-
-static bool ConvertDTMFToChars(uint8_t *code, char *text, int maxSize)
-{
-	if (!text || !code)
-	{
-		return false;
-	}
-	int j=0;
-
-	for (int i = 0; i < maxSize; i++)
-	{
-		if (code[i] < 16)
-			text[j++] = DTMF_AllowedChars[code[i]];
-	}
-	text[j] = 0;
-
-	return true;
-}
-
-extern int toupper(int __c);
-
-static bool ConvertCharsToDTMFCode(char *text, uint8_t *code, int maxSize)
-{// initialize to empty.
-	if (!text || !*text || !code)
-	{
-		return false;
-	}
-
-	memset(code, 0xFFU, DTMF_CODE_MAX_LEN);
-	for (int i = 0; (i < maxSize) && text[i]; i++)
-	{
-		char *symbol = strchr(DTMF_AllowedChars, toupper(text[i]));
-		if (!symbol)
-		{
-			return false;
-		}
-		code[i] = (symbol - DTMF_AllowedChars);
-	}
-
-	return true;
-}
-
 menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
@@ -162,7 +117,7 @@ menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun)
 
 			memcpy(&tmpDTMFContact, &contactListDTMFContactData, CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE);
 
-			ConvertDTMFToChars(tmpDTMFContact.code, dtmfCodeChars, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
+			dtmfConvertCodeToChars(tmpDTMFContact.code, dtmfCodeChars, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
 			codeplugUtilConvertBufToString(tmpDTMFContact.name, contactName, DTMF_NAME_MAX_LEN);
 
 			namePos = strlen(contactName);
@@ -442,7 +397,7 @@ static void handleEvent(uiEvent_t *ev)
 					memset(tmpDTMFContact.code, 0xFFU, DTMF_CODE_MAX_LEN);
 
 					codeplugUtilConvertStringToBuf(contactName, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
-					ConvertCharsToDTMFCode(dtmfCodeChars, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
+					dtmfConvertCharsToCode(dtmfCodeChars, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
 
 					if (((dtmfContactDetailsIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactDetailsIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
 						&& (tmpDTMFContact.name[0]!=0xFFU) && (tmpDTMFContact.code[0] != 0xFFU))

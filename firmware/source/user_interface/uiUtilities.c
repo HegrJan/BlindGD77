@@ -39,6 +39,7 @@
 #include "functions/autozone.h"
 
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
+static const char *DTMF_AllowedChars = "0123456789ABCD*#"; // The order is mandatory
 
 static __attribute__((section(".data.$RAM2"))) LinkItem_t callsList[NUM_LASTHEARD_STORED];
 
@@ -3373,6 +3374,47 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 			dtmfProcess();
 		}
 	}
+}
+
+ bool dtmfConvertCodeToChars(uint8_t *code, char *text, int maxSize)
+{
+	if (!text || !code)
+	{
+		return false;
+	}
+	int j=0;
+
+	for (int i = 0; i < maxSize; i++)
+	{
+		if (code[i] < 16)
+			text[j++] = DTMF_AllowedChars[code[i]];
+	}
+	text[j] = 0;
+
+	return true;
+}
+
+extern int toupper(int __c);
+
+ bool dtmfConvertCharsToCode(char *text, uint8_t *code, int maxSize)
+{// initialize to empty.
+	if (!text || !*text || !code)
+	{
+		return false;
+	}
+
+	memset(code, 0xFFU, DTMF_CODE_MAX_LEN);
+	for (int i = 0; (i < maxSize) && text[i]; i++)
+	{
+		char *symbol = strchr(DTMF_AllowedChars, toupper(text[i]));
+		if (!symbol)
+		{
+			return false;
+		}
+		code[i] = (symbol - DTMF_AllowedChars);
+	}
+
+	return true;
 }
 
 void resetOriginalSettingsData(void)

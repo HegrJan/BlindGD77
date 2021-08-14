@@ -198,6 +198,8 @@ void dtmfSequencePrepare(uint8_t *seq, bool autoStart);
 void dtmfSequenceStart(void);
 void dtmfSequenceStop(void);
 void dtmfSequenceTick(bool popPreviousMenuOnEnding);
+ bool dtmfConvertCharsToCode(char *text, uint8_t *code, int maxSize);
+ bool dtmfConvertCodeToChars(uint8_t *code, char *text, int maxSize);
 
 void resetOriginalSettingsData(void);
 

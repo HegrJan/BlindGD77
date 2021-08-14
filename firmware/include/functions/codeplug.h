@@ -65,6 +65,8 @@ extern const int VFO_SWEEP_SCAN_RANGE_SAMPLE_STEP_TABLE[7];
 
 // DTMF Contact
 #define CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE                     32
+#define DTMF_CODE_MAX_LEN 16 // should match the max size of the struct_codeplugDTMFContact_t .code field in codeplug.h.
+#define DTMF_NAME_MAX_LEN 16 // should match the max size of the struct_codeplugDTMFContact_t .name field in codeplug.h.
 
 // General Settings
 #define CODEPLUG_GENERAL_SETTINGS_DATA_STRUCT_SIZE                 40
