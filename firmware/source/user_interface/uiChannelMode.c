@@ -3011,7 +3011,7 @@ static void BackspaceGD77sKeypadChar(void)
 static void ClearGD77sKeypadBuffer(void)
 {
 	GD77SKeypadPos = 0;
-	memset(GD77SKeypadBuffer, 0, sizeof(GD77SKeypadBuffer));//joe
+	memset(GD77SKeypadBuffer, 0, sizeof(GD77SKeypadBuffer));
 	GD77SParameters.virtualVFOMode=false;
 }
 
@@ -3121,7 +3121,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 }
 
 static bool HandleGD77sKbdEvent(uiEvent_t *ev)
-{//joe
+{
 	if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
 		return false;
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
@@ -3149,7 +3149,6 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 	{// copy first 8 digits to receive and second 8 digits to transmit.
-//joe
 		char rxBuf[9]="\0";
 		char txBuf[9]="\0";
 		bool copyRxToTx=strlen(GD77SKeypadBuffer) < 9;
@@ -3167,10 +3166,13 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		// now set the rx and tx freq in the current channel data.
 		currentChannelData->rxFreq=atol(rxBuf);
 		currentChannelData->txFreq=copyRxToTx ? currentChannelData->rxFreq : atol(txBuf);
-		announceFrequency();
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 		GD77SParameters.virtualVFOMode=true;
+		voicePromptsInit();
+		announceFrequency();
+		voicePromptsPlay();
 	}
+	
 	return true;
 }
 
