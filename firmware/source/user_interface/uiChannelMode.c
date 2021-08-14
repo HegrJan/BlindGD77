@@ -61,6 +61,7 @@ typedef struct
 	bool             channelOutOfBounds;
 	uint16_t         dtmfListSelected;
 	int32_t          dtmfListCount;
+	bool virtualVFOMode;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -69,7 +70,8 @@ static GD77SParameters_t GD77SParameters =
 		.uiMode = GD77S_UIMODE_TG_OR_SQUELCH,
 		.channelOutOfBounds = false,
 		.dtmfListSelected = 0,
-		.dtmfListCount = 0
+		.dtmfListCount = 0,
+		.virtualVFOMode=false
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -2657,15 +2659,15 @@ void uiChannelInitializeCurrentZone(void)
 }
 
 #if defined(PLATFORM_GD77S)
-#define GD77S_KBD_BUF_MAX 16
+#define GD77S_KEYPAD_BUF_MAX 17
 static int GD77sSelectedCharIndex=0;
-static char GD77S_KBD_Buffer[GD77S_KBD_BUF_MAX]="\0";
-static int GD77S_KBD_pos=0;
+static char GD77SKeypadBuffer[GD77S_KEYPAD_BUF_MAX]="\0";
+static int GD77SKeypadPos=0;
 
 
 bool uiChannelModeTransmitDTMFContactForGD77S(void)
-{
-	if (GD77SParameters.uiMode==GD77S_UIMODE_KEYPAD)
+{// if GD77SParameters.virtualVFOMode is true, we're setting frequency not dtmf code.
+	if (GD77SParameters.uiMode==GD77S_UIMODE_KEYPAD && !GD77SParameters.virtualVFOMode)
 	{// Dial the string in the keyboard buffer.
 		if (dtmfSequenceIsKeying())
 		{
@@ -2674,10 +2676,10 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 			dtmfSequenceReset();
 			return true;
 		}			
-		if (GD77S_KBD_Buffer[0])
+		if (GD77SKeypadBuffer[0])
 		{// convert the string to a dialing code.
-			uint8_t dtmfCodeBuffer[GD77S_KBD_BUF_MAX];
-			if (dtmfConvertCharsToCode(GD77S_KBD_Buffer, dtmfCodeBuffer, GD77S_KBD_BUF_MAX))
+			uint8_t dtmfCodeBuffer[GD77S_KEYPAD_BUF_MAX];
+			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, GD77S_KEYPAD_BUF_MAX))
 			{
 				dtmfSequencePrepare(dtmfCodeBuffer, true);
 				return true;
@@ -2969,7 +2971,7 @@ static void buildSpeechChannelDetailsForGD77S()
 	}
 }
 
-static void 			AnnounceGD77sKbdChar(bool init)
+static void 			AnnounceGD77sKeypadChar(bool init)
 {
 	char buf[2] = {0,0};
 	buf[0]=DTMF_AllowedChars[GD77sSelectedCharIndex];
@@ -2980,36 +2982,37 @@ static void 			AnnounceGD77sKbdChar(bool init)
 	voicePromptsPlay();
 }
 
-static void 			AnnounceGD77sKbdBuffer(void)
+static void 			AnnounceGD77sKeypadBuffer(void)
 {
 	voicePromptsInit();
-	voicePromptsAppendString(GD77S_KBD_Buffer);
+	voicePromptsAppendString(GD77SKeypadBuffer);
 	voicePromptsPlay();
 }
 
-static void AddGD77sKbdChar(void)
+static void AddGD77sKeypadChar(void)
 {
-	if (GD77S_KBD_pos >=GD77S_KBD_BUF_MAX-1)
+	if (GD77SKeypadPos >=GD77S_KEYPAD_BUF_MAX-1)
 		return;
 	
-	GD77S_KBD_Buffer[GD77S_KBD_pos++]= DTMF_AllowedChars[GD77sSelectedCharIndex];
-	AnnounceGD77sKbdChar(true);
-	GD77S_KBD_Buffer[GD77S_KBD_pos]='\0';
+	GD77SKeypadBuffer[GD77SKeypadPos++]= DTMF_AllowedChars[GD77sSelectedCharIndex];
+	AnnounceGD77sKeypadChar(true);
+	GD77SKeypadBuffer[GD77SKeypadPos]='\0';
 }
 
-static void BackspaceGD77sKbdChar(void)
+static void BackspaceGD77sKeypadChar(void)
 {
-	if (GD77S_KBD_pos <= 0)
+	if (GD77SKeypadPos <= 0)
 		return;
-	GD77S_KBD_pos--;
-	announceChar(GD77S_KBD_Buffer[GD77S_KBD_pos]);
-	GD77S_KBD_Buffer[GD77S_KBD_pos]= '\0';
+	GD77SKeypadPos--;
+	announceChar(GD77SKeypadBuffer[GD77SKeypadPos]);
+	GD77SKeypadBuffer[GD77SKeypadPos]= '\0';
 }
 
-static void ClearGD77sKbdBuffer(void)
+static void ClearGD77sKeypadBuffer(void)
 {
-	GD77S_KBD_pos = 0;
-	GD77S_KBD_Buffer[GD77S_KBD_pos]= '\0';
+	GD77SKeypadPos = 0;
+	memset(GD77SKeypadBuffer, 0, sizeof(GD77SKeypadBuffer));//joe
+	GD77SParameters.virtualVFOMode=false;
 }
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
@@ -3110,7 +3113,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 			announceEcoLevel(voicePromptsIsPlaying());
 			break;
 		case GD77S_UIMODE_KEYPAD:
-			AnnounceGD77sKbdChar(false);
+			AnnounceGD77sKeypadChar(false);
 			break;
 		case GD77S_UIMODE_MAX:
 			break;
@@ -3121,30 +3124,53 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 {//joe
 	if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
 		return false;
-	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE) || BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
+	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
 		return false;
 	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
 	{
 		GD77sSelectedCharIndex=ev->rotary-1;
-		AnnounceGD77sKbdChar(true);
+		AnnounceGD77sKeypadChar(true);
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
 	{
-		ClearGD77sKbdBuffer();
+		ClearGD77sKeypadBuffer();
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
 	{
-		BackspaceGD77sKbdChar();
+		BackspaceGD77sKeypadChar();
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
 	{
-		AnnounceGD77sKbdBuffer();
+		AnnounceGD77sKeypadBuffer();
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
 	{
-		AddGD77sKbdChar();
+		AddGD77sKeypadChar();
 	}
-	
+	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
+	{// copy first 8 digits to receive and second 8 digits to transmit.
+//joe
+		char rxBuf[9]="\0";
+		char txBuf[9]="\0";
+		bool copyRxToTx=strlen(GD77SKeypadBuffer) < 9;
+		for (int i=0; i < 8; ++i)
+		{
+			if (isdigit(GD77SKeypadBuffer[i]))
+				rxBuf[i]=GD77SKeypadBuffer[i];
+			else
+				rxBuf[i]='0';
+			if (isdigit(GD77SKeypadBuffer[i+8]))
+				txBuf[i]=GD77SKeypadBuffer[i+8];
+			else
+				txBuf[i]='0';
+		}			
+		// now set the rx and tx freq in the current channel data.
+		currentChannelData->rxFreq=atol(rxBuf);
+		currentChannelData->txFreq=copyRxToTx ? currentChannelData->rxFreq : atol(txBuf);
+		announceFrequency();
+		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+		GD77SParameters.virtualVFOMode=true;
+	}
 	return true;
 }
 
