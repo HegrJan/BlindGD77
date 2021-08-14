@@ -50,7 +50,7 @@ typedef enum
 	GD77S_UIMODE_ZONE,
 	GD77S_UIMODE_POWER,
 	GD77S_UIMODE_ECO,
-	GD77S_UIMODE_KBD,
+	GD77S_UIMODE_KEYPAD, // virtual keypad
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
 
@@ -432,7 +432,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
-			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KBD) && (rotarySwitchGetPosition() != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
+			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD) && (rotarySwitchGetPosition() != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
 			{
 				if (voicePromptsIsPlaying() == false)
 				{
@@ -2657,8 +2657,35 @@ void uiChannelInitializeCurrentZone(void)
 }
 
 #if defined(PLATFORM_GD77S)
+#define GD77S_KBD_BUF_MAX 16
+static int GD77sSelectedCharIndex=0;
+static char GD77S_KBD_Buffer[GD77S_KBD_BUF_MAX]="\0";
+static int GD77S_KBD_pos=0;
+
+
 bool uiChannelModeTransmitDTMFContactForGD77S(void)
 {
+	if (GD77SParameters.uiMode==GD77S_UIMODE_KEYPAD)
+	{// Dial the string in the keyboard buffer.
+		if (dtmfSequenceIsKeying())
+		{
+			dtmfSequenceStop();
+			dtmfSequenceTick(false);
+			dtmfSequenceReset();
+			return true;
+		}			
+		if (GD77S_KBD_Buffer[0])
+		{// convert the string to a dialing code.
+			uint8_t dtmfCodeBuffer[GD77S_KBD_BUF_MAX];
+			if (dtmfConvertCharsToCode(GD77S_KBD_Buffer, dtmfCodeBuffer, GD77S_KBD_BUF_MAX))
+			{
+				dtmfSequencePrepare(dtmfCodeBuffer, true);
+				return true;
+			}
+		}
+
+		return false;	
+	}
 	if (GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS)
 	{
 		if (GD77SParameters.dtmfListCount > 0)
@@ -2942,11 +2969,6 @@ static void buildSpeechChannelDetailsForGD77S()
 	}
 }
 
-#define GD77S_KBD_BUF_MAX 16
-static int GD77sSelectedCharIndex=0;
-static char GD77S_KBD_Buffer[GD77S_KBD_BUF_MAX]="\0";
-static int GD77S_KBD_pos=0;
-
 static void 			AnnounceGD77sKbdChar(bool init)
 {
 	char buf[2] = {0,0};
@@ -3087,7 +3109,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 		case GD77S_UIMODE_ECO:
 			announceEcoLevel(voicePromptsIsPlaying());
 			break;
-		case GD77S_UIMODE_KBD:
+		case GD77S_UIMODE_KEYPAD:
 			AnnounceGD77sKbdChar(false);
 			break;
 		case GD77S_UIMODE_MAX:
@@ -3097,7 +3119,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 
 static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 {//joe
-	if (GD77SParameters.uiMode!=GD77S_UIMODE_KBD)
+	if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
 		return false;
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE) || BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 		return false;
@@ -3253,7 +3275,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				case GD77S_UIMODE_ECO:
 					vp = PROMPT_ECO_MODE;
 					break;
-				case GD77S_UIMODE_KBD:
+				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
 					break;
 				case GD77S_UIMODE_MAX:
@@ -3431,7 +3453,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
 					voicePromptsPlay();
 					break;
-				case GD77S_UIMODE_KBD:
+				case GD77S_UIMODE_KEYPAD:
 					break; // handled by separate handler.
 				case GD77S_UIMODE_MAX:
 					break;
@@ -3634,7 +3656,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
 					voicePromptsPlay();
 					break;
-				case GD77S_UIMODE_KBD:
+				case GD77S_UIMODE_KEYPAD:
 					break;// handled by separate handler
 				case GD77S_UIMODE_MAX:
 					break;
