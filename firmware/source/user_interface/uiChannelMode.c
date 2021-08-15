@@ -3003,10 +3003,15 @@ static void AddGD77sKeypadChar(void)
 static void BackspaceGD77sKeypadChar(void)
 {
 	if (GD77SKeypadPos <= 0)
+	{
+		soundSetMelody(MELODY_KEY_LONG_BEEP);
 		return;
+	}
 	GD77SKeypadPos--;
 	announceChar(GD77SKeypadBuffer[GD77SKeypadPos]);
 	GD77SKeypadBuffer[GD77SKeypadPos]= '\0';
+	if (GD77SKeypadPos==0)
+		GD77SParameters.virtualVFOMode=false;
 }
 
 static void ClearGD77sKeypadBuffer(void)
@@ -3014,6 +3019,7 @@ static void ClearGD77sKeypadBuffer(void)
 	GD77SKeypadPos = 0;
 	memset(GD77SKeypadBuffer, 0, sizeof(GD77SKeypadBuffer));
 	GD77SParameters.virtualVFOMode=false;
+	soundSetMelody(MELODY_KEY_LONG_BEEP);
 }
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
@@ -3121,6 +3127,78 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 	}
 }
 
+static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
+{
+	if (!GD77SKeypadBuffer[0])
+		return false;
+	if (strcmp(GD77SKeypadBuffer, "*")==0)
+	{// Toggle DMR and FM mode.
+		if (trxGetMode() == RADIO_MODE_ANALOG)
+		{
+			currentChannelData->chMode = RADIO_MODE_DIGITAL;
+			uiDataGlobal.VoicePrompts.inhibitInitial = true;// Stop VP playing in loadChannelData
+			loadChannelData(true, false);
+			uiDataGlobal.VoicePrompts.inhibitInitial = false;
+		}
+		else
+		{
+			currentChannelData->chMode = RADIO_MODE_ANALOG;
+			trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
+			trxSetRxCSS(currentChannelData->rxTone);
+		}
+		announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
+		return true;	
+	}
+	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
+	{// talkgroup # followed by digits. 
+		bool privateCall=GD77SKeypadBuffer[1]=='#'; // ## followed by digits
+		int digitOffset=privateCall ? 2 : 1; 
+		if (isdigit(GD77SKeypadBuffer[digitOffset]))
+		{
+			uint32_t dmrID=atol(GD77SKeypadBuffer+digitOffset);
+			setOverrideTGorPC(dmrID, privateCall);
+			announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+		}
+		else // toggle time slot.
+		{
+			trxSetDMRTimeSlot(1 - trxGetDMRTimeSlot());
+			tsSetManualOverride(CHANNEL_CHANNEL, (trxGetDMRTimeSlot() + 1));
+
+			if ((nonVolatileSettings.overrideTG == 0) && (currentContactData.reserve1 & 0x01) == 0x00)
+			{
+				tsSetContactHasBeenOverriden(CHANNEL_CHANNEL, true);
+			}
+
+			//	init_digital();
+			disableAudioAmp(AUDIO_AMP_MODE_RF);
+			clearActiveDMRID();
+			lastHeardClearLastID();
+			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+			uiChannelModeUpdateScreen(0);
+
+			announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
+		}	
+		return true;
+	}
+	if (trxGetMode() == RADIO_MODE_ANALOG && strcmp(GD77SKeypadBuffer, "B")==0)
+	{
+		uint8_t mask=currentChannelData->flag4;
+		if (mask&0x02) // wide, set to narrow.
+			mask&=~0x02;
+		else // narrow, set to wide.
+			mask|=0x02;
+		currentChannelData->flag4=mask;
+	
+		trxSetModeAndBandwidth(currentChannelData->chMode, currentChannelData->flag4);
+	
+		announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
+			
+		return true;
+	}
+
+	return false;	
+}
+
 static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 {
 	if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
@@ -3150,6 +3228,11 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 	{// copy first 8 digits to receive and second 8 digits to transmit.
+		if (ProcessGD77SKeypadCmd(ev))
+		{
+			GD77SParameters.virtualVFOMode=true;
+			return true;
+		}
 		char rxBuf[9]="\0";
 		char txBuf[9]="\0";
 		bool copyRxToTx=strlen(GD77SKeypadBuffer) < 9;
