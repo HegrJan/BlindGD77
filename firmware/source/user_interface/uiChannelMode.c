@@ -3180,22 +3180,33 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		}	
 		return true;
 	}
-	if (trxGetMode() == RADIO_MODE_ANALOG && strcmp(GD77SKeypadBuffer, "B")==0)
+	if (trxGetMode() == RADIO_MODE_ANALOG)
 	{
-		uint8_t mask=currentChannelData->flag4;
-		if (mask&0x02) // wide, set to narrow.
-			mask&=~0x02;
-		else // narrow, set to wide.
-			mask|=0x02;
-		currentChannelData->flag4=mask;
-	
-		trxSetModeAndBandwidth(currentChannelData->chMode, currentChannelData->flag4);
-	
-		announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
-			
-		return true;
+		if (strcmp(GD77SKeypadBuffer, "B")==0)
+		{
+			uint8_t mask=currentChannelData->flag4;
+			if (mask&0x02) // wide, set to narrow.
+				mask&=~0x02;
+			else // narrow, set to wide.
+				mask|=0x02;
+			currentChannelData->flag4=mask;
+			trxSetModeAndBandwidth(currentChannelData->chMode, currentChannelData->flag4);
+			announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
+						return true;
+		}
+		if ((GD77SKeypadBuffer[0]=='C' || GD77SKeypadBuffer[0]=='D') && isdigit(GD77SKeypadBuffer[1]))
+		{// CTCSS/DCS
+			uint16_t tone = atoi(GD77SKeypadBuffer+1);
+			// If DCS, or in the CSS_TYPE_DCS_MASK
+			if (GD77SKeypadBuffer[0]=='D' && tone > 0)
+				tone|=CSS_TYPE_DCS;
+			currentChannelData->rxTone=0;
+			currentChannelData->txTone=tone;
+			announceCSSCode(tone, codeplugGetCSSType(tone), DIRECTION_NONE, true, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+			return true;
+		}
 	}
-
+	
 	return false;	
 }
 
