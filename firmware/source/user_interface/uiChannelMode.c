@@ -3196,10 +3196,13 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		}
 		if ((GD77SKeypadBuffer[0]=='C' || GD77SKeypadBuffer[0]=='D') && isdigit(GD77SKeypadBuffer[1]))
 		{// CTCSS/DCS
-			uint16_t tone = atoi(GD77SKeypadBuffer+1);
+			bool dcs=GD77SKeypadBuffer[0]=='D';
+			uint16_t tone=0;
+			if (dcs)
+				tone = strtol(GD77SKeypadBuffer+1, NULL, 16) | CSS_TYPE_DCS;
+			else
+				tone = atoi(GD77SKeypadBuffer+1);
 			// If DCS, or in the CSS_TYPE_DCS_MASK
-			if (GD77SKeypadBuffer[0]=='D' && tone > 0)
-				tone|=CSS_TYPE_DCS;
 			currentChannelData->rxTone=0;
 			currentChannelData->txTone=tone;
 			announceCSSCode(tone, codeplugGetCSSType(tone), DIRECTION_NONE, true, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
