@@ -3560,3 +3560,30 @@ void CycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 }
 
+bool IsBitSet(uint8_t bits, int whichBit)
+{
+	if (whichBit < 1 || whichBit > 8)
+		return false;
+	
+	whichBit--; // 1 is bit 0;
+	
+	uint8_t bit=1<<whichBit;
+	return bits & bit ? true : false;
+}
+
+ void SetBit(uint8_t* bits, int whichBit, bool set)
+{
+	if (!bits)
+		return;
+	if (whichBit < 1 || whichBit > 8)
+		return;
+	
+	whichBit--; // 1 is bit 0;
+	uint8_t bit=1<<whichBit;
+	if (set)
+		*bits|=bit;
+	else
+		*bits&=~bit;
+}
+
+

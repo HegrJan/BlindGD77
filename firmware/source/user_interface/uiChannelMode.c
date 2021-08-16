@@ -52,6 +52,7 @@ typedef enum
 	GD77S_UIMODE_DTMF_CONTACTS,
 	GD77S_UIMODE_POWER,
 	GD77S_UIMODE_ECO,
+	GD77S_UIMODE_AUTOZONE,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
 
@@ -63,6 +64,10 @@ typedef struct
 	uint16_t         dtmfListSelected;
 	int32_t          dtmfListCount;
 	bool virtualVFOMode;
+	uint8_t autoZonesEnabled;
+	uint8_t autozoneTypeIndex;
+	struct_AutoZoneParams_t autoZone;
+	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -72,7 +77,10 @@ static GD77SParameters_t GD77SParameters =
 		.channelOutOfBounds = false,
 		.dtmfListSelected = 0,
 		.dtmfListCount = 0,
-		.virtualVFOMode=false
+		.virtualVFOMode=false,
+		.autoZonesEnabled=0,
+		.autozoneTypeIndex=1,
+		.channelbankOffset=0
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -366,11 +374,12 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			if (voicePromptsIsPlaying() == false)
 			{
 				GD77SParameters.firstRun = false;
-				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition(), true);
+				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
 			}
 
 
 			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
+			GD77SParameters.autoZonesEnabled=nonVolatileSettings.autoZonesEnabled;
 		}
 #endif
 		uiChannelModeUpdateScreen(0);
@@ -435,11 +444,11 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
-			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD) && (rotarySwitchGetPosition() != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
+			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD) && (rotarySwitchGetPosition()+GD77SParameters.channelbankOffset != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
 			{
 				if (voicePromptsIsPlaying() == false)
 				{
-					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition(), GD77SParameters.firstRun);
+					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, GD77SParameters.firstRun);
 
 					// Opening channel number announce has not took place yet, probably because it was telling
 					// parameter like new hotspot mode selection.
@@ -3111,7 +3120,14 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 		case GD77S_UIMODE_ZONE: // Zone
 			announceZoneName(voicePromptsIsPlaying());
 			break;
-
+		case GD77S_UIMODE_AUTOZONE:
+			AutoZoneGetData(GD77SParameters.autozoneTypeIndex, &GD77SParameters.autoZone);
+			voicePromptsAppendString((char*)GD77SParameters.autoZone.name);
+			if (IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex))
+				voicePromptsAppendLanguageString(&currentLanguage->on);
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
 		case GD77S_UIMODE_POWER: // Power
 			announcePowerLevel(voicePromptsIsPlaying());
 			break;
@@ -3296,7 +3312,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 			}
 
 			settingsSet(nonVolatileSettings.overrideTG, 0);
-			checkAndUpdateSelectedChannelForGD77S(ev->rotary, false);
+			checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
 			clearActiveDMRID();
 			lastHeardClearLastID();
 		}
@@ -3335,7 +3351,16 @@ static void handleEventForGD77S(uiEvent_t *ev)
 		{
 			voicePrompt_t vp = NUM_VOICE_PROMPTS;
 			char * const *vpString = NULL;
-
+			// First see if we're leaving autozone mode and save the autozone settings.
+			if (GD77SParameters.uiMode==GD77S_UIMODE_AUTOZONE)
+			{
+				nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
+				if (GD77SParameters.autoZonesEnabled==0)
+					nonVolatileSettings.autoZone.flags=0;
+				if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+					currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+				settingsSetDirty();
+			}
 			GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
 
 			//skip over Digital controls if the radio is in Analog mode
@@ -3386,7 +3411,9 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				case GD77S_UIMODE_ZONE: // Zone Mode
 					vp = PROMPT_ZONE_MODE;
 					break;
-
+				case GD77S_UIMODE_AUTOZONE: // AutoZone Mode
+					vpString = (char * const *)&currentLanguage->autoZone;
+					break;
 				case GD77S_UIMODE_POWER: // Power Mode
 					vp = PROMPT_POWER_MODE;
 					break;
@@ -3550,14 +3577,23 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);
 					settingsSet(nonVolatileSettings.currentChannelIndexInZone, (int16_t) -2); // Will be updated when reloading the UiChannelMode screen
 					currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+					codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
 
 					menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
-					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition(), false);
+					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, false);
 					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;
 
 					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_2);
 					break;
-
+				case GD77S_UIMODE_AUTOZONE:
+					if (GD77SParameters.autozoneTypeIndex < AutoZone_TYPE_MAX-1)
+						GD77SParameters.autozoneTypeIndex++;
+					else
+						GD77SParameters.autozoneTypeIndex=1;
+					voicePromptsInit();
+					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
+					voicePromptsPlay();
+ 					break;
 				case GD77S_UIMODE_POWER: // Power
 					increasePowerLevel(true);// true = Allow 5W++
 					break;
@@ -3578,6 +3614,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					break;
 			}
 		}
+		// check autozone and channel bank.
 		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
 			uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
@@ -3618,6 +3655,14 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				voicePromptsAppendLanguageString(&currentLanguage->select_tx);
 				voicePromptsPlay();
 				return;
+			}
+			else
+			{
+				if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+					GD77SParameters.channelbankOffset+=16;
+				else
+					GD77SParameters.channelbankOffset=0;
+				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
 			}
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2) && (uiDataGlobal.DTMFContactList.isKeying == false))
@@ -3755,12 +3800,20 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					currentChannelData->rxFreq = 0x00; // Flag to the Channel screeen that the channel data is now invalid and needs to be reloaded
 
 					menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
-					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition(), false);
+					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, false);
 					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;
 
 					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_2);
 					break;
-
+				case GD77S_UIMODE_AUTOZONE:
+				{
+					bool isBitSet=IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex);
+					SetBit(&GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex, !isBitSet);
+					voicePromptsInit();
+					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
+					voicePromptsPlay();
+					break;
+				}
 				case GD77S_UIMODE_POWER: // Power
 					decreasePowerLevel();
 					break;

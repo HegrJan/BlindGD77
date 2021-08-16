@@ -200,6 +200,8 @@ void dtmfSequenceStop(void);
 void dtmfSequenceTick(bool popPreviousMenuOnEnding);
  bool dtmfConvertCharsToCode(char *text, uint8_t *code, int maxSize);
  bool dtmfConvertCodeToChars(uint8_t *code, char *text, int maxSize);
+bool IsBitSet(uint8_t bits, int whichBit);
+void SetBit(uint8_t* bits, int whichBit, bool set);
 
 void resetOriginalSettingsData(void);
 
