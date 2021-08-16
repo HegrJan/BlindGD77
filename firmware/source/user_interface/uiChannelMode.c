@@ -44,12 +44,12 @@ typedef enum
 {
 	GD77S_UIMODE_TG_OR_SQUELCH,
 	GD77S_UIMODE_KEYPAD, // virtual keypad
+	GD77S_UIMODE_ZONE,
 	GD77S_UIMODE_SCAN,
 	GD77S_UIMODE_TS,
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
 	GD77S_UIMODE_DTMF_CONTACTS,
-	GD77S_UIMODE_ZONE,
 	GD77S_UIMODE_POWER,
 	GD77S_UIMODE_ECO,
 	GD77S_UIMODE_MAX
@@ -3353,21 +3353,14 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				// digital
 				if (GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS)
 				{
-					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;
+					GD77SParameters.uiMode = GD77S_UIMODE_POWER;
 				}
 			}
 
 			switch (GD77SParameters.uiMode)
 			{
 				case GD77S_UIMODE_TG_OR_SQUELCH: // Channel Mode
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						vp = PROMPT_CHANNEL_MODE;
-					}
-					else
-					{
-						vpString = (char * const *)&currentLanguage->squelch;
-					}
+					vp = PROMPT_CHANNEL_MODE;
 					break;
 
 				case GD77S_UIMODE_SCAN:
