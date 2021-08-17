@@ -43,14 +43,14 @@
 typedef enum
 {
 	GD77S_UIMODE_TG_OR_SQUELCH,
-	GD77S_UIMODE_KEYPAD, // virtual keypad
 	GD77S_UIMODE_ZONE,
+	GD77S_UIMODE_POWER,
+	GD77S_UIMODE_KEYPAD, // virtual keypad
 	GD77S_UIMODE_SCAN,
 	GD77S_UIMODE_TS,
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
 	GD77S_UIMODE_DTMF_CONTACTS,
-	GD77S_UIMODE_POWER,
 	GD77S_UIMODE_ECO,
 	GD77S_UIMODE_AUTOZONE,
 	GD77S_UIMODE_MAX
@@ -2933,7 +2933,10 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 			voicePromptsAppendInteger(chanNum);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 			codeplugUtilConvertBufToString(currentChannelData->name, buf, 16);
-			voicePromptsAppendString(buf);
+			if (chanNum!=atoi(buf))
+			{// Only append name if different from the channel number.
+				voicePromptsAppendString(buf);
+			}
 			voicePromptsPlay();
 		}
 
@@ -3378,7 +3381,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				// digital
 				if (GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS)
 				{
-					GD77SParameters.uiMode = GD77S_UIMODE_POWER;
+					GD77SParameters.uiMode = GD77S_UIMODE_ECO;
 				}
 			}
 
@@ -3578,7 +3581,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					settingsSet(nonVolatileSettings.currentChannelIndexInZone, (int16_t) -2); // Will be updated when reloading the UiChannelMode screen
 					currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 					codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
-
+					GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
 					menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, false);
 					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;
@@ -3614,7 +3617,10 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					break;
 			}
 		}
-		// check autozone and channel bank.
+		else if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && (nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable) && BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
+		{
+			CycleRepeaterOffset(NULL);
+		}
 		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
 			uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
@@ -3658,7 +3664,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 			}
 			else
 			{
-				if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+				if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
 					GD77SParameters.channelbankOffset+=16;
 				else
 					GD77SParameters.channelbankOffset=0;
@@ -3798,7 +3804,8 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);
 					settingsSet(nonVolatileSettings.currentChannelIndexInZone, (int16_t) -2); // Will be updated when reloading the UiChannelMode screen
 					currentChannelData->rxFreq = 0x00; // Flag to the Channel screeen that the channel data is now invalid and needs to be reloaded
-
+					codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+					GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
 					menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, false);
 					GD77SParameters.uiMode = GD77S_UIMODE_ZONE;

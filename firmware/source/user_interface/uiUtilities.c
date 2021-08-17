@@ -3519,7 +3519,8 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	{
 		direction=0;
 		voicePromptsAppendLanguageString(&currentLanguage->none);
-		*newMenuStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
+		if (newMenuStatus)
+			*newMenuStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 	}
 	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 		voicePromptsPlay();
