@@ -3296,7 +3296,8 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 	{
 		if (ProcessGD77SKeypadCmd(ev))
-		{
+		{//joe
+			memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);
 			GD77SParameters.virtualVFOMode=true;
 			return true;
 		}
@@ -3319,6 +3320,7 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		currentChannelData->rxFreq=atol(rxBuf);
 		currentChannelData->txFreq=copyRxToTx ? currentChannelData->rxFreq : atol(txBuf);
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);
 		GD77SParameters.virtualVFOMode=true;
 		voicePromptsInit();
 		announceFrequency();
@@ -3326,18 +3328,6 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	
 	return true;
-}
-
-static void SaveChannelToVFOIfSwitchingAwayFromKeypad(GD77S_UIMODES_t priorMode)
-{
-	if (priorMode==GD77S_UIMODE_KEYPAD)
-	{
-		// We're switching away from the keypad mode.
-		//save off the current channel settings to VFO a so that when we return to keypad mode, the user can optionally restore from these settings without having to re-enter them all.
-		// Don't copy the name of the vfo, which is in the first 16 bytes, only the rest of the data.
-		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);
-		return;	
-	}
 }
 
 static void handleEventForGD77S(uiEvent_t *ev)
@@ -3412,7 +3402,6 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				settingsSetDirty();
 			}
 			
-			SaveChannelToVFOIfSwitchingAwayFromKeypad(GD77SParameters.uiMode); // so that next time keypad mode is enabled, the user can restore the last frequency and associated data entered.
 			GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
 			//skip over Digital controls if the radio is in Analog mode
 			if (trxGetMode() == RADIO_MODE_ANALOG)
