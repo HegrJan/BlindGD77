@@ -3296,8 +3296,8 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 	{
 		if (ProcessGD77SKeypadCmd(ev))
-		{//joe
-			memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);
+		{
+			memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);// copy all channel details except name.
 			GD77SParameters.virtualVFOMode=true;
 			return true;
 		}
@@ -3320,7 +3320,7 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		currentChannelData->rxFreq=atol(rxBuf);
 		currentChannelData->txFreq=copyRxToTx ? currentChannelData->rxFreq : atol(txBuf);
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);
+		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // copy all channel details except name.
 		GD77SParameters.virtualVFOMode=true;
 		voicePromptsInit();
 		announceFrequency();
