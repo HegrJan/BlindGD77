@@ -3238,11 +3238,13 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			return true;
 		}
 	}
-	if ((GD77SKeypadBuffer[0]=='A') && isdigit(GD77SKeypadBuffer[1]))
+	if (GD77SKeypadBuffer[0]=='A' && strlen(GD77SKeypadBuffer) <=3)
 	{// a0 copy from VFO to temporary channel for immediate action.
 		// a1 through a16 copy vfo back to permanent channel 1 to 16 in real zone (won't work in autozone), note name is left unchanged.
 		memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[CHANNEL_VFO_A].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
-		int channel=atoi(GD77SKeypadBuffer+1);
+		int channel=0;
+		if (isdigit(GD77SKeypadBuffer[1]))
+			channel=atoi(GD77SKeypadBuffer+1);
 		if (channel==0)
 		{
 			voicePromptsInit();
