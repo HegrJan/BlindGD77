@@ -2948,14 +2948,17 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 	}
 }
 
-static void buildSpeechChannelDetailsForGD77S()
+static void buildSpeechChannelDetailsForGD77S(bool announceName)
 {
-	char buf[17];
+	if (announceName)
+	{
+		char buf[17];
 
-	codeplugUtilConvertBufToString(currentChannelData->name, buf, 16);
-	voicePromptsAppendString(buf);
+		codeplugUtilConvertBufToString(currentChannelData->name, buf, 16);
+		voicePromptsAppendString(buf);
 
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
 	announceFrequency();
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 
@@ -3216,6 +3219,8 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		if ((GD77SKeypadBuffer[0]=='C' || GD77SKeypadBuffer[0]=='D') && isdigit(GD77SKeypadBuffer[1]))
 		{// CTCSS/DCS
 			bool dcs=GD77SKeypadBuffer[0]=='D';
+			int bufLen=strlen(GD77SKeypadBuffer);
+			bool forBothRXAndTX=GD77SKeypadBuffer[bufLen-1]=='*';
 			uint16_t tone=0;
 			if (dcs)
 				tone = strtol(GD77SKeypadBuffer+1, NULL, 16) | CSS_TYPE_DCS;
@@ -3224,9 +3229,38 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			// If DCS, or in the CSS_TYPE_DCS_MASK
 			currentChannelData->rxTone=0;
 			currentChannelData->txTone=tone;
+			if (forBothRXAndTX)
+				currentChannelData->rxTone=tone;
+			else
+				currentChannelData->rxTone=0;
+
 			announceCSSCode(tone, codeplugGetCSSType(tone), DIRECTION_NONE, true, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 			return true;
 		}
+	}
+	if ((GD77SKeypadBuffer[0]=='A') && isdigit(GD77SKeypadBuffer[1]))
+	{// a0 copy from VFO to temporary channel for immediate action.
+		// a1 through a16 copy vfo back to permanent channel 1 to 16 in real zone (won't work in autozone), note name is left unchanged.
+		memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[CHANNEL_VFO_A].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
+		int channel=atoi(GD77SKeypadBuffer+1);
+		if (channel==0)
+		{
+			voicePromptsInit();
+			buildSpeechChannelDetailsForGD77S(false);
+			voicePromptsPlay();
+			return true; // just temporary.
+		}
+		// just name the channel by its number.
+		char channelName[16]="\0";
+		snprintf(channelName, 16, "%d", channel);
+		codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
+		codeplugChannelSaveDataForIndex(channel-1, currentChannelData);
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->vfoToChannel);
+		voicePromptsAppendInteger(channel);
+		voicePromptsPlay();
+		// save
+		return true; // just temporary.
 	}
 	
 	return false;	
@@ -3260,12 +3294,13 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		BackspaceGD77sKeypadChar();
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
-	{// copy first 8 digits to receive and second 8 digits to transmit.
+	{
 		if (ProcessGD77SKeypadCmd(ev))
 		{
 			GD77SParameters.virtualVFOMode=true;
 			return true;
 		}
+		// copy first 8 digits to receive and second 8 digits to transmit.
 		char rxBuf[9]="\0";
 		char txBuf[9]="\0";
 		bool copyRxToTx=strlen(GD77SKeypadBuffer) < 9;
@@ -3291,6 +3326,18 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	
 	return true;
+}
+
+static void SaveChannelToVFOIfSwitchingAwayFromKeypad(GD77S_UIMODES_t priorMode)
+{
+	if (priorMode==GD77S_UIMODE_KEYPAD)
+	{
+		// We're switching away from the keypad mode.
+		//save off the current channel settings to VFO a so that when we return to keypad mode, the user can optionally restore from these settings without having to re-enter them all.
+		// Don't copy the name of the vfo, which is in the first 16 bytes, only the rest of the data.
+		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);
+		return;	
+	}
 }
 
 static void handleEventForGD77S(uiEvent_t *ev)
@@ -3364,8 +3411,9 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 				settingsSetDirty();
 			}
+			
+			SaveChannelToVFOIfSwitchingAwayFromKeypad(GD77SParameters.uiMode); // so that next time keypad mode is enabled, the user can restore the last frequency and associated data entered.
 			GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
-
 			//skip over Digital controls if the radio is in Analog mode
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{
@@ -3453,7 +3501,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 			if (GD77SParameters.channelOutOfBounds == false)
 			{
 				voicePromptsInit();
-				buildSpeechChannelDetailsForGD77S();
+				buildSpeechChannelDetailsForGD77S(true);
 				voicePromptsPlay();
 			}
 		}
