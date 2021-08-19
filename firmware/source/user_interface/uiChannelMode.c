@@ -3220,13 +3220,32 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 	}
 	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
 	{// talkgroup # followed by digits. 
-		bool privateCall=GD77SKeypadBuffer[1]=='#'; // ## followed by digits
-		int digitOffset=privateCall ? 2 : 1; 
+		int len=strlen(GD77SKeypadBuffer);
+		int hashCount=1;
+		while (GD77SKeypadBuffer[hashCount]=='#' && hashCount < len)
+		{
+			hashCount++;
+		}
+		bool privateCall=hashCount==2;
+		bool changeUserDMRID = hashCount==3;
+		int digitOffset=hashCount; 
 		if (isdigit(GD77SKeypadBuffer[digitOffset]))
 		{
 			uint32_t dmrID=atol(GD77SKeypadBuffer+digitOffset);
-			setOverrideTGorPC(dmrID, privateCall);
-			announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+			if (changeUserDMRID)
+			{
+				trxDMRID=dmrID;
+				codeplugSetUserDMRID(trxDMRID);
+				voicePromptsInit();
+				voicePromptsAppendLanguageString(&currentLanguage->user_dmr_id);//joe
+				voicePromptsAppendInteger(trxDMRID);
+				voicePromptsPlay();
+			}
+			else
+			{
+				setOverrideTGorPC(dmrID, privateCall);
+				announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+			}
 		}
 		else // toggle time slot.
 		{
