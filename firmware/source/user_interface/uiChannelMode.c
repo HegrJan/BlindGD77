@@ -3149,6 +3149,53 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 	}
 }
 
+static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
+{
+	bool addToZone= zoneChannelIndex >= currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone;
+	uint16_t physicalChannelIndex;
+	if (addToZone)
+	{
+		for (physicalChannelIndex = CODEPLUG_CHANNELS_MIN; physicalChannelIndex <= CODEPLUG_CHANNELS_MAX; physicalChannelIndex++)
+		{
+			if (!codeplugAllChannelsIndexIsInUse(physicalChannelIndex))
+			{
+				break;
+			}
+		}
+	}
+	else
+		physicalChannelIndex = currentZone.channels[zoneChannelIndex-1];
+	if (physicalChannelIndex >= CODEPLUG_CONTACTS_MAX)
+	{// memory full.
+		soundSetMelody(MELODY_ERROR_BEEP);
+		return false;
+	}
+	// just name the channel by its number.
+	char channelName[16]="\0";
+	snprintf(channelName, 16, "%d", zoneChannelIndex);
+	codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
+	codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
+
+	if (addToZone)
+	{
+		codeplugAllChannelsIndexSetUsed(physicalChannelIndex); //Set channel index as valid
+		if (currentZone.NOT_IN_CODEPLUGDATA_indexNumber == 0xDEADBEEF)
+		{
+			uiChannelInitializeCurrentZone();
+		}
+
+		if (codeplugZoneAddChannelToZoneAndSave(physicalChannelIndex, &currentZone))
+		{
+			settingsSet(nonVolatileSettings.currentChannelIndexInZone , currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1);
+		}
+	}
+	voicePromptsInit();
+	voicePromptsAppendLanguageString(&currentLanguage->vfoToChannel);
+	voicePromptsAppendInteger(zoneChannelIndex);
+	voicePromptsPlay();
+	return true;
+}
+
 static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 {
 	if (!GD77SKeypadBuffer[0])
@@ -3216,16 +3263,20 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
 						return true;
 		}
-		if ((GD77SKeypadBuffer[0]=='C' || GD77SKeypadBuffer[0]=='D') && isdigit(GD77SKeypadBuffer[1]))
+		if ((GD77SKeypadBuffer[0]=='C' || GD77SKeypadBuffer[0]=='D'))
 		{// CTCSS/DCS
 			bool dcs=GD77SKeypadBuffer[0]=='D';
+			bool hasDigits=isdigit(GD77SKeypadBuffer[1]);
 			int bufLen=strlen(GD77SKeypadBuffer);
 			bool forBothRXAndTX=GD77SKeypadBuffer[bufLen-1]=='*';
 			uint16_t tone=0;
-			if (dcs)
-				tone = strtol(GD77SKeypadBuffer+1, NULL, 16) | CSS_TYPE_DCS;
-			else
-				tone = atoi(GD77SKeypadBuffer+1);
+			if (hasDigits)
+			{
+				if (dcs)
+					tone = strtol(GD77SKeypadBuffer+1, NULL, 16) | CSS_TYPE_DCS; //need hex which is why we use strtol.
+				else
+					tone = atoi(GD77SKeypadBuffer+1);//tone is decimal
+			}
 			// If DCS, or in the CSS_TYPE_DCS_MASK
 			currentChannelData->rxTone=0;
 			currentChannelData->txTone=tone;
@@ -3242,26 +3293,17 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 	{// a0 copy from VFO to temporary channel for immediate action.
 		// a1 through a16 copy vfo back to permanent channel 1 to 16 in real zone (won't work in autozone), note name is left unchanged.
 		memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[CHANNEL_VFO_A].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
-		int channel=0;
+		int zoneChannelIndex=0;
 		if (isdigit(GD77SKeypadBuffer[1]))
-			channel=atoi(GD77SKeypadBuffer+1);
-		if (channel==0)
+			zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
+		if (zoneChannelIndex==0)
 		{
 			voicePromptsInit();
 			buildSpeechChannelDetailsForGD77S(false);
 			voicePromptsPlay();
 			return true; // just temporary.
 		}
-		// just name the channel by its number.
-		char channelName[16]="\0";
-		snprintf(channelName, 16, "%d", channel);
-		codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
-		codeplugChannelSaveDataForIndex(currentZone.channels[channel-1], currentChannelData);
-		voicePromptsInit();
-		voicePromptsAppendLanguageString(&currentLanguage->vfoToChannel);
-		voicePromptsAppendInteger(channel);
-		voicePromptsPlay();
-		// save
+		SaveChannelToCurrentZone(zoneChannelIndex);
 		return true; // just temporary.
 	}
 	
@@ -3289,6 +3331,7 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
 	{
+		voicePromptsInit();
 		ClearGD77sKeypadBuffer();
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
