@@ -3256,7 +3256,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		char channelName[16]="\0";
 		snprintf(channelName, 16, "%d", channel);
 		codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
-		codeplugChannelSaveDataForIndex(channel-1, currentChannelData);
+		codeplugChannelSaveDataForIndex(currentZone.channels[channel-1], currentChannelData);
 		voicePromptsInit();
 		voicePromptsAppendLanguageString(&currentLanguage->vfoToChannel);
 		voicePromptsAppendInteger(channel);
