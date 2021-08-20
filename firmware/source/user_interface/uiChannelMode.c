@@ -3244,7 +3244,8 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			else
 			{
 				setOverrideTGorPC(dmrID, privateCall);
-				announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+				updateTrxID();
+				announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_2);
 			}
 		}
 		else // toggle time slot.
