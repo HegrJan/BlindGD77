@@ -304,6 +304,10 @@ uint32_t codeplugGetUserDMRID(void);
 void codeplugSetUserDMRID(uint32_t dmrId);
 void codeplugGetRadioName(char *buf);
 void codeplugGetBootScreenData(char *line1, char *line2, uint8_t *displayType);
+// save boot screen info
+bool codeplugSetRadioName(char *buf);
+bool codeplugSetBootScreenData(char *line1, char *line2);
+
 void codeplugGetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber);
 void codeplugSetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber);
 bool codeplugAllChannelsIndexIsInUse(int index);

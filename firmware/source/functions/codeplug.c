@@ -1268,6 +1268,17 @@ void codeplugGetRadioName(char *buf)
 	codeplugUtilConvertBufToString(buf, buf, 8);
 }
 
+bool codeplugSetRadioName(char *name)
+{
+	if (!name || !*name) 
+		return false;
+	
+	char buf[8];
+	memset(buf, 0xff, 8);
+	codeplugUtilConvertStringToBuf(name, buf, 8);
+	return EEPROM_Write(CODEPLUG_ADDR_USER_CALLSIGN, (uint8_t*)buf, 8);
+}
+
 // Max length the user can enter is 16. Hence buf must be 17 chars to allow for the termination
 void codeplugGetBootScreenData(char *line1, char *line2, uint8_t *displayType)
 {
@@ -1280,6 +1291,18 @@ void codeplugGetBootScreenData(char *line1, char *line2, uint8_t *displayType)
 	codeplugUtilConvertBufToString(line2, line2, (SCREEN_LINE_BUFFER_SIZE - 1));
 
 	EEPROM_Read(CODEPLUG_ADDR_BOOT_INTRO_SCREEN, displayType, 1);// read the display type
+}
+
+bool codeplugSetBootScreenData(char *line1, char *line2)
+{
+	char buf[SCREEN_LINE_BUFFER_SIZE];
+	memset(buf, 0xff, SCREEN_LINE_BUFFER_SIZE);
+	codeplugUtilConvertStringToBuf(line1, buf, (SCREEN_LINE_BUFFER_SIZE - 1));
+	EEPROM_Write(CODEPLUG_ADDR_BOOT_LINE1, (uint8_t*)buf, SCREEN_LINE_BUFFER_SIZE );
+	memset(buf, 0xff, SCREEN_LINE_BUFFER_SIZE);
+	codeplugUtilConvertStringToBuf(line2, buf, (SCREEN_LINE_BUFFER_SIZE - 1));
+	EEPROM_Write(CODEPLUG_ADDR_BOOT_LINE2, (uint8_t*)buf, SCREEN_LINE_BUFFER_SIZE);
+	return true;
 }
 
 void codeplugGetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber)
