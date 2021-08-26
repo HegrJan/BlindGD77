@@ -74,21 +74,21 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
 	{
 		*editParams->cursorPos = editBufferLen;
-		menuUpdateCursor(*editParams->cursorPos, true, true);
+		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT))
 	{
 		moveCursorRightInString(editParams->editBuffer, editParams->cursorPos, editParams->maxLen, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-		menuUpdateCursor(*editParams->cursorPos, true, true);
+		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
 	else if (KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
 	{
 		*editParams->cursorPos = 0;
-		menuUpdateCursor(*editParams->cursorPos, true, true);
+		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
 		if (editBufferLen > 0)
 			announceChar(editParams->editBuffer[0]);
 		editParams->allowedToSpeakUpdate = false;
@@ -97,7 +97,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_LEFT))
 	{
 		moveCursorLeftInString(editParams->editBuffer, editParams->cursorPos, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-		menuUpdateCursor(*editParams->cursorPos, true, true);
+		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
@@ -137,7 +137,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 			if (*editParams->cursorPos < editParams->maxLen-1)
 				(*editParams->cursorPos)++;
 		}
-		menuUpdateCursor(*editParams->cursorPos, true, true);
+		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
 	}
 	announceChar(ch);
 	editParams->allowedToSpeakUpdate = false;

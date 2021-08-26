@@ -36,7 +36,8 @@ typedef  struct
 	EditFieldTypes_t editFieldType;
 	char* editBuffer;
 	int maxLen;
-	int* cursorPos;
+	int* cursorPos; // in string
+	int xOffset; // if editable area is after a prompt, must account for prompt when calculating where to draw the cursor.
 	bool allowedToSpeakUpdate;
 } EditStructParrams_t;
 #endif //EDIT_HANDLER_H_INCLUDED

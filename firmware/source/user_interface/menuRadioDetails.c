@@ -40,6 +40,7 @@ static menuStatus_t menuRadioDetailsExitCode = MENU_STATUS_SUCCESS;
 enum DETAILS_DISPLAY_LIST { DETAILS_CALLSIGN=0, DETAILS_DMRID, DETAILS_LINE1, DETAILS_LINE2, NUM_DETAILS_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list
 // four lines, callsign, DMRID, boot line 1, boot line 2.
 static char userInfo[NUM_DETAILS_ITEMS][SCREEN_LINE_BUFFER_SIZE+1];
+static int xOffsetForSelectedMenuItem; // for cursor 
 static int userInfoCursorPositions[NUM_DETAILS_ITEMS];
 static bool curFieldIsNumeric=false;
 static EditStructParrams_t editParams;
@@ -55,7 +56,7 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		uint8_t bootScreenType;
 		codeplugGetBootScreenData(userInfo[DETAILS_LINE1], userInfo[DETAILS_LINE2], &bootScreenType);
 		editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
-
+		editParams.xOffset=0; // set to number of chars in lefthand prompt if any.
 		voicePromptsInit();
 		menuDataGlobal.currentItemIndex = DETAILS_CALLSIGN;
 		menuDataGlobal.endIndex = NUM_DETAILS_ITEMS;
@@ -138,10 +139,14 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 		if (leftSide != NULL)
 		{
 			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+			if (i==0)
+				xOffsetForSelectedMenuItem=strlen(*leftSide)+1;
 		}
 		else
 		{
 			strcpy(buf, rightSideVar);
+			if (i==0)
+				xOffsetForSelectedMenuItem=2; // 1:text or 2:text, want cursor to be beyond the colon.
 		}
 		if ((i == 0) && allowedToSpeakUpdate)
 		{
@@ -185,7 +190,7 @@ static void handleEvent(uiEvent_t *ev)
 	editParams.editFieldType=curFieldIsNumeric ? EDIT_TYPE_NUMERIC : EDIT_TYPE_ALPHANUMERIC;
 	editParams.editBuffer= userInfo[menuDataGlobal.currentItemIndex];
 	editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
-
+	editParams.xOffset=xOffsetForSelectedMenuItem;
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (repeatVoicePromptOnSK1(ev))
