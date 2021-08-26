@@ -40,7 +40,7 @@ static menuStatus_t menuRadioDetailsExitCode = MENU_STATUS_SUCCESS;
 enum DETAILS_DISPLAY_LIST { DETAILS_CALLSIGN=0, DETAILS_DMRID, DETAILS_LINE1, DETAILS_LINE2, NUM_DETAILS_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list
 // four lines, callsign, DMRID, boot line 1, boot line 2.
 static char userInfo[NUM_DETAILS_ITEMS][SCREEN_LINE_BUFFER_SIZE+1];
-static int xOffsetForSelectedMenuItem; // for cursor 
+static int xOffsetForEditableMenuItems[NUM_DETAILS_ITEMS]; // for cursor 
 static int userInfoCursorPositions[NUM_DETAILS_ITEMS];
 static bool curFieldIsNumeric=false;
 static EditStructParrams_t editParams;
@@ -51,6 +51,8 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 	{
 		memset(userInfo, 0, sizeof(userInfo));
 		memset(userInfoCursorPositions, 0, sizeof(userInfoCursorPositions));
+		memset(xOffsetForEditableMenuItems, 0,sizeof(xOffsetForEditableMenuItems));
+		
 		codeplugGetRadioName(userInfo[DETAILS_CALLSIGN]);
 		snprintf(userInfo[DETAILS_DMRID], SCREEN_LINE_BUFFER_SIZE, "%u", codeplugGetUserDMRID());
 		uint8_t bootScreenType;
@@ -65,7 +67,7 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		voicePromptsAppendLanguageString(&currentLanguage->menu);
 	
 		updateScreen(isFirstRun, true);
-		menuUpdateCursor(userInfoCursorPositions[menuDataGlobal.currentItemIndex], true, true);
+		menuUpdateCursor(userInfoCursorPositions[menuDataGlobal.currentItemIndex]+xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex], true, true);
 		
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
@@ -73,7 +75,7 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 	{
 		menuRadioDetailsExitCode = MENU_STATUS_SUCCESS;
 		
-		menuUpdateCursor(userInfoCursorPositions[menuDataGlobal.currentItemIndex],false, true);
+		menuUpdateCursor(userInfoCursorPositions[menuDataGlobal.currentItemIndex]+xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex],false, true);
 
 		if (ev->hasEvent)
 		{
@@ -139,14 +141,12 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 		if (leftSide != NULL)
 		{
 			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
-			if (i==0)
-				xOffsetForSelectedMenuItem=strlen(*leftSide)+1;
+			xOffsetForEditableMenuItems[mNum]=strlen(*leftSide)+1;
 		}
 		else
 		{
 			strcpy(buf, rightSideVar);
-			if (i==0)
-				xOffsetForSelectedMenuItem=2; // 1:text or 2:text, want cursor to be beyond the colon.
+			xOffsetForEditableMenuItems[mNum]=2;
 		}
 		if ((i == 0) && allowedToSpeakUpdate)
 		{
@@ -190,7 +190,7 @@ static void handleEvent(uiEvent_t *ev)
 	editParams.editFieldType=curFieldIsNumeric ? EDIT_TYPE_NUMERIC : EDIT_TYPE_ALPHANUMERIC;
 	editParams.editBuffer= userInfo[menuDataGlobal.currentItemIndex];
 	editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
-	editParams.xOffset=xOffsetForSelectedMenuItem;
+	editParams.xOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex];
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (repeatVoicePromptOnSK1(ev))
