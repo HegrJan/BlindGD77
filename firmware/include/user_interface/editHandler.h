@@ -37,8 +37,9 @@ typedef  struct
 	char* editBuffer;
 	int maxLen;
 	int* cursorPos; // in string
-	int xOffset; // if editable area is after a prompt, must account for prompt when calculating where to draw the cursor.
+	int xOffset; // if editable area is after a prompt, num of chars in prompt to offset cursor by, when drawing cursor, added to cursorPos above.
 	bool allowedToSpeakUpdate;
 } EditStructParrams_t;
-#endif //EDIT_HANDLER_H_INCLUDED
+
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams);
+#endif //EDIT_HANDLER_H_INCLUDED
