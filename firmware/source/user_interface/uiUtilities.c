@@ -3441,7 +3441,7 @@ bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel)
 	mask|=0x02;
 	channel->flag4=mask;
 	
-	trxSetModeAndBandwidth(channel->chMode, channel->flag4);
+	trxSetModeAndBandwidth(channel->chMode, ((channel->flag4&0x02)==0x02));
 	
 	return true;
 }
