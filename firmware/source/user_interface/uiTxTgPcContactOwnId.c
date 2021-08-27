@@ -33,27 +33,27 @@
 #include "user_interface/uiUtilities.h"
 #include "user_interface/uiLocalisation.h"
 #include "functions/voicePrompts.h"
+#include "user_interface/editHandler.h"
 
 #define NUM_DTMF_DIGITS  16
 
 static char digits[17]; // CCS7 or DTMF (maxlen 16 + terminator for screen rendering)
+static int cursorPos;
 static int pcIdx;
 static bool inAnalog = false;
 static struct_codeplugContact_t contact;
 static struct_codeplugDTMFContact_t dtmfContact;
+static EditStructParrams_t editParams;
 
 static void updateCursor(void);
-static void updateScreen(bool inputModeHasChanged);
+static void updateScreen(bool inputModeHasChanged, bool allowedToSpeakUpdate);
 static void handleEvent(uiEvent_t *ev);
 static void announceContactName(void);
-
-static const uint32_t CURSOR_UPDATE_TIMEOUT = 500;
 
 enum DISPLAY_MENU_LIST { ENTRY_TG = 0, ENTRY_PC, ENTRY_DTMF, ENTRY_SELECT_CONTACT, ENTRY_USER_DMR_ID, NUM_ENTRY_ITEMS};
 static const char *menuName[NUM_ENTRY_ITEMS];
 
 static menuStatus_t menuNumericalExitStatus = MENU_STATUS_SUCCESS;
-
 
 // public interface
 menuStatus_t menuNumericalEntry(uiEvent_t *ev, bool isFirstRun)
@@ -61,7 +61,14 @@ menuStatus_t menuNumericalEntry(uiEvent_t *ev, bool isFirstRun)
 	if (isFirstRun)
 	{
 		inAnalog = (trxGetMode() == RADIO_MODE_ANALOG);
-
+		cursorPos=0;
+		editParams.editBuffer=digits;
+		editParams.maxLen = inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS;
+		editParams.editFieldType = inAnalog ? EDIT_TYPE_DTMF_CHARS : EDIT_TYPE_NUMERIC;
+		editParams.cursorPos=&cursorPos;
+		editParams.xPixelOffset =0;
+		editParams.yPixelOffset =0;
+		editParams.allowedToSpeakUpdate=true;
 		if (inAnalog)
 		{
 			dtmfSequenceReset();
@@ -77,7 +84,7 @@ menuStatus_t menuNumericalEntry(uiEvent_t *ev, bool isFirstRun)
 		menuDataGlobal.endIndex = NUM_ENTRY_ITEMS;
 		digits[0] = 0;
 		pcIdx = 0;
-		updateScreen(true);
+		updateScreen(true, true);
 		return (MENU_STATUS_INPUT_TYPE | MENU_STATUS_SUCCESS);
 	}
 	else
@@ -118,30 +125,18 @@ menuStatus_t menuNumericalEntry(uiEvent_t *ev, bool isFirstRun)
 
 static void updateCursor(void)
 {
-	size_t sLen;
+	if (menuDataGlobal.currentItemIndex == ENTRY_SELECT_CONTACT)
+		return;
+	
+	size_t sLen=strlen(digits)*8;
 
-	// Display blinking cursor only when digits could be entered.
-	if ((menuDataGlobal.currentItemIndex != ENTRY_SELECT_CONTACT) && ((sLen = strlen(digits)) <= (inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS)))
-	{
-		static uint32_t lastBlink = 0;
-		static bool     blink = false;
-		uint32_t        m = fw_millis();
+	editParams.xPixelOffset=((DISPLAY_SIZE_X - sLen) >> 1);
+	editParams.yPixelOffset=(DISPLAY_SIZE_Y / 2)+16;
 
-		if ((m - lastBlink) > CURSOR_UPDATE_TIMEOUT)
-		{
-			sLen *= 8;
-
-			ucPrintCore((((DISPLAY_SIZE_X - sLen) >> 1) + sLen), (DISPLAY_SIZE_Y / 2), "_", FONT_SIZE_3, 0, blink);
-
-			blink = !blink;
-			lastBlink = m;
-
-			ucRender();
-		}
-	}
+	editUpdateCursor(&editParams, true, true);
 }
 
-static void updateScreen(bool inputModeHasChanged)
+static void updateScreen(bool inputModeHasChanged, bool allowedToSpeakUpdate)
 {
 	char buf[33];
 	size_t sLen = strlen(menuName[menuDataGlobal.currentItemIndex]) * 8;
@@ -155,8 +150,11 @@ static void updateScreen(bool inputModeHasChanged)
 	ucPrintAt(((DISPLAY_SIZE_X - sLen) >> 1) - 2, y, (char *)menuName[menuDataGlobal.currentItemIndex], FONT_SIZE_3);
 
 
-	if (inputModeHasChanged)
+	if (inputModeHasChanged || allowedToSpeakUpdate)
 	{
+		editParams.editFieldType = inAnalog ? EDIT_TYPE_DTMF_CHARS : EDIT_TYPE_NUMERIC;
+		editParams.maxLen = inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS;
+
 		voicePromptsInit();
 		switch(menuDataGlobal.currentItemIndex)
 		{
@@ -241,66 +239,6 @@ static int getNextDTMFContact(int curIdx, bool next, struct_codeplugDTMFContact_
 	return (((curIdx == 0) && ((*ct).name[0] == 0xff)) ? curIdx : (idx + 1));
 }
 
-static const uint8_t *dtmfDigits2Code(void)
-{
-	static uint8_t buffer[16];
-	char *p = digits;
-
-	memset(buffer, 0xFF, sizeof(buffer));
-
-	for (uint8_t i = 0; i < 16; i++, p++)
-	{
-		if (*p == 0x00)
-		{
-			break;
-		}
-		else if (*p == '*')
-		{
-			buffer[i] = 0x0e;
-		}
-		else if (*p == '#')
-		{
-			buffer[i] = 0x0f;
-		}
-		else if (*p >= 'A' && *p <= 'D')
-		{
-			buffer[i] = (*p - 55);
-		}
-		else
-		{
-			buffer[i] =  (*p - '0');
-		}
-	}
-	return buffer;
-}
-
-static void dtmfCode2digits(uint8_t *code)
-{
-	uint8_t *p = code;
-
-	memset(digits, 0x00, sizeof(digits));
-
-	for (uint8_t i = 0; i < 16; i++, p++)
-	{
-		if (*p == 0xFF)
-		{
-			break;
-		}
-		else if (*p == 0x0e)
-		{
-			digits[i] = '*';
-		}
-		else if (*p == 0x0f)
-		{
-			digits[i] = '#';
-		}
-		else
-		{
-			sprintf(digits + i, "%1X", *p);
-		}
-	}
-}
-
 static void announceContactName(void)
 {
 	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
@@ -325,7 +263,6 @@ static void announceContactName(void)
 
 static void handleEvent(uiEvent_t *ev)
 {
-	size_t sLen;
 	uint32_t tmpID;
 
 	// DTMF sequence is playing, stop it.
@@ -397,8 +334,9 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				voicePromptsTerminate();
 			}
-
-			dtmfSequencePrepare((uint8_t *)dtmfDigits2Code(), true);
+			uint8_t code[NUM_DTMF_DIGITS];
+			dtmfConvertCharsToCode(digits, code, NUM_DTMF_DIGITS);
+			dtmfSequencePrepare(code, true);
 			menuNumericalExitStatus = MENU_STATUS_SUCCESS;
 			return;
 		}
@@ -467,7 +405,7 @@ static void handleEvent(uiEvent_t *ev)
 
 				if (userIDEntered == false)
 				{
-					announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+					announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_2);
 				}
 				return;
 			}
@@ -523,7 +461,7 @@ static void handleEvent(uiEvent_t *ev)
 					{
 						if (inAnalog)
 						{
-							dtmfCode2digits(dtmfContact.code);
+							dtmfConvertCodeToChars(dtmfContact.code, digits, NUM_DTMF_DIGITS);
 						}
 						else
 						{
@@ -534,7 +472,7 @@ static void handleEvent(uiEvent_t *ev)
 				}
 			}
 		}
-		updateScreen(true);
+		updateScreen(true, true);
 		return;
 	}
 
@@ -559,7 +497,7 @@ static void handleEvent(uiEvent_t *ev)
 
 			if (inAnalog)
 			{
-				dtmfCode2digits(dtmfContact.code);
+				dtmfConvertCodeToChars(dtmfContact.code, digits, NUM_DTMF_DIGITS);
 			}
 			else
 			{
@@ -570,114 +508,45 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				menuNumericalExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 			}
-
-			updateScreen(false);
-		}
-	}
-	else
-	{
-		if ((sLen = strlen(digits)) <= (inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS))
-		{
-			bool refreshScreen = false;
-
-			// Inc / Dec entered value.
-			if ((inAnalog == false) && (KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN)))
-			{
-				if (strlen(digits))
-				{
-					unsigned long int ccs7 = strtoul(digits, NULL, 10);
-
-					if (KEYCHECK_SHORTUP(ev->keys, KEY_UP))
-					{
-						if (ccs7 < MAX_TG_OR_PC_VALUE)
-						{
-							ccs7++;
-						}
-						refreshScreen = true;
-					}
-					else
-					{
-						if (ccs7 > 1)
-						{
-							ccs7--;
-						}
-						refreshScreen = true;
-					}
-
-					if (refreshScreen)
-					{
-						sprintf(digits, "%lu", ccs7);
-					}
-				}
-			} // Delete a digit
-			else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) && (inAnalog ? BUTTONCHECK_DOWN(ev, BUTTON_SK2) : true))
-			{
-				if ((sLen = strlen(digits)) > 0)
-				{
-					digits[sLen - 1] = 0;
-					refreshScreen = true;
-				}
-			}
-			else
-			{
-				// Add a digit
-				if (sLen < (inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS))
-				{
-					int keyval = menuGetKeypadKeyValue(ev, (inAnalog ? false : true));
-
-					if (inAnalog)
-					{
-						// Calculate offsets for A/B/C/D/*/#
-						switch (keyval)
-						{
-						case 0 ... 9: // As is
-						break;
-
-						case 10: // A
-							keyval = 17;
-							break;
-						case 11: // B
-							keyval = 18;
-							break;
-						case 12: // C
-							keyval = 19;
-							break;
-						case 13: // D
-							keyval = 20;
-							break;
-						case 14: // *
-							keyval = -6;
-							break;
-						case 15: // #
-							keyval = -13;
-							break;
-						}
-					}
-
-					if (keyval != 99)
-					{
-						char c[2] = {0, 0};
-						c[0] = keyval + '0';
-
-						if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-						{
-							voicePromptsInit();
-							voicePromptsAppendString(c);
-							voicePromptsPlay();
-						}
-
-						strcat(digits, c);
-						refreshScreen = true;
-					}
-				}
-			}
-
-			if (refreshScreen)
-			{
-				updateScreen(false);
-			}
-
+			updateScreen(false, true);
 			updateCursor();
 		}
 	}
+	else if (HandleEditEvent(ev, &editParams))
+	{
+		updateScreen(false, editParams.allowedToSpeakUpdate);
+		updateCursor();
+	}
+	else if (strlen(digits) && (KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN)))
+	{
+		unsigned long int ccs7 = strtoul(digits, NULL, 10);
+		bool refreshScreen=false;
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_UP))
+		{
+			if (ccs7 < MAX_TG_OR_PC_VALUE)
+			{
+				ccs7++;
+				refreshScreen = true;
+			}
+		}
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN))
+		{
+			if (ccs7 > 1)
+			{
+				ccs7--;
+				refreshScreen = true;
+			}
+		}
+
+		if (refreshScreen)
+		{
+			sprintf(digits, "%lu", ccs7);
+			voicePromptsInit();
+			voicePromptsAppendString(digits);
+			voicePromptsPlay();
+			updateScreen(false, false);
+		}
+	}
 }
+
+

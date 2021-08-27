@@ -58,7 +58,8 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		uint8_t bootScreenType;
 		codeplugGetBootScreenData(userInfo[DETAILS_LINE1], userInfo[DETAILS_LINE2], &bootScreenType);
 		editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
-		editParams.xOffset=0; // set to number of chars in lefthand prompt if any.
+		editParams.xPixelOffset=0; // set to number of chars in lefthand prompt if any.
+		editParams.yPixelOffset=0;
 		voicePromptsInit();
 		menuDataGlobal.currentItemIndex = DETAILS_CALLSIGN;
 		menuDataGlobal.endIndex = NUM_DETAILS_ITEMS;
@@ -67,7 +68,9 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		voicePromptsAppendLanguageString(&currentLanguage->menu);
 	
 		updateScreen(isFirstRun, true);
-		menuUpdateCursor(userInfoCursorPositions[menuDataGlobal.currentItemIndex]+xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex], true, true);
+		editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8; // font size 3.
+		editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
+		editUpdateCursor(&editParams, true, true);
 		
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
@@ -75,7 +78,9 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 	{
 		menuRadioDetailsExitCode = MENU_STATUS_SUCCESS;
 		
-		menuUpdateCursor(userInfoCursorPositions[menuDataGlobal.currentItemIndex]+xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex],false, true);
+		editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8; // font size 3.
+		editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
+		editUpdateCursor(&editParams, false, true);
 
 		if (ev->hasEvent)
 		{
@@ -190,7 +195,7 @@ static void handleEvent(uiEvent_t *ev)
 	editParams.editFieldType=curFieldIsNumeric ? EDIT_TYPE_NUMERIC : EDIT_TYPE_ALPHANUMERIC;
 	editParams.editBuffer= userInfo[menuDataGlobal.currentItemIndex];
 	editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
-	editParams.xOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex];
+	editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8;
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (repeatVoicePromptOnSK1(ev))

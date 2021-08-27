@@ -36,10 +36,13 @@ typedef  struct
 	EditFieldTypes_t editFieldType;
 	char* editBuffer;
 	int maxLen;
-	int* cursorPos; // in string
-	int xOffset; // if editable area is after a prompt, num of chars in prompt to offset cursor by, when drawing cursor, added to cursorPos above.
+	int* cursorPos; // 0-based index of cursor in edit buffer (string).
+	int xPixelOffset; // x pixel offset of first char of editable text (e.g. when preceeded by a prompt or edit is centered).
+	int yPixelOffset; // y pixel offset to print cursor at.
 	bool allowedToSpeakUpdate;
 } EditStructParrams_t;
-
+ 
+ void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render);
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams);
+
 #endif //EDIT_HANDLER_H_INCLUDED

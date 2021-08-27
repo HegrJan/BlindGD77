@@ -25,6 +25,8 @@
  */
 #include <ctype.h>
 #include "user_interface/editHandler.h"
+#include "functions/ticks.h"
+
 static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
 {
 	if (!buffer || !cursorPos) return false;
@@ -52,6 +54,49 @@ static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
 	return true;
 }
 
+ void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render)
+{
+	if (!editParams)
+		return;
+	
+#if defined(PLATFORM_RD5R)
+	const int MENU_CURSOR_Y = 32;
+#else
+	const int MENU_CURSOR_Y = 46;
+#endif
+
+int xPixelOffset = editParams->xPixelOffset;
+int yPixelOffset=editParams->yPixelOffset ? editParams->yPixelOffset : MENU_CURSOR_Y;
+int pos=*editParams->cursorPos;
+
+	if (yPixelOffset==0)
+	{
+		yPixelOffset=MENU_CURSOR_Y;
+	}
+	
+	static uint32_t lastBlink = 0;
+	static bool     blink = false;
+	uint32_t        m = fw_millis();
+
+	if (moved)
+	{
+		blink = true;
+	}
+
+	if (moved || (m - lastBlink) > 500)
+	{
+		ucDrawFastHLine(xPixelOffset+(pos * 8), yPixelOffset, 8, blink);
+
+		blink = !blink;
+		lastBlink = m;
+
+		if (render)
+		{
+			ucRenderRows(yPixelOffset / 8, yPixelOffset / 8 + 1);
+		}
+	}
+}
+	
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 {
 	if (!editParams || !editParams->editBuffer || !editParams->cursorPos)
@@ -74,21 +119,21 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
 	{
 		*editParams->cursorPos = editBufferLen;
-		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
+		editUpdateCursor(editParams, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT))
 	{
 		moveCursorRightInString(editParams->editBuffer, editParams->cursorPos, editParams->maxLen, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
+		editUpdateCursor(editParams, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
 	else if (KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
 	{
 		*editParams->cursorPos = 0;
-		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
+		editUpdateCursor(editParams, true, true);
 		if (editBufferLen > 0)
 			announceChar(editParams->editBuffer[0]);
 		editParams->allowedToSpeakUpdate = false;
@@ -97,7 +142,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_LEFT))
 	{
 		moveCursorLeftInString(editParams->editBuffer, editParams->cursorPos, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
+		editUpdateCursor(editParams, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
@@ -137,7 +182,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 			if (*editParams->cursorPos < editParams->maxLen-1)
 				(*editParams->cursorPos)++;
 		}
-		menuUpdateCursor(*editParams->cursorPos+editParams->xOffset, true, true);
+		editUpdateCursor(editParams, true, true);
 	}
 	announceChar(ch);
 	editParams->allowedToSpeakUpdate = false;
