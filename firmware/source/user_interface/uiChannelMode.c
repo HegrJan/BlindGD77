@@ -3279,7 +3279,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			else // narrow, set to wide.
 				mask|=0x02;
 			currentChannelData->flag4=mask;
-			trxSetModeAndBandwidth(currentChannelData->chMode, currentChannelData->flag4);
+			trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4&0x02)==0x02));
 			announceItem(PROMPT_SEQUENCE_BANDWIDTH, PROMPT_THRESHOLD_2);
 						return true;
 		}
