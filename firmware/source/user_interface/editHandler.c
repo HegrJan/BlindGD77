@@ -91,7 +91,52 @@ int pos=*editParams->cursorPos;
 		}
 	}
 }
-	
+
+void moveCursorLeftInString(char *str, int *pos, bool delete)
+{
+	int nLen = strlen(str);
+
+	if (*pos > 0)
+	{
+		*pos -=1;
+		announceChar(str[*pos]); // speak the new char or the char about to be backspaced out.
+
+		if (delete)
+		{
+			for (int i = *pos; i <= nLen; i++)
+			{
+				str[i] = str[i + 1];
+			}
+		}
+	}
+}
+
+void moveCursorRightInString(char *str, int *pos, int max, bool insert)
+{
+	int nLen = strlen(str);
+
+	if (*pos < strlen(str))
+	{
+		if (insert)
+		{
+			if (nLen < max)
+			{
+				for (int i = nLen; i > *pos; i--)
+				{
+					str[i] = str[i - 1];
+				}
+				str[*pos] = ' ';
+			}
+		}
+
+		if (*pos < max-1)
+		{
+			*pos += 1;
+			announceChar(str[*pos]); // speak the new char or the char about to be backspaced out.
+		}
+	}
+}
+
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 {
 	if (!editParams || !editParams->editBuffer || !editParams->cursorPos)
