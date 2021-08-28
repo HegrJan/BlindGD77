@@ -26,8 +26,8 @@
 #include <ctype.h>
 #include "user_interface/editHandler.h"
 #include "functions/ticks.h"
-
-static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
+ 
+ static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
 {
 	if (!buffer || !cursorPos) return false;
 	
@@ -69,11 +69,6 @@ int xPixelOffset = editParams->xPixelOffset;
 int yPixelOffset=editParams->yPixelOffset ? editParams->yPixelOffset : MENU_CURSOR_Y;
 int pos=*editParams->cursorPos;
 
-	if (yPixelOffset==0)
-	{
-		yPixelOffset=MENU_CURSOR_Y;
-	}
-	
 	static uint32_t lastBlink = 0;
 	static bool     blink = false;
 	uint32_t        m = fw_millis();
@@ -173,11 +168,12 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 		return false;
 	if (keyPressed)
 	{
-		if (curLen < SCREEN_LINE_BUFFER_SIZE-1)
+		if (curLen < editParams->maxLen-1)
 			InsertChar(editParams->editBuffer, ch, editParams->cursorPos, editParams->maxLen);
 		else
 		{
 			editParams->editBuffer[*editParams->cursorPos]=ch; // just add at the current cursor location, overwriting what was there.
+			editParams->editBuffer[editParams->maxLen-1]='\0';// null terminate
 			// If we're not on the last char then advance the cursor.
 			if (*editParams->cursorPos < editParams->maxLen-1)
 				(*editParams->cursorPos)++;

@@ -35,14 +35,14 @@ typedef  struct
 {
 	EditFieldTypes_t editFieldType;
 	char* editBuffer;
-	int maxLen;
+	int maxLen;// including null terminator.
 	int* cursorPos; // 0-based index of cursor in edit buffer (string).
 	int xPixelOffset; // x pixel offset of first char of editable text (e.g. when preceeded by a prompt or edit is centered).
 	int yPixelOffset; // y pixel offset to print cursor at.
 	bool allowedToSpeakUpdate;
 } EditStructParrams_t;
- 
- void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render);
+
+void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render);
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams);
 
 #endif //EDIT_HANDLER_H_INCLUDED

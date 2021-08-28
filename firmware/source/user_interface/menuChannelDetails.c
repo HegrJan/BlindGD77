@@ -33,6 +33,7 @@
 #include "user_interface/menuSystem.h"
 #include "user_interface/uiUtilities.h"
 #include "user_interface/uiLocalisation.h"
+#include "user_interface/editHandler.h"
 
 static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate);
 static void updateCursor(bool moved);
@@ -52,10 +53,13 @@ static struct_codeplugChannel_t tmpChannel =  // update a temporary copy of the 
 };
 static char channelName[SCREEN_LINE_BUFFER_SIZE];
 static int namePos;
+static char digits[9];
+static int digitPos;
+
 static uint16_t savedPriorityChannelIndex = 0;
 static bool nameInError = false;
-
 static menuStatus_t menuChannelDetailsExitCode = MENU_STATUS_SUCCESS;
+static EditStructParrams_t editParams;
 
 enum CHANNEL_DETAILS_DISPLAY_LIST { CH_DETAILS_NAME = 0,
 									CH_DETAILS_RXFREQ, CH_DETAILS_TXFREQ,
@@ -96,6 +100,13 @@ menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
 
 		codeplugUtilConvertBufToString(tmpChannel.name, channelName, 16);
 		namePos = strlen(channelName);
+		editParams.editBuffer = channelName;
+		editParams.cursorPos=&namePos;
+		editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
+		editParams.xPixelOffset=5 * 8; // name prompt * char width at font size 3.
+		editParams.yPixelOffset=0; // use default for menu.
+		editParams.allowedToSpeakUpdate=true;
+		
 		if ((uiDataGlobal.currentSelectedChannelNumber == CH_DETAILS_VFO_CHANNEL) && (namePos == 0)) // In VFO, and VFO has no name in the codeplug
 		{
 			snprintf(channelName, SCREEN_LINE_BUFFER_SIZE, "VFO %s", (nonVolatileSettings.currentVFONumber == 0 ? "A" : "B"));
@@ -129,17 +140,100 @@ menuStatus_t menuChannelDetails(uiEvent_t *ev, bool isFirstRun)
 	return menuChannelDetailsExitCode;
 }
 
+static bool UseEditHandler()
+{
+	switch(menuDataGlobal.currentItemIndex)
+	{
+		case CH_DETAILS_NAME:
+		case CH_DETAILS_RXFREQ:
+		case CH_DETAILS_TXFREQ:
+		case CH_DETAILS_DMRID:
+			return true;
+			break;
+		default:
+			break;
+	}
+	return false;
+}
+
 static void updateCursor(bool moved)
 {
-	if (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL)
+	if (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL && UseEditHandler())
 	{
-		switch (menuDataGlobal.currentItemIndex)
-		{
-		case CH_DETAILS_NAME:
-			menuUpdateCursor(namePos, moved, true);
-			break;
-		}
+		editUpdateCursor(&editParams, moved, true);
 	}
+}
+
+uint32_t GetNumberBeingEdited()
+{
+	switch(menuDataGlobal.currentItemIndex)
+	{
+		case CH_DETAILS_RXFREQ:
+			return tmpChannel.rxFreq;
+		case CH_DETAILS_TXFREQ:
+			return tmpChannel.txFreq;
+			case CH_DETAILS_DMRID:
+				return codeplugChannelGetOptionalDMRID(&tmpChannel);
+	}
+	return 0;
+}
+
+static void SetEditParamsForSelectedMenu(bool updateNumericBuffer)
+{
+	bool isEditing=uiDataGlobal.FreqEnter.index!=0;
+	uint32_t number=GetNumberBeingEdited();
+
+	switch(menuDataGlobal.currentItemIndex)
+	{
+		case CH_DETAILS_NAME:
+			editParams.editFieldType=EDIT_TYPE_ALPHANUMERIC;
+			editParams.editBuffer=channelName;
+			editParams.cursorPos=&namePos;
+			editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
+			editParams.xPixelOffset=5 * 8; // name prompt * char width at font size 3.
+			editParams.yPixelOffset=0; // use default for menu.
+			break;
+		case CH_DETAILS_RXFREQ:
+		case CH_DETAILS_TXFREQ:
+			editParams.editFieldType=EDIT_TYPE_NUMERIC;
+			editParams.editBuffer=digits;
+			editParams.cursorPos=&digitPos;
+			editParams.maxLen= 9;
+			if (isEditing)
+			{// When editing, the frequency plus decimal point plus mHz is centered, this is 13 chars.
+				size_t sLen=13 * 8; // 13 chars * font size 3  8 pixels.
+				editParams.xPixelOffset=((DISPLAY_SIZE_X - sLen) >> 1);
+				editParams.yPixelOffset=32+FONT_SIZE_3_HEIGHT;
+			}
+			else
+			{
+				editParams.xPixelOffset=3*8; // rx: or tx: * font size 3 8 pixels.
+				editParams.yPixelOffset=0; // use default menu offset.
+			}
+			// if cursor is after decimal point then need to account for this.
+			if (digitPos > 2)
+				editParams.xPixelOffset+=8; //skip decimal.
+			break;
+		case CH_DETAILS_DMRID:
+			editParams.editFieldType=EDIT_TYPE_NUMERIC;
+			editParams.editBuffer=digits;
+			editParams.cursorPos=&digitPos;
+			editParams.maxLen= 9;
+			if (isEditing)
+			{// When editing, the frequency plus decimal point plus mHz is centered, this is 13 chars.
+				size_t sLen=8 * 8; // DMR ID * font size 3 8 pixels.
+				editParams.xPixelOffset=((DISPLAY_SIZE_X - sLen) >> 1);
+				editParams.yPixelOffset=32+FONT_SIZE_3_HEIGHT;
+			}
+			else
+			{
+				editParams.xPixelOffset=7*8; // "dmr id:" * font size 3 8 pixels.
+				editParams.yPixelOffset=0; // use default menu offset.
+			}
+			break;
+	}
+	if (updateNumericBuffer && number > 0)
+		snprintf(editParams.editBuffer, editParams.maxLen, "%u", number);
 }
 
 static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
@@ -160,7 +254,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	ucClearBuf();
 
 	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE, currentLanguage->channel_details);
-
+	SetEditParamsForSelectedMenu(isFirstRun);
 	if (uiDataGlobal.FreqEnter.index != 0)
 	{
 		snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%c%c%c%s%c%c%c%c%c%s", uiDataGlobal.FreqEnter.digits[0], uiDataGlobal.FreqEnter.digits[1], uiDataGlobal.FreqEnter.digits[2], (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID) ? "" : ".",
@@ -194,7 +288,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 						leftSide = (char * const *)&currentLanguage->mode;
 						strcpy(rightSideVar, (tmpChannel.chMode == RADIO_MODE_ANALOG) ? "FM" : "DMR");
 						break;
-					break;
 					case CH_DETAILS_DMRID:
 						leftSide = (char * const *)&currentLanguage->dmr_id;
 						if (tmpChannel.chMode == RADIO_MODE_ANALOG)
@@ -619,6 +712,38 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 	}
+	if ( UseEditHandler())
+	{
+		bool handled=HandleEditEvent(ev, &editParams);
+		// ensure the field for display is correctly padded with filler chars and update from editor.
+		if (handled && editParams.editFieldType == EDIT_TYPE_NUMERIC)
+		{
+			freqEnterReset();
+			uiDataGlobal .FreqEnter.index=strlen(editParams.editBuffer);
+			memcpy(uiDataGlobal.FreqEnter.digits, editParams.editBuffer, strlen(editParams.editBuffer));// so we don't null terminate and wipe out the rest of the filler chars.
+		}
+		if (uiDataGlobal.FreqEnter.index != 0)
+		{
+			int number = freqEnterRead(0, 8, (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID));
+
+			if (((menuDataGlobal.currentItemIndex == CH_DETAILS_RXFREQ) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXFREQ))
+				&& (trxGetBandFromFrequency(number) != -1))
+			{
+				updateFrequency(number);
+			}
+			else if ((menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID)
+				&& (((number >= MIN_TG_OR_PC_VALUE) && (number <= MAX_TG_OR_PC_VALUE)) || (number == 0)))
+			{
+				codeplugChannelSetOptionalDMRID(number, &tmpChannel);
+				freqEnterReset();
+			}
+		}
+		if (handled)
+		{
+			updateScreen(false, editParams.allowedToSpeakUpdate);
+			return;
+		}
+	}
 
 	if ((menuDataGlobal.currentItemIndex == CH_DETAILS_RXFREQ) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXFREQ) || (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID))
 	{
@@ -652,79 +777,6 @@ static void handleEvent(uiEvent_t *ev)
 				updateScreen(false, true);
 				return;
 			}
-			else if (KEYCHECK_SHORTUP(ev->keys, KEY_LEFT))
-			{
-				char buf[17];
-
-				uiDataGlobal.FreqEnter.index--;
-				uiDataGlobal.FreqEnter.digits[uiDataGlobal.FreqEnter.index] = '-';
-
-				voicePromptsInit();
-				snprintf(buf, 17, "%c%c%c%s%c%c%c%c%c", uiDataGlobal.FreqEnter.digits[0], uiDataGlobal.FreqEnter.digits[1], uiDataGlobal.FreqEnter.digits[2], (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID) ? "" : ".",
-						uiDataGlobal.FreqEnter.digits[3], uiDataGlobal.FreqEnter.digits[4], uiDataGlobal.FreqEnter.digits[5], uiDataGlobal.FreqEnter.digits[6], uiDataGlobal.FreqEnter.digits[7]);
-				buf[(menuDataGlobal.currentItemIndex != CH_DETAILS_DMRID) ? ((uiDataGlobal.FreqEnter.index > 2) ? (uiDataGlobal.FreqEnter.index + 1) : uiDataGlobal.FreqEnter.index) : uiDataGlobal.FreqEnter.index] = 0;
-				voicePromptsAppendString(buf);
-				if (menuDataGlobal.currentItemIndex != CH_DETAILS_DMRID)
-				{
-					voicePromptsAppendPrompt(PROMPT_MEGAHERTZ);
-				}
-				voicePromptsPlay();
-
-				updateScreen(false, true);
-
-				return;
-			}
-		}
-
-		if ((uiDataGlobal.FreqEnter.index < 8))
-		{
-			if (!BUTTONCHECK_DOWN(ev, BUTTON_SK2))
-			{
-				int keyval = menuGetKeypadKeyValue(ev, true);
-
-				if ((keyval != 99) &&
-						((menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID) || (((uiDataGlobal.FreqEnter.index == 0) && (keyval == 0)) == false)))
-				{
-					voicePromptsInit();
-					voicePromptsAppendInteger(keyval);
-					voicePromptsPlay();
-
-					uiDataGlobal.FreqEnter.digits[uiDataGlobal.FreqEnter.index] = (char) keyval + '0';
-					uiDataGlobal.FreqEnter.index++;
-
-					if (uiDataGlobal.FreqEnter.index == 8)
-					{
-						int number = freqEnterRead(0, 8, (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID));
-
-						if (((menuDataGlobal.currentItemIndex == CH_DETAILS_RXFREQ) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXFREQ))
-								&& (trxGetBandFromFrequency(number) != -1))
-						{
-							updateFrequency(number);
-						}
-						else if ((menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID)
-								&& (((number >= MIN_TG_OR_PC_VALUE) && (number <= MAX_TG_OR_PC_VALUE)) || (number == 0)))
-						{
-							codeplugChannelSetOptionalDMRID(number, &tmpChannel);
-							freqEnterReset();
-						}
-						else
-						{
-							uiDataGlobal.FreqEnter.index--;
-							uiDataGlobal.FreqEnter.digits[uiDataGlobal.FreqEnter.index] = '-';
-							soundSetMelody(MELODY_ERROR_BEEP);
-						}
-					}
-					updateScreen(false, true);
-					return;
-				}
-			}
-			else
-			{
-				if (KEYCHECK_PRESS_NUMBER(ev->keys))
-				{
-					soundSetMelody(MELODY_ERROR_BEEP);
-				}
-			}
 		}
 	}
 
@@ -736,12 +788,16 @@ static void handleEvent(uiEvent_t *ev)
 		if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 		{
 			menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, NUM_CH_DETAILS_ITEMS);
+			SetEditParamsForSelectedMenu(true);
+			uiDataGlobal.FreqEnter.index = 0; // so we don't keep showing the number being edited.
 			updateScreen(false, true);
 			menuChannelDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 		{
 			menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, NUM_CH_DETAILS_ITEMS);
+			SetEditParamsForSelectedMenu(true);
+			uiDataGlobal.FreqEnter.index = 0;// so we don't keep showing the number being edited.
 			updateScreen(false, true);
 			menuChannelDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 		}
@@ -782,12 +838,7 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
 		{
-			if (menuDataGlobal.currentItemIndex == CH_DETAILS_NAME)
-			{
-				namePos = strlen(channelName);
-				updateScreen(false, !voicePromptsIsPlaying());
-			}
-			else if ((menuDataGlobal.currentItemIndex == CH_DETAILS_RXCSS) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXCSS))
+			if ((menuDataGlobal.currentItemIndex == CH_DETAILS_RXCSS) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXCSS))
 			{
 				goto handlesRightKey;
 			}
@@ -802,14 +853,6 @@ static void handleEvent(uiEvent_t *ev)
 
 			switch(menuDataGlobal.currentItemIndex)
 			{
-				case CH_DETAILS_NAME:
-					if (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL)
-					{
-						moveCursorRightInString(channelName, &namePos, 16, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-						updateCursor(true);
-						allowedToSpeakUpdate = (strlen(channelName) == 0);
-					}
-					break;
 				case CH_DETAILS_MODE:
 					if (tmpChannel.chMode == RADIO_MODE_DIGITAL)
 					{
@@ -941,12 +984,7 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
 		{
-			if (menuDataGlobal.currentItemIndex == CH_DETAILS_NAME)
-			{
-				namePos = 0;
-				updateScreen(false, !voicePromptsIsPlaying());
-			}
-			else if ((menuDataGlobal.currentItemIndex == CH_DETAILS_RXCSS) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXCSS))
+			if ((menuDataGlobal.currentItemIndex == CH_DETAILS_RXCSS) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXCSS))
 			{
 				goto handlesLeftKey;
 			}
@@ -961,14 +999,6 @@ static void handleEvent(uiEvent_t *ev)
 
 			switch(menuDataGlobal.currentItemIndex)
 			{
-				case CH_DETAILS_NAME:
-					if (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL)
-					{
-						moveCursorLeftInString(channelName, &namePos, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-						updateCursor(true);
-						allowedToSpeakUpdate = (strlen(channelName) == 0);
-					}
-					break;
 				case CH_DETAILS_MODE:
 					if (tmpChannel.chMode == RADIO_MODE_ANALOG)
 					{
@@ -1106,40 +1136,6 @@ static void handleEvent(uiEvent_t *ev)
 			}
 
 			updateScreen(false, allowedToSpeakUpdate);
-		}
-		else if (!BUTTONCHECK_DOWN(ev, BUTTON_SK2) && (menuDataGlobal.currentItemIndex == CH_DETAILS_NAME) && (uiDataGlobal.currentSelectedChannelNumber != CH_DETAILS_VFO_CHANNEL))
-		{
-			// vk3kyy - Commented this out, as BUTTON_SK2 is now changed in the enclosing if, as this was needed so that QuicKeys worked (see also next comment below)
-			//if (!BUTTONCHECK_DOWN(ev, BUTTON_SK2))
-			{
-				if ((ev->keys.event == KEY_MOD_PREVIEW) && (namePos < 16))
-				{
-					channelName[namePos] = ev->keys.key;
-					updateCursor(true);
-					announceChar(ev->keys.key);
-					updateScreen(false, false);
-				}
-				else if ((ev->keys.event == KEY_MOD_PRESS) && (namePos < 16))
-				{
-					channelName[namePos] = ev->keys.key;
-					if ((namePos < strlen(channelName)) && (namePos < 15))
-					{
-						namePos++;
-					}
-					updateCursor(true);
-					announceChar(ev->keys.key);
-					updateScreen(false, false);
-				}
-			}
-			/*
-			 * vk3kyy - needed to stop this code because it interferes with the QuickKeys and saveing of the channel SK2 + Green
-			 * And I don't know what it was intended to do.
-			else
-			{
-				keyboardReset();
-				keypadAlphaEnable = true;
-				soundSetMelody(MELODY_ERROR_BEEP);
-			}*/
 		}
 		else if ((ev->keys.event & KEY_MOD_PRESS) && (menuDataGlobal.menuOptionsTimeout > 0))
 		{
