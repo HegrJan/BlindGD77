@@ -57,7 +57,7 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		snprintf(userInfo[DETAILS_DMRID], SCREEN_LINE_BUFFER_SIZE, "%u", codeplugGetUserDMRID());
 		uint8_t bootScreenType;
 		codeplugGetBootScreenData(userInfo[DETAILS_LINE1], userInfo[DETAILS_LINE2], &bootScreenType);
-		editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
+		editParams.maxLen=SCREEN_LINE_BUFFER_SIZE+1;
 		editParams.xPixelOffset=0; // set to number of chars in lefthand prompt if any.
 		editParams.yPixelOffset=0;
 		voicePromptsInit();

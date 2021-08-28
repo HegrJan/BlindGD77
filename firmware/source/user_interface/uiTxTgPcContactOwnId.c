@@ -63,7 +63,7 @@ menuStatus_t menuNumericalEntry(uiEvent_t *ev, bool isFirstRun)
 		inAnalog = (trxGetMode() == RADIO_MODE_ANALOG);
 		cursorPos=0;
 		editParams.editBuffer=digits;
-		editParams.maxLen = inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS;
+		editParams.maxLen = inAnalog ? NUM_DTMF_DIGITS+1 : NUM_PC_OR_TG_DIGITS+1;
 		editParams.editFieldType = inAnalog ? EDIT_TYPE_DTMF_CHARS : EDIT_TYPE_NUMERIC;
 		editParams.cursorPos=&cursorPos;
 		editParams.xPixelOffset =0;

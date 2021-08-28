@@ -109,7 +109,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	
 	bool keyPreview=(ev->keys.event == KEY_MOD_PREVIEW);
 	bool keyPressed=(ev->keys.event == KEY_MOD_PRESS);
-	int keyval = menuGetKeypadKeyValue(ev, true);
+	int keyval = menuGetKeypadKeyValue(ev, editParams->editFieldType==EDIT_TYPE_NUMERIC);
 	
 	if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
 	{
