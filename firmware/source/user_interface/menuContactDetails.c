@@ -31,9 +31,9 @@
 #include "user_interface/menuSystem.h"
 #include "user_interface/uiUtilities.h"
 #include "user_interface/uiLocalisation.h"
+#include "user_interface/editHandler.h"
 
 static void updateScreen(bool isFirstRun, bool updateScreen);
-static void updateCursor(bool moved);
 static void handleEvent(uiEvent_t *ev);
 static bool contactIsNewOrAtSameIndex(struct_codeplugContact_t *ct, int index);
 
@@ -46,6 +46,7 @@ static char digits[9];
 static char contactName[20];
 static int namePos;
 static int numPos;
+static EditStructParrams_t editParams;
 
 enum CONTACT_DETAILS_DISPLAY_LIST { CONTACT_DETAILS_NAME = 0, CONTACT_DETAILS_TG, CONTACT_DETAILS_CALLTYPE, CONTACT_DETAILS_TS,
 	NUM_CONTACT_DETAILS_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list
@@ -53,6 +54,41 @@ enum CONTACT_DETAILS_DISPLAY_LIST { CONTACT_DETAILS_NAME = 0, CONTACT_DETAILS_TG
 static int menuContactDetailsState;
 static int menuContactDetailsTimeout;
 enum MENU_CONTACT_DETAILS_STATE { MENU_CONTACT_DETAILS_DISPLAY = 0, MENU_CONTACT_DETAILS_SAVED, MENU_CONTACT_DETAILS_EXISTS, MENU_CONTACT_DETAILS_FULL };
+
+static bool UseEditHandler()
+{
+	switch(menuDataGlobal.currentItemIndex)
+	{
+		case CONTACT_DETAILS_NAME:
+			return true;
+		case CONTACT_DETAILS_TG:
+			return tmpContact.callType!=CONTACT_CALLTYPE_ALL;
+	}
+	return false;
+}
+static void SetEditParamsForMenuIndex()
+{
+	switch(menuDataGlobal.currentItemIndex)
+	{
+		case CONTACT_DETAILS_NAME:
+			editParams.editFieldType=EDIT_TYPE_ALPHANUMERIC;
+			editParams.editBuffer=contactName;
+			editParams.cursorPos=&namePos;
+			editParams.maxLen=SCREEN_LINE_BUFFER_SIZE+1;
+			editParams.xPixelOffset=5*8; // name or code plus colon * 8 pixels.
+			editParams.yPixelOffset=0; // use menu default.
+			break;
+		case CONTACT_DETAILS_TG:
+			editParams.editFieldType=EDIT_TYPE_NUMERIC;
+			editParams.editBuffer=digits;
+			editParams.cursorPos=&numPos;
+			editParams.maxLen=9;
+			editParams.xPixelOffset=3*8; // tg: or pc: * 8 pixels.
+			editParams.yPixelOffset=0; // use menu default.
+			itoa(tmpContact.tgNumber, digits, 10);
+			break;
+	}		
+}
 
 menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
 {
@@ -100,40 +136,23 @@ menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
 		menuContactDetailsState = (contactDetailsIndex == 0) ? MENU_CONTACT_DETAILS_FULL : MENU_CONTACT_DETAILS_DISPLAY;
 		menuDataGlobal.currentItemIndex = CONTACT_DETAILS_NAME;
 		menuDataGlobal.endIndex = NUM_CONTACT_DETAILS_ITEMS;
-
+		SetEditParamsForMenuIndex();
 		updateScreen(isFirstRun, true);
-		updateCursor(true);
-
+		editUpdateCursor(&editParams, true, true);
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
 	}
 	else
 	{
 		menuContactDetailsExitCode = MENU_STATUS_SUCCESS;
 
-		updateCursor(false);
+		editUpdateCursor(&editParams, false, true);
+
 		if (ev->hasEvent || (menuContactDetailsTimeout > 0))
 		{
 			handleEvent(ev);
 		}
 	}
 	return menuContactDetailsExitCode;
-}
-
-static void updateCursor(bool moved)
-{
-	// Only display the cursor when the fields are displayed
-	if (menuContactDetailsState == MENU_CONTACT_DETAILS_DISPLAY)
-	{
-		switch (menuDataGlobal.currentItemIndex)
-		{
-			case CONTACT_DETAILS_NAME:
-				menuUpdateCursor(namePos, moved, true);
-				break;
-			case CONTACT_DETAILS_TG:
-				menuUpdateCursor(numPos, moved, true);
-				break;
-		}
-	}
 }
 
 static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
@@ -227,11 +246,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 									snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", MAX_TG_OR_PC_VALUE);
 									leftSideConst = (char * const *)&currentLanguage->all_call;
 									break;
-							}
-
-							if (i == 0)
-							{
-								numPos = strlen(*leftSide) + 1 + (nLen ? nLen : strlen(rightSideVar));
 							}
 						}
 						break;
@@ -347,7 +361,6 @@ static void handleEvent(uiEvent_t *ev)
 {
 	dmrIdDataStruct_t foundRecord;
 	char buf[SCREEN_LINE_BUFFER_SIZE];
-	int sLen = strlen(digits);
 
 	if (ev->events & BUTTON_EVENT)
 	{
@@ -368,34 +381,27 @@ static void handleEvent(uiEvent_t *ev)
 				if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 				{
 					menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, NUM_CONTACT_DETAILS_ITEMS);
+					SetEditParamsForMenuIndex();
 					updateScreen(false, true);
 					menuContactDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 				}
 				else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 				{
 					menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, NUM_CONTACT_DETAILS_ITEMS);
+					SetEditParamsForMenuIndex();
 					updateScreen(false, true);
 					menuContactDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 				}
-				else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
+				else if (UseEditHandler() && HandleEditEvent(ev, &editParams))
 				{
-					if (menuDataGlobal.currentItemIndex == CONTACT_DETAILS_NAME)
-					{
-						namePos = strlen(contactName);
-						updateScreen(false, !voicePromptsIsPlaying());
-					}
+					updateScreen(false, editParams.allowedToSpeakUpdate);
+					editUpdateCursor(&editParams, true, true);
+					return;
 				}
 				else if (KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT))
 				{
 					switch(menuDataGlobal.currentItemIndex)
 					{
-						case CONTACT_DETAILS_NAME:
-							moveCursorRightInString(contactName, &namePos, 16, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-							updateCursor(true);
-							allowedToSpeakUpdate = (strlen(contactName) == 0);
-							break;
-						case CONTACT_DETAILS_TG:
-							break;
 						case CONTACT_DETAILS_CALLTYPE:
 							if (tmpContact.callType < CONTACT_CALLTYPE_ALL)
 							{
@@ -422,30 +428,10 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					updateScreen(false, allowedToSpeakUpdate);
 				}
-				else if (KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
-				{
-					if (menuDataGlobal.currentItemIndex == CONTACT_DETAILS_NAME)
-					{
-						namePos = 0;
-						updateScreen(false, !voicePromptsIsPlaying());
-					}
-				}
 				else if (KEYCHECK_SHORTUP(ev->keys, KEY_LEFT))
 				{
 					switch(menuDataGlobal.currentItemIndex)
 					{
-						case CONTACT_DETAILS_NAME:
-							moveCursorLeftInString(contactName, &namePos, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
-							updateCursor(true);
-							allowedToSpeakUpdate = (strlen(contactName) == 0);
-							break;
-						case CONTACT_DETAILS_TG:
-							if (sLen > 0)
-							{
-								digits[sLen - 1] = 0x00;
-							}
-							updateCursor(true);
-							break;
 						case CONTACT_DETAILS_CALLTYPE:
 							if (tmpContact.callType > 0)
 							{
@@ -534,50 +520,6 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					menuSystemPopPreviousMenu();
 					return;
-				}
-				else
-				{
-					if (menuDataGlobal.currentItemIndex == CONTACT_DETAILS_TG)
-					{
-						if (tmpContact.callType != CONTACT_CALLTYPE_ALL)
-						{
-							// Add a digit
-							if (sLen < NUM_PC_OR_TG_DIGITS)
-							{
-								int keyval = menuGetKeypadKeyValue(ev, true);
-
-								char c[2] = {0, 0};
-
-								if (keyval != 99)
-								{
-									c[0] = keyval + '0';
-									strcat(digits, c);
-								}
-								updateScreen(false, allowedToSpeakUpdate);
-							}
-						}
-					}
-					else if (menuDataGlobal.currentItemIndex == CONTACT_DETAILS_NAME)
-					{
-						if ((ev->keys.event == KEY_MOD_PREVIEW) && (namePos < 16))
-						{
-							contactName[namePos] = ev->keys.key;
-							updateCursor(true);
-							announceChar(ev->keys.key);
-							updateScreen(false, false);
-						}
-						else if ((ev->keys.event == KEY_MOD_PRESS) && (namePos < 16))
-						{
-							contactName[namePos] = ev->keys.key;
-							if (namePos < strlen(contactName) && namePos < 15)
-							{
-								namePos++;
-							}
-							updateCursor(true);
-							announceChar(ev->keys.key);
-							updateScreen(false, false);
-						}
-					}
 				}
 			}
 			break;
