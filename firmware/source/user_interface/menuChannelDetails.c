@@ -179,7 +179,7 @@ uint32_t GetNumberBeingEdited()
 	return 0;
 }
 
-static void SetEditParamsForSelectedMenu(bool updateNumericBuffer)
+static void SetEditParamsForMenuIndex(bool updateNumericBuffer)
 {
 	bool isEditing=uiDataGlobal.FreqEnter.index!=0;
 	uint32_t number=GetNumberBeingEdited();
@@ -261,7 +261,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	ucClearBuf();
 
 	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE, currentLanguage->channel_details);
-	SetEditParamsForSelectedMenu(isFirstRun);
+	SetEditParamsForMenuIndex(isFirstRun);
 	if (uiDataGlobal.FreqEnter.index != 0)
 	{
 		snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%c%c%c%s%c%c%c%c%c%s", uiDataGlobal.FreqEnter.digits[0], uiDataGlobal.FreqEnter.digits[1], uiDataGlobal.FreqEnter.digits[2], (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID) ? "" : ".",
@@ -795,7 +795,7 @@ static void handleEvent(uiEvent_t *ev)
 		if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 		{
 			menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, NUM_CH_DETAILS_ITEMS);
-			SetEditParamsForSelectedMenu(true);
+			SetEditParamsForMenuIndex(true);
 			uiDataGlobal.FreqEnter.index = 0; // so we don't keep showing the number being edited.
 			updateScreen(false, true);
 			menuChannelDetailsExitCode |= MENU_STATUS_LIST_TYPE;
@@ -803,7 +803,7 @@ static void handleEvent(uiEvent_t *ev)
 		else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 		{
 			menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, NUM_CH_DETAILS_ITEMS);
-			SetEditParamsForSelectedMenu(true);
+			SetEditParamsForMenuIndex(true);
 			uiDataGlobal.FreqEnter.index = 0;// so we don't keep showing the number being edited.
 			updateScreen(false, true);
 			menuChannelDetailsExitCode |= MENU_STATUS_LIST_TYPE;

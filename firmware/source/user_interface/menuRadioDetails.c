@@ -45,6 +45,18 @@ static int userInfoCursorPositions[NUM_DETAILS_ITEMS];
 static bool curFieldIsNumeric=false;
 static EditStructParrams_t editParams;
 
+static void SetEditParamsForMenuIndex()
+{
+		bool curFieldIsNumeric=menuDataGlobal.currentItemIndex == DETAILS_DMRID;
+
+	editParams.editFieldType=curFieldIsNumeric ? EDIT_TYPE_NUMERIC : EDIT_TYPE_ALPHANUMERIC;
+	editParams.editBuffer= userInfo[menuDataGlobal.currentItemIndex];
+	editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
+	editParams.maxLen= ((menuDataGlobal.currentItemIndex == DETAILS_CALLSIGN) || curFieldIsNumeric) ? 9 : SCREEN_LINE_BUFFER_SIZE+1;
+	editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8; // font size 3.
+	editParams.yPixelOffset=0; // use default menu calculation.
+}
+
 menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
@@ -57,19 +69,16 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		snprintf(userInfo[DETAILS_DMRID], SCREEN_LINE_BUFFER_SIZE, "%u", codeplugGetUserDMRID());
 		uint8_t bootScreenType;
 		codeplugGetBootScreenData(userInfo[DETAILS_LINE1], userInfo[DETAILS_LINE2], &bootScreenType);
-		editParams.maxLen=SCREEN_LINE_BUFFER_SIZE+1;
-		editParams.xPixelOffset=0; // set to number of chars in lefthand prompt if any.
-		editParams.yPixelOffset=0;
+		
 		voicePromptsInit();
 		menuDataGlobal.currentItemIndex = DETAILS_CALLSIGN;
 		menuDataGlobal.endIndex = NUM_DETAILS_ITEMS;
+		SetEditParamsForMenuIndex();
 
 		voicePromptsAppendLanguageString(&currentLanguage->info);
 		voicePromptsAppendLanguageString(&currentLanguage->menu);
 	
 		updateScreen(isFirstRun, true);
-		editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8; // font size 3.
-		editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
 		editUpdateCursor(&editParams, true, true);
 		
 		return (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
@@ -78,8 +87,6 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 	{
 		menuRadioDetailsExitCode = MENU_STATUS_SUCCESS;
 		
-		editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8; // font size 3.
-		editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
 		editUpdateCursor(&editParams, false, true);
 
 		if (ev->hasEvent)
@@ -114,7 +121,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	{
 		keypadAlphaEnable = true;
 	}
-	editParams.maxLen= ((menuDataGlobal.currentItemIndex == DETAILS_CALLSIGN) || curFieldIsNumeric) ? 8 : SCREEN_LINE_BUFFER_SIZE;
 
 	for(int i = -1; i <= 1; i++)
 	{
@@ -192,10 +198,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 
 static void handleEvent(uiEvent_t *ev)
 {
-	editParams.editFieldType=curFieldIsNumeric ? EDIT_TYPE_NUMERIC : EDIT_TYPE_ALPHANUMERIC;
-	editParams.editBuffer= userInfo[menuDataGlobal.currentItemIndex];
-	editParams.cursorPos=&userInfoCursorPositions[menuDataGlobal.currentItemIndex];
-	editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8;
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (repeatVoicePromptOnSK1(ev))
@@ -208,12 +210,14 @@ static void handleEvent(uiEvent_t *ev)
 		if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
 		{
 			menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, NUM_DETAILS_ITEMS);
+			SetEditParamsForMenuIndex();
 			updateScreen(false, true);
 			menuRadioDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
 		{
 			menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, NUM_DETAILS_ITEMS);
+			SetEditParamsForMenuIndex();
 			updateScreen(false, true);
 			menuRadioDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 		}
