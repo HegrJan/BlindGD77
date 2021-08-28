@@ -147,8 +147,9 @@ static bool UseEditHandler()
 		case CH_DETAILS_NAME:
 		case CH_DETAILS_RXFREQ:
 		case CH_DETAILS_TXFREQ:
-		case CH_DETAILS_DMRID:
 			return true;
+		case CH_DETAILS_DMRID:
+			return tmpChannel.chMode == RADIO_MODE_DIGITAL;
 			break;
 		default:
 			break;
@@ -192,6 +193,7 @@ static void SetEditParamsForSelectedMenu(bool updateNumericBuffer)
 			editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
 			editParams.xPixelOffset=5 * 8; // name prompt * char width at font size 3.
 			editParams.yPixelOffset=0; // use default for menu.
+			updateNumericBuffer=false;
 			break;
 		case CH_DETAILS_RXFREQ:
 		case CH_DETAILS_TXFREQ:
@@ -232,8 +234,13 @@ static void SetEditParamsForSelectedMenu(bool updateNumericBuffer)
 			}
 			break;
 	}
-	if (updateNumericBuffer && number > 0)
-		snprintf(editParams.editBuffer, editParams.maxLen, "%u", number);
+	if (updateNumericBuffer)
+	{
+		if (number)
+			snprintf(editParams.editBuffer, editParams.maxLen, "%u", number);
+		else
+			editParams.editBuffer[0]='\0'; // initialize or we might get an irrelevant number from a prior field.
+	}
 }
 
 static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
