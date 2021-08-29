@@ -3237,7 +3237,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 				trxDMRID=dmrID;
 				codeplugSetUserDMRID(trxDMRID);
 				voicePromptsInit();
-				voicePromptsAppendLanguageString(&currentLanguage->user_dmr_id);//joe
+				voicePromptsAppendLanguageString(&currentLanguage->user_dmr_id);
 				voicePromptsAppendInteger(trxDMRID);
 				voicePromptsPlay();
 			}
@@ -3420,6 +3420,20 @@ static void handleEventForGD77S(uiEvent_t *ev)
 			checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
 			clearActiveDMRID();
 			lastHeardClearLastID();
+		}
+		// If rotary knob is turned, immediately reset to channel mode in any mode except keypad.
+		// This is a quick shortcut to reset to the channel mode.
+		if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
+		{
+			if (GD77SParameters.uiMode!=GD77S_UIMODE_TG_OR_SQUELCH)
+			{//joe
+				GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
+				voicePromptsInit();
+				voicePromptsAppendPrompt(PROMPT_CHANNEL_MODE);
+				voicePromptsAppendPrompt(PROMPT_CHANNEL);
+				voicePromptsAppendInteger(ev->rotary+GD77SParameters.channelbankOffset);
+				voicePromptsPlay();
+			}
 		}
 	}
 
