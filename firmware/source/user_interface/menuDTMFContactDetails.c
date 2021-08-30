@@ -42,7 +42,6 @@ static void handleEvent(uiEvent_t *ev);
 static menuStatus_t menuDTMFContactDetailsExitCode = MENU_STATUS_SUCCESS;
 
 static struct_codeplugDTMFContact_t tmpDTMFContact;
-static EditStructParrams_t editParams;
 
 static int dtmfContactDetailsIndex;
 static int dtmfContactCount;

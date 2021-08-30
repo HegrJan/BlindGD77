@@ -43,7 +43,6 @@ static int pcIdx;
 static bool inAnalog = false;
 static struct_codeplugContact_t contact;
 static struct_codeplugDTMFContact_t dtmfContact;
-static EditStructParrams_t editParams;
 
 static void updateCursor(void);
 static void updateScreen(bool inputModeHasChanged, bool allowedToSpeakUpdate);

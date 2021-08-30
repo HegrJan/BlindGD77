@@ -42,6 +42,8 @@ typedef  struct
 	bool allowedToSpeakUpdate;
 } EditStructParrams_t;
 
+extern EditStructParrams_t editParams;
+
 void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render);
 void moveCursorLeftInString(char *str, int *pos, bool delete);
 void moveCursorRightInString(char *str, int *pos, int max, bool insert);

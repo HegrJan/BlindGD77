@@ -26,6 +26,17 @@
 #include <ctype.h>
 #include "user_interface/editHandler.h"
 #include "functions/ticks.h"
+
+EditStructParrams_t editParams=
+{
+	.editFieldType=EDIT_TYPE_ALPHANUMERIC,
+	.editBuffer=NULL,
+	.maxLen=SCREEN_LINE_BUFFER_SIZE,
+	.cursorPos=NULL,
+	.xPixelOffset=0,
+	.yPixelOffset=0,
+	.allowedToSpeakUpdate=true
+};
  
  static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
 {

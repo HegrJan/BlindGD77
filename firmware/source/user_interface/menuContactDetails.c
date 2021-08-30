@@ -46,7 +46,6 @@ static char digits[9];
 static char contactName[20];
 static int namePos;
 static int numPos;
-static EditStructParrams_t editParams;
 
 enum CONTACT_DETAILS_DISPLAY_LIST { CONTACT_DETAILS_NAME = 0, CONTACT_DETAILS_TG, CONTACT_DETAILS_CALLTYPE, CONTACT_DETAILS_TS,
 	NUM_CONTACT_DETAILS_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list

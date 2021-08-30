@@ -59,7 +59,6 @@ static int digitPos;
 static uint16_t savedPriorityChannelIndex = 0;
 static bool nameInError = false;
 static menuStatus_t menuChannelDetailsExitCode = MENU_STATUS_SUCCESS;
-static EditStructParrams_t editParams;
 
 enum CHANNEL_DETAILS_DISPLAY_LIST { CH_DETAILS_NAME = 0,
 									CH_DETAILS_RXFREQ, CH_DETAILS_TXFREQ,

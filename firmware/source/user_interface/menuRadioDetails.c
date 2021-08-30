@@ -43,7 +43,6 @@ static char userInfo[NUM_DETAILS_ITEMS][SCREEN_LINE_BUFFER_SIZE+1];
 static int xOffsetForEditableMenuItems[NUM_DETAILS_ITEMS]; // for cursor 
 static int userInfoCursorPositions[NUM_DETAILS_ITEMS];
 static bool curFieldIsNumeric=false;
-static EditStructParrams_t editParams;
 
 static void SetEditParamsForMenuIndex()
 {
