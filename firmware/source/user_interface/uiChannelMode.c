@@ -3199,7 +3199,15 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 {
 	if (!GD77SKeypadBuffer[0])
-		return false;
+	{// copy channel to vfo
+		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
+
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->channelToVfo);
+		voicePromptsPlay();
+		
+		return true; // will force saving to VFO.
+	}
 	if (strcmp(GD77SKeypadBuffer, "*")==0)
 	{// Toggle DMR and FM mode.
 		if (trxGetMode() == RADIO_MODE_ANALOG)
