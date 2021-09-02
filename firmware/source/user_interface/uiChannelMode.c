@@ -357,8 +357,6 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		}
 
 #if defined(PLATFORM_GD77S)
-		trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);// ensure the power level is available for the Power announcement
-
 		//Reset to first UiMode if the radio is in Analog mode and the current UiMode only applies to DMR
 		if ((trxGetMode() == RADIO_MODE_ANALOG) &&
 			((GD77SParameters.uiMode == GD77S_UIMODE_TS ) ||
@@ -848,9 +846,6 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, AnnounceChannelInfoImmediately() ? PROMPT_THRESHOLD_2 : PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
 		dualWatchChannelData.allowedToAnnounceChannelDetails=false;// once announced, disallow until user explicitly changes the channel.
 	}
-#else
-	// Force GD77S to always use the Master power level
-	currentChannelData->libreDMR_Power = 0x00;
 #endif
 
 }
