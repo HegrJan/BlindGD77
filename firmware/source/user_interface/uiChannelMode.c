@@ -2980,6 +2980,12 @@ static void buildSpeechChannelDetailsForGD77S(bool announceName)
 			buildCSSCodeVoicePrompts(currentChannelData->txTone, type, DIRECTION_TRANSMIT, true);
 		}
 	}
+	
+	announcePowerLevel(false);
+	if ( currentChannelData->libreDMR_Power == 0)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->from_master);
+	}
 }
 
 static void 			AnnounceGD77sKeypadChar(bool init)
@@ -3191,6 +3197,47 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 	return true;
 }
 
+static int GetPowerLevelFromMilliwatValue(int number)
+{
+	if (number <= 125)
+	{
+		return 1;
+	}
+	if (number <= 375)
+	{
+		return 2;
+	}
+	if (number <= 625)
+	{
+		return 3;
+	}
+	if (number <= 875)
+	{
+		return 4;
+	}
+	if (number <= 1500)
+	{
+		return 5;
+	}
+	if (number <= 2500)
+	{
+		return 6;
+	}
+	if (number <= 3500)
+	{
+			return 7;
+	}
+	if (number <= 4500)
+	{
+		return 8;
+	}
+	if (number <= 5000)
+	{
+		return 9;
+	}
+	return 10;
+}
+
 static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 {
 	if (!GD77SKeypadBuffer[0])
@@ -3221,6 +3268,31 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
 		return true;	
 	}
+	if (strncmp(GD77SKeypadBuffer, "**", 2)==0)
+	{// set or clear channel specific power.
+		int number = isdigit(GD77SKeypadBuffer[2]) ? atoi(GD77SKeypadBuffer+2) : 0;
+		if (number >=50)
+			number=GetPowerLevelFromMilliwatValue(number);
+		if (number==0)
+		{// Clear channel specific power.
+			currentChannelData->libreDMR_Power = 0x00;
+			trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
+		}
+		else if (number >=CODEPLUG_MIN_PER_CHANNEL_POWER && number <=(MAX_POWER_SETTING_NUM + CODEPLUG_MIN_PER_CHANNEL_POWER))
+		{
+			currentChannelData->libreDMR_Power=number;
+			trxSetPowerFromLevel(currentChannelData->libreDMR_Power - 1);
+		}
+				
+		announceItem(PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_1);
+		if ( currentChannelData->libreDMR_Power == 0)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->from_master);
+		}
+		voicePromptsPlay();
+		return true;
+	}
+
 	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
 	{// talkgroup # followed by digits. 
 		int len=strlen(GD77SKeypadBuffer);
