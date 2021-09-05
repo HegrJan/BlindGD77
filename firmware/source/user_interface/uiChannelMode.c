@@ -52,6 +52,7 @@ typedef enum
 	GD77S_UIMODE_FILTER,
 	GD77S_UIMODE_DTMF_CONTACTS,
 	GD77S_UIMODE_ECO,
+	GD77S_UIMODE_MIC_GAIN,
 	GD77S_UIMODE_AUTOZONE,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
@@ -3142,6 +3143,9 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 		case GD77S_UIMODE_ECO:
 			announceEcoLevel(voicePromptsIsPlaying());
 			break;
+		case GD77S_UIMODE_MIC_GAIN:
+			announceMicGain(!voicePromptsIsPlaying(), true);
+			break;
 		case GD77S_UIMODE_KEYPAD:
 			AnnounceGD77sKeypadChar(false);
 			break;
@@ -3615,6 +3619,16 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				case GD77S_UIMODE_ECO:
 					vp = PROMPT_ECO_MODE;
 					break;
+				case GD77S_UIMODE_MIC_GAIN:
+					if (trxGetMode() == RADIO_MODE_DIGITAL)
+					{
+						vpString = (char * const *)&currentLanguage->dmr_mic_gain;
+					}
+					else
+					{
+						vpString = (char * const *)&currentLanguage->fm_mic_gain;
+										}
+					break;
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
 					break;
@@ -3797,6 +3811,27 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					{
 						settingsIncrement(nonVolatileSettings.ecoLevel, 1);
 						rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+					}
+					voicePromptsInit();
+					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
+					voicePromptsPlay();
+					break;
+				case GD77S_UIMODE_MIC_GAIN:
+					if (trxGetMode() == RADIO_MODE_DIGITAL)
+					{
+						if (nonVolatileSettings.micGainDMR < 15)
+						{
+							settingsIncrement(nonVolatileSettings.micGainDMR, 1);
+							setMicGainDMR(nonVolatileSettings.micGainDMR);
+						}	
+					}
+					else
+					{
+						if (nonVolatileSettings.micGainFM < 31)
+						{
+							settingsIncrement(nonVolatileSettings.micGainFM, 1);
+							trxSetMicGainFM(nonVolatileSettings.micGainFM);
+						}
 					}
 					voicePromptsInit();
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
@@ -4021,6 +4056,27 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					{
 						settingsDecrement(nonVolatileSettings.ecoLevel, 1);
 						rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+					}
+					voicePromptsInit();
+					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
+					voicePromptsPlay();
+					break;
+				case GD77S_UIMODE_MIC_GAIN:
+					if (trxGetMode() == RADIO_MODE_DIGITAL)
+					{
+						if (nonVolatileSettings.micGainDMR > 0)
+						{
+							settingsDecrement(nonVolatileSettings.micGainDMR, 1);
+							setMicGainDMR(nonVolatileSettings.micGainDMR);
+						}	
+					}
+					else
+					{
+						if (nonVolatileSettings.micGainFM > 1)
+						{
+							settingsDecrement(nonVolatileSettings.micGainFM, 1);
+							trxSetMicGainFM(nonVolatileSettings.micGainFM);
+						}
 					}
 					voicePromptsInit();
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);

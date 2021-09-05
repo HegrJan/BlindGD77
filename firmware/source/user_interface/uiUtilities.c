@@ -2052,6 +2052,36 @@ void announceEcoLevel(bool voicePromptWasPlaying)
 
 	voicePromptsAppendInteger(nonVolatileSettings.ecoLevel);
 }
+
+void announceMicGain(bool announcePrompt, bool announceValue)
+{
+	bool isDigital = trxGetMode() == RADIO_MODE_DIGITAL;
+	if (announcePrompt)
+	{
+		if (isDigital)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->dmr_mic_gain);
+		}
+		else
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->fm_mic_gain);
+		}
+	}
+	if (announceValue)
+	{
+		if (isDigital)
+		{
+			char buf[SCREEN_LINE_BUFFER_SIZE];
+			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
+
+			voicePromptsAppendString(buf);
+		}
+		else
+		{
+			voicePromptsAppendInteger(nonVolatileSettings.micGainFM - 16);
+		}
+	}
+}
 #endif
 
 ANNOUNCE_STATIC void announceTemperature(bool voicePromptWasPlaying)

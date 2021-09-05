@@ -45,6 +45,7 @@ ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying);
 void announceEcoLevel(bool voicePromptWasPlaying);
+void announceMicGain(bool announcePrompt, bool announceValue);
 ANNOUNCE_STATIC void announceBatteryPercentage(void);
 ANNOUNCE_STATIC void announceTS(void);
 ANNOUNCE_STATIC void announceCC(void);
