@@ -37,6 +37,36 @@ EditStructParrams_t editParams=
 	.yPixelOffset=0,
 	.allowedToSpeakUpdate=true
 };
+
+static bool needToRequeueEditBufferForAnnouncementOnSK1=false;
+
+static void AnnounceCharWithRequeue(char ch)
+{
+	announceChar(ch);
+	needToRequeueEditBufferForAnnouncementOnSK1=true;
+} 
+
+/*
+After announcing a character during editing, we need to requeue the entire buffer so that sk1 will reread the entire buffer.
+*/
+void RequeueEditBufferForAnnouncementOnSK1IfNeeded()
+{
+	if (!needToRequeueEditBufferForAnnouncementOnSK1)
+		return;
+	if (voicePromptsIsPlaying())
+		return;
+	
+	needToRequeueEditBufferForAnnouncementOnSK1=false;
+	
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+		return;
+
+	if (!editParams.editBuffer[0])
+		return;
+	
+	voicePromptsInit();
+	voicePromptsAppendString(editParams.editBuffer);
+}
  
  static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
 {
@@ -110,7 +140,7 @@ void moveCursorLeftInString(char *str, int *pos, bool delete)
 	if (*pos > 0)
 	{
 		*pos -=1;
-		announceChar(str[*pos]); // speak the new char or the char about to be backspaced out.
+		AnnounceCharWithRequeue(str[*pos]); // speak the new char or the char about to be backspaced out.
 
 		if (delete)
 		{
@@ -143,7 +173,7 @@ void moveCursorRightInString(char *str, int *pos, int max, bool insert)
 		if (*pos < max-1)
 		{
 			*pos += 1;
-			announceChar(str[*pos]); // speak the new char or the char about to be backspaced out.
+			AnnounceCharWithRequeue(str[*pos]); // speak the new char or the char about to be backspaced out.
 		}
 	}
 }
@@ -155,7 +185,10 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	editParams->allowedToSpeakUpdate=true; // set to false when we speak a newly inserted character to avoid the whole buffer being repeated on a screen update.
 	
 	if ((ev->events & KEY_EVENT)==0)
+	{
+		RequeueEditBufferForAnnouncementOnSK1IfNeeded();
 		return false;
+	}
 	if (KEYCHECK_PRESS(ev->keys, KEY_DOWN) || KEYCHECK_PRESS(ev->keys, KEY_UP))
 		return false; // switching fields.
 	if (KEYCHECK_PRESS(ev->keys, KEY_GREEN) || KEYCHECK_PRESS(ev->keys, KEY_RED))
@@ -169,6 +202,17 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	
 	if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
 	{
+		bool deleteToEnd =BUTTONCHECK_DOWN(ev, BUTTON_SK2);
+		if (deleteToEnd)
+		{
+			while (editBufferLen > (*editParams->cursorPos))
+			{
+				editParams->editBuffer[*editParams->cursorPos]=editParams->editBuffer[(*editParams->cursorPos)+1];
+				editBufferLen--;
+			}
+			editParams->editBuffer[editBufferLen]='\0';
+		}
+
 		*editParams->cursorPos = editBufferLen;
 		editUpdateCursor(editParams, true, true);
 		editParams->allowedToSpeakUpdate = false;
@@ -183,10 +227,18 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	}
 	else if (KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
 	{
+		bool deleteToStart =BUTTONCHECK_DOWN(ev, BUTTON_SK2);
+		if (deleteToStart)
+		{
+			while (*editParams->cursorPos > 0)
+			{
+				moveCursorLeftInString(editParams->editBuffer, editParams->cursorPos, true);
+			}
+		}
 		*editParams->cursorPos = 0;
 		editUpdateCursor(editParams, true, true);
 		if (editBufferLen > 0)
-			announceChar(editParams->editBuffer[0]);
+			AnnounceCharWithRequeue(editParams->editBuffer[0]);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
 	}
@@ -236,7 +288,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 		}
 		editUpdateCursor(editParams, true, true);
 	}
-	announceChar(ch);
+	AnnounceCharWithRequeue(ch);
 	editParams->allowedToSpeakUpdate = false;
 	return true;
 }

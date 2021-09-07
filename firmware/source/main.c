@@ -38,6 +38,7 @@
 #include "interfaces/clockManager.h"
 #include "functions/rxPowerSaving.h"
 #include "interfaces/wdog.h"
+#include "user_interface/editHandler.h"
 
 #if defined(USING_EXTERNAL_DEBUGGER)
 #include "SeggerRTT/RTT/SEGGER_RTT.h"
@@ -1200,10 +1201,10 @@ void mainTask(void *data)
 					displayEnableBacklight(false);
 				}
 			}
-
 			voicePromptsTick();
 			soundTickMelody();
 			voxTick();
+			RequeueEditBufferForAnnouncementOnSK1IfNeeded();
 
 #if defined(PLATFORM_RD5R) // Needed for platforms which can't control the poweroff
 			settingsSaveIfNeeded(false);

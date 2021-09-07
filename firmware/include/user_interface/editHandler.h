@@ -48,5 +48,6 @@ void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render);
 void moveCursorLeftInString(char *str, int *pos, bool delete);
 void moveCursorRightInString(char *str, int *pos, int max, bool insert);
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams);
+void RequeueEditBufferForAnnouncementOnSK1IfNeeded();
 
 #endif //EDIT_HANDLER_H_INCLUDED
