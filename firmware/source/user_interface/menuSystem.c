@@ -152,8 +152,11 @@ static void menuSystemCheckForFirstEntryAudible(menuStatus_t status)
 			nextKeyBeepMelody = (int *)MELODY_KEY_BEEP_FIRST_ITEM;
 		}
 		else if (status & MENU_STATUS_INPUT_TYPE)
-		{
-			nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
+		{// If voice prompts are active, the voice prompt prevents this melody from playing until too late.
+		// Only play it if the voice prompt level is beep,
+		// or if higher, if a voice prompt isn't active.
+			if ((nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_BEEP) || (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && !voicePromptsIsPlaying()))
+				nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
 		}
 	}
 }
