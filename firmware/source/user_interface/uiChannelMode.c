@@ -69,6 +69,7 @@ typedef struct
 	uint8_t autozoneTypeIndex;
 	struct_AutoZoneParams_t autoZone;
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
+	bool cycleFunctionsInReverse;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -81,7 +82,8 @@ static GD77SParameters_t GD77SParameters =
 		.virtualVFOMode=false,
 		.autoZonesEnabled=0,
 		.autozoneTypeIndex=1,
-		.channelbankOffset=0
+		.channelbankOffset=0,
+		.cycleFunctionsInReverse=false
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -3505,7 +3507,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 		if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
 		{
 			if (GD77SParameters.uiMode!=GD77S_UIMODE_TG_OR_SQUELCH)
-			{//joe
+			{
 				GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
 				voicePromptsInit();
 				voicePromptsAppendPrompt(PROMPT_CHANNEL_MODE);
@@ -3539,7 +3541,11 @@ static void handleEventForGD77S(uiEvent_t *ev)
 			voicePromptsPlay();
 			return;
 		}
-
+if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)==0 && BUTTONCHECK_DOWN(ev, BUTTON_ORANGE)==0)
+{
+	GD77SParameters.cycleFunctionsInReverse=false;
+	return;
+}
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
 			announceItem(PROMPT_SEQUENCE_BATTERY, PROMPT_THRESHOLD_2);
@@ -3547,6 +3553,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
+			GD77SParameters.cycleFunctionsInReverse =BUTTONCHECK_DOWN(ev, BUTTON_SK1);
 			voicePrompt_t vp = NUM_VOICE_PROMPTS;
 			char * const *vpString = NULL;
 			// First see if we're leaving autozone mode and save the autozone settings.
@@ -3559,8 +3566,10 @@ static void handleEventForGD77S(uiEvent_t *ev)
 					currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 				settingsSetDirty();
 			}
-			
-			GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
+			if (GD77SParameters.cycleFunctionsInReverse)
+				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode - 1) % GD77S_UIMODE_MAX;
+			else
+				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
 			//skip over Digital controls if the radio is in Analog mode
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{
@@ -3568,7 +3577,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				if ((GD77SParameters.uiMode == GD77S_UIMODE_TS) ||
 					(GD77SParameters.uiMode == GD77S_UIMODE_CC))
 				{
-					GD77SParameters.uiMode = GD77S_UIMODE_FILTER;
+					GD77SParameters.uiMode = GD77SParameters.cycleFunctionsInReverse ? GD77S_UIMODE_TS-1 :GD77S_UIMODE_CC+1;
 				}
 			}
 			else
@@ -3576,7 +3585,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				// digital
 				if (GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS)
 				{
-					GD77SParameters.uiMode = GD77S_UIMODE_ECO;
+					GD77SParameters.uiMode =GD77SParameters.cycleFunctionsInReverse ? GD77S_UIMODE_DTMF_CONTACTS-1:GD77S_UIMODE_DTMF_CONTACTS+1;
 				}
 			}
 
@@ -3653,7 +3662,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				voicePromptsPlay();
 			}
 		}
-		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
+		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.cycleFunctionsInReverse)
 		{
 			if (GD77SParameters.channelOutOfBounds == false)
 			{
@@ -3662,7 +3671,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 				voicePromptsPlay();
 			}
 		}
-		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (uiDataGlobal.DTMFContactList.isKeying == false))
+		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.cycleFunctionsInReverse)
 		{
 			switch (GD77SParameters.uiMode)
 			{
