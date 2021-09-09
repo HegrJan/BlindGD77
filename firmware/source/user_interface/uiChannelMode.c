@@ -2557,9 +2557,9 @@ static void scanning(void)
 		{
 			if(trxCarrierDetected())
 			{
+				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
-				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
 
 				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 				{
@@ -3959,11 +3959,13 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 							{
 								uiDataGlobal.Scan.lastIteration = true;
 							}
-
+							
 							uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = uiDataGlobal.currentSelectedChannelNumber;
 							uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
 							uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
 							uiDataGlobal.Scan.state = SCAN_SCANNING;
+							keyboardReset();
+
 							return;
 						}
 
