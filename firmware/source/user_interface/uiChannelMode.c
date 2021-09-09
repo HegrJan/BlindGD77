@@ -2935,6 +2935,9 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 			{// Only append name if different from the channel number.
 				voicePromptsAppendString(buf);
 			}
+			if (trxGetMode() == RADIO_MODE_DIGITAL)
+				announceContactNameTgOrPc(true); // avoid saying "contact", just announce the tg.
+
 			voicePromptsPlay();
 		}
 
@@ -3146,7 +3149,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 			announceEcoLevel(voicePromptsIsPlaying());
 			break;
 		case GD77S_UIMODE_MIC_GAIN:
-			announceMicGain(!voicePromptsIsPlaying(), true);
+			announceMicGain(false, true);
 			break;
 		case GD77S_UIMODE_KEYPAD:
 			AnnounceGD77sKeypadChar(false);
