@@ -377,19 +377,19 @@ void menuSystemLanguageHasChanged(void)
 const menuItemNewData_t mainMenuItems[] =
 {
 	{   3, MENU_ZONE_LIST       },
-	{   4, MENU_RSSI_SCREEN     },
-	{ 150, MENU_RADIO_INFOS     },
+	{  12, MENU_CHANNEL_DETAILS },
 	{   6, MENU_CONTACTS_MENU   },
 	{   7, MENU_LAST_HEARD      },
-	{   8, MENU_FIRMWARE_INFO   },
+	{   4, MENU_RSSI_SCREEN     },
+	{ 150, MENU_RADIO_INFOS     },
 	{   9, MENU_OPTIONS         },
 	{  10, MENU_DISPLAY         },
 	{  11, MENU_SOUND           },
-	{  12, MENU_CHANNEL_DETAILS },
+	{   144, MENU_RADIO_DETAILS},
 	{  13, MENU_LANGUAGE        },
+	{   8, MENU_FIRMWARE_INFO   },
 	{   2, MENU_CREDITS         },
 	{   175, MENU_AUTOZONE        },
-	{   144, MENU_RADIO_DETAILS},
 };
 
 const menuItemsList_t menuDataMainMenu =
