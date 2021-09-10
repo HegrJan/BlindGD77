@@ -67,6 +67,7 @@ menuStatus_t menuNumericalEntry(uiEvent_t *ev, bool isFirstRun)
 		editParams.cursorPos=&cursorPos;
 		editParams.xPixelOffset =0;
 		editParams.yPixelOffset =0;
+		*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 		editParams.allowedToSpeakUpdate=true;
 		if (inAnalog)
 		{
@@ -153,6 +154,7 @@ static void updateScreen(bool inputModeHasChanged, bool allowedToSpeakUpdate)
 	{
 		editParams.editFieldType = inAnalog ? EDIT_TYPE_DTMF_CHARS : EDIT_TYPE_NUMERIC;
 		editParams.maxLen = inAnalog ? NUM_DTMF_DIGITS : NUM_PC_OR_TG_DIGITS;
+		*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 
 		voicePromptsInit();
 		switch(menuDataGlobal.currentItemIndex)

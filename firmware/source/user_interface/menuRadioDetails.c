@@ -54,6 +54,7 @@ static void SetEditParamsForMenuIndex()
 	editParams.maxLen= ((menuDataGlobal.currentItemIndex == DETAILS_CALLSIGN) || curFieldIsNumeric) ? 9 : SCREEN_LINE_BUFFER_SIZE+1;
 	editParams.xPixelOffset=xOffsetForEditableMenuItems[menuDataGlobal.currentItemIndex]*8; // font size 3.
 	editParams.yPixelOffset=0; // use default menu calculation.
+	*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 }
 
 menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)

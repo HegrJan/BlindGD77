@@ -82,6 +82,7 @@ static void SetEditParamsForMenuIndex()
 			editParams.yPixelOffset=0; // use menu default.
 			break;
 	}		
+	*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 }
 
 static bool DTMFContactExists(char* name)

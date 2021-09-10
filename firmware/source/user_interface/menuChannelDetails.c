@@ -192,6 +192,8 @@ static void SetEditParamsForMenuIndex(bool updateNumericBuffer)
 			editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
 			editParams.xPixelOffset=5 * 8; // name prompt * char width at font size 3.
 			editParams.yPixelOffset=0; // use default for menu.
+			if (updateNumericBuffer)// name is not numeric but it means focus is moving to this field.
+				*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 			updateNumericBuffer=false;
 			break;
 		case CH_DETAILS_RXFREQ:
@@ -239,6 +241,7 @@ static void SetEditParamsForMenuIndex(bool updateNumericBuffer)
 			snprintf(editParams.editBuffer, editParams.maxLen, "%u", number);
 		else
 			editParams.editBuffer[0]='\0'; // initialize or we might get an irrelevant number from a prior field.
+		*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 	}
 }
 

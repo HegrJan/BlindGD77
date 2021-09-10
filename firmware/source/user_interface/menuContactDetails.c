@@ -87,6 +87,7 @@ static void SetEditParamsForMenuIndex()
 			itoa(tmpContact.tgNumber, digits, 10);
 			break;
 	}		
+	*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 }
 
 menuStatus_t menuContactDetails(uiEvent_t *ev, bool isFirstRun)
