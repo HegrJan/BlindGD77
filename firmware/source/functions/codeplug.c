@@ -1270,7 +1270,7 @@ void codeplugGetRadioName(char *buf)
 
 bool codeplugSetRadioName(char *name)
 {
-	if (!name || !*name) 
+	if (!name) 
 		return false;
 	
 	char buf[8];

@@ -66,7 +66,14 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		memset(xOffsetForEditableMenuItems, 0,sizeof(xOffsetForEditableMenuItems));
 		
 		codeplugGetRadioName(userInfo[DETAILS_CALLSIGN]);
-		snprintf(userInfo[DETAILS_DMRID], SCREEN_LINE_BUFFER_SIZE, "%u", codeplugGetUserDMRID());
+		if (codeplugGetUserDMRID())
+		{
+			snprintf(userInfo[DETAILS_DMRID], SCREEN_LINE_BUFFER_SIZE, "%u", codeplugGetUserDMRID());
+		}
+		else
+		{
+			userInfo[DETAILS_DMRID][0]='\0';
+		}
 		uint8_t bootScreenType;
 		codeplugGetBootScreenData(userInfo[DETAILS_LINE1], userInfo[DETAILS_LINE2], &bootScreenType);
 		
