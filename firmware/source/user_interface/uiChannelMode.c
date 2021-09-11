@@ -1099,7 +1099,7 @@ static void handleEvent(uiEvent_t *ev)
 			if (uiDataGlobal.Scan.active && dualWatchChannelData.dualWatchActive)
 				AnnounceDualWatchChannels(nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1);
 			else
-				AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2));
+				AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
 			return;
 		}
 
@@ -2949,51 +2949,6 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 	}
 }
 
-static void buildSpeechChannelDetailsForGD77S(bool announceName)
-{
-	if (announceName)
-	{
-		char buf[17];
-
-		codeplugUtilConvertBufToString(currentChannelData->name, buf, 16);
-		voicePromptsAppendString(buf);
-
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-	}
-	announceFrequency();
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-
-	if (trxGetMode() == RADIO_MODE_DIGITAL)
-	{
-		announceContactNameTgOrPc(voicePromptsIsPlaying());
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		announceTS();
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		announceCC();
-	}
-	else
-	{
-		CodeplugCSSTypes_t type = codeplugGetCSSType(currentChannelData->rxTone);
-		if ((type & CSS_TYPE_NONE) == 0)
-		{
-			buildCSSCodeVoicePrompts(currentChannelData->rxTone, type, DIRECTION_RECEIVE, true);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-		}
-
-		type = codeplugGetCSSType(currentChannelData->txTone);
-		if ((type & CSS_TYPE_NONE) == 0)
-		{
-			buildCSSCodeVoicePrompts(currentChannelData->txTone, type, DIRECTION_TRANSMIT, true);
-		}
-	}
-	
-	announcePowerLevel(false);
-	if ( currentChannelData->libreDMR_Power == 0)
-	{
-		voicePromptsAppendLanguageString(&currentLanguage->from_master);
-	}
-}
-
 static void 			AnnounceGD77sKeypadChar(bool init)
 {
 	char buf[2] = {0,0};
@@ -3402,9 +3357,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
 		if (zoneChannelIndex==0)
 		{
-			voicePromptsInit();
-			buildSpeechChannelDetailsForGD77S(false);
-			voicePromptsPlay();
+			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2), false);
 			return true; // just temporary.
 		}
 		SaveChannelToCurrentZone(zoneChannelIndex);
@@ -3669,9 +3622,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		{
 			if (GD77SParameters.channelOutOfBounds == false)
 			{
-				voicePromptsInit();
-				buildSpeechChannelDetailsForGD77S(true);
-				voicePromptsPlay();
+				AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
 			}
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.cycleFunctionsInReverse)

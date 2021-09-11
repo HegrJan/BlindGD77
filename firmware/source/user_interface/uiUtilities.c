@@ -2701,12 +2701,12 @@ static bool DoesPriorityChannelExistInCurrentZone()
 	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone) && indexRelativeToCurrentZone!=NO_PRIORITY_CHANNEL;
 }
 
-void AnnounceChannelSummary(bool voicePromptWasPlaying)
+void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
 	
 	voicePromptsInit();
-	if (isChannelScreen)
+	if (announceName)
 	{
 		char voiceBuf[17];
 		char voiceBufChNumber[5];
