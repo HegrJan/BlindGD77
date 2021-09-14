@@ -36,17 +36,19 @@ static  void ApplyFRSRestrictions(uint16_t index, struct_codeplugChannel_t *chan
 static void 	ApplyMURSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 static void 	ApplyNOAARestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 static void 	ApplyPMR446Restrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
+static void ApplyUSRailRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 
 const struct_AutoZoneParams_t AutoZoneData[AutoZone_TYPE_MAX]=
-{// type, name, flags, start freq, end freq, spacing, rpt offset, pri index, totalInBase, baseChn, interChn, offsetChn, offInterChn, func
-	{AutoZone_MRN, "MRN", 0x03a5, 16065000, 16200000, 5000, 4600, 16, 56, 1, 60, 0, 0, &ApplyMarineRestrictions},
+	{// type, name, flags, start freq, end freq, spacing, rpt offset, pri index, totalInBase, baseChn, interChn, offsetChn, offInterChn, func
+		{AutoZone_MRN, "MRN", 0x03a5, 16065000, 16200000, 5000, 4600, 16, 56, 1, 60, 0, 0, &ApplyMarineRestrictions},
 		{AutoZone_AU_UHFCB, "UHF CB", 0x55, 47642500, 47740000, 2500, 750, 5, 80, 0, 0, 0, 0, &ApplyUHFCBRestrictions},
-			{AutoZone_GMRS, "GMRS", 0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8, &ApplyGMRSRestrictions},
-				{AutoZone_FRS, "FRS",  0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8, &ApplyFRSRestrictions},
-					{AutoZone_MURS, "MURS", 0x01, 15182000, 15206000, 6000, 0, 0, 5, 0, 0, 0, 0, &ApplyMURSRestrictions},
-						{AutoZone_NOAA, "NOAA", 0x01, 16240000, 16255000, 2500, 0, 0, 7, 0, 0, 0, 0, &ApplyNOAARestrictions},
-							{AutoZone_PMR446, "PMR446", 0x41,  44600625, 44619375, 1250, 0, 0, 16, 0, 0, 0, 0, &ApplyPMR446Restrictions}
-};
+		{AutoZone_GMRS, "GMRS", 0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8, &ApplyGMRSRestrictions},
+		{AutoZone_FRS, "FRS",  0x04d5, 46255000, 46272500, 2500, 5000, 0, 15, 15, 1, 23, 8, &ApplyFRSRestrictions},
+		{AutoZone_MURS, "MURS", 0x01, 15182000, 15206000, 6000, 0, 0, 5, 0, 0, 0, 0, &ApplyMURSRestrictions}, // fudged, see AdjustMURSFrequencies.
+		{AutoZone_NOAA, "NOAA", 0x01, 16240000, 16255000, 2500, 0, 0, 7, 0, 0, 0, 0, &ApplyNOAARestrictions},
+		{AutoZone_PMR446, "PMR446", 0x41,  44600625, 44619375, 1250, 0, 0, 16, 0, 0, 0, 0, &ApplyPMR446Restrictions},
+		{AutoZone_US_RAILWAY, "US RAIL", 0x41, 16012500, 16156500, 1500, 0, 0, 97, 0, 0, 0, 0, &ApplyUSRailRestrictions},// note first 4 channels must be fudged, see AdjustUSRailFrequencies.
+	};
 
 static struct_AutoZoneParams_t* autoZone=&nonVolatileSettings.autoZone;
 
@@ -177,6 +179,33 @@ static void 	ApplyPMR446Restrictions(uint16_t index, struct_codeplugChannel_t *c
 	channelBuf->libreDMR_Power=3; // max 0.5 watts.
 }
 
+static void ApplyUSRailRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
+{
+	channelBuf->flag4|=0x04; // RX only.
+}
+
+static void AdjustUSRailFrequencies(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq)
+{
+	switch (index)
+	{
+		case 1:
+			*rxFreq = 15957000;
+			break;
+		case 2:
+			*rxFreq = 15981000;
+			break;
+		case 3:
+			*rxFreq = 15993000;
+			break;
+		case 4:
+			*rxFreq = 16005000;
+			break;
+		default:
+			return;
+	}
+	*txFreq=*rxFreq;
+}
+
 /*
 Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band are RX only.
 */
@@ -184,7 +213,7 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 {
 	if (autoZone->type <1 || autoZone->type >=AutoZone_TYPE_MAX)
 		return;
-	if (!AutoZoneData[autoZone->type].ApplyChannelRestrictionsFunc)
+	if (!AutoZoneData[autoZone->type-1].ApplyChannelRestrictionsFunc)
 		return;
 	AutoZoneData[autoZone->type-1].ApplyChannelRestrictionsFunc(index, channelBuf);
 }	
@@ -281,7 +310,7 @@ static uint8_t AutoZoneGetBitFromIndex(int index)
 {
 	uint8_t indexCounter=0;
 	uint8_t bit=1;
-	for (uint8_t bitCounter = 1 ; bitCounter < 8; ++bitCounter)
+	for (uint8_t bitCounter = 1 ; bitCounter < AutoZone_TYPE_MAX; ++bitCounter)
 	{
 		if (nonVolatileSettings.autoZonesEnabled&bit)
 		{
@@ -322,14 +351,16 @@ bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf)
 	memset(returnBuf->name, 0xff, sizeof(returnBuf->name));
 	memcpy(returnBuf->name, autoZone->name, nameLen);
 	
-		int total=autoZone->totalChannelsInBaseBank;
+	int total=autoZone->totalChannelsInBaseBank;
+		
 	if (autoZone->flags&AutoZoneHasBankAtOffset)
 		total*=2;
 	returnBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone = total;
 
 	if (!AutoZoneGetChannelIndices(returnBuf))
 	{// Just use natural order.
-		for (uint16_t channelIndex=0; channelIndex < total; ++channelIndex)
+		int safeMax=SAFE_MIN(total, 99);
+		for (uint16_t channelIndex=0; channelIndex < safeMax; ++channelIndex)
 		{
 			returnBuf->channels[channelIndex]=channelIndex+1;
 		}
@@ -392,7 +423,13 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 	}
 	// Hack for MURS.
 	if (autoZone->type==AutoZone_MURS)
+	{
 		AdjustMURSFrequencies(index, rxFreq, txFreq);
+	}
+	else if (autoZone->type==AutoZone_US_RAILWAY)
+	{//similar hack because first four channels don't follow pattern.
+		AdjustUSRailFrequencies(index, rxFreq, txFreq);
+	}
 	return true;
 }
 

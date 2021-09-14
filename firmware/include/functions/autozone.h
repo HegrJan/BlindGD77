@@ -44,6 +44,7 @@ typedef enum
 	AutoZone_MURS,
 	AutoZone_NOAA,
 	AutoZone_PMR446,
+	AutoZone_US_RAILWAY,
 	AutoZone_TYPE_MAX
 } AutoZoneType_t;
 

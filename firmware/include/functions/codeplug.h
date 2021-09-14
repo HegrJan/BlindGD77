@@ -123,7 +123,8 @@ typedef enum
 typedef struct
 {
 	char		name[16];
-	uint16_t	channels[80];// 16 for the original codeplug, but set this to  80 to allow for the new codeplug zones format
+	uint16_t	channels[80];// 16 for the original codeplug, 80 for standard and 99 for autozone.
+	uint16_t	NOT_IN_CODEPLUGDATA_ExtraChannels[19];// extra 19 for autozone, not used by real zones.
 	int			NOT_IN_CODEPLUGDATA_numChannelsInZone;// This property is not part of the codeplug data, its initialised by the code
 	int			NOT_IN_CODEPLUGDATA_highestIndex; // Highest index in the array of channels
 	int			NOT_IN_CODEPLUGDATA_indexNumber;// This property is not part of the codeplug data, its initialised by the code. Index > 0 are real zone. -1 indicates the virtual "All channels" zone
