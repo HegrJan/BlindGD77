@@ -44,18 +44,29 @@ typedef enum
 {
 	GD77S_UIMODE_TG_OR_SQUELCH,
 	GD77S_UIMODE_ZONE,
-	GD77S_UIMODE_POWER,
-	GD77S_UIMODE_KEYPAD, // virtual keypad
 	GD77S_UIMODE_SCAN,
+	GD77S_UIMODE_DTMF_CONTACTS,
+	GD77S_UIMODE_KEYPAD, // virtual keypad
 	GD77S_UIMODE_TS,
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
-	GD77S_UIMODE_DTMF_CONTACTS,
-	GD77S_UIMODE_ECO,
-	GD77S_UIMODE_MIC_GAIN,
-	GD77S_UIMODE_AUTOZONE,
+	GD77S_UIMODE_OPTIONS,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
+typedef enum
+{
+	GD77S_OPTION_POWER,
+	GD77S_OPTION_ECO,
+	GD77S_OPTION_FM_MIC_GAIN,
+	GD77S_OPTION_DMR_MIC_GAIN,
+	GD77S_OPTION_VHF_SQUELCH,
+	GD77S_OPTION_220_SQUELCH,
+	GD77S_OPTION_UHF_SQUELCH,
+	GD77S_OPTION_TOT_MASTER,
+	GD77S_OPTION_PTT_LATCH,
+	GD77S_OPTION_AUTOZONE,
+	GD77S_OPTION_MAX
+} GD77S_OPTIONS_t;
 
 typedef struct
 {
@@ -70,6 +81,7 @@ typedef struct
 	struct_AutoZoneParams_t autoZone;
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 	bool cycleFunctionsInReverse;
+	GD77S_OPTIONS_t option; // used in Options mode.
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -83,7 +95,8 @@ static GD77SParameters_t GD77SParameters =
 		.autoZonesEnabled=0,
 		.autozoneTypeIndex=1,
 		.channelbankOffset=0,
-		.cycleFunctionsInReverse=false
+		.cycleFunctionsInReverse=false,
+		.option=GD77S_OPTION_POWER
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -445,7 +458,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
-			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD) && (rotarySwitchGetPosition()+GD77SParameters.channelbankOffset != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
+			if (((uiDataGlobal.Scan.active == false) && (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD) && (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS) && (rotarySwitchGetPosition()+GD77SParameters.channelbankOffset != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
 			{
 				if (voicePromptsIsPlaying() == false)
 				{
@@ -2999,6 +3012,83 @@ static void ClearGD77sKeypadBuffer(void)
 	soundSetMelody(MELODY_KEY_LONG_BEEP);
 }
 
+static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPromptInProgress)
+{
+	if (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS)
+		return;
+	bool voicePromptWasPlaying = alwaysAnnounceOptionName ? false : voicePromptsIsPlaying();
+	if (clearPriorPromptInProgress)
+		voicePromptsInit();
+	
+	char rightSideVar[SCREEN_LINE_BUFFER_SIZE]="\0";
+
+	switch (GD77SParameters.option)
+	{
+		case GD77S_OPTION_POWER:
+			announcePowerLevel(voicePromptWasPlaying);
+			break;
+		case GD77S_OPTION_ECO:
+			announceEcoLevel(voicePromptWasPlaying);
+			break;
+		case GD77S_OPTION_FM_MIC_GAIN:
+			announceMicGain(voicePromptWasPlaying==false, true, false);
+			break;
+		case GD77S_OPTION_DMR_MIC_GAIN:
+			announceMicGain(voicePromptWasPlaying==false, true, true);
+			break;
+		case GD77S_OPTION_VHF_SQUELCH:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->squelch_VHF);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] - 1) * 5);// 5% steps
+			voicePromptsAppendString(rightSideVar);
+			break;
+		case GD77S_OPTION_220_SQUELCH:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->squelch_220);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] - 1) * 5);// 5% steps
+			voicePromptsAppendString(rightSideVar);
+			break;
+		case GD77S_OPTION_UHF_SQUELCH:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->squelch_UHF);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] - 1) * 5);// 5% steps
+			voicePromptsAppendString(rightSideVar);
+			break;
+		case GD77S_OPTION_TOT_MASTER:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->tot);
+			if (nonVolatileSettings.totMaster > 0)
+			{
+				snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", nonVolatileSettings.totMaster * 15);
+				voicePromptsAppendString(rightSideVar);
+			}
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
+		case GD77S_OPTION_PTT_LATCH:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->ptt_toggle);
+			if (settingsIsOptionBitSet(BIT_PTT_LATCH))
+				voicePromptsAppendLanguageString(&currentLanguage->on);
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
+		case GD77S_OPTION_AUTOZONE:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->autoZone);
+			AutoZoneGetData(GD77SParameters.autozoneTypeIndex, &GD77SParameters.autoZone);
+			voicePromptsAppendString((char*)GD77SParameters.autoZone.name);
+			if (IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex))
+				voicePromptsAppendLanguageString(&currentLanguage->on);
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
+		case GD77S_OPTION_MAX:
+			return;
+	};
+	voicePromptsPlay();
+}
+
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 {
 	char buf[17];
@@ -3088,26 +3178,11 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 		case GD77S_UIMODE_ZONE: // Zone
 			announceZoneName(voicePromptsIsPlaying());
 			break;
-		case GD77S_UIMODE_AUTOZONE:
-			AutoZoneGetData(GD77SParameters.autozoneTypeIndex, &GD77SParameters.autoZone);
-			voicePromptsAppendString((char*)GD77SParameters.autoZone.name);
-			if (IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex))
-				voicePromptsAppendLanguageString(&currentLanguage->on);
-			else
-				voicePromptsAppendLanguageString(&currentLanguage->off);
-			break;
-		case GD77S_UIMODE_POWER: // Power
-			announcePowerLevel(voicePromptsIsPlaying());
-			break;
-
-		case GD77S_UIMODE_ECO:
-			announceEcoLevel(voicePromptsIsPlaying());
-			break;
-		case GD77S_UIMODE_MIC_GAIN:
-			announceMicGain(false, true);
-			break;
 		case GD77S_UIMODE_KEYPAD:
 			AnnounceGD77sKeypadChar(false);
+			break;
+		case GD77S_UIMODE_OPTIONS:
+			AnnounceGD77SOption(true, false);
 			break;
 		case GD77S_UIMODE_MAX:
 			break;
@@ -3432,9 +3507,242 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	return true;
 }
 
+static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
+{
+	if (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS)
+		return;
+	switch (GD77SParameters.option)
+	{
+		case GD77S_OPTION_POWER:
+			if (dir > 0)
+				increasePowerLevel(true);// true = Allow 5W++
+			else if (dir < 0)
+				decreasePowerLevel();// true = Allow 5W++
+			else // set default.
+			{
+				currentChannelData->libreDMR_Power=0x00;
+				nonVolatileSettings.txPowerLevel = 3u;
+				trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
+			}
+			break;
+		case GD77S_OPTION_ECO:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.ecoLevel < ECO_LEVEL_MAX)
+				{
+					settingsIncrement(nonVolatileSettings.ecoLevel, 1);
+					rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.ecoLevel > 0)
+				{
+					settingsDecrement(nonVolatileSettings.ecoLevel, 1);
+					rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.ecoLevel = 1;
+				rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+			}
+			break;
+		case GD77S_OPTION_FM_MIC_GAIN:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.micGainFM < 31)
+				{
+					settingsIncrement(nonVolatileSettings.micGainFM, 1);
+					trxSetMicGainFM(nonVolatileSettings.micGainFM);
+				}	
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.micGainFM > 1)
+				{
+					settingsDecrement(nonVolatileSettings.micGainFM, 1);
+					trxSetMicGainFM(nonVolatileSettings.micGainFM);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.micGainFM = 17U; // Default (from all of my cals, datasheet default: 16)
+				trxSetMicGainFM(nonVolatileSettings.micGainFM);
+			}
+			break;
+		case GD77S_OPTION_DMR_MIC_GAIN:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.micGainDMR < 15)
+				{
+					settingsIncrement(nonVolatileSettings.micGainDMR, 1);
+					setMicGainDMR(nonVolatileSettings.micGainDMR);
+				}	
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.micGainDMR > 0)
+				{
+					settingsDecrement(nonVolatileSettings.micGainDMR, 1);
+					setMicGainDMR(nonVolatileSettings.micGainDMR);
+				}	
+			}
+			else
+			{
+				nonVolatileSettings.micGainDMR=11u;
+				setMicGainDMR(nonVolatileSettings.micGainDMR);
+			}
+			break;
+		case GD77S_OPTION_VHF_SQUELCH:
+		case GD77S_OPTION_220_SQUELCH:
+		case GD77S_OPTION_UHF_SQUELCH:
+		{
+			int band=GD77SParameters.option-GD77S_OPTION_VHF_SQUELCH;
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.squelchDefaults[band] < CODEPLUG_MAX_VARIABLE_SQUELCH)
+				{
+					settingsIncrement(nonVolatileSettings.squelchDefaults[band], 1);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] > 1)
+				{
+					settingsDecrement(nonVolatileSettings.squelchDefaults[band], 1);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]=10u;
+			}
+		}
+		case GD77S_OPTION_TOT_MASTER:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.totMaster < 255)
+				{
+					settingsIncrement(nonVolatileSettings.totMaster,1);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.totMaster > 0)
+				{
+					settingsDecrement(nonVolatileSettings.totMaster,1);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.totMaster=0;
+			}
+			break;
+		case GD77S_OPTION_PTT_LATCH:
+			if (dir > 0)
+			{
+				if (settingsIsOptionBitSet(BIT_PTT_LATCH) == false)
+				{
+					settingsSetOptionBit(BIT_PTT_LATCH, true);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (settingsIsOptionBitSet(BIT_PTT_LATCH))
+				{
+					settingsSetOptionBit(BIT_PTT_LATCH, false);
+				}
+			}
+			else
+			{
+				settingsSetOptionBit(BIT_PTT_LATCH, false);
+			}
+			break;
+		case GD77S_OPTION_AUTOZONE:
+			if (dir > 0)
+			{
+				if (GD77SParameters.autozoneTypeIndex < AutoZone_TYPE_MAX-1)
+					GD77SParameters.autozoneTypeIndex++;
+				else
+					GD77SParameters.autozoneTypeIndex=1;
+			}
+			else if (dir < 0)
+			{
+				bool isBitSet=IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex);
+				SetBit(&GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex, !isBitSet);
+			}
+			else
+			{
+				GD77SParameters.autoZonesEnabled=0;
+			}
+			break;
+		case GD77S_OPTION_MAX:
+			return;
+	};
+	AnnounceGD77SOption(false, true);
+}
+
+static void SaveGD77SAutoZoneParams()
+{
+	if (GD77SParameters.option != GD77S_OPTION_AUTOZONE)
+		return;
+		
+	nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
+	if (GD77SParameters.autoZonesEnabled==0)
+		nonVolatileSettings.autoZone.flags=0;
+	if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	settingsSetDirty();
+}
+
+static bool HandleGD77sOptionEvent(uiEvent_t *ev)
+{
+	if (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS)
+		return false;
+	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
+	{
+		SaveGD77SAutoZoneParams();
+		GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
+		keyboardReset();
+
+		return true;
+	}
+	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
+	{
+			// First see if we're leaving autozone mode and save the autozone settings.
+		SaveGD77SAutoZoneParams();
+		GD77SParameters.option=ev->rotary-1;
+		AnnounceGD77SOption(true, true);
+		return true;
+	}
+	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
+	{
+		AnnounceGD77SOption(true, true);  // repeat the current option and its value.
+		return true;
+	}
+	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
+	{
+		SetGD77Option(0); // 0 means default.
+	}
+	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+	{
+		SetGD77Option(1); // 1 means increment if possible.
+		return true;
+	}
+	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
+	{
+		SetGD77Option(-1); // -1 means decrement if possible.
+		return true;
+	}
+	
+	return false;
+}
+
 static void handleEventForGD77S(uiEvent_t *ev)
 {
 	if (HandleGD77sKbdEvent(ev))
+		return;
+	if (HandleGD77sOptionEvent(ev))
 		return;
 	
 	if (ev->events & ROTARY_EVENT)
@@ -3460,7 +3768,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 		}
 		// If rotary knob is turned, immediately reset to channel mode in any mode except keypad.
 		// This is a quick shortcut to reset to the channel mode.
-		if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
+		if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD && GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS)
 		{
 			if (GD77SParameters.uiMode!=GD77S_UIMODE_TG_OR_SQUELCH)
 			{
@@ -3512,16 +3820,6 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			GD77SParameters.cycleFunctionsInReverse =BUTTONCHECK_DOWN(ev, BUTTON_SK1);
 			voicePrompt_t vp = NUM_VOICE_PROMPTS;
 			char * const *vpString = NULL;
-			// First see if we're leaving autozone mode and save the autozone settings.
-			if (GD77SParameters.uiMode==GD77S_UIMODE_AUTOZONE)
-			{
-				nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
-				if (GD77SParameters.autoZonesEnabled==0)
-					nonVolatileSettings.autoZone.flags=0;
-				if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
-					currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-				settingsSetDirty();
-			}
 			if (GD77SParameters.cycleFunctionsInReverse)
 				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode - 1) % GD77S_UIMODE_MAX;
 			else
@@ -3574,25 +3872,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_ZONE: // Zone Mode
 					vp = PROMPT_ZONE_MODE;
 					break;
-				case GD77S_UIMODE_AUTOZONE: // AutoZone Mode
-					vpString = (char * const *)&currentLanguage->autoZone;
-					break;
-				case GD77S_UIMODE_POWER: // Power Mode
-					vp = PROMPT_POWER_MODE;
-					break;
-
-				case GD77S_UIMODE_ECO:
-					vp = PROMPT_ECO_MODE;
-					break;
-				case GD77S_UIMODE_MIC_GAIN:
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						vpString = (char * const *)&currentLanguage->dmr_mic_gain;
-					}
-					else
-					{
-						vpString = (char * const *)&currentLanguage->fm_mic_gain;
-										}
+				case GD77S_UIMODE_OPTIONS:
+					vpString = (char * const *)&currentLanguage->options;
 					break;
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
@@ -3756,52 +4037,10 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 
 					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_2);
 					break;
-				case GD77S_UIMODE_AUTOZONE:
-					if (GD77SParameters.autozoneTypeIndex < AutoZone_TYPE_MAX-1)
-						GD77SParameters.autozoneTypeIndex++;
-					else
-						GD77SParameters.autozoneTypeIndex=1;
-					voicePromptsInit();
-					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
-					voicePromptsPlay();
- 					break;
-				case GD77S_UIMODE_POWER: // Power
-					increasePowerLevel(true);// true = Allow 5W++
-					break;
-
-				case GD77S_UIMODE_ECO:
-					if (nonVolatileSettings.ecoLevel < ECO_LEVEL_MAX)
-					{
-						settingsIncrement(nonVolatileSettings.ecoLevel, 1);
-						rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
-					}
-					voicePromptsInit();
-					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
-					voicePromptsPlay();
-					break;
-				case GD77S_UIMODE_MIC_GAIN:
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						if (nonVolatileSettings.micGainDMR < 15)
-						{
-							settingsIncrement(nonVolatileSettings.micGainDMR, 1);
-							setMicGainDMR(nonVolatileSettings.micGainDMR);
-						}	
-					}
-					else
-					{
-						if (nonVolatileSettings.micGainFM < 31)
-						{
-							settingsIncrement(nonVolatileSettings.micGainFM, 1);
-							trxSetMicGainFM(nonVolatileSettings.micGainFM);
-						}
-					}
-					voicePromptsInit();
-					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
-					voicePromptsPlay();
-					break;
 				case GD77S_UIMODE_KEYPAD:
 					break; // handled by separate handler.
+				case GD77S_UIMODE_OPTIONS:
+					break; // handleed by its own handler. 
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -4003,52 +4242,10 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 
 					announceItem(PROMPT_SEQUENCE_ZONE, PROMPT_THRESHOLD_2);
 					break;
-				case GD77S_UIMODE_AUTOZONE:
-				{
-					bool isBitSet=IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex);
-					SetBit(&GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex, !isBitSet);
-					voicePromptsInit();
-					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
-					voicePromptsPlay();
-					break;
-				}
-				case GD77S_UIMODE_POWER: // Power
-					decreasePowerLevel();
-					break;
-
-				case GD77S_UIMODE_ECO:
-					if (nonVolatileSettings.ecoLevel > 0)
-					{
-						settingsDecrement(nonVolatileSettings.ecoLevel, 1);
-						rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
-					}
-					voicePromptsInit();
-					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
-					voicePromptsPlay();
-					break;
-				case GD77S_UIMODE_MIC_GAIN:
-					if (trxGetMode() == RADIO_MODE_DIGITAL)
-					{
-						if (nonVolatileSettings.micGainDMR > 0)
-						{
-							settingsDecrement(nonVolatileSettings.micGainDMR, 1);
-							setMicGainDMR(nonVolatileSettings.micGainDMR);
-						}	
-					}
-					else
-					{
-						if (nonVolatileSettings.micGainFM > 1)
-						{
-							settingsDecrement(nonVolatileSettings.micGainFM, 1);
-							trxSetMicGainFM(nonVolatileSettings.micGainFM);
-						}
-					}
-					voicePromptsInit();
-					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
-					voicePromptsPlay();
-					break;
 				case GD77S_UIMODE_KEYPAD:
 					break;// handled by separate handler
+				case GD77S_UIMODE_OPTIONS:
+					break; // handleed by its own handler. 
 				case GD77S_UIMODE_MAX:
 					break;
 			}

@@ -720,7 +720,7 @@ void mainTask(void *data)
 					keys.event = 0;
 				}
 			}
-
+#endif
 			//
 			// PTT toggle feature
 			//
@@ -779,7 +779,7 @@ void mainTask(void *data)
 					PTTToggledDown = false;
 				}
 			}
-#endif
+//#endif//joe
 
 			if (button_event == EVENT_BUTTON_CHANGE)
 			{

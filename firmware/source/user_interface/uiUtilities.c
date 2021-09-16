@@ -2053,9 +2053,8 @@ void announceEcoLevel(bool voicePromptWasPlaying)
 	voicePromptsAppendInteger(nonVolatileSettings.ecoLevel);
 }
 
-void announceMicGain(bool announcePrompt, bool announceValue)
+void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital)
 {
-	bool isDigital = trxGetMode() == RADIO_MODE_DIGITAL;
 	if (announcePrompt)
 	{
 		if (isDigital)
