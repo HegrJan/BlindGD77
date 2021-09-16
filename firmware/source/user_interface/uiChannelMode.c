@@ -3934,6 +3934,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
 	{
 		SetGD77Option(0); // 0 means default.
+		return true;
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
 	{
