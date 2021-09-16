@@ -4045,7 +4045,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			voicePrompt_t vp = NUM_VOICE_PROMPTS;
 			char * const *vpString = NULL;
 			if (GD77SParameters.cycleFunctionsInReverse)
-				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode - 1) % GD77S_UIMODE_MAX;
+				GD77SParameters.uiMode = (GD77SParameters.uiMode > 0) ? (GD77SParameters.uiMode - 1) : (GD77S_UIMODE_MAX-1);
 			else
 				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
 			//skip over Digital controls if the radio is in Analog mode
