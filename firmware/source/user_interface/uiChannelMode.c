@@ -3541,6 +3541,9 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 {
 	if (GD77SParameters.uiMode!=GD77S_UIMODE_KEYPAD)
 		return false;
+	if (GD77SParameters.cycleFunctionsInReverse)
+		return false;
+
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
 		return false;
 	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
@@ -3777,7 +3780,7 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			break;
 		case GD77S_OPTION_FM_BEEP:
 		case GD77S_OPTION_DMR_BEEP:
-		{//joe
+		{
 			uint8_t dmrBeepOptions=nonVolatileSettings.beepOptions&(BEEP_TX_START | BEEP_TX_STOP); // only care about bits 0 and 1, 2 and 3 are used for fm.
 			uint8_t fmBeepOptions=(nonVolatileSettings.beepOptions&(BEEP_FM_TX_START | BEEP_FM_TX_STOP))>>2;
 			bool wantDmrBeep=GD77SParameters.option==GD77S_OPTION_DMR_BEEP;
@@ -3912,12 +3915,19 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 {
 	if (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS)
 		return false;
+	if (GD77SParameters.cycleFunctionsInReverse)
+		return false;
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
 	{
 		SaveGD77SAutoZoneParams();
 		GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
-		keyboardReset();
-
+		checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
+		keyboardReset();//joe
+		voicePromptsInit();
+		voicePromptsAppendPrompt(PROMPT_CHANNEL_MODE);
+		voicePromptsAppendPrompt(PROMPT_CHANNEL);
+		voicePromptsAppendInteger(ev->rotary+GD77SParameters.channelbankOffset);
+		voicePromptsPlay();
 		return true;
 	}
 	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
