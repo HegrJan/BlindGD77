@@ -3711,6 +3711,8 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			else
 			{
 				nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]=10u;
+				nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz]=10u;
+				nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF]=10u;
 			}
 		}
 		case GD77S_OPTION_TOT_MASTER:
