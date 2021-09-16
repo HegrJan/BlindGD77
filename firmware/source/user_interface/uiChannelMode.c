@@ -50,6 +50,7 @@ typedef enum
 	GD77S_UIMODE_TS,
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
+	GD77S_UIMODE_VOX,
 	GD77S_UIMODE_OPTIONS,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
@@ -67,6 +68,8 @@ typedef enum
 	GD77S_OPTION_TOT_MASTER,
 	GD77S_OPTION_PTT_LATCH,
 	GD77S_OPTION_ECO,
+	GD77S_OPTION_VOX_THRESHOLD,
+	GD77S_OPTION_VOX_TAIL,
 	GD77S_OPTION_AUTOZONE,
 	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
@@ -3124,6 +3127,33 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions>>2]);
 			break;
 		}
+		case 	GD77S_OPTION_VOX_THRESHOLD:
+			voicePromptsAppendLanguageString(&currentLanguage->vox_threshold);
+			if (nonVolatileSettings.voxThreshold > 0)
+			{
+				snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.voxThreshold);
+				voicePromptsAppendString(rightSideVar);
+			}
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
+		case GD77S_OPTION_VOX_TAIL:
+			voicePromptsAppendLanguageString(&currentLanguage->vox_tail);
+			if (nonVolatileSettings.voxThreshold != 0)
+			{
+				float tail = (nonVolatileSettings.voxTailUnits * 0.5);
+				uint8_t secs = (uint8_t)tail;
+				uint8_t fracSec = (tail - secs) * 10;
+
+				snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d.%d", secs, fracSec);
+				voicePromptsAppendString(rightSideVar);
+				voicePromptsAppendLanguageString(&currentLanguage->seconds);
+			}
+			else
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->n_a);
+			}
+			break;
 		case GD77S_OPTION_FIRMWARE_INFO:
 //			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "[ %s", GITVERSION);
 			//rightSideVar[9] = 0; // git hash id 7 char long;
@@ -3239,6 +3269,12 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 			break;
 		case GD77S_UIMODE_KEYPAD:
 			AnnounceGD77sKeypadChar(false);
+			break;
+		case GD77S_UIMODE_VOX:
+			if (currentChannelData->flag4 & 0x40)
+				voicePromptsAppendLanguageString(&currentLanguage->on);
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
 			break;
 		case GD77S_UIMODE_OPTIONS:
 			AnnounceGD77SOption(true, false);
@@ -3785,6 +3821,52 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			settingsSet(nonVolatileSettings.beepOptions, ((fmBeepOptions<<2)|dmrBeepOptions));
 			break;
 		}
+		case 	GD77S_OPTION_VOX_THRESHOLD:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.voxThreshold < 30)
+				{
+					settingsIncrement(nonVolatileSettings.voxThreshold, 1);
+					voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.voxThreshold > 2)
+				{
+					settingsDecrement(nonVolatileSettings.voxThreshold, 1);
+					voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.voxThreshold = 20U;
+				voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
+			}
+			break;
+		case GD77S_OPTION_VOX_TAIL:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.voxTailUnits < 10) // 5 seconds max
+				{
+					settingsIncrement(nonVolatileSettings.voxTailUnits, 1);
+					voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.voxTailUnits > 1) // .5 minimum
+				{
+					settingsDecrement(nonVolatileSettings.voxTailUnits, 1);
+					voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.voxTailUnits = 4U; // 2 seconds tail
+				voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
+			}
+			break;
 		case GD77S_OPTION_FIRMWARE_INFO:
 			break;
 		case GD77S_OPTION_AUTOZONE:
@@ -4007,6 +4089,9 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
 					break;
+				case GD77S_UIMODE_VOX:
+					vp = PROMPT_VOX;
+					break;
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -4168,8 +4253,15 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_KEYPAD:
 					break; // handled by separate handler.
+				case GD77S_UIMODE_VOX:
+					if ((currentChannelData->flag4 & 0x40)==0)
+						currentChannelData->flag4 |=0x40;
+					voicePromptsInit();
+					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
+					voicePromptsPlay();
+					break;
 				case GD77S_UIMODE_OPTIONS:
-					break; // handleed by its own handler. 
+					break; // handled by its own handler. 
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -4373,6 +4465,13 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_KEYPAD:
 					break;// handled by separate handler
+				case GD77S_UIMODE_VOX:
+					if (currentChannelData->flag4 & 0x40)
+						currentChannelData->flag4 &=~0x40;
+					voicePromptsInit();
+					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
+					voicePromptsPlay();
+					break;
 				case GD77S_UIMODE_OPTIONS:
 					break; // handleed by its own handler. 
 				case GD77S_UIMODE_MAX:
