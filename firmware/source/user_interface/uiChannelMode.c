@@ -56,15 +56,19 @@ typedef enum
 typedef enum
 {
 	GD77S_OPTION_POWER,
-	GD77S_OPTION_ECO,
 	GD77S_OPTION_FM_MIC_GAIN,
 	GD77S_OPTION_DMR_MIC_GAIN,
+	GD77S_OPTION_FM_BEEP,
+	GD77S_OPTION_DMR_BEEP,
+	GD77S_OPTION_BAND_LIMITS,
 	GD77S_OPTION_VHF_SQUELCH,
 	GD77S_OPTION_220_SQUELCH,
 	GD77S_OPTION_UHF_SQUELCH,
 	GD77S_OPTION_TOT_MASTER,
 	GD77S_OPTION_PTT_LATCH,
+	GD77S_OPTION_ECO,
 	GD77S_OPTION_AUTOZONE,
+	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
 } GD77S_OPTIONS_t;
 
@@ -3083,6 +3087,61 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			else
 				voicePromptsAppendLanguageString(&currentLanguage->off);
 			break;
+		case GD77S_OPTION_BAND_LIMITS:
+		{
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->band_limits);
+			switch(nonVolatileSettings.txFreqLimited)
+			{
+				case BAND_LIMITS_NONE:
+					voicePromptsAppendLanguageString(&currentLanguage->off);
+					break;
+				case BAND_LIMITS_ON_LEGACY_DEFAULT:
+					voicePromptsAppendLanguageString(&currentLanguage->on);
+					break;
+				case BAND_LIMITS_FROM_CPS:
+					strcpy(rightSideVar,"CPS");
+					voicePromptsAppendString(rightSideVar);
+					break;
+			}
+			break;
+		}
+		case GD77S_OPTION_FM_BEEP:
+		case GD77S_OPTION_DMR_BEEP:
+		{
+			const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
+			bool dmrBeep=GD77SParameters.option==GD77S_OPTION_DMR_BEEP;
+			
+			if (dmrBeep)
+				strcpy(rightSideVar, "DMR");
+			else
+				strcpy(rightSideVar, "FM");
+			voicePromptsAppendString(rightSideVar);
+			voicePromptsAppendLanguageString(&currentLanguage->beep);
+			if (dmrBeep)
+				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions&(BEEP_TX_START+BEEP_TX_STOP)]);
+			else
+				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions>>2]);
+			break;
+		}
+		case GD77S_OPTION_FIRMWARE_INFO:
+//			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "[ %s", GITVERSION);
+			//rightSideVar[9] = 0; // git hash id 7 char long;
+			//strcat(rightSideVar, (uiDataGlobal.dmrDisabled ? " F ]" : " D ]"));
+			voicePromptsAppendLanguageString(&currentLanguage->firmware_info);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendLanguageString(&currentLanguage->openGD77S);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendLanguageString(&currentLanguage->built);
+			voicePromptsAppendString(__TIME__);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendString(__DATE__);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			//voicePromptsAppendLanguageString(&currentLanguage->gitCommit);
+			//voicePromptsAppendString(rightSideVar);
+			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
@@ -3657,6 +3716,76 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			{
 				settingsSetOptionBit(BIT_PTT_LATCH, false);
 			}
+			break;
+		case GD77S_OPTION_BAND_LIMITS:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.txFreqLimited < BAND_LIMITS_FROM_CPS)
+				{
+					settingsIncrement(nonVolatileSettings.txFreqLimited, 1);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.txFreqLimited > BAND_LIMITS_NONE)
+				{
+					settingsDecrement(nonVolatileSettings.txFreqLimited, 1);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.txFreqLimited =BAND_LIMITS_NONE;
+			}
+			break;
+		case GD77S_OPTION_FM_BEEP:
+		case GD77S_OPTION_DMR_BEEP:
+		{//joe
+			uint8_t dmrBeepOptions=nonVolatileSettings.beepOptions&(BEEP_TX_START | BEEP_TX_STOP); // only care about bits 0 and 1, 2 and 3 are used for fm.
+			uint8_t fmBeepOptions=(nonVolatileSettings.beepOptions&(BEEP_FM_TX_START | BEEP_FM_TX_STOP))>>2;
+			bool wantDmrBeep=GD77SParameters.option==GD77S_OPTION_DMR_BEEP;
+			if (dir > 0)
+			{
+				if (wantDmrBeep)
+				{
+					if (dmrBeepOptions < (BEEP_TX_START | BEEP_TX_STOP))
+					{
+						dmrBeepOptions++;
+					}
+				}
+				else
+				{
+					if (fmBeepOptions < (BEEP_TX_START | BEEP_TX_STOP)) // we shifted right by 2 for ease of manipulation and testing
+					{
+						fmBeepOptions++;
+					}
+				}
+			}
+			else if (dir < 0)
+			{
+				if (wantDmrBeep)
+				{
+					if (dmrBeepOptions > 0)
+					{
+						dmrBeepOptions--;
+					}
+				}
+				else
+				{
+					if (fmBeepOptions > 0)
+					{
+						fmBeepOptions--;
+					}
+				}
+			}
+			else // default
+			{
+				fmBeepOptions=0;
+				dmrBeepOptions= BEEP_TX_START | BEEP_TX_STOP;
+			}
+			settingsSet(nonVolatileSettings.beepOptions, ((fmBeepOptions<<2)|dmrBeepOptions));
+			break;
+		}
+		case GD77S_OPTION_FIRMWARE_INFO:
 			break;
 		case GD77S_OPTION_AUTOZONE:
 			if (dir > 0)
