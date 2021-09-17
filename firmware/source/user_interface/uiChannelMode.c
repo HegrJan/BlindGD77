@@ -3155,9 +3155,9 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			}
 			break;
 		case GD77S_OPTION_FIRMWARE_INFO:
-//			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "[ %s", GITVERSION);
-			//rightSideVar[9] = 0; // git hash id 7 char long;
-			//strcat(rightSideVar, (uiDataGlobal.dmrDisabled ? " F ]" : " D ]"));
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "[ %s", GITVERSION);
+			rightSideVar[9] = 0; // git hash id 7 char long;
+			strcat(rightSideVar, (uiDataGlobal.dmrDisabled ? " F ]" : " D ]"));
 			voicePromptsAppendLanguageString(&currentLanguage->firmware_info);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 			voicePromptsAppendLanguageString(&currentLanguage->openGD77S);
@@ -3169,8 +3169,8 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			voicePromptsAppendString(__DATE__);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			//voicePromptsAppendLanguageString(&currentLanguage->gitCommit);
-			//voicePromptsAppendString(rightSideVar);
+			voicePromptsAppendLanguageString(&currentLanguage->gitCommit);
+			voicePromptsAppendString(rightSideVar);
 			break;
 		case GD77S_OPTION_MAX:
 			return;
