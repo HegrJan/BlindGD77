@@ -3922,7 +3922,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		SaveGD77SAutoZoneParams();
 		GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
 		checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
-		keyboardReset();//joe
+		keyboardReset();
 		voicePromptsInit();
 		voicePromptsAppendPrompt(PROMPT_CHANNEL_MODE);
 		voicePromptsAppendPrompt(PROMPT_CHANNEL);
@@ -4036,7 +4036,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 }
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
-			announceItem(PROMPT_SEQUENCE_BATTERY, PROMPT_THRESHOLD_2);
+			announceItem(PROMPT_SEQUENCE_BATTERY, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);// next call will call play for immediate announcement.
+			announceItemWithInit(false, PROMPT_SEQUENCE_TEMPERATURE, PROMPT_THRESHOLD_2);
 			return;
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE) && (uiDataGlobal.DTMFContactList.isKeying == false))
