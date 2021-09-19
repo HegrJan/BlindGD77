@@ -3607,9 +3607,6 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 
 static void SaveGD77SAutoZoneParams()
 {
-	if (GD77SParameters.option != GD77S_OPTION_AUTOZONE)
-		return;
-		
 	nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
 	GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
 
@@ -3928,7 +3925,6 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		return false;
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
 	{
-		SaveGD77SAutoZoneParams();
 		GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
 		checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
 		keyboardReset();
@@ -3941,8 +3937,6 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	}
 	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
 	{
-			// First see if we're leaving autozone mode and save the autozone settings.
-		SaveGD77SAutoZoneParams();
 		GD77SParameters.option=ev->rotary-1;
 		AnnounceGD77SOption(true, true);
 		return true;
