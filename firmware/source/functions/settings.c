@@ -37,7 +37,7 @@
 #include "functions/rxPowerSaving.h"
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
-// VK7JS updated on Aug 2021 after adding AutoZone menu option and the ability to save zone channel indices.
+// VK7JS updated on Sep 19 for GD77S new options menu.
 static const int STORAGE_MAGIC_NUMBER 		= 0x2109; // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
