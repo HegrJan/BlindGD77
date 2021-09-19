@@ -3605,6 +3605,27 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	return true;
 }
 
+static void SaveGD77SAutoZoneParams()
+{
+	if (GD77SParameters.option != GD77S_OPTION_AUTOZONE)
+		return;
+		
+	nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
+	GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
+
+	if (GD77SParameters.autoZonesEnabled==0)
+	{
+		nonVolatileSettings.autoZone.flags=0;
+		if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+		{
+			nonVolatileSettings.currentZone = 0;
+			currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+			codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+		}
+	}
+	settingsSetDirty();
+}
+
 static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 {
 	if (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS)
@@ -3891,31 +3912,12 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			{
 				GD77SParameters.autoZonesEnabled=0;
 			}
-			if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && GD77SParameters.autoZonesEnabled==0)
-			{// We're switching off all autoZones and one is stil active so switch back to zone 0.
-				nonVolatileSettings.currentZone = 0;
-				currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-				codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
-				GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
-			}
+			SaveGD77SAutoZoneParams();
 			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
 	AnnounceGD77SOption(false, true);
-}
-
-static void SaveGD77SAutoZoneParams()
-{
-	if (GD77SParameters.option != GD77S_OPTION_AUTOZONE)
-		return;
-		
-	nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
-	if (GD77SParameters.autoZonesEnabled==0)
-		nonVolatileSettings.autoZone.flags=0;
-	if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
-		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-	settingsSetDirty();
 }
 
 static bool HandleGD77sOptionEvent(uiEvent_t *ev)
