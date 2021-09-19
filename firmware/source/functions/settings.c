@@ -38,7 +38,7 @@
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
 // VK7JS updated on Aug 2021 after adding AutoZone menu option and the ability to save zone channel indices.
-static const int STORAGE_MAGIC_NUMBER 		= 0x2108; // NOTE: never use 0xDEADBEEF, it's reserved value
+static const int STORAGE_MAGIC_NUMBER 		= 0x2109; // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
