@@ -3891,6 +3891,13 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			{
 				GD77SParameters.autoZonesEnabled=0;
 			}
+			if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && GD77SParameters.autoZonesEnabled==0)
+			{// We're switching off all autoZones and one is stil active so switch back to zone 0.
+				nonVolatileSettings.currentZone = 0;
+				currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+				codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+				GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
+			}
 			break;
 		case GD77S_OPTION_MAX:
 			return;

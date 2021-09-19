@@ -467,6 +467,7 @@ bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBu
 		channelBuf->flag4&=~0x02; // clear.
 	else
 		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
+	channelBuf->flag4&=~0x04; // allow TX.
 	AutoZoneApplyChannelRestrictions(index, channelBuf);
 	return true;
 }
