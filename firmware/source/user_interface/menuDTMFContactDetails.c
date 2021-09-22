@@ -66,6 +66,7 @@ static void SetEditParamsForMenuIndex()
 	switch(menuDataGlobal.currentItemIndex)
 	{
 		case CONTACT_DETAILS_NAME:
+			keypadAlphaEnable = true;
 			editParams.editFieldType=EDIT_TYPE_ALPHANUMERIC;
 			editParams.editBuffer=contactName;
 			editParams.cursorPos=&namePos;
@@ -74,6 +75,7 @@ static void SetEditParamsForMenuIndex()
 			editParams.yPixelOffset=0; // use menu default.
 			break;
 		case CONTACT_DETAILS_DTMF_CODE:
+			keypadAlphaEnable = false;
 			editParams.editFieldType=EDIT_TYPE_DTMF_CHARS;
 			editParams.editBuffer=dtmfCodeChars;
 			editParams.cursorPos=&codePos;
@@ -197,15 +199,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	}
 
 	menuDisplayTitle(buf);
-
-	if (menuDataGlobal.currentItemIndex == CONTACT_DETAILS_NAME)
-	{
-		keypadAlphaEnable = true;
-	}
-	else
-	{
-		keypadAlphaEnable = false;
-	}
 
 	switch (menuDTMFContactDetailsState)
 	{

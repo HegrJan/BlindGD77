@@ -178,6 +178,24 @@ void moveCursorRightInString(char *str, int *pos, int max, bool insert)
 	}
 }
 
+static void ToggleKeypadAlphaEnable()
+{
+	char buff[5];
+	voicePromptsInit();
+	keypadAlphaEnable=!keypadAlphaEnable;
+	if (keypadAlphaEnable)
+	{
+		editParams.editFieldType = EDIT_TYPE_ALPHANUMERIC;
+		strcpy(buff, "abc");
+	}
+	else
+	{
+		editParams.editFieldType = EDIT_TYPE_DTMF_CHARS;
+		strcpy(buff, "123");
+	}
+	voicePromptsAppendString(buff);
+	voicePromptsPlay();
+}
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 {
 	if (!editParams || !editParams->editBuffer || !editParams->cursorPos)
@@ -220,7 +238,13 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	}
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT))
 	{
-		moveCursorRightInString(editParams->editBuffer, editParams->cursorPos, editParams->maxLen, BUTTONCHECK_DOWN(ev, BUTTON_SK2));
+		if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && (editParams->editFieldType != EDIT_TYPE_NUMERIC))
+		{
+			ToggleKeypadAlphaEnable();
+			editParams->allowedToSpeakUpdate=false; // set to false when we speak a newly inserted character to avoid the whole buffer being repeated on a screen update.
+			return true;
+		}
+		moveCursorRightInString(editParams->editBuffer, editParams->cursorPos, editParams->maxLen, false);
 		editUpdateCursor(editParams, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
