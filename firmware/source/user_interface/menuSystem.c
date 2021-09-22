@@ -385,7 +385,7 @@ const menuItemNewData_t mainMenuItems[] =
 	{   9, MENU_OPTIONS         },
 	{  10, MENU_DISPLAY         },
 	{  11, MENU_SOUND           },
-	{   144, MENU_RADIO_DETAILS},
+	{   177, MENU_RADIO_DETAILS},
 	{  13, MENU_LANGUAGE        },
 	{   8, MENU_FIRMWARE_INFO   },
 	{   2, MENU_CREDITS         },

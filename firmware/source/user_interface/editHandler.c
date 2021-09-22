@@ -24,6 +24,7 @@
  *
  */
 #include <ctype.h>
+#include "user_interface/uiLocalisation.h"
 #include "user_interface/editHandler.h"
 #include "functions/ticks.h"
 
@@ -66,6 +67,14 @@ void RequeueEditBufferForAnnouncementOnSK1IfNeeded()
 	
 	voicePromptsInit();
 	voicePromptsAppendString(editParams.editBuffer);
+	if (keypadAlphaEnable)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->alphanumeric);
+	}
+	else
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->numeric);
+	}
 }
  
  static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
@@ -180,20 +189,18 @@ void moveCursorRightInString(char *str, int *pos, int max, bool insert)
 
 static void ToggleKeypadAlphaEnable()
 {
-	char buff[5];
 	voicePromptsInit();
 	keypadAlphaEnable=!keypadAlphaEnable;
 	if (keypadAlphaEnable)
 	{
 		editParams.editFieldType = EDIT_TYPE_ALPHANUMERIC;
-		strcpy(buff, "abc");
+		voicePromptsAppendLanguageString(&currentLanguage->alphanumeric);
 	}
 	else
 	{
 		editParams.editFieldType = EDIT_TYPE_DTMF_CHARS;
-		strcpy(buff, "123");
+		voicePromptsAppendLanguageString(&currentLanguage->numeric);
 	}
-	voicePromptsAppendString(buff);
 	voicePromptsPlay();
 }
 bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)

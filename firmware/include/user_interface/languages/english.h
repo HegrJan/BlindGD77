@@ -219,7 +219,13 @@ const stringsTable_t englishLanguage =
 .uhfRptOffset="UHF Off",
 .tone="Tone",
 .autoZone="Auto Zone",
-.dtmf_code="Code"
+.dtmf_code="Code",
+.user_info="User Info",
+.callsign="Callsign",
+.alphanumeric="alphanumeric",
+.numeric="Numeric",
+.delete_from_zone="Del from zone",
+.delete_from_all_zones="Del from all"
 };
 /********************************************************************
  *

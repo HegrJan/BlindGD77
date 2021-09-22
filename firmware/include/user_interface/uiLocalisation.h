@@ -230,6 +230,12 @@ typedef struct
    const char* tone;
    const char * autoZone;
    const char* dtmf_code;
+   const char* user_info;
+   const char* callsign;
+   const char* alphanumeric;
+   const char* numeric;
+   const char* delete_from_zone;
+   const char* delete_from_all_zones;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

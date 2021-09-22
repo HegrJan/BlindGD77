@@ -82,7 +82,7 @@ menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun)
 		menuDataGlobal.endIndex = NUM_DETAILS_ITEMS;
 		SetEditParamsForMenuIndex();
 
-		voicePromptsAppendLanguageString(&currentLanguage->info);
+		voicePromptsAppendLanguageString(&currentLanguage->user_info);
 		voicePromptsAppendLanguageString(&currentLanguage->menu);
 	
 		updateScreen(isFirstRun, true);
@@ -118,7 +118,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 
 	ucClearBuf();
 
-	menuDisplayTitle(currentLanguage->info);
+	menuDisplayTitle(currentLanguage->user_info);
 
 	for(int i = -1; i <= 1; i++)
 	{
@@ -135,7 +135,7 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 		switch (mNum)
 		{
 			case DETAILS_CALLSIGN:
-				leftSide = (char * const *)&currentLanguage->name;
+				leftSide = (char * const *)&currentLanguage->callsign;
 				strncpy(rightSideVar, userInfo[DETAILS_CALLSIGN], SCREEN_LINE_BUFFER_SIZE);
 				break;
 			case DETAILS_DMRID:
