@@ -42,11 +42,11 @@ enum DETAILS_DISPLAY_LIST { DETAILS_CALLSIGN=0, DETAILS_DMRID, DETAILS_LINE1, DE
 static char userInfo[NUM_DETAILS_ITEMS][SCREEN_LINE_BUFFER_SIZE+1];
 static int xOffsetForEditableMenuItems[NUM_DETAILS_ITEMS]; // for cursor 
 static int userInfoCursorPositions[NUM_DETAILS_ITEMS];
-static bool curFieldIsNumeric=false;
 
 static void SetEditParamsForMenuIndex()
 {
 		bool curFieldIsNumeric=menuDataGlobal.currentItemIndex == DETAILS_DMRID;
+		keypadAlphaEnable = !curFieldIsNumeric;
 
 	editParams.editFieldType=curFieldIsNumeric ? EDIT_TYPE_NUMERIC : EDIT_TYPE_ALPHANUMERIC;
 	editParams.editBuffer= userInfo[menuDataGlobal.currentItemIndex];
@@ -119,15 +119,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	ucClearBuf();
 
 	menuDisplayTitle(currentLanguage->info);
-	curFieldIsNumeric=menuDataGlobal.currentItemIndex == DETAILS_DMRID;
-	if (curFieldIsNumeric)
-	{
-		keypadAlphaEnable = false;
-	}
-	else
-	{
-		keypadAlphaEnable = true;
-	}
 
 	for(int i = -1; i <= 1; i++)
 	{

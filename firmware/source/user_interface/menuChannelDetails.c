@@ -193,7 +193,10 @@ static void SetEditParamsForMenuIndex(bool updateNumericBuffer)
 			editParams.xPixelOffset=5 * 8; // name prompt * char width at font size 3.
 			editParams.yPixelOffset=0; // use default for menu.
 			if (updateNumericBuffer)// name is not numeric but it means focus is moving to this field.
+			{
+				keypadAlphaEnable = true;
 				*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
+			}
 			updateNumericBuffer=false;
 			break;
 		case CH_DETAILS_RXFREQ:
@@ -237,6 +240,7 @@ static void SetEditParamsForMenuIndex(bool updateNumericBuffer)
 	}
 	if (updateNumericBuffer)
 	{
+		keypadAlphaEnable = false;
 		if (number)
 			snprintf(editParams.editBuffer, editParams.maxLen, "%u", number);
 		else
@@ -263,7 +267,8 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	ucClearBuf();
 
 	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE, currentLanguage->channel_details);
-	SetEditParamsForMenuIndex(isFirstRun);
+	if (isFirstRun)
+		SetEditParamsForMenuIndex(isFirstRun);
 	if (uiDataGlobal.FreqEnter.index != 0)
 	{
 		snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%c%c%c%s%c%c%c%c%c%s", uiDataGlobal.FreqEnter.digits[0], uiDataGlobal.FreqEnter.digits[1], uiDataGlobal.FreqEnter.digits[2], (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID) ? "" : ".",
@@ -272,8 +277,6 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 	}
 	else
 	{
-		keypadAlphaEnable = (menuDataGlobal.currentItemIndex == CH_DETAILS_NAME);
-
 		// Can only display 3 of the options at a time menu at -1, 0 and +1
 		for(int i = -1; i <= 1; i++)
 		{
