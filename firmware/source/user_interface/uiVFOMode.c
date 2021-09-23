@@ -2087,7 +2087,7 @@ static bool validateNewChannel(void)
 			}
 
 			codeplugChannelSaveDataForIndex(newChannelIndex, &channelScreenChannelData);
-			codeplugAllChannelsIndexSetUsed(newChannelIndex); //Set channel index as valid
+			codeplugAllChannelsIndexSetUsed(newChannelIndex, true); //Set channel index as valid
 
 			// Check if currentZone is initialized
 			if (currentZone.NOT_IN_CODEPLUGDATA_indexNumber == 0xDEADBEEF)

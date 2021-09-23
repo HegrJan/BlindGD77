@@ -444,7 +444,7 @@ bool codeplugAllChannelsIndexIsInUse(int index)
 	return false;
 }
 
-void codeplugAllChannelsIndexSetUsed(int index)
+void codeplugAllChannelsIndexSetUsed(int index, bool flag)
 {
 	if ((index >= CODEPLUG_CHANNELS_MIN) && (index <= CODEPLUG_CHANNELS_MAX))
 	{
@@ -452,9 +452,13 @@ void codeplugAllChannelsIndexSetUsed(int index)
 		int channelBank = (index / CODEPLUG_CHANNELS_PER_BANK);
 		int byteno = (index % CODEPLUG_CHANNELS_PER_BANK) / 8;
 		int cacheOffset = index / 8;
+		bool wasUsed=			codeplugAllChannelsCache[cacheOffset] | (1 << (index % 8)) ? true : false;
 
-		codeplugAllChannelsCache[cacheOffset] |= (1 << (index % 8));
-
+		if (flag)
+			codeplugAllChannelsCache[cacheOffset] |= (1 << (index % 8));
+		else
+			codeplugAllChannelsCache[cacheOffset] &=~(1 << (index % 8));
+	
 		if(channelBank == 0)
 		{
 			EEPROM_Write(CODEPLUG_ADDR_CHANNEL_HEADER_EEPROM + byteno, &codeplugAllChannelsCache[cacheOffset], 1);
@@ -464,8 +468,15 @@ void codeplugAllChannelsIndexSetUsed(int index)
 			SPI_Flash_write((CODEPLUG_ADDR_CHANNEL_HEADER_FLASH + ((channelBank - 1) *
 					(CODEPLUG_CHANNELS_PER_BANK * CODEPLUG_CHANNEL_DATA_STRUCT_SIZE + 16))) + byteno, &codeplugAllChannelsCache[cacheOffset], 1);
 		}
-
+	if (flag && !wasUsed)
+	{
 		allChannelsTotalNumOfChannels++;
+	}
+	else if (wasUsed)
+	{
+		allChannelsTotalNumOfChannels--;
+	}
+		
 		if ((index + 1) > allChannelsHighestChannelIndex)
 		{
 			allChannelsHighestChannelIndex = (index + 1);
@@ -684,7 +695,6 @@ bool codeplugChannelSaveDataForIndex(int index, struct_codeplugChannel_t *channe
 	return retVal;
 }
 
-//joe
 bool codeplugDeleteChannelWithIndex(int index)
 {
 	if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
@@ -692,7 +702,20 @@ bool codeplugDeleteChannelWithIndex(int index)
 	struct_codeplugChannel_t channelBuf;
 	memset(&channelBuf, 0, sizeof(struct_codeplugChannel_t));
 	codeplugUtilConvertStringToBuf(channelBuf.name, channelBuf.name, sizeof(channelBuf.name));
-	return codeplugChannelSaveDataForIndex(index, &channelBuf);
+	if (! codeplugChannelSaveDataForIndex(index, &channelBuf))
+		return false;
+	// now delete it from all zones.
+	int zoneCount=codeplugZonesGetRealCount(); // just real zones, excluding allChannels and autoZones.
+	struct_codeplugZone_t zoneBuf;
+
+	for (int i=0; i < zoneCount; i++)
+	{
+		if (codeplugZoneGetDataForNumber(i, &zoneBuf))
+			codeplugZoneDeleteChannelFromZone(index, &zoneBuf);
+	}
+	codeplugAllChannelsIndexSetUsed(index, false);
+
+	return true;
 }
 
 static void codeplugRxGroupInitCache(void)

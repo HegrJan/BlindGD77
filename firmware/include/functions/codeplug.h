@@ -312,7 +312,7 @@ bool codeplugSetBootScreenData(char *line1, char *line2);
 void codeplugGetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber);
 void codeplugSetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber);
 bool codeplugAllChannelsIndexIsInUse(int index);
-void codeplugAllChannelsIndexSetUsed(int index);
+void codeplugAllChannelsIndexSetUsed(int index, bool flag);
 bool codeplugChannelSaveDataForIndex(int index, struct_codeplugChannel_t *channelBuf);
 bool codeplugDeleteChannelWithIndex(int index);
 CodeplugCSSTypes_t codeplugGetCSSType(uint16_t tone);
