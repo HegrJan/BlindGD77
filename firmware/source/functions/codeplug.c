@@ -375,6 +375,40 @@ bool codeplugZoneAddChannelToZoneAndSave(int channelIndex, struct_codeplugZone_t
 	}
 }
 
+bool codeplugZoneDeleteChannelFromZone(int channelIndex, struct_codeplugZone_t *zoneBuf)
+{
+	if (AutoZoneIsCurrentZone(zoneBuf->NOT_IN_CODEPLUGDATA_indexNumber))
+		return false; // Can't add to the autoZone
+	if (CODEPLUG_ZONE_IS_ALLCHANNELS(*zoneBuf))
+		return false; // allChannels zone.
+	if (zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone==0)
+		return false;		
+	// find the channel in this zone.
+	int zoneChannelIndex=-1;
+	for (int i=0; i < zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++i)
+	{
+	if (zoneBuf->channels[i] == channelIndex)
+	{
+		zoneChannelIndex=i;
+		break;
+	}
+	}
+	if (zoneChannelIndex==-1) //not found
+		return false;
+	// now, move all channels beyond this back by 1 position.
+	for (int j=zoneChannelIndex; j < zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone-1; ++j)
+	{
+		zoneBuf->channels[j]=zoneBuf->channels[j+1];
+	}
+	zoneBuf->channels[zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone-1]=0;
+	zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone--;
+	zoneBuf->NOT_IN_CODEPLUGDATA_highestIndex = zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone;
+
+	// IMPORTANT. Write size is different from the size of the data, because it the zone struct contains properties not in the codeplug data
+	return EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zoneBuf->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
+				(uint8_t *)zoneBuf, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
+}
+
 static uint16_t codeplugAllChannelsGetCount(void)
 {
 	uint16_t c = 0;
@@ -648,6 +682,17 @@ bool codeplugChannelSaveDataForIndex(int index, struct_codeplugChannel_t *channe
 	channelBuf->rxTone = codeplugCSSToInt(channelBuf->rxTone);
 
 	return retVal;
+}
+
+//joe
+bool codeplugDeleteChannelWithIndex(int index)
+{
+	if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+		return false; // can't save to the autozone.
+	struct_codeplugChannel_t channelBuf;
+	memset(&channelBuf, 0, sizeof(struct_codeplugChannel_t));
+	codeplugUtilConvertStringToBuf(channelBuf.name, channelBuf.name, sizeof(channelBuf.name));
+	return codeplugChannelSaveDataForIndex(index, &channelBuf);
 }
 
 static void codeplugRxGroupInitCache(void)

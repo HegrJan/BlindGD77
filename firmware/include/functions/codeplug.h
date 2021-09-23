@@ -314,6 +314,7 @@ void codeplugSetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFON
 bool codeplugAllChannelsIndexIsInUse(int index);
 void codeplugAllChannelsIndexSetUsed(int index);
 bool codeplugChannelSaveDataForIndex(int index, struct_codeplugChannel_t *channelBuf);
+bool codeplugDeleteChannelWithIndex(int index);
 CodeplugCSSTypes_t codeplugGetCSSType(uint16_t tone);
 
 
@@ -339,6 +340,7 @@ bool codeplugGetGeneralSettings(struct_codeplugGeneralSettings_t *generalSetting
 bool codeplugGetSignallingDTMF(struct_codeplugSignalling_DTMF_t *signallingDTMFBuffer);
 bool codeplugGetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_t *signallingDTMFDurationsBuffer);
 bool codeplugZoneAddChannelToZoneAndSave(int channelIndex, struct_codeplugZone_t *zoneBuf);
+bool codeplugZoneDeleteChannelFromZone(int channelIndex, struct_codeplugZone_t *zoneBuf);
 bool codeplugGetDeviceInfo(struct_codeplugDeviceInfo_t *deviceInfoBuffer);
 
 uint16_t codeplugGetQuickkeyFunctionID(char key);
