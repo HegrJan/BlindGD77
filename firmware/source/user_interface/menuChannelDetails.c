@@ -237,6 +237,8 @@ static void SetEditParamsForMenuIndex(bool updateNumericBuffer)
 				editParams.yPixelOffset=0; // use default menu offset.
 			}
 			break;
+		default:
+			return;
 	}
 	if (updateNumericBuffer)
 	{
