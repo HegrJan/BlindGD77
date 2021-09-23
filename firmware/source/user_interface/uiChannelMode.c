@@ -139,6 +139,8 @@ static bool nextChannelReady = false;
 static int nextChannelIndex = 0;
 static bool scobAlreadyTriggered = false;
 static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel confirmation window
+static bool quickmenuDeleteChannelHandled=false;
+static bool quickmenuDeleteFromAllZones=false;
 
 static menuStatus_t menuChannelExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickChannelExitStatus = MENU_STATUS_SUCCESS;
@@ -1964,6 +1966,8 @@ enum CHANNEL_SCREEN_QUICK_MENU_ITEMS {  CH_SCREEN_QUICK_MENU_COPY2VFO = 0, CH_SC
 	CH_SCREEN_QUICK_MENU_FILTER_DMR_TS,
 	CH_SCREEN_QUICK_MENU_DUAL_SCAN,
 	CH_SCREEN_QUICK_MENU_PRIORITY_SCAN,
+	CH_SCREEN_QUICK_MENU_DEL_FROM_ZONE,
+	CH_SCREEN_QUICK_MENU_DEL_CHANNEL,
 	NUM_CH_SCREEN_QUICK_MENU_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list
 
 menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
@@ -1979,7 +1983,14 @@ menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
 			menuSystemPopAllAndDisplayRootMenu();
 			return MENU_STATUS_SUCCESS;
 		}
-
+		if (quickmenuDeleteChannelHandled)
+		{
+			quickmenuDeleteChannelHandled = false;
+			quickmenuDeleteFromAllZones=false;
+			menuSystemPopAllAndDisplayRootMenu();
+			return MENU_STATUS_SUCCESS;
+		}
+		
 		uiChannelModeStopScanning();
 		uiDataGlobal.QuickMenu.tmpDmrDestinationFilterLevel = nonVolatileSettings.dmrDestinationFilter;
 		uiDataGlobal.QuickMenu.tmpDmrCcTsFilterLevel = nonVolatileSettings.dmrCcTsFilter;
@@ -2051,6 +2062,31 @@ static bool validateOverwriteChannel(void)
 	return true;
 }
 
+static bool validateDeleteChannel(void)
+{
+	quickmenuDeleteChannelHandled = true;
+
+	if (uiDataGlobal.MessageBox.keyPressed == KEY_GREEN)
+	{
+		uint16_t index = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+
+		if (quickmenuDeleteFromAllZones)
+		{
+			codeplugDeleteChannelWithIndex(index);
+		}
+		else
+		{
+			codeplugZoneDeleteChannelFromZone(index, &currentZone);
+		}
+		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+		if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+			nonVolatileSettings.currentChannelIndexInAllZone=SAFE_MIN(1,nonVolatileSettings.currentChannelIndexInAllZone-1);
+		else
+			nonVolatileSettings.currentChannelIndexInZone=SAFE_MIN(0,nonVolatileSettings.currentChannelIndexInZone-1);
+	}
+	return true;
+}
+
 static void updateQuickMenuScreen(bool isFirstRun)
 {
 	int mNum = 0;
@@ -2115,6 +2151,12 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					break;
 				case CH_SCREEN_QUICK_MENU_PRIORITY_SCAN:
 					rightSideConst = (char * const *)&currentLanguage->priorityScan;
+					break;
+				case CH_SCREEN_QUICK_MENU_DEL_FROM_ZONE:
+					rightSideConst = (char * const *)&currentLanguage->delete_from_zone;
+					break;
+				case CH_SCREEN_QUICK_MENU_DEL_CHANNEL:
+					rightSideConst = (char * const *)&currentLanguage->delete_from_all_zones;
 					break;
 				default:
 					buf[0] = 0;
@@ -2333,6 +2375,37 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 				}
 				menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
 				break;
+			}
+			case CH_SCREEN_QUICK_MENU_DEL_FROM_ZONE:
+			case CH_SCREEN_QUICK_MENU_DEL_CHANNEL:
+			{
+				quickmenuDeleteFromAllZones = (menuDataGlobal.currentItemIndex == CH_SCREEN_QUICK_MENU_DEL_CHANNEL);
+				if (quickmenuDeleteChannelHandled == false)
+				{
+					if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) && !quickmenuDeleteFromAllZones)
+					{
+						menuQuickChannelExitStatus |= MENU_STATUS_ERROR;
+						break; // can't delete from allChannels zone.
+					}
+					if (quickmenuDeleteFromAllZones)
+						snprintf(uiDataGlobal.MessageBox.message, MESSAGEBOX_MESSAGE_LEN_MAX, "%s\n%s", currentLanguage->delete_from_all_zones, currentLanguage->please_confirm);
+					else
+						snprintf(uiDataGlobal.MessageBox.message, MESSAGEBOX_MESSAGE_LEN_MAX, "%s\n%s", currentLanguage->delete_from_zone, currentLanguage->please_confirm);
+					uiDataGlobal.MessageBox.type = MESSAGEBOX_TYPE_INFO;
+					uiDataGlobal.MessageBox.decoration = MESSAGEBOX_DECORATION_FRAME;
+					uiDataGlobal.MessageBox.buttons = MESSAGEBOX_BUTTONS_YESNO;
+					uiDataGlobal.MessageBox.validatorCallback = validateDeleteChannel;
+
+					menuSystemPushNewMenu(UI_MESSAGE_BOX);
+					voicePromptsInit();
+					if (quickmenuDeleteFromAllZones)
+						voicePromptsAppendLanguageString(&currentLanguage->delete_from_all_zones);
+					else
+						voicePromptsAppendLanguageString(&currentLanguage->delete_from_zone);
+					voicePromptsAppendLanguageString(&currentLanguage->please_confirm);
+					voicePromptsPlay();
+					break;
+				}
 			}
 		}
 		return;
