@@ -56,7 +56,7 @@ static int32_t pinCode;
 
 static void AnnounceBootText()
 {
-	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
 		return;
 	voicePromptsInit();
 	voicePromptsAppendString(line1);
