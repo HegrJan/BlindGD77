@@ -462,17 +462,17 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #if defined(PLATFORM_GD77S)
 		uiChannelModeHeartBeatActivityForGD77S(ev);
 #endif
-
-		if (ev->events == NO_EVENT)
-		{
-			if (reorderingChannels && (ev->keys.key==0 && ev->buttons==0))
-			{
-				reorderingChannels=false;
+		if (reorderingChannels && (ev->keys.key==0 && ev->buttons==0))
+		{// wait for keys and buttons to be released before cancelling this flag so that other operations based on these buttons aren't inadvertently triggered.
+			reorderingChannels=false;
 #if !defined(PLATFORM_GD77S)
 			sk2Latch =false;
 			sk2LatchTimeout=0;
 #endif // !defined(PLATFORM_GD77S)
-			}
+		}
+
+		if (ev->events == NO_EVENT)
+		{
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
@@ -1982,7 +1982,8 @@ static void handleUpKey(uiEvent_t *ev)
 			swapCurrentWithNext();
 		return;
 	}
-
+	if (reorderingChannels) // don't want to act on any other keys until these are released.
+		return;
 	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 	{
 		selectPrevNextZone(true);
