@@ -3386,7 +3386,7 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 
 	if (addToZone)
 	{
-		codeplugAllChannelsIndexSetUsed(physicalChannelIndex); //Set channel index as valid
+		codeplugAllChannelsIndexSetUsed(physicalChannelIndex, true); //Set channel index as valid
 		if (currentZone.NOT_IN_CODEPLUGDATA_indexNumber == 0xDEADBEEF)
 		{
 			uiChannelInitializeCurrentZone();
