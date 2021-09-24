@@ -141,6 +141,7 @@ static bool scobAlreadyTriggered = false;
 static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel confirmation window
 static bool quickmenuDeleteChannelHandled=false;
 static bool quickmenuDeleteFromAllZones=false;
+static bool reorderingChannels=false;
 
 static menuStatus_t menuChannelExitStatus = MENU_STATUS_SUCCESS;
 static menuStatus_t menuQuickChannelExitStatus = MENU_STATUS_SUCCESS;
@@ -464,6 +465,10 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 
 		if (ev->events == NO_EVENT)
 		{
+			if (reorderingChannels && (ev->keys.key==0 && ev->buttons==0))
+			{
+				reorderingChannels=false;
+			}
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
@@ -1037,6 +1042,59 @@ void uiChannelModeUpdateScreen(int txTimeSecs)
 	uiDataGlobal.displayQSOState = QSO_DISPLAY_IDLE;
 }
 
+// these indices are relative to the current zone.
+static bool ReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2)
+{
+	if (!codeplugZoneReorderChannels(zoneChannelIndex1, zoneChannelIndex2, &currentZone))
+		return false;
+	settingsSetCurrentChannelIndexForZone(zoneChannelIndex2, nonVolatileSettings.currentZone);
+	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	loadChannelData(false, true);
+	
+	return true;
+	}
+
+static bool swapCurrentWithNext()
+{
+	if (!reorderingChannels)
+		return false;
+	if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone <=1)
+		return false;
+
+	int next=((nonVolatileSettings.currentChannelIndexInZone + 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone);
+	return ReorderChannels(nonVolatileSettings.currentChannelIndexInZone, next);
+}
+
+static bool swapCurrentWithPrior()
+{
+		if (!reorderingChannels)
+		return false;
+	if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone <=1)
+		return false;
+	
+	int prior=nonVolatileSettings.currentChannelIndexInZone ==0 ? currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-1 : nonVolatileSettings.currentChannelIndexInZone-1;
+	return ReorderChannels(nonVolatileSettings.currentChannelIndexInZone, prior);
+}
+
+static bool swapCurrentWithLast()
+{
+	if (!reorderingChannels)
+		return false;
+	if (nonVolatileSettings.currentChannelIndexInZone >= currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
+		return false;
+	return ReorderChannels(nonVolatileSettings.currentChannelIndexInZone, currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-1);
+}
+
+static bool swapCurrentWithFirst()
+{
+		if (!reorderingChannels)
+		return false;
+
+	if (nonVolatileSettings.currentChannelIndexInZone ==0)
+		return false;
+	return ReorderChannels(nonVolatileSettings.currentChannelIndexInZone, 0);
+}
+
 static void handleEvent(uiEvent_t *ev)
 {
 #if defined(PLATFORM_GD77S)
@@ -1114,6 +1172,8 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & BUTTON_EVENT)
 	{
+		if (reorderingChannels)
+			return; // until buttons are released.
 		// long hold sk1 now summarizes channel for all models.
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 		{
@@ -1259,6 +1319,9 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & KEY_EVENT)
 	{
+		if (reorderingChannels)
+			return; // until keys are released.
+
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			if (directChannelNumber > 0)
@@ -1711,7 +1774,18 @@ static void handleEvent(uiEvent_t *ev)
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
 		{
 			uiDataGlobal.displaySquelch = false;
-
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) &&BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+			{
+				reorderingChannels=true;
+				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
+					swapCurrentWithFirst();
+				else
+					swapCurrentWithPrior();
+				return;
+			}
+			if (reorderingChannels) // don't want to act on any other keys until these are released.
+				return;
+			
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
 				selectPrevNextZone(false);
@@ -1886,6 +1960,15 @@ static void selectPrevNextZone(bool nextZone)
 static void handleUpKey(uiEvent_t *ev)
 {
 	uiDataGlobal.displaySquelch = false;
+	if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) &&BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+	{
+		reorderingChannels=true;
+		if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
+			swapCurrentWithLast();
+		else
+			swapCurrentWithNext();
+		return;
+	}
 
 	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 	{
