@@ -468,6 +468,10 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			if (reorderingChannels && (ev->keys.key==0 && ev->buttons==0))
 			{
 				reorderingChannels=false;
+#if !defined(PLATFORM_GD77S)
+			sk2Latch =false;
+			sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
 			}
 #if defined(PLATFORM_GD77S)
 			// Just ensure rotary's selected channel is matching the already loaded one
@@ -1049,8 +1053,22 @@ static bool ReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2)
 		return false;
 	settingsSetCurrentChannelIndexForZone(zoneChannelIndex2, nonVolatileSettings.currentZone);
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-	loadChannelData(false, true);
-	
+	loadChannelData(false, false);
+	voicePromptsInit();
+	char voiceBuf[17];
+	char voiceBufChNumber[5];
+	int channelNumber = nonVolatileSettings.currentChannelIndexInZone+1;
+	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
+	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
+	voicePromptsAppendPrompt(PROMPT_CHANNEL);
+	// If the number and name differ, then append.
+	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+	{
+		voicePromptsAppendString(voiceBufChNumber);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
+	voicePromptsAppendString(voiceBuf);
+	voicePromptsPlay();	
 	return true;
 	}
 
@@ -1169,11 +1187,9 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		return;
 	}
-
-	if (ev->events & BUTTON_EVENT)
+	// Don't act on any buttons while reordering is in progress.
+	if (ev->events & BUTTON_EVENT && !reorderingChannels)
 	{
-		if (reorderingChannels)
-			return; // until buttons are released.
 		// long hold sk1 now summarizes channel for all models.
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 		{
@@ -1319,9 +1335,6 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & KEY_EVENT)
 	{
-		if (reorderingChannels)
-			return; // until keys are released.
-
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			if (directChannelNumber > 0)
