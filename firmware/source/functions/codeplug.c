@@ -409,6 +409,26 @@ bool codeplugZoneDeleteChannelFromZone(int channelIndex, struct_codeplugZone_t *
 				(uint8_t *)zoneBuf, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
 }
 
+bool codeplugZoneReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2, struct_codeplugZone_t *zoneBuf)
+{
+	if (AutoZoneIsCurrentZone(zoneBuf->NOT_IN_CODEPLUGDATA_indexNumber))
+		return false; // Can't add to the autoZone
+	if (CODEPLUG_ZONE_IS_ALLCHANNELS(*zoneBuf))
+		return false; // allChannels zone.
+	if (zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone==0)
+		return false;		
+	if ((zoneChannelIndex1 < 0 || zoneChannelIndex2 < 0) 
+	|| (zoneChannelIndex1==zoneChannelIndex2)
+|| (zoneChannelIndex1>=zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone || zoneChannelIndex2>=zoneBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone))
+return false;
+	uint16_t tempChannelIndex=zoneBuf->channels[zoneChannelIndex1];
+	zoneBuf->channels[zoneChannelIndex1]=zoneBuf->channels[zoneChannelIndex2];
+	zoneBuf->channels[zoneChannelIndex2]=tempChannelIndex;
+	// IMPORTANT. Write size is different from the size of the data, because it the zone struct contains properties not in the codeplug data
+	return EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zoneBuf->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
+				(uint8_t *)zoneBuf, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
+}
+
 static uint16_t codeplugAllChannelsGetCount(void)
 {
 	uint16_t c = 0;

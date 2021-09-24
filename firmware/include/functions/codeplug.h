@@ -341,6 +341,8 @@ bool codeplugGetSignallingDTMF(struct_codeplugSignalling_DTMF_t *signallingDTMFB
 bool codeplugGetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_t *signallingDTMFDurationsBuffer);
 bool codeplugZoneAddChannelToZoneAndSave(int channelIndex, struct_codeplugZone_t *zoneBuf);
 bool codeplugZoneDeleteChannelFromZone(int channelIndex, struct_codeplugZone_t *zoneBuf);
+// Used for rearanging channels in a zone.
+bool codeplugZoneReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2, struct_codeplugZone_t *zoneBuf);
 bool codeplugGetDeviceInfo(struct_codeplugDeviceInfo_t *deviceInfoBuffer);
 
 uint16_t codeplugGetQuickkeyFunctionID(char key);
