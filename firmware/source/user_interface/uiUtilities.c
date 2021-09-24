@@ -2788,11 +2788,15 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	announcePowerLevel(voicePromptWasPlaying);
-	if (isChannelScreen && currentChannelData->libreDMR_Power == 0)
+	if (isChannelScreen)
 	{
-		voicePromptsAppendLanguageString(&currentLanguage->from_master);
-	}
+		if (currentChannelData->libreDMR_Power == 0)
+			voicePromptsAppendLanguageString(&currentLanguage->from_master);
+	
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
+		announceZoneName(voicePromptWasPlaying);
+	}
 	voicePromptsPlay();
 }
 
