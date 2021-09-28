@@ -462,14 +462,6 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 #if defined(PLATFORM_GD77S)
 		uiChannelModeHeartBeatActivityForGD77S(ev);
 #endif
-		if (reorderingChannels && (ev->keys.key==0 && ev->buttons==0))
-		{// wait for keys and buttons to be released before cancelling this flag so that other operations based on these buttons aren't inadvertently triggered.
-			reorderingChannels=false;
-#if !defined(PLATFORM_GD77S)
-			sk2Latch =false;
-			sk2LatchTimeout=0;
-#endif // !defined(PLATFORM_GD77S)
-		}
 
 		if (ev->events == NO_EVENT)
 		{
@@ -1187,8 +1179,7 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		return;
 	}
-	// Don't act on any buttons while reordering is in progress.
-	if (ev->events & BUTTON_EVENT && !reorderingChannels)
+	if (ev->events & BUTTON_EVENT)
 	{
 		// long hold sk1 now summarizes channel for all models.
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
@@ -1337,6 +1328,12 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
+			if (reorderingChannels)
+			{
+				reorderingChannels=false;
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE, PROMPT_THRESHOLD_2);
+				return;
+			}
 			if (directChannelNumber > 0)
 			{
 				if(CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
@@ -1461,6 +1458,13 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
+			if (reorderingChannels)
+			{
+				reorderingChannels=false;
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE, PROMPT_THRESHOLD_2);
+				return;
+			}
+
 			if (dualWatchChannelData.dualWatchActive)
 			{
 				StopDualWatch(true); // Ensure dual watch is stopped.
@@ -1787,17 +1791,14 @@ static void handleEvent(uiEvent_t *ev)
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
 		{
 			uiDataGlobal.displaySquelch = false;
-			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) &&BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+			if (reorderingChannels)
 			{
-				reorderingChannels=true;
 				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
 					swapCurrentWithFirst();
 				else
 					swapCurrentWithPrior();
 				return;
 			}
-			if (reorderingChannels) // don't want to act on any other keys until these are released.
-				return;
 			
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
@@ -1973,17 +1974,14 @@ static void selectPrevNextZone(bool nextZone)
 static void handleUpKey(uiEvent_t *ev)
 {
 	uiDataGlobal.displaySquelch = false;
-	if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) &&BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+	if (reorderingChannels)
 	{
-		reorderingChannels=true;
 		if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
 			swapCurrentWithLast();
 		else
 			swapCurrentWithNext();
 		return;
 	}
-	if (reorderingChannels) // don't want to act on any other keys until these are released.
-		return;
 	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 	{
 		selectPrevNextZone(true);
@@ -2065,6 +2063,7 @@ enum CHANNEL_SCREEN_QUICK_MENU_ITEMS {  CH_SCREEN_QUICK_MENU_COPY2VFO = 0, CH_SC
 	CH_SCREEN_QUICK_MENU_PRIORITY_SCAN,
 	CH_SCREEN_QUICK_MENU_DEL_FROM_ZONE,
 	CH_SCREEN_QUICK_MENU_DEL_CHANNEL,
+	CH_SCREEN_QUICK_MENU_REORDER_CHANNELS,
 	NUM_CH_SCREEN_QUICK_MENU_ITEMS };// The last item in the list is used so that we automatically get a total number of items in the list
 
 menuStatus_t uiChannelModeQuickMenu(uiEvent_t *ev, bool isFirstRun)
@@ -2254,6 +2253,9 @@ static void updateQuickMenuScreen(bool isFirstRun)
 					break;
 				case CH_SCREEN_QUICK_MENU_DEL_CHANNEL:
 					rightSideConst = (char * const *)&currentLanguage->delete_from_all_zones;
+					break;
+				case CH_SCREEN_QUICK_MENU_REORDER_CHANNELS:
+					rightSideConst = (char * const *)&currentLanguage->reorder_channels;
 					break;
 				default:
 					buf[0] = 0;
@@ -2504,6 +2506,10 @@ static void handleQuickMenuEvent(uiEvent_t *ev)
 					break;
 				}
 			}
+			case CH_SCREEN_QUICK_MENU_REORDER_CHANNELS:
+			reorderingChannels=true;
+			menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, true);
+			break;
 		}
 		return;
 	}

@@ -225,7 +225,8 @@ const stringsTable_t englishLanguage =
 .alphanumeric="alphanumeric",
 .numeric="Numeric",
 .delete_from_zone="Del from zone",
-.delete_from_all_zones="Del from all"
+.delete_from_all_zones="Del from all",
+.reorder_channels="Reorder Channels"
 };
 /********************************************************************
  *
