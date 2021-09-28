@@ -1529,7 +1529,7 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 #endif
-		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT))
+		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) && !reorderingChannels)
 		{
 			// Long press allows the 5W+ power setting to be selected immediately
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
@@ -1542,6 +1542,15 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_RIGHT))
 		{
+			if (reorderingChannels)
+			{
+				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
+					swapCurrentWithLast();
+				else
+					swapCurrentWithNext();
+				return;
+			}
+
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
 				if (increasePowerLevel(false))
@@ -1601,6 +1610,15 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT))
 		{
+			if (reorderingChannels)
+			{
+				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
+					swapCurrentWithFirst();
+				else
+					swapCurrentWithPrior();
+				return;
+			}
+
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
 				if (decreasePowerLevel())
@@ -1791,14 +1809,6 @@ static void handleEvent(uiEvent_t *ev)
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
 		{
 			uiDataGlobal.displaySquelch = false;
-			if (reorderingChannels)
-			{
-				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
-					swapCurrentWithFirst();
-				else
-					swapCurrentWithPrior();
-				return;
-			}
 			
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
@@ -1974,14 +1984,6 @@ static void selectPrevNextZone(bool nextZone)
 static void handleUpKey(uiEvent_t *ev)
 {
 	uiDataGlobal.displaySquelch = false;
-	if (reorderingChannels)
-	{
-		if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
-			swapCurrentWithLast();
-		else
-			swapCurrentWithNext();
-		return;
-	}
 	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 	{
 		selectPrevNextZone(true);
