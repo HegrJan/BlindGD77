@@ -38,6 +38,7 @@ static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
 enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
+	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
 	NUM_SOUND_MENU_ITEMS};
 
 menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
@@ -200,6 +201,17 @@ static void updateScreen(bool isFirstRun)
 						const char * const *audioPromptOption[] = { &currentLanguage->silent, &currentLanguage->beep,
 								&currentLanguage->voice_prompt_level_1, &currentLanguage->voice_prompt_level_2, &currentLanguage->voice_prompt_level_3 };
 						rightSideConst = (char * const *)audioPromptOption[nonVolatileSettings.audioPromptMode];
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						leftSide = (char * const *)&currentLanguage->voice_prompt_vol;
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", nonVolatileSettings.voicePromptVolumePercent);
+					}
+					else
+					{
+						leftSide = (char * const *)&currentLanguage->n_a;
 					}
 					break;
 			}
@@ -446,7 +458,15 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
-
+				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptVolumePercent < 100)
+						{
+							settingsIncrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+						}
+					}
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -536,6 +556,15 @@ static void handleEvent(uiEvent_t *ev)
 						}
 
 						settingsDecrement(nonVolatileSettings.audioPromptMode, 1);
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					if (nonVolatileSettings.audioPromptMode >=AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptVolumePercent > 10)
+						{
+							settingsDecrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+						}
 					}
 					break;
 			}

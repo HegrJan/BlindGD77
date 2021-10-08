@@ -259,11 +259,16 @@ bool soundRefillData(void)
 	if (wavbuffer_count > 0)
 	{
 		spi_soundBuf = spi_sound[g_SAI_TX_Handle.queueUser];
+	int8_t  volPercent  =(voicePromptsIsPlaying() && nonVolatileSettings.voicePromptVolumePercent > 0) ?nonVolatileSettings.voicePromptVolumePercent : 100;
 
 		for (int i = 0; i < (WAV_BUFFER_SIZE / 2); i++)
 		{
-			*(spi_soundBuf + (4 * i) + 3) = audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1];
-			*(spi_soundBuf + (4 * i) + 2) = audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
+			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
+			double adjustedSample = (volPercent * sample) / 100;
+			int16_t roundedAdjustedSample=adjustedSample;
+			
+			*(spi_soundBuf + (4 * i) + 3) = (uint8_t)((roundedAdjustedSample>>8)&0xff);
+			*(spi_soundBuf + (4 * i) + 2) = (uint8_t)((roundedAdjustedSample)&0xff);
 		}
 
 		// The transfer can fail

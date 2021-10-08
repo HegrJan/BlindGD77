@@ -347,7 +347,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.autoZonesEnabled=0;
 	memset(nonVolatileSettings.zoneChannelIndices, 0, sizeof(nonVolatileSettings.zoneChannelIndices));	
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
-
+	nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
 	settingsDirty = true;
 
 	settingsSaveSettings(false);

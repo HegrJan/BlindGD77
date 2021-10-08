@@ -237,6 +237,7 @@ typedef struct
    const char* delete_from_zone;
    const char* delete_from_all_zones;
    const char* reorder_channels;
+   const char* voice_prompt_vol;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
