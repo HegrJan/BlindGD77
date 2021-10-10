@@ -252,6 +252,24 @@ void soundRetrieveBuffer(void)
 	}
 	taskEXIT_CRITICAL();
 }
+static void ApplyRateAndVolumeAdjustmentToWaveBuffer()
+{
+	if (!voicePromptsIsPlaying())
+		return;
+	if (nonVolatileSettings.voicePromptVolumePercent==0)
+		nonVolatileSettings.voicePromptVolumePercent=100;
+	
+	for (int i = 0; i < (WAV_BUFFER_SIZE / 2); i++)
+	{
+		int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
+		double adjustedSample=nonVolatileSettings.voicePromptVolumePercent*sample/100;
+		int16_t roundedSample=adjustedSample;
+		
+		audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1]=(uint8_t)((roundedSample>>8)&0xff);
+		audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i]=(uint8_t)(roundedSample&0xff);
+	}
+}
+
 
 // This function is used by the I2S TX callback function to send the data through the bus
 bool soundRefillData(void)
@@ -259,16 +277,11 @@ bool soundRefillData(void)
 	if (wavbuffer_count > 0)
 	{
 		spi_soundBuf = spi_sound[g_SAI_TX_Handle.queueUser];
-	int8_t  volPercent  =(voicePromptsIsPlaying() && nonVolatileSettings.voicePromptVolumePercent > 0) ?nonVolatileSettings.voicePromptVolumePercent : 100;
-
+		ApplyRateAndVolumeAdjustmentToWaveBuffer();
 		for (int i = 0; i < (WAV_BUFFER_SIZE / 2); i++)
 		{
-			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
-			double adjustedSample = (volPercent * sample) / 100;
-			int16_t roundedAdjustedSample=adjustedSample;
-			
-			*(spi_soundBuf + (4 * i) + 3) = (uint8_t)((roundedAdjustedSample>>8)&0xff);
-			*(spi_soundBuf + (4 * i) + 2) = (uint8_t)((roundedAdjustedSample)&0xff);
+			*(spi_soundBuf + (4 * i) + 3) = audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1];
+			*(spi_soundBuf + (4 * i) + 2) = audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
 		}
 
 		// The transfer can fail
