@@ -260,9 +260,20 @@ bool soundRefillData(void)
 	{
 		spi_soundBuf = spi_sound[g_SAI_TX_Handle.queueUser];
 		
-		int8_t  volPercent  =(voicePromptsIsPlaying() && (nonVolatileSettings.voicePromptVolumePercent > 0)) ? nonVolatileSettings.voicePromptVolumePercent : 100;
-		int8_t  rate = (voicePromptsIsPlaying() && (nonVolatileSettings.voicePromptRate > 0)) ? nonVolatileSettings.voicePromptRate : 0;
-		uint8_t skipEveryNthSample=(rate > 0) ? (12-rate) : 0;
+		int8_t  volPercent  =100;
+		int8_t  rate = 0;
+			uint8_t skipEveryNthSample = 0;
+	
+	if (voicePromptsIsPlaying())
+	{
+		if (nonVolatileSettings.voicePromptVolumePercent > 0)
+			volPercent=nonVolatileSettings.voicePromptVolumePercent;
+		if (nonVolatileSettings.voicePromptRate > 0)
+		{
+			rate = nonVolatileSettings.voicePromptRate;
+			skipEveryNthSample= 12-rate;
+		}
+	}
 		
 		uint8_t maxSamples=(WAV_BUFFER_SIZE / 2);
 		uint8_t samples=maxSamples;
