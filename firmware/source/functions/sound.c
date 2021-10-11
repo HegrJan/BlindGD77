@@ -259,11 +259,22 @@ bool soundRefillData(void)
 	if (wavbuffer_count > 0)
 	{
 		spi_soundBuf = spi_sound[g_SAI_TX_Handle.queueUser];
-	int8_t  volPercent  =(voicePromptsIsPlaying() && nonVolatileSettings.voicePromptVolumePercent > 0) ?nonVolatileSettings.voicePromptVolumePercent : 100;
-
-		for (int i = 0; i < (WAV_BUFFER_SIZE / 2); i++)
+		
+		int8_t  volPercent  =(voicePromptsIsPlaying() && (nonVolatileSettings.voicePromptVolumePercent > 0)) ? nonVolatileSettings.voicePromptVolumePercent : 100;
+		int8_t  rate = (voicePromptsIsPlaying() && (nonVolatileSettings.voicePromptRate > 0)) ? nonVolatileSettings.voicePromptRate : 0;
+		uint8_t skipEveryNthSample=(rate > 0) ? (12-rate) : 0;
+		
+		uint8_t maxSamples=(WAV_BUFFER_SIZE / 2);
+		uint8_t samples=maxSamples;
+		
+		for (int i = 0,j=0; (i < maxSamples) && (j < maxSamples); i++,j++)
 		{
-			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
+			if ((i > 0) && (skipEveryNthSample > 0) && ((i%skipEveryNthSample)==0))
+			{
+				j++;
+				samples--;
+			}
+			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
 			double adjustedSample = (volPercent * sample) / 100;
 			int16_t roundedAdjustedSample=adjustedSample;
 			
@@ -272,7 +283,7 @@ bool soundRefillData(void)
 		}
 
 		// The transfer can fail
-		if (I2STransferTransmit(spi_soundBuf, WAV_BUFFER_SIZE * 2))
+		if (I2STransferTransmit(spi_soundBuf, samples * 4))
 		{
 			g_TX_SAI_in_use = false;
 		}

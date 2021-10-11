@@ -130,7 +130,8 @@ typedef struct
 	uint8_t totMaster; // Master timeout timer value.
 	int16_t			zoneChannelIndices[32]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, but 32 out of a possible 250  zone channel indices are in this array.
 	uint8_t voicePromptVolumePercent; // percent of max volume
-	// Currently this struct is 200 bytes. It can be a maximum of 256 bytes JKS 4 August 2021. 
+	uint8_t voicePromptRate;
+	// Currently this struct is 216 bytes. It can be a maximum of 256 bytes JKS 4 August 2021. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

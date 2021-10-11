@@ -348,6 +348,7 @@ void settingsRestoreDefaultSettings(void)
 	memset(nonVolatileSettings.zoneChannelIndices, 0, sizeof(nonVolatileSettings.zoneChannelIndices));	
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
 	nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
+	nonVolatileSettings.voicePromptRate=0; // default, for each increment of 1 we throw away a sample every 4-voicePromptRate  samples to crudely increase rate.
 	settingsDirty = true;
 
 	settingsSaveSettings(false);

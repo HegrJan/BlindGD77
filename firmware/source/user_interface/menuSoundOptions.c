@@ -39,6 +39,7 @@ static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
 	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
+	OPTIONS_AUDIO_PROMPT_RATE,
 	NUM_SOUND_MENU_ITEMS};
 
 menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
@@ -214,6 +215,18 @@ static void updateScreen(bool isFirstRun)
 						leftSide = (char * const *)&currentLanguage->n_a;
 					}
 					break;
+				case OPTIONS_AUDIO_PROMPT_RATE:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						leftSide = (char * const *)&currentLanguage->voice_prompt_rate;
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.voicePromptRate+1);
+					}
+					else
+					{
+						leftSide = (char * const *)&currentLanguage->n_a;
+					}
+					break;
+				
 			}
 
 			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSide? *leftSide:"", (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
@@ -467,6 +480,15 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_AUDIO_PROMPT_RATE:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptRate < 9)
+						{
+							settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
+						}
+					}
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -564,6 +586,15 @@ static void handleEvent(uiEvent_t *ev)
 						if (nonVolatileSettings.voicePromptVolumePercent > 10)
 						{
 							settingsDecrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+						}
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_RATE:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptRate > 0)
+						{
+							settingsDecrement(nonVolatileSettings.voicePromptRate, 1);
 						}
 					}
 					break;
