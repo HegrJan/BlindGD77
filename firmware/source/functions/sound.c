@@ -280,7 +280,7 @@ bool soundRefillData(void)
 		
 		for (int i = 0,j=0; (i < maxSamples) && (j < maxSamples); i++,j++)
 		{
-			if ((i > 0) && (skipEveryNthSample > 0) && ((i%skipEveryNthSample)==0))
+			if ((j > 0) && (skipEveryNthSample > 0) && ((j%skipEveryNthSample)==0))
 			{
 				j++;
 				samples--;
