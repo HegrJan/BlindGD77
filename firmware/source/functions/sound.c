@@ -280,12 +280,17 @@ bool soundRefillData(void)
 		
 		for (int i = 0,j=0; (i < maxSamples) && (j < maxSamples); i++,j++)
 		{
-			if ((j > 0) && (skipEveryNthSample > 0) && ((j%skipEveryNthSample)==0))
+			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
+		
+			if ((j > 0) && (j < maxSamples) && (skipEveryNthSample > 0) && ((j%skipEveryNthSample)==0))
 			{
 				j++;
+				int16_t skippedSample = (audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
+				int32_t averageSample=(sample+skippedSample)/2;
+				sample=averageSample;
+
 				samples--;
 			}
-			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
 			double adjustedSample = (volPercent * sample) / 100;
 			int16_t roundedAdjustedSample=adjustedSample;
 			
