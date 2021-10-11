@@ -271,7 +271,7 @@ bool soundRefillData(void)
 		if (nonVolatileSettings.voicePromptRate > 0)
 		{
 			rate = nonVolatileSettings.voicePromptRate;
-			skipEveryNthSample= 13-rate;// rate is from 0 to 9, 0 being no change at all. Thus a rate of 1 will skip a sample every 12 samples and a rate of 9 will skip a sample every 4 samples.
+			skipEveryNthSample= 12-rate;// rate is from 0 to 9, 0 being no change at all. Thus a rate of 1 will skip a sample every 11 samples and a rate of 9 will skip a sample every 3 samples.
 		}
 	}
 		
