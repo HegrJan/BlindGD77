@@ -31,6 +31,7 @@
 #include "functions/sound.h"
 #include "functions/voicePrompts.h"
 #include "functions/rxPowerSaving.h"
+static int16_t sampleBuffer[WAV_BUFFER_SIZE/2];
 
 static void soundBeepTask(void *data);
 typedef union byteSwap16
@@ -252,54 +253,62 @@ void soundRetrieveBuffer(void)
 	}
 	taskEXIT_CRITICAL();
 }
+static int ApplyVolAndRateToCurrentWaveBuffer()
+{
+	uint8_t maxSamples=(WAV_BUFFER_SIZE / 2);
+	uint8_t samples=maxSamples;
+
+	if (!voicePromptsIsPlaying())
+		return samples;
+	
+	int volPercent=100;
+	int rate=0;
+	int skipEveryNthSample=0;
+
+	if (nonVolatileSettings.voicePromptVolumePercent > 0)
+		volPercent=nonVolatileSettings.voicePromptVolumePercent;
+	if (nonVolatileSettings.voicePromptRate > 0)
+	{
+		rate = nonVolatileSettings.voicePromptRate;
+		skipEveryNthSample= 12-rate;// rate is from 0 to 9, 0 being no change at all. Thus a rate of 1 will skip a sample every 11 samples and a rate of 9 will skip a sample every 3 samples.
+	}
+	
+	for (int i = 0,j=0; (i < maxSamples) && (j < maxSamples); i++,j++)
+	{
+		int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
+		
+		if ((j > 0) && (j < maxSamples) && (skipEveryNthSample > 0) && ((j%skipEveryNthSample)==0))
+		{
+			j++;
+			int16_t skippedSample = (audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
+			int32_t averageSample=(sample+skippedSample)/2;
+			sample=averageSample;
+
+			samples--;
+		}
+		double adjustedSample = (volPercent * sample) / 100;
+		sampleBuffer[i]=(int16_t)adjustedSample;
+	}	
+	memcpy(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx], sampleBuffer, samples*sizeof(int16_t));
+			
+	return samples;
+}
 
 // This function is used by the I2S TX callback function to send the data through the bus
 bool soundRefillData(void)
 {
 	if (wavbuffer_count > 0)
 	{
+		int samples=ApplyVolAndRateToCurrentWaveBuffer();
 		spi_soundBuf = spi_sound[g_SAI_TX_Handle.queueUser];
 		
-		int8_t  volPercent  =100;
-		int8_t  rate = 0;
-			uint8_t skipEveryNthSample = 0;
-	
-	if (voicePromptsIsPlaying())
-	{
-		if (nonVolatileSettings.voicePromptVolumePercent > 0)
-			volPercent=nonVolatileSettings.voicePromptVolumePercent;
-		if (nonVolatileSettings.voicePromptRate > 0)
+		for (int i = 0; i < samples; i++)
 		{
-			rate = nonVolatileSettings.voicePromptRate;
-			skipEveryNthSample= 12-rate;// rate is from 0 to 9, 0 being no change at all. Thus a rate of 1 will skip a sample every 11 samples and a rate of 9 will skip a sample every 3 samples.
+			*(spi_soundBuf + (4 * i) + 3) = audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * i) + 1];
+			*(spi_soundBuf + (4 * i) + 2) = audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * i];
 		}
-	}
-		
-		uint8_t maxSamples=(WAV_BUFFER_SIZE / 2);
-		uint8_t samples=maxSamples;
-		
-		for (int i = 0,j=0; (i < maxSamples) && (j < maxSamples); i++,j++)
-		{
-			int16_t sample=(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
-		
-			if ((j > 0) && (j < maxSamples) && (skipEveryNthSample > 0) && ((j%skipEveryNthSample)==0))
-			{
-				j++;
-				int16_t skippedSample = (audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][(2 * j) + 1]<<8)|audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx][2 * j];
-				int32_t averageSample=(sample+skippedSample)/2;
-				sample=averageSample;
-
-				samples--;
-			}
-			double adjustedSample = (volPercent * sample) / 100;
-			int16_t roundedAdjustedSample=adjustedSample;
-			
-			*(spi_soundBuf + (4 * i) + 3) = (uint8_t)((roundedAdjustedSample>>8)&0xff);
-			*(spi_soundBuf + (4 * i) + 2) = (uint8_t)((roundedAdjustedSample)&0xff);
-		}
-
 		// The transfer can fail
-		if (I2STransferTransmit(spi_soundBuf, samples * 4))
+		if (I2STransferTransmit(spi_soundBuf, (samples * 4)))
 		{
 			g_TX_SAI_in_use = false;
 		}
