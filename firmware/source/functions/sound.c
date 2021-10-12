@@ -253,6 +253,7 @@ void soundRetrieveBuffer(void)
 	}
 	taskEXIT_CRITICAL();
 }
+
 static int ApplyVolAndRateToCurrentWaveBuffer()
 {
 	uint8_t maxSamples=(WAV_BUFFER_SIZE / 2);
@@ -289,7 +290,7 @@ static int ApplyVolAndRateToCurrentWaveBuffer()
 		double adjustedSample = (volPercent * sample) / 100;
 		sampleBuffer[i]=(int16_t)adjustedSample;
 	}	
-	memcpy(audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx], sampleBuffer, samples*sizeof(int16_t));
+	memcpy((uint16_t*)audioAndHotspotDataBuffer.wavbuffer[wavbuffer_read_idx], sampleBuffer, samples*sizeof(int16_t));
 			
 	return samples;
 }
