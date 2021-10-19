@@ -138,10 +138,10 @@ static void RetractWriteBufferPtr(int retractBy)
 	
 	wavbuffer_count-=retractBy;
 	// also retract the write index.
-	if (wavbuffer_write_idx-retractBy > 0)
+	if (wavbuffer_write_idx-retractBy >= 0)
 		wavbuffer_write_idx-=retractBy;
 	else
-	{
+	{// last decode caused write ptr to wrap around to start so move it back relative to the end of the circular buffer.
 		int diff=retractBy-wavbuffer_write_idx;
 		wavbuffer_write_idx=WAV_BUFFER_COUNT-diff;
 	} 
