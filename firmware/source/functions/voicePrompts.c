@@ -32,7 +32,6 @@
 #include "user_interface/uiLocalisation.h"
 #include "functions/rxPowerSaving.h"
 #include "functions/sonic_lite.h"
-static short sonicBuffer[3 * WAV_BUFFER_SIZE]; // 6 buffers are decoded for each DMR frame, WAV_BUFFER_SIZE is in bytes, not shorts hence only need 3.
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0006; // Version 6 TOC increased to 320. Added PROMOT_VOX and PROMPT_UNUSED_1 to PROMPT_UNUSED_10
 													// Version 5 TOC increased to 300
@@ -150,29 +149,25 @@ static void RetractWriteBufferPtr(int retractBy)
 
 static void ApplyVolAndRateToCurrentWaveBuffers(int startDecodeIndex, bool flush)
 {
-	const int singleBufferSamples=WAV_BUFFER_SIZE/2;// 6 buffers are decoded at once, each sample takes up two bytes.
-	const int maxSamples= 6 * singleBufferSamples; 
+	const int singleBufferSamples=WAV_BUFFER_SIZE/2; // WAV_BUFFER_SIZE is in bytes, each sample takes up two bytes (16 bits).
+	const int maxSamples= 6 * singleBufferSamples; // 6 buffers are decoded at once, each sample takes up two bytes.
 
 	int numSamples= maxSamples;
-	
-	memcpy(sonicBuffer, audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], maxSamples*sizeof(short));
-	
-	sonicWriteShortToStream(sonicBuffer, numSamples);
+	// Because we only speed up prompts, the number of samples in total will always be less than or equal to the original number of samples.
+	sonicWriteShortToStream((short*)audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], numSamples);
 	if (flush)
 		sonicFlushStream();
 	
 	numSamples = SAFE_MIN(sonicSamplesAvailable(), maxSamples);
 	if ((numSamples < maxSamples) && !flush)
 	{// only read an exact multiple of the buffer size so that the read ptr only ever sees full buffers.
-		// Leave the rest for next time.
+		// Leave the rest in the stream for next time.
 		int fullBuffers=(numSamples / singleBufferSamples);
 		numSamples=fullBuffers*singleBufferSamples;
 		int retractBufferCount=6-fullBuffers;// 6 buffers are used when decoding a DMR frame.
-		RetractWriteBufferPtr(retractBufferCount);
+		RetractWriteBufferPtr(retractBufferCount); // retract over any partial buffer and reuse for next decode.
 	}
-	sonicReadShortFromStream(sonicBuffer, numSamples);
-	
-	memcpy(audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], sonicBuffer, (numSamples*sizeof(short)));
+	sonicReadShortFromStream((short*)audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], numSamples);
 }
 
 void voicePromptsTick(void)
