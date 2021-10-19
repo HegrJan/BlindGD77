@@ -152,22 +152,32 @@ static void ApplyVolAndRateToCurrentWaveBuffers(int startDecodeIndex, bool flush
 	const int singleBufferSamples=WAV_BUFFER_SIZE/2; // WAV_BUFFER_SIZE is in bytes, each sample takes up two bytes (16 bits).
 	const int maxSamples= 6 * singleBufferSamples; // 6 buffers are decoded at once, each sample takes up two bytes.
 
-	int numSamples= maxSamples;
 	// Because we only speed up prompts, the number of samples in total will always be less than or equal to the original number of samples.
-	sonicWriteShortToStream((short*)audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], numSamples);
+	int readIdx=startDecodeIndex;
+	for (int bufferCount=0; bufferCount < 6; ++bufferCount)
+	{
+		sonicWriteShortToStream((short*)audioAndHotspotDataBuffer.wavbuffer[readIdx], singleBufferSamples);
+		readIdx=(readIdx+1)%WAV_BUFFER_COUNT;
+	}
 	if (flush)
 		sonicFlushStream();
 	
-	numSamples = SAFE_MIN(sonicSamplesAvailable(), maxSamples);
+	int numSamples = SAFE_MIN(sonicSamplesAvailable(), maxSamples);
+			int fullBuffers=6;
+
 	if ((numSamples < maxSamples) && !flush)
 	{// only read an exact multiple of the buffer size so that the read ptr only ever sees full buffers.
 		// Leave the rest in the stream for next time.
-		int fullBuffers=(numSamples / singleBufferSamples);
-		numSamples=fullBuffers*singleBufferSamples;
+		fullBuffers=(numSamples / singleBufferSamples);
 		int retractBufferCount=6-fullBuffers;// 6 buffers are used when decoding a DMR frame.
 		RetractWriteBufferPtr(retractBufferCount); // retract over any partial buffer and reuse for next decode.
 	}
-	sonicReadShortFromStream((short*)audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], numSamples);
+	readIdx=startDecodeIndex;
+	for (int bufferCount=0; bufferCount < fullBuffers; ++bufferCount)
+	{
+		sonicReadShortFromStream((short*)audioAndHotspotDataBuffer.wavbuffer[readIdx], singleBufferSamples); // write the processed samples back to the buffers.
+		readIdx=(readIdx+1)%WAV_BUFFER_COUNT;
+	}
 }
 
 void voicePromptsTick(void)
@@ -178,7 +188,7 @@ void voicePromptsTick(void)
 		{
 			if (wavbuffer_count <= (WAV_BUFFER_COUNT / 2))
 			{
-				int startDecodeIndex=wavbuffer_write_idx;
+				int startDecodeIndex=wavbuffer_write_idx; // save it off as decode will fill 6 buffers.
 				codecDecode((uint8_t *)&ambeData[promptDataPosition], 3);
 				promptDataPosition += 27;
 				ApplyVolAndRateToCurrentWaveBuffers(startDecodeIndex, promptDataPosition>=currentPromptLength);
