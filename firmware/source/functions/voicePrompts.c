@@ -31,14 +31,14 @@
 #include "functions/settings.h"
 #include "user_interface/uiLocalisation.h"
 #include "functions/rxPowerSaving.h"
-
+#include "functions/sonic_lite.h"
+static short sonicBuffer[3 * WAV_BUFFER_SIZE]; // 6 buffers are decoded for each DMR frame, WAV_BUFFER_SIZE is in bytes, not shorts hence only need 3.
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
 const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0006; // Version 6 TOC increased to 320. Added PROMOT_VOX and PROMPT_UNUSED_1 to PROMPT_UNUSED_10
 													// Version 5 TOC increased to 300
 													// Version 4 does not have unused items
                                                     // Version 3 does not have the PROMPT_TBD items in it
 #define VOICE_PROMPTS_TOC_SIZE 320
-
 static void getAmbeData(int offset,int length);
 
 typedef struct
@@ -129,6 +129,52 @@ static void getAmbeData(int offset,int length)
 	}
 }
 
+static void RetractWriteBufferPtr(int retractBy)
+{
+	if (retractBy==0) 
+		return;
+	
+	if (wavbuffer_count < retractBy) 
+		return;
+	
+	wavbuffer_count-=retractBy;
+	// also retract the write index.
+	if (wavbuffer_write_idx-retractBy > 0)
+		wavbuffer_write_idx-=retractBy;
+	else
+	{
+		int diff=retractBy-wavbuffer_write_idx;
+		wavbuffer_write_idx=WAV_BUFFER_COUNT-diff;
+	} 
+}
+
+static void ApplyVolAndRateToCurrentWaveBuffers(int startDecodeIndex, bool flush)
+{
+	const int singleBufferSamples=WAV_BUFFER_SIZE/2;// 6 buffers are decoded at once, each sample takes up two bytes.
+	const int maxSamples= 6 * singleBufferSamples; 
+
+	int numSamples= maxSamples;
+	
+	memcpy(sonicBuffer, audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], maxSamples*sizeof(short));
+	
+	sonicWriteShortToStream(sonicBuffer, numSamples);
+	if (flush)
+		sonicFlushStream();
+	
+	numSamples = SAFE_MIN(sonicSamplesAvailable(), maxSamples);
+	if ((numSamples < maxSamples) && !flush)
+	{// only read an exact multiple of the buffer size so that the read ptr only ever sees full buffers.
+		// Leave the rest for next time.
+		int fullBuffers=(numSamples / singleBufferSamples);
+		numSamples=fullBuffers*singleBufferSamples;
+		int retractBufferCount=6-fullBuffers;// 6 buffers are used when decoding a DMR frame.
+		RetractWriteBufferPtr(retractBufferCount);
+	}
+	sonicReadShortFromStream(sonicBuffer, numSamples);
+	
+	memcpy(audioAndHotspotDataBuffer.wavbuffer[startDecodeIndex], sonicBuffer, (numSamples*sizeof(short)));
+}
+
 void voicePromptsTick(void)
 {
 	if (voicePromptIsActive)
@@ -137,8 +183,10 @@ void voicePromptsTick(void)
 		{
 			if (wavbuffer_count <= (WAV_BUFFER_COUNT / 2))
 			{
+				int startDecodeIndex=wavbuffer_write_idx;
 				codecDecode((uint8_t *)&ambeData[promptDataPosition], 3);
 				promptDataPosition += 27;
+				ApplyVolAndRateToCurrentWaveBuffers(startDecodeIndex, promptDataPosition>=currentPromptLength);
 			}
 
 			soundTickRXBuffer();
@@ -209,6 +257,12 @@ void voicePromptsInit(void)
 	{
 		voicePromptsTerminate();
 	}
+	
+	sonicInit();
+	float volume = nonVolatileSettings.voicePromptVolumePercent * 0.01;
+	float speed = (10+nonVolatileSettings.voicePromptRate) * 0.1;
+	sonicSetSpeed(speed);
+	sonicSetVolume(volume);
 
 	voicePromptsCurrentSequence.Length = 0;
 	voicePromptsCurrentSequence.Pos = 0;
