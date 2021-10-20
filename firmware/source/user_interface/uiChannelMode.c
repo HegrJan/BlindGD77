@@ -1532,8 +1532,13 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 #endif
-		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) && !reorderingChannels)
+		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT))
 		{
+			if (reorderingChannels)
+			{
+				swapCurrentWithLast();
+				return;
+			}
 			// Long press allows the 5W+ power setting to be selected immediately
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
@@ -1543,17 +1548,13 @@ static void handleEvent(uiEvent_t *ev)
 				}
 			}
 		}
-		else if (KEYCHECK_PRESS(ev->keys, KEY_RIGHT))
+		else if (reorderingChannels && KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT))
 		{
-			if (reorderingChannels)
-			{
-				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
-					swapCurrentWithLast();
-				else
-					swapCurrentWithNext();
-				return;
-			}
-
+			swapCurrentWithNext();
+			return;
+		}
+		else if (KEYCHECK_PRESS(ev->keys, KEY_RIGHT) && !reorderingChannels)
+		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
 				if (increasePowerLevel(false))
@@ -1611,17 +1612,18 @@ static void handleEvent(uiEvent_t *ev)
 			}
 
 		}
-		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT))
+		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) && reorderingChannels)
 		{
-			if (reorderingChannels)
-			{
-				if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT))
-					swapCurrentWithFirst();
-				else
-					swapCurrentWithPrior();
-				return;
-			}
-
+			swapCurrentWithFirst();
+			return;
+		}
+		else if (reorderingChannels && KEYCHECK_SHORTUP(ev->keys, KEY_LEFT))
+		{
+			swapCurrentWithPrior();
+			return;
+		}
+		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) && !reorderingChannels)
+		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
 				if (decreasePowerLevel())
