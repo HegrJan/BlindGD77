@@ -483,7 +483,7 @@ static void handleEvent(uiEvent_t *ev)
 				case OPTIONS_AUDIO_PROMPT_RATE:
 					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 					{
-						if (nonVolatileSettings.voicePromptRate < 12)
+						if (nonVolatileSettings.voicePromptRate < 11)
 						{
 							settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
 						}

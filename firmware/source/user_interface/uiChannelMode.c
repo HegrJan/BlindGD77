@@ -51,6 +51,7 @@ typedef enum
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
 	GD77S_UIMODE_VOX,
+	GD77S_UIMODE_VOICE,
 	GD77S_UIMODE_OPTIONS,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
@@ -3147,6 +3148,26 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 	}
 }
 
+static void AnnounceGD77SVoiceParams(bool announceVolume, bool announceRate)
+{
+	char buf[5];
+	voicePromptsInit();
+	if (announceVolume)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->voice_prompt_vol);
+		snprintf(buf, 5, "%d%%", nonVolatileSettings.voicePromptVolumePercent);
+		voicePromptsAppendString(buf);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
+		if (announceRate)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->voice_prompt_rate);
+		snprintf(buf, 5, "%d", nonVolatileSettings.voicePromptRate+1);
+		voicePromptsAppendString(buf);
+	}
+	voicePromptsPlay();
+}
+
 static void 			AnnounceGD77sKeypadChar(bool init)
 {
 	char buf[2] = {0,0};
@@ -3456,6 +3477,9 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 			break;
 		case GD77S_UIMODE_OPTIONS:
 			AnnounceGD77SOption(true, false);
+			break;
+		case GD77S_UIMODE_VOICE:
+			AnnounceGD77SVoiceParams(true, true);
 			break;
 		case GD77S_UIMODE_MAX:
 			break;
@@ -4287,6 +4311,9 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_VOX:
 					vp = PROMPT_VOX;
 					break;
+				case GD77S_UIMODE_VOICE:
+					vpString = (char * const *)&currentLanguage->audio_prompt;
+					break;
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -4457,6 +4484,18 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_OPTIONS:
 					break; // handled by its own handler. 
+				case GD77S_UIMODE_VOICE:
+				// sk1 changes volume, sk2 changes speed.
+					if (nonVolatileSettings.voicePromptVolumePercent < 100)
+					{
+						settingsIncrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+					}
+					else
+					{
+						settingsSet(nonVolatileSettings.voicePromptVolumePercent, 10);
+					}	
+					AnnounceGD77SVoiceParams(true, false);
+					break;
 				case GD77S_UIMODE_MAX:
 					break;
 			}
@@ -4668,7 +4707,19 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					voicePromptsPlay();
 					break;
 				case GD77S_UIMODE_OPTIONS:
-					break; // handleed by its own handler. 
+					break; // handled by its own handler. 
+				case GD77S_UIMODE_VOICE:
+									// sk1 changes volume, sk2 changes speed.
+					if (nonVolatileSettings.voicePromptRate < 11)
+					{
+						settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
+					}
+					else
+					{
+						settingsSet(nonVolatileSettings.voicePromptRate, 0);
+					}	
+					AnnounceGD77SVoiceParams(false, true);
+					break;
 				case GD77S_UIMODE_MAX:
 					break;
 			}
