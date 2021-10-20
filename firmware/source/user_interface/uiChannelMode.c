@@ -1039,6 +1039,7 @@ void uiChannelModeUpdateScreen(int txTimeSecs)
 	uiDataGlobal.displayQSOState = QSO_DISPLAY_IDLE;
 }
 
+#if !defined(PLATFORM_GD77S)
 // these indices are relative to the current zone.
 static bool ReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2)
 {
@@ -1063,7 +1064,7 @@ static bool ReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2)
 	voicePromptsAppendString(voiceBuf);
 	voicePromptsPlay();	
 	return true;
-	}
+}
 
 static bool swapCurrentWithNext()
 {
@@ -1078,11 +1079,11 @@ static bool swapCurrentWithNext()
 
 static bool swapCurrentWithPrior()
 {
-		if (!reorderingChannels)
+	if (!reorderingChannels)
 		return false;
 	if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone <=1)
 		return false;
-	
+
 	int prior=nonVolatileSettings.currentChannelIndexInZone ==0 ? currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-1 : nonVolatileSettings.currentChannelIndexInZone-1;
 	return ReorderChannels(nonVolatileSettings.currentChannelIndexInZone, prior);
 }
@@ -1098,13 +1099,14 @@ static bool swapCurrentWithLast()
 
 static bool swapCurrentWithFirst()
 {
-		if (!reorderingChannels)
+	if (!reorderingChannels)
 		return false;
 
 	if (nonVolatileSettings.currentChannelIndexInZone ==0)
 		return false;
 	return ReorderChannels(nonVolatileSettings.currentChannelIndexInZone, 0);
 }
+#endif // !defined(PLATFORM_GD77S)
 
 static void handleEvent(uiEvent_t *ev)
 {
