@@ -4714,7 +4714,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break; // handled by its own handler. 
 				case GD77S_UIMODE_VOICE:
 									// sk1 changes volume, sk2 changes speed.
-					if (nonVolatileSettings.voicePromptRate < 11)
+					if (nonVolatileSettings.voicePromptRate < 9)
 					{
 						settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
 					}
