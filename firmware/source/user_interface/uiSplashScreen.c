@@ -108,6 +108,16 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 		if (codeplugGetOpenGD77CustomData(CODEPLUG_CUSTOM_DATA_TYPE_BEEP, melodyBuf))
 		{
 			hasBootMelody=(melodyBuf[0] != 0) && (melodyBuf[1] != 0);
+			if (hasBootMelody)
+			{
+				soundCreateSong(melodyBuf);
+				soundSetMelody(melody_generic);
+			}
+		}
+		else
+		{
+			soundSetMelody(MELODY_POWER_ON);
+			hasBootMelody=true;
 		}
 		if (!hasBootMelody && !hasBootText)
 		{
@@ -117,8 +127,6 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 		if (hasBootMelody)
 		{
 			splashScreenPhase=splashPlayingTune;
-			soundCreateSong(melodyBuf);
-			soundSetMelody(melody_generic);
 		}
 		else
 		{
