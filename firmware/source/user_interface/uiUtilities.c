@@ -2702,6 +2702,8 @@ static bool DoesPriorityChannelExistInCurrentZone()
 
 void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+		return;
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
 	
 	voicePromptsInit();
