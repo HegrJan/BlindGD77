@@ -245,7 +245,7 @@ static void updateScreen(bool isFirstRun)
 					if (mNum==OPTIONS_MENU_FM_BEEP)
 					{
 						// hack for FM Beep.
-						voicePromptsAppendString("FM");
+						voicePromptsAppendPrompt(PROMPT_FM);
 						voicePromptsAppendLanguageString(&currentLanguage->beep);
 					}
 					else
