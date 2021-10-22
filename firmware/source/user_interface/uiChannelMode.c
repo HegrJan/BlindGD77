@@ -1191,7 +1191,7 @@ static void handleEvent(uiEvent_t *ev)
 			if (uiDataGlobal.Scan.active && dualWatchChannelData.dualWatchActive)
 				AnnounceDualWatchChannels(nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1);
 			else
-				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_1 || nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
+				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
 			return;
 		}
 
@@ -3733,7 +3733,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
 		if (zoneChannelIndex==0)
 		{
-			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2), false);
+			AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), false);
 			return true; // just temporary.
 		}
 		SaveChannelToCurrentZone(zoneChannelIndex);
@@ -4343,7 +4343,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		{
 			if (GD77SParameters.channelOutOfBounds == false)
 			{
-				AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
+				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
 			}
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.cycleFunctionsInReverse)
