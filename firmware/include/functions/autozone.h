@@ -75,7 +75,7 @@ typedef struct
 	uint32_t endFrequency; // mHz of last non-interstitial/interleaved channel of base bank
 	uint16_t channelSpacing; // kHz channel step x 100 between channels in base bank.
 	uint16_t repeaterOffset; // kHz.
-	uint16_t priorityChannelIndex;
+	uint8_t priorityChannelIndex;
 	uint8_t totalChannelsInBaseBank;
 	// The next four are used for display purposes, e.g. to give a particular physical channel an appropriate display channel number. 
 	uint8_t baseChannelNumberStart;
