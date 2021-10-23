@@ -192,6 +192,10 @@ bool settingsLoadSettings(void)
 		nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
 	if (nonVolatileSettings.uhfOffset==0 || nonVolatileSettings.uhfOffset > 9000) 
 		nonVolatileSettings.uhfOffset=5000; // repeater offset for 70 cm band.
+	if (nonVolatileSettings.voicePromptVolumePercent < 10 || nonVolatileSettings.voicePromptVolumePercent > 100)
+		nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
+	if (nonVolatileSettings.voicePromptRate > 9)
+		nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 
 	return hasRestoredDefaultsettings;
 }

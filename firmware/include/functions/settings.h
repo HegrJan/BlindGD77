@@ -128,10 +128,10 @@ typedef struct
 	uint8_t autoZonesEnabled;// 1-bit per autozone type.
 	uint16_t		vfoSweepSettings; // 3bits: channel step | 5 bits: RSSI noise floor | 7bits: gain
 	uint8_t totMaster; // Master timeout timer value.
-	int16_t			zoneChannelIndices[32]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, but 32 out of a possible 250  zone channel indices are in this array.
+	int16_t			zoneChannelIndices[16]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, but 16   zone channel indices are in this array.
 	uint8_t voicePromptVolumePercent; // percent of max volume
 	uint8_t voicePromptRate;
-	// Currently this struct is 216 bytes. It can be a maximum of 256 bytes JKS 4 August 2021. 
+	// Currently this struct is 184 bytes. It can be a maximum of 256 bytes JKS 23 Oct 2021. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
