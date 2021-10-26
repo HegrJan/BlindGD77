@@ -161,29 +161,13 @@ void moveCursorLeftInString(char *str, int *pos, bool delete)
 	}
 }
 
-void moveCursorRightInString(char *str, int *pos, int max, bool insert)
+void moveCursorRightInString(char *str, int *pos, int max)
 {
-	int nLen = strlen(str);
-
-	if (*pos < strlen(str))
+	int safeMax=SAFE_MIN(strlen(str),(max-1));
+	if (*pos < safeMax)
 	{
-		if (insert)
-		{
-			if (nLen < max)
-			{
-				for (int i = nLen; i > *pos; i--)
-				{
-					str[i] = str[i - 1];
-				}
-				str[*pos] = ' ';
-			}
-		}
-
-		if (*pos < max-1)
-		{
-			*pos += 1;
-			AnnounceCharWithRequeue(str[*pos]); // speak the new char or the char about to be backspaced out.
-		}
+		(*pos) ++;
+		AnnounceCharWithRequeue(str[*pos]); // speak the new char
 	}
 }
 
@@ -251,7 +235,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 			editParams->allowedToSpeakUpdate=false; // set to false when we speak a newly inserted character to avoid the whole buffer being repeated on a screen update.
 			return true;
 		}
-		moveCursorRightInString(editParams->editBuffer, editParams->cursorPos, editParams->maxLen, false);
+		moveCursorRightInString(editParams->editBuffer, editParams->cursorPos, editParams->maxLen);
 		editUpdateCursor(editParams, true, true);
 		editParams->allowedToSpeakUpdate = false;
 		return true;
