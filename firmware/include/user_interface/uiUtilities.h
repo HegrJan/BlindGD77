@@ -49,7 +49,7 @@ void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital);
 ANNOUNCE_STATIC void announceBatteryPercentage(void);
 ANNOUNCE_STATIC void announceTS(void);
 ANNOUNCE_STATIC void announceCC(void);
-ANNOUNCE_STATIC void announceChannelName(bool voicePromptWasPlaying);
+ANNOUNCE_STATIC void announceChannelName(bool announceChannelPrompt, bool announceChannelNumberIfDifferentToName);
 ANNOUNCE_STATIC void announceFrequency(void);
 ANNOUNCE_STATIC void announceVFOChannelName(void);
 ANNOUNCE_STATIC void announceVFOAndFrequency(bool announceVFOName);
