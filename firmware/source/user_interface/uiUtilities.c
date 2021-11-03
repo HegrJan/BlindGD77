@@ -2412,7 +2412,8 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		{
 			announceVFOChannelName();
 		}
-		announceRadioMode(voicePromptWasPlaying);
+		if (!level2)// At level 2, do not say FM or DMR, only say contact which will indicate DMR, no contact will presumably be fm.
+			announceRadioMode(voicePromptWasPlaying);
 		if (voicePromptSequenceState == PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE)
 		{
 			break;
