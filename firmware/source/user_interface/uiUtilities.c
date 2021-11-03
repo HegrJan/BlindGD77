@@ -2127,20 +2127,49 @@ ANNOUNCE_STATIC void announceCC(void)
 	voicePromptsAppendInteger(trxGetDMRColourCode());
 }
 
-ANNOUNCE_STATIC void announceChannelName(bool voicePromptWasPlaying)
+static bool IsThisThePriorityChannel()
+{
+	uint16_t channelIndexRelativeToAllChannels=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+	
+	return (uiDataGlobal.priorityChannelIndex == channelIndexRelativeToAllChannels) || uiDataGlobal.priorityChannelActive;
+}
+
+static bool PriorityChannelExistsInCurrentZone()
+{
+	if (uiDataGlobal.priorityChannelIndex==NO_PRIORITY_CHANNEL)
+		return false;
+
+	uint16_t indexRelativeToCurrentZone=NO_PRIORITY_CHANNEL;	
+	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone) && indexRelativeToCurrentZone!=NO_PRIORITY_CHANNEL;
+}
+
+ANNOUNCE_STATIC void announceChannelName(bool announceChannelPrompt, bool announceChannelNumberIfDifferentToName)
 {
 	char voiceBuf[17];
-	codeplugUtilConvertBufToString(channelScreenChannelData.name, voiceBuf, 16);
-
-	if (!voicePromptWasPlaying)
+	char voiceBufChNumber[5];
+	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
+	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
+	// We can't announce  the channel number if this is the priority channel but it does not exist in the current zone, otherwise it won't make sense.
+	bool thisIsThePriorityChannel=IsThisThePriorityChannel();
+	bool announceChannelNumber=announceChannelNumberIfDifferentToName;
+	if (thisIsThePriorityChannel && !PriorityChannelExistsInCurrentZone())
+		announceChannelNumber=false;
+		
+	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
+	
+	if (announceChannelPrompt)
 	{
-		uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : nonVolatileSettings.currentChannelIndexInZone;
-		if (nonVolatileSettings.priorityChannelIndex == channelIndex)
+		if (thisIsThePriorityChannel)
 			voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
 		else
 			voicePromptsAppendPrompt(PROMPT_CHANNEL);
 	}
-
+	// If the number and name differ, then append.
+	if (announceChannelNumber && strcmp(voiceBufChNumber, voiceBuf) != 0)
+	{
+		voicePromptsAppendString(voiceBufChNumber);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
 	voicePromptsAppendString(voiceBuf);
 }
 
@@ -2329,7 +2358,7 @@ static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool a
 {
 	if (menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE)
 	{
-		announceChannelName(voicePromptWasPlaying);
+		announceChannelName(!voicePromptWasPlaying, false);
 	}
 	else
 	{
@@ -2442,7 +2471,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		if (voicePromptSequenceState==PROMPT_SEQUENCE_ZONE)
 			break;
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		announceChannelName(voicePromptWasPlaying);
+		announceChannelName(!voicePromptWasPlaying, false);
 	//	deliberate fall through to announce mode.
 	case PROMPT_SEQUENCE_MODE:
 		announceRadioMode(voicePromptWasPlaying);
@@ -2495,6 +2524,9 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		break;
 	case PROMPT_SEQUENCE_DIRECTION_RX:
 		voicePromptsAppendString("RX");
+		break;
+	case PROMPT_SEQUENCE_CHANNEL_NUMBER_AND_NAME:
+		announceChannelName(!voicePromptWasPlaying, true);
 		break;
 	default:
 		break;
@@ -2692,15 +2724,6 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	return false;
 }
 
-static bool DoesPriorityChannelExistInCurrentZone()
-{
-	if (uiDataGlobal.priorityChannelIndex==NO_PRIORITY_CHANNEL)
-		return false;
-
-	uint16_t indexRelativeToCurrentZone=NO_PRIORITY_CHANNEL;	
-	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone) && indexRelativeToCurrentZone!=NO_PRIORITY_CHANNEL;
-}
-
 void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
@@ -2708,32 +2731,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	voicePromptsInit();
 	if (announceName)
 	{
-		char voiceBuf[17];
-		char voiceBufChNumber[5];
-		int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
-		uint16_t channelIndexRelativeToAllChannels=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
-	
-		bool thisIsThePriorityChannel=(uiDataGlobal.priorityChannelIndex == channelIndexRelativeToAllChannels) || uiDataGlobal.priorityChannelActive;
-
-		codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
-		// We can't announce  the channel number if this is the priority channel but it does not exist in the current zone, otherwise it won't make sense.
-		bool announceChannelNumber=true;
-		if (thisIsThePriorityChannel && !DoesPriorityChannelExistInCurrentZone())
-			announceChannelNumber=false;
-	
-		snprintf(voiceBufChNumber, 5, "%d", channelNumber);
-
-		if (thisIsThePriorityChannel)
-			voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
-		else
-			voicePromptsAppendPrompt(PROMPT_CHANNEL);
-		// If the number and name differ, then append.
-		if (announceChannelNumber && strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
-		{
-			voicePromptsAppendString(voiceBufChNumber);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-		}
-		voicePromptsAppendString(voiceBuf);
+		announceChannelName(true, true);
 	}
 	
 	announceFrequency();

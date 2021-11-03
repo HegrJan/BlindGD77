@@ -1048,21 +1048,7 @@ static bool ReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2)
 	settingsSetCurrentChannelIndexForZone(zoneChannelIndex2, nonVolatileSettings.currentZone);
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 	loadChannelData(false, false);
-	voicePromptsInit();
-	char voiceBuf[17];
-	char voiceBufChNumber[5];
-	int channelNumber = nonVolatileSettings.currentChannelIndexInZone+1;
-	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
-	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
-	voicePromptsAppendPrompt(PROMPT_CHANNEL);
-	// If the number and name differ, then append.
-	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
-	{
-		voicePromptsAppendString(voiceBufChNumber);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
-	}
-	voicePromptsAppendString(voiceBuf);
-	voicePromptsPlay();	
+	announceItem(PROMPT_SEQUENCE_CHANNEL_NUMBER_AND_NAME, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 	return true;
 }
 
