@@ -2389,14 +2389,14 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		return;
 	}
 
-	bool level2=nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2;
+	bool lessVerbose =nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2;
 	// If voice prompts are already playing and further speech is requested, a less verbose sequence is spoken.
 	// This is known as follow-on.
 	// For example, at level 3, if the name and mode are being spoken,
 	// the user would hear "channel" name "mode" fm.
 	// If follow-on occurs, they'd just hear name fm.
 	// At voice prompt level 2, we always enforce follow-on to reduce verbosity.
-	bool voicePromptWasPlaying = voicePromptsIsPlaying() || level2;
+	bool voicePromptWasPlaying = voicePromptsIsPlaying() || lessVerbose;
 
 	voicePromptSequenceState = item;
 
@@ -2441,7 +2441,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		{
 			announceVFOChannelName();
 		}
-		if (!level2)// At level 2, do not say FM or DMR, only say contact which will indicate DMR, no contact will presumably be fm.
+		if (!lessVerbose)// At level 2, do not say FM or DMR, only say contact which will indicate DMR, no contact will presumably be fm.
 			announceRadioMode(voicePromptWasPlaying);
 		if (voicePromptSequenceState == PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE)
 		{
