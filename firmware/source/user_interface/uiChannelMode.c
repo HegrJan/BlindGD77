@@ -42,11 +42,11 @@
 #if defined(PLATFORM_GD77S)
 typedef enum
 {
-	GD77S_UIMODE_TG_OR_SQUELCH,
 	GD77S_UIMODE_ZONE,
+	GD77S_UIMODE_TG_OR_SQUELCH,
 	GD77S_UIMODE_SCAN,
-	GD77S_UIMODE_DTMF_CONTACTS,
 	GD77S_UIMODE_KEYPAD, // virtual keypad
+	GD77S_UIMODE_DTMF_CONTACTS,
 	GD77S_UIMODE_TS,
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
@@ -3723,7 +3723,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			return true; // just temporary.
 		}
 		SaveChannelToCurrentZone(zoneChannelIndex);
-		return true; // just temporary.
+		return true;
 	}
 	
 	return false;	
@@ -4117,11 +4117,11 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		return false;
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
 	{
-		GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
+		GD77SParameters.uiMode=GD77S_UIMODE_ZONE;
 		checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
 		keyboardReset();
 		voicePromptsInit();
-		voicePromptsAppendPrompt(PROMPT_CHANNEL_MODE);
+		voicePromptsAppendPrompt(PROMPT_ZONE_MODE);
 		voicePromptsAppendPrompt(PROMPT_CHANNEL);
 		voicePromptsAppendInteger(ev->rotary+GD77SParameters.channelbankOffset);
 		voicePromptsPlay();
@@ -4155,6 +4155,26 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	}
 	
 	return false;
+}
+
+static void 						ToggleGD77SVFOMode(uiEvent_t *ev)
+{
+			GD77SParameters.virtualVFOMode=!GD77SParameters.virtualVFOMode;
+	voicePromptsTerminate();
+	if (GD77SParameters.virtualVFOMode)
+	{
+				memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE );
+		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+		voicePromptsInit();
+		voicePromptsAppendString("vfo");
+		announceFrequency();
+		voicePromptsPlay();
+	}
+	else
+	{
+		loadChannelData(false, false);
+		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE, PROMPT_THRESHOLD_2);
+	}	
 }
 
 static void handleEventForGD77S(uiEvent_t *ev)
@@ -4192,6 +4212,7 @@ static void handleEventForGD77S(uiEvent_t *ev)
 			if (GD77SParameters.uiMode!=GD77S_UIMODE_TG_OR_SQUELCH)
 			{
 				GD77SParameters.uiMode=GD77S_UIMODE_TG_OR_SQUELCH;
+				GD77SParameters.virtualVFOMode=false;
 				voicePromptsInit();
 				voicePromptsAppendPrompt(PROMPT_CHANNEL_MODE);
 				voicePromptsAppendPrompt(PROMPT_CHANNEL);
@@ -4244,6 +4265,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				GD77SParameters.uiMode = (GD77SParameters.uiMode > 0) ? (GD77SParameters.uiMode - 1) : (GD77S_UIMODE_MAX-1);
 			else
 				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
+			GD77SParameters.virtualVFOMode=false;
 			//skip over Digital controls if the radio is in Analog mode
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{
@@ -4265,14 +4287,18 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 
 			switch (GD77SParameters.uiMode)
 			{
-				case GD77S_UIMODE_TG_OR_SQUELCH: // Channel Mode
-					vp = PROMPT_CHANNEL_MODE;
+				case GD77S_UIMODE_TG_OR_SQUELCH:
+				{
+					if (trxGetMode() == RADIO_MODE_ANALOG)
+						vpString=(char * const *)&currentLanguage->squelch;
+					else 
+						vp =PROMPT_TALKGROUP;
 					break;
+				}
 
 				case GD77S_UIMODE_SCAN:
-					vp = PROMPT_SCAN_MODE;
+					vp = PROMPT_CHANNEL_MODE;
 					break;
-
 				case GD77S_UIMODE_TS: // Timeslot Mode
 					vp = PROMPT_TIMESLOT_MODE;
 					break;
@@ -4329,7 +4355,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		{
 			if (GD77SParameters.channelOutOfBounds == false)
 			{
-				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
+				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), GD77SParameters.virtualVFOMode==false);
 			}
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.cycleFunctionsInReverse)
@@ -4610,6 +4636,11 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 							uiDataGlobal.Scan.direction *= -1;
 							return;
 						}
+					}
+					else
+					{
+						ToggleGD77SVFOMode(ev);
+						return;
 					}
 					break;
 
