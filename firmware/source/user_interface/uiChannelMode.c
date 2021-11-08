@@ -90,6 +90,9 @@ typedef struct
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 	bool cycleFunctionsInReverse;
 	GD77S_OPTIONS_t option; // used in Options mode.
+	uint32_t scanStartFrequency;
+	uint32_t scanEndFrequency;
+	uint16_t scanStep;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -104,7 +107,10 @@ static GD77SParameters_t GD77SParameters =
 		.autozoneTypeIndex=1,
 		.channelbankOffset=0,
 		.cycleFunctionsInReverse=false,
-		.option=GD77S_OPTION_POWER
+		.option=GD77S_OPTION_POWER,
+		.scanStartFrequency=0,
+		.scanEndFrequency=0,
+		.scanStep=0
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -619,11 +625,65 @@ static bool canCurrentZoneBeScanned(int *availableChannels)
 
 	return (enabledChannels > 1);
 }
+#if  defined(PLATFORM_GD77S) // GD77S vfo scan
+static bool InitGD77SScan()
+{
+	if (trxGetBandFromFrequency(settingsVFOChannel[CHANNEL_VFO_A].rxFreq)==-1)
+	{
+		voicePromptsInit();
+		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+		voicePromptsAppendLanguageString(&currentLanguage->error);
+		voicePromptsPlay();	
+		return false;//joe
+	}
+	GD77SParameters.scanStartFrequency=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
+	GD77SParameters.scanStep=1250; // 12.5 KHz. 
 
+	GD77SParameters.scanEndFrequency = GD77SParameters.scanStartFrequency+100000;// 1MHz.
+	while (trxGetBandFromFrequency(GD77SParameters.scanEndFrequency)==-1)
+	{
+		GD77SParameters.scanEndFrequency--;
+	}
+	
+	return true;
+}
+
+static bool HandleGD77SScanning()
+{
+	if (!GD77SParameters.virtualVFOMode)
+return false;
+	if (uiDataGlobal.Scan.direction == 1)
+	{
+		if (settingsVFOChannel[CHANNEL_VFO_A].rxFreq < (GD77SParameters.scanEndFrequency-GD77SParameters.scanStep))
+			settingsVFOChannel[CHANNEL_VFO_A].rxFreq+=GD77SParameters.scanStep;
+		else
+			settingsVFOChannel[CHANNEL_VFO_A].rxFreq=GD77SParameters.scanStartFrequency;
+	}
+	else
+	{
+		if (settingsVFOChannel[CHANNEL_VFO_A].rxFreq > (GD77SParameters.scanStartFrequency+GD77SParameters.scanStep))
+			settingsVFOChannel[CHANNEL_VFO_A].rxFreq-=GD77SParameters.scanStep;
+		else
+			settingsVFOChannel[CHANNEL_VFO_A].rxFreq = GD77SParameters.scanEndFrequency;
+	}
+	settingsVFOChannel[CHANNEL_VFO_A].txFreq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
+	memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE); // Don't copy the name of the vfo, which is in the first 16 bytes
+	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+	nextChannelReady =true;
+	
+	return true;
+}
+#endif
 static void scanSearchForNextChannel(void)
 {
 	if (DoDualWatchScan())
 		return;
+#if  defined(PLATFORM_GD77S) // GD77S vfo scan
+	if (HandleGD77SScanning())
+	{
+		return;
+	}
+#endif
 
 	int channel = 0;
 
@@ -689,6 +749,11 @@ static void scanSearchForNextChannel(void)
 
 static void scanApplyNextChannel(void)
 {
+	#if  defined(PLATFORM_GD77S) // GD77S vfo scan
+	if (GD77SParameters.virtualVFOMode==false)
+	{
+#endif
+
 	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 	{
 		// All Channels virtual zone
@@ -702,7 +767,9 @@ static void scanApplyNextChannel(void)
 	lastHeardClearLastID();
 
 	memcpy(&channelScreenChannelData, &channelNextChannelData, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
-
+#if  defined(PLATFORM_GD77S) // GD77S vfo scan
+	}
+#endif
 	loadChannelData(true, false);
 	uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 	uiChannelModeUpdateScreen(0);
@@ -4406,7 +4473,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					}
 					else
 					{
-						scanStart(false);
+						if (GD77SParameters.virtualVFOMode==false || InitGD77SScan())
+							scanStart(false);
 					}
 
 					voicePromptsInit();
