@@ -634,7 +634,7 @@ static bool InitGD77SScan()
 		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
 		voicePromptsAppendLanguageString(&currentLanguage->error);
 		voicePromptsPlay();	
-		return false;//joe
+		return false;
 	}
 	GD77SParameters.scanStartFrequency=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
 	GD77SParameters.scanStep=1250; // 12.5 KHz. 
@@ -652,22 +652,43 @@ static bool HandleGD77SScanning()
 {
 	if (!GD77SParameters.virtualVFOMode)
 return false;
+	uint32_t freq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
+
 	if (uiDataGlobal.Scan.direction == 1)
 	{
-		if (settingsVFOChannel[CHANNEL_VFO_A].rxFreq < (GD77SParameters.scanEndFrequency-GD77SParameters.scanStep))
-			settingsVFOChannel[CHANNEL_VFO_A].rxFreq+=GD77SParameters.scanStep;
+		if (freq < (GD77SParameters.scanEndFrequency-GD77SParameters.scanStep))
+			freq +=GD77SParameters.scanStep;
 		else
-			settingsVFOChannel[CHANNEL_VFO_A].rxFreq=GD77SParameters.scanStartFrequency;
+			freq =GD77SParameters.scanStartFrequency;
 	}
 	else
 	{
-		if (settingsVFOChannel[CHANNEL_VFO_A].rxFreq > (GD77SParameters.scanStartFrequency+GD77SParameters.scanStep))
-			settingsVFOChannel[CHANNEL_VFO_A].rxFreq-=GD77SParameters.scanStep;
+		if (freq > (GD77SParameters.scanStartFrequency+GD77SParameters.scanStep))
+			freq -=GD77SParameters.scanStep;
 		else
-			settingsVFOChannel[CHANNEL_VFO_A].rxFreq = GD77SParameters.scanEndFrequency;
+			freq = GD77SParameters.scanEndFrequency;
 	}
-	settingsVFOChannel[CHANNEL_VFO_A].txFreq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
-	memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE); // Don't copy the name of the vfo, which is in the first 16 bytes
+	//check all nuisance delete entries and skip channel if there is a match
+	bool skipped=false;
+	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
+	{
+		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
+		{
+			break;
+		}
+		else
+		{
+			if(uiDataGlobal.Scan.nuisanceDelete[i] == freq)
+			{
+				skipped=true;
+				break;
+			}
+		}
+	}
+	settingsVFOChannel[CHANNEL_VFO_A].txFreq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq=freq;
+	if (skipped)
+		return true;
+	memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 	nextChannelReady =true;
 	
@@ -4631,11 +4652,14 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			}
 			else
 			{
-				if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
-					GD77SParameters.channelbankOffset+=16;
-				else
-					GD77SParameters.channelbankOffset=0;
-				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
+				if (!GD77SParameters.virtualVFOMode && AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+				{
+					if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+						GD77SParameters.channelbankOffset+=16;
+					else
+						GD77SParameters.channelbankOffset=0;
+					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
+				}
 			}
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2) && (uiDataGlobal.DTMFContactList.isKeying == false))
@@ -4684,12 +4708,12 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 						if(uiDataGlobal.Scan.state == SCAN_PAUSED)
 						{
 							// There is two channels available in the Zone, just stop scanning
-							if (uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
+							if (!GD77SParameters.virtualVFOMode && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
 							{
 								uiDataGlobal.Scan.lastIteration = true;
 							}
-							
-							uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = uiDataGlobal.currentSelectedChannelNumber;
+							//joe
+							uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = GD77SParameters.virtualVFOMode ? currentChannelData->rxFreq : uiDataGlobal.currentSelectedChannelNumber;
 							uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
 							uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
 							uiDataGlobal.Scan.state = SCAN_SCANNING;
