@@ -3770,7 +3770,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			bool hasDigits=isdigit(GD77SKeypadBuffer[1]);
 			int bufLen=strlen(GD77SKeypadBuffer);
 			bool forBothRXAndTX=GD77SKeypadBuffer[bufLen-1]=='*';
-			uint16_t tone=0;
+			uint16_t tone=CODEPLUG_CSS_TONE_NONE;
 			if (hasDigits)
 			{
 				if (dcs)
@@ -3779,12 +3779,12 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 					tone = atoi(GD77SKeypadBuffer+1);//tone is decimal
 			}
 			// If DCS, or in the CSS_TYPE_DCS_MASK
-			currentChannelData->rxTone=0;
+			currentChannelData->rxTone=CODEPLUG_CSS_TONE_NONE;
 			currentChannelData->txTone=tone;
 			if (forBothRXAndTX)
 				currentChannelData->rxTone=tone;
 			else
-				currentChannelData->rxTone=0;
+				currentChannelData->rxTone=CODEPLUG_CSS_TONE_NONE;
 
 			announceCSSCode(tone, codeplugGetCSSType(tone), DIRECTION_NONE, true, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 			return true;
