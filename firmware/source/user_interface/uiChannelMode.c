@@ -645,7 +645,9 @@ static bool HandleGD77SScanning()
 	if (!GD77SParameters.virtualVFOMode)
 return false;
 	uint32_t freq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
-	int fStep=VFO_FREQ_STEP_TABLE[(settingsVFOChannel[CHANNEL_VFO_A].VFOflag5 >> 4)];
+	bool wide=(settingsVFOChannel[CHANNEL_VFO_A].flag4&0x02) ? true : false;
+		
+	int fStep=wide ? 2500 : 1250; // 25 KHz or 12.5 KHz depending on bandwidth.
 	if (uiDataGlobal.Scan.direction == 1)
 	{
 		if (freq < (nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A]-fStep))
@@ -4704,7 +4706,6 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 							{
 								uiDataGlobal.Scan.lastIteration = true;
 							}
-							//joe
 							uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = GD77SParameters.virtualVFOMode ? currentChannelData->rxFreq : uiDataGlobal.currentSelectedChannelNumber;
 							uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
 							uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
