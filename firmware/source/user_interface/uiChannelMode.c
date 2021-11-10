@@ -90,9 +90,6 @@ typedef struct
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 	bool cycleFunctionsInReverse;
 	GD77S_OPTIONS_t option; // used in Options mode.
-	uint32_t scanStartFrequency;
-	uint32_t scanEndFrequency;
-	uint16_t scanStep;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -107,10 +104,7 @@ static GD77SParameters_t GD77SParameters =
 		.autozoneTypeIndex=1,
 		.channelbankOffset=0,
 		.cycleFunctionsInReverse=false,
-		.option=GD77S_OPTION_POWER,
-		.scanStartFrequency=0,
-		.scanEndFrequency=0,
-		.scanStep=0
+		.option=GD77S_OPTION_POWER
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -636,13 +630,11 @@ static bool InitGD77SScan()
 		voicePromptsPlay();	
 		return false;
 	}
-	GD77SParameters.scanStartFrequency=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
-	GD77SParameters.scanStep=1250; // 12.5 KHz. 
-
-	GD77SParameters.scanEndFrequency = GD77SParameters.scanStartFrequency+100000;// 1MHz.
-	while (trxGetBandFromFrequency(GD77SParameters.scanEndFrequency)==-1)
+	nonVolatileSettings.vfoScanLow[CHANNEL_VFO_A]=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
+	nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A] = nonVolatileSettings.vfoScanLow[CHANNEL_VFO_A]+100000;// 1MHz.
+	while (trxGetBandFromFrequency(nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A])==-1)
 	{
-		GD77SParameters.scanEndFrequency--;
+		nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A]--;
 	}
 	
 	return true;
@@ -653,20 +645,20 @@ static bool HandleGD77SScanning()
 	if (!GD77SParameters.virtualVFOMode)
 return false;
 	uint32_t freq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq;
-
+	int fStep=VFO_FREQ_STEP_TABLE[(settingsVFOChannel[CHANNEL_VFO_A].VFOflag5 >> 4)];
 	if (uiDataGlobal.Scan.direction == 1)
 	{
-		if (freq < (GD77SParameters.scanEndFrequency-GD77SParameters.scanStep))
-			freq +=GD77SParameters.scanStep;
+		if (freq < (nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A]-fStep))
+			freq +=fStep;
 		else
-			freq =GD77SParameters.scanStartFrequency;
+			freq =nonVolatileSettings.vfoScanLow[CHANNEL_VFO_A];
 	}
 	else
 	{
-		if (freq > (GD77SParameters.scanStartFrequency+GD77SParameters.scanStep))
-			freq -=GD77SParameters.scanStep;
+		if (freq > (nonVolatileSettings.vfoScanLow[CHANNEL_VFO_A]+fStep))
+			freq -=fStep;
 		else
-			freq = GD77SParameters.scanEndFrequency;
+			freq = nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A];
 	}
 	//check all nuisance delete entries and skip channel if there is a match
 	bool skipped=false;
