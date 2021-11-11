@@ -1,0 +1,22 @@
+Restoring a GD77 or GD77S radio to stock Radioddity Firmware:
+Note: In order to restore a GD77 or GD77S radio to Radioddity stock firmware, it is necessary to take some steps prior to loading a codeplug or voice prompts onto the radio.
+Follow these steps exactly and you should be able to reload the Radioddity firmware:
+(Thanks to Scott Whitaker for this confirmation).
+ 
+These steps are only able to be performed on a brand-new GD77 or GD77S prior to loading voice prompts or a codeplug for the first time, using the OpenGD77 CPS software, so red carefully.
+1. First, Using the OpenGD77 CPS software, flash the OpenGD77 or AccessibleGD77 firmware on to the radio as documented in this archive, but do not load voice prompts or codeplug.
+2. Very important! Once finished, restart the radio, but do not proceed to loading voice prompts or codeplug.
+3. Go to the OpenGD77 Support dialog in the OpenGD77 CPS software, and backup the following:
+3.1. backup the EEPROM, 
+3.2. backup the Flash memory,
+3.3. backup the Calibration files.
+(i.e. three separate steps). Note: though there is a backup MCU ROM, there is no restore option so it apparently isn't needed. Keep these files in a safe location.
+4. You may then load your code plug and voice prompts and make whatever other changes you want.
+5. To go back to the stock firmware, use the OpenGD77 Support dialog in the Open GD77 CPS software to restore the following files from your backed up files in step 3:
+5.1. restore the EEPROM, 
+5.2. restore the Flash memory,
+5.3. restore the  Calibration files,
+back to the radio.  The radio will restart between each file load, so the user does not have to do so. 
+6. Once that is finished, then turn the radio off.
+6.1. Hold the SK1 and SK2 buttons to put the radio in flash mode.
+6.2. Use the Radioddity tool (not the OpenGD77 CPS software), to load their firmware (4.3.6 in this case) back to the radio. 7. The radio will now have the original firmware in it, and as far as I can tell, it works just as it did out of the box.

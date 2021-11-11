@@ -1,0 +1,187 @@
+Radioddity GD77S Quick Start Guide
+by Joseph Stephen VK7JS
+10 November 2021
+To contact Joseph Stephen, email joestephen@skymesh.com.au
+
+Please note. Turn on word wrap to read this document in a text editor.
+This Guide assumes you are running the forked version of OpenGD77 produced by Joseph Stephen VK7JS and Jan Hegr OK1TE now called AccessibleGD77.
+
+See the bottom of this document for links to the original and forked branches on Github.
+
+To install the CPS software required to communicate with your radio in order to upload Firmware, voice prompts and a code plug, please run the file called:
+OpenGD77CPSInstaller.exe
+in the root folder of this archive.
+To upload firmware, see the file called 
+Firmware Upload.txt.
+To learn how to create and upload a code plug, see the file called 
+Creating and Uploading a Code Plug.txt.
+
+Physical Description
+
+Front panel:
+Top half speaker grill.
+Bottom half blank
+There is no screen on the S model.
+
+Top edge, left to right:
+Power/volume knob, Channel knob, Orange button, Antenna socket (female SMA)
+The channel knob has 16 fixed positions. the knob does not wrap around but has a hard stop at each extreme.
+
+Left side, top to bottom:
+PTT (Push to Talk.)
+SK1 (Side Key 1, also called Black button.)
+SK2 (Side Key 2, also called Blue Button.)
+
+Right Edge, top to bottom:
+Mic cover.
+
+To remove battery:
+1. Place thumb in middle of top edge of speaker grill.
+2. Place forefinger top middle of back edge (there is a recess).
+3. Press forefinger toward thumb.
+4. With other hand, slide battery downward (toward bottom of radio). Be careful because belt clip is attached to radio, not battery.
+
+To install the battery, just place it on the back of the radio behind the belt clip and push upward and it wil click in place.
+
+quick Overview.
+When you install the firmware and voice prompts, the radio will speak on startup since there is no screen.
+The voice prompt level is equivalent to level 3 on the GD77 model.
+
+Because there is no screen or keypad, functions are selected using the orange button and the SK1 and SK2 buttons. Typically, you cycle to the function you wish to set using the orange button, and use SK1 to select the next, or SK2 to select the prior value for that option.
+Pressing and holding SK1 and then pressing orange will cycle backward through the functions. 
+
+Currently, the orange button will cycle you through the following options:
+* Zone Mode: SK1 and SK2 choose the zones.
+* Squelch/TG Mode: SK1 and SK2 adjust squelch for FM channels, or choose talk groups for a DMR channel.
+* Channel Mode: SK1 starts or stops a scan. SK2 adds a channel or frequency to the nuisance list during a scan, or toggles between Channel Mode and VFO Mode if not scanning. (Note in VFO mode, the scan starts from the current VFO frequency and scans for 1 MHz and cycles around to the start frequency again.) Note also that the nuisance list is cleared for each new scan. The scan step in VFO scan will match the bandwidth set in the VFO. I.e. if the bandwidth is narrow, the scan step will be 12.5 KHz and if it is wide, the scan step will be 25 KHz.
+* Keypad mode (See below).
+* DTMF Contact List (FM channels only), SK1 and SK2 select DTMF contacts, PTT will dial the contact.
+* Filter mode SK1 and SK2 choose CTCSS or DCS codes in analog mode, and choose between several filters for digital channels (tg, contact, receive group, etc).
+* Timeslot mode: (Digital channels only), SK1 and SK2 choose between timeslot 1 and timeslot 2.
+* Color code mode: (Digital channels only), SK1 and SK2 choose color codes.
+* Vox mode: SK1 and SK2 enable or disable the mode. To set the vox parameters, see the Options menu below.
+* Voice mode: SK1 chooses relative volume, SK2 chooses voice rate. These values wrap around. The volume can be set from 10 to 100%, the rate from the default rate of the voice pack to twice the rate in increments of 10%. This is one mode where SK1 and SK2 do not choose next and prior values for a single option. This was done so that we did not have to have two separate voice modes.
+* Options Mode: See below.
+
+If you wish to hear a summary of the current channel, press and hold SK1 for more than half a second.
+
+Long hold Orange announces the current battery level.
+
+Note that if you receive a DMR signal on a different talk group to your current talkgroup, pressing and holding SK2 for more than half a second from TG Mode will change your current talk group to the received talk group. This is important, otherwise if you attempt to respond to the caller, they would not hear you. Note that if the DMR signal is from a different talk group to your current one, you are alerted with a double beep when the reception begins.
+
+Monitor Mode:
+To Open the Squelch temporarily, i.e. turn on monitor mode, press and hold SK2 for more than 3 seconds from Squelch/TG mode. When you release it, your squelch level is restored.
+
+Virtual Keypad mode for GD77S. 
+1. The GD77S now has a virtual keypad mode. Enter it like other modes, by pressing Orange until you hear Keypad.
+1.1. Once in keypad mode, the rotary knob is no longer used for channel selection but number and letter selection.
+1.2. Read the current buffer with long hold sk1.
+1.3. Add the currently selected digit or letter to the buffer with short press sk1.
+1.4. Backspace the last char with short press sk2.
+1.5. Clear the buffer with long hold sk2. You'll hear a confirmation beep.
+1.6. If you hit ptt, the buffer is sent as dtmf tones (if the radio is in analog mode).
+1.7. If you press long hold of orange, the buffer is interpreted as either a command (see below) or a frequency, or frequency pair (rx tx) and the radio is set to that frequency.
+1.7.1. The frequency entry is flexible. If it is simplex, you can enter as few digits as you need to get the correct frequency, e.g. 147 for 147 mHz.
+1.7.2. If you wish to enter both rx and tx, so long as the rx starts at position 1 and the tx at position 9, i.e. first 8 for rx and 2nd 8 for tx, it should work. The following will work:
+14700000146400 
+To set rx to 147 and tx to 146400.
+Or,
+1470000014640000 i.e. rest filled with 0s.
+Thus, if you wish to set frequency then dial a dtmf string, first set the frequency, then long hold sk2 to clear and then enter the dtmf code, then ptt.
+Note, even if you exit the mode with short ppress orange, then go back in, the buffer is preserved.
+2. You can now enter a special command string followed by long hold orange to change radio functions. Commands which are supported by the virtual keypad include:
+2 .1. * followed by long hold orange will toggle radio mode. Note, since the buffer is not automatically reset, pressing long hold orange again will cycle the mode back again.
+2.2. Normally, the Power mode on the GD77S will adjust the channel or master power but there is no way of either clearing a channel's custom power or setting it if it is from the master. Thus, I've added a new Keypad mode command ** number, followed by long hold Orange, to do that.
+2.2.1. **0 will clear the channel's custom power, forcing it back to the master value.
+2.2.2. **1 through **10 will set the power to levels 1 through 10, where 1 is 50MW, 9 is 5W etc.
+2.2.3. **50, **250, **500, **750, **1000, **2000, **3000, **4000, **5000, or **5100 etc will set the channel's custom power level to the nearest milliwat level supported by the radio.
+2.2.4. The channel summary on long hold sk1 will now announce the channel's power level. If it is from the master value, the "from master" announcement will be spoken after the power level.
+2.3. # folowed by long hold orange will toggle time slot in DMR mode.
+2.4. # followed by digits followed by long hold orange will set the radio to the specified talkgroup if in DMR mode.
+2.5. ## followed by digits followed by long hold orange will start a private call with the user with the specified DMR ID.
+2.6. ### followed by ID followed by long hold orange will set the radio's User DMR ID. Note this is saved to flash memory so power cycling the radio will maintain this user ID.
+2.7. B followed by long hold orange will toggle radio bandwidth in FM mode. Note, since the buffer is not automatically  reset, pressing long hold orange again will cycle the bandwidth back again.
+2.8. C followed by digits followed by long hold orange will set a CTCSS code, e.g. C854 would enter the code 85.4 hz tx tone. Add a * to set the code for rx also, e.g. C854* would set rx and tx tone to 85.4 hz.
+2.9. D followed by digits followed by long hold orange to enter a DCS code, e.g. D31 would enter the DCS code 031  tx DCS code. Likewise adding a * after the digits will set rx dcs also.
+Note to clear a CTCSS or DCS code, enter c followed by long hold orange.
+Remember, if you wish to enter a new command, don't forget to clear the buffer first with long hold sk2.
+2.10. Command A or  A1 through A16 followed by long hold orange, recall VFO, copy VFO to channels 1 through 16 in the current zone.
+Whenever you go to keypad mode, whatever channel was last active is still active. If you then change the radio mode, enter a frequency, tone, set mode etc, whenever you press long hold orange to action a command, all of the current VFO settings are automatically saved. You can then go and do other things, change channels etc, even turn off the radio.
+When you go back to keypad mode, as usual, whatever was last active is still active, however, you can recall the prior saved VFO settings using the command a followed by long hold orange. This makes the saved VFO settings active again. Note that this is the same VFO as reached by pressing SK2 from Channel Mode. 
+If you wish to make the VFO settings more permanent, you can then save these settings to channel 1 through 16 in the current zone using the command a1 through a16 followed by long hold orange. All of the VFO settings are saved to the specified channel in the current zone. The overwritten channel will have its number as its name. e.g. channel 1, channel 16, etc. Of course you cannot save to an AutoZone channel.
+2.11. If you just want to copy a channel to the VFO without issuing any command to change the current channel's settings, after locating the channel you wish to copy, activate Keypad mode, then immediately press long hold orange with an empty keypad buffer. The current channel will be copied to the VFO. If you previously visited keypad mode, remember to clear the keypad buffer with long hold sk2 prior to pressing long hold orange.
+
+There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
+
+Options Mode:
+There is now a new Options mode on the GD77S. Cycle to it using the Orange button like all other modes. All global modes have been moved from the Orange function cycle to this new mode. In this new mode, similar to the Keypad mode, the channel knob is used to select the option and SK1 and SK2 are used to change the option's values. Long hold SK1 repeats the current option and its value, and long hold SK2 resets the option to its factory default.
+This Mode contains the following options:
+* Master Power,
+* FM Mic Gain,
+* DMR Mic Gain,
+* FM Beep,
+* DMR Beep,
+* Band Limits,
+* VHF master Squelch,
+* 220 MHz master Squelch,
+* UHF master Squelch,
+* TOT master (needed for PTT latch),
+* PTT Latch,
+* Eco Level (5 levels of battery save mode),
+* Vox Threshold,
+* Vox Tail,
+* AutoZone,
+* Firmware Info.
+
+PTT Latch support has been added to the GD77S. Enable TOT (timeout timer) and PTT Latch from the Options mode. Note that PTT Latch will not work without a Timeout defined. This is by design. Also, when PTT Latch is enabled, like on the GD77, beeps are automatically enabled when you press and release PTT so you know when transmission has started and stopped.
+
+AutoZones feature.
+An AutoZone is a pseudo zone created on the fly based on channelized frequencies calculated via a formula with heuristics applied. I.e. these zones do not take up any memory for the channel data.
+1. Cycle to the Options menu with the Orange button.
+2. Use the channel knob to choose Autozones from the Options menu.
+3. Use SK1 to cycle through the names of the AutoZones and use SK2 to enable or disable an AutoZone.
+4. Press orange to exit Options Mode.
+Once you've enabled all the autozones that you want, you can then choose them from the Zones mode using SK1 and SK2 like any other zone.
+
+If an AutoZone has more than 16 channels, use extra long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
+If an AutoZone has duplex available for a particular channel, such as a UHF CB channel, an extra long hold of SK1 will toggle between simplex and  duplex mode from Squelch Mode. (You'll hear none for simplex and either plus or minus for a plus or minus repeater offset as defined by the AutoZone). 
+
+The following autoZones are available: 
+* Mrn (The international VHF Marine band),
+* UHF CB (The Australian 80 channel UHF cb band),
+* GMRS (General Mobile Radio Service) band,
+* FRS (Family Radio Service) band,
+* MURS (Multi-use Radio Service) band,
+* NOAA ()(National Oceanic and Atmospheric Administration) band,
+* PMR446 (Personal Mobile Radio) band, and,
+* US Rail (US Railway band).
+When an AutoZone is active, the rules for that band are adhered to, for example:
+In the Australian UHF cb band, channels 22, 23, 61, 62 and 63 are receive only, and duplex (extra long SK1) may only be enabled on channels 1 through 8 and 41 through 48. The correct repeater offset (750 kHz) is automatically applied when duplex is toggled.
+When NOAA or US Rail are active, all channels are receive only.
+When GMRS is active, duplex (extra long SK1) may be used on channels 15 through 22 and the correct repeater offset is applied. all other channels only allow simplex operation.
+For the marine band,  use extra long SK1 to cycle between simplex and deuplex for supported channels. 
+Please note that transmission withihn AutoZones is subject to the Band Limits menu option in the main Options Menu, as well as the restrictions of the specific AutoZone.
+If you think you should be able to transmit and can't, check that the GD77S Band Limits is appropriately set. 
+Please note: To toggle the band limits between on and off on the GD77S, hold down SK1+PTT while powering on the radio.
+
+ It goes without saying that you must hold the relevant license for transmission in any of these bands not governed by a class licence.
+
+Resetting the radio's settings to default.
+If you need to reset the radio's settings to their default values, power off the radio, hold sk2, then power on the radio. You'll hear "Update Settings".
+You'll then need to reset all of your favorite options.
+Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
+This does not affect your codeplug.
+
+Note for more detailed information about each of the menu options, please consult the manual, OpenGD77_User_Guide.pdf. It is out of date in some areas, so where there is a conflict, this AccessibleGuideGD77.txt file is more up-to-date.
+
+Links:
+The most recent version of the source of the accessible fork of OpenGD77 can be found at:
+https://github.com/HegrJan/BlindGD77
+The original version can be found at:
+https://www.opengd77.com/downloads/releases/R2021052901/sources_and_tools/
+The official Radioddity firmware (required to upload the OpenGD77 firmware) can be found at
+http://radioddity.s3.amazonaws.com/2021-01-26_GD-77_CPS_%26_Firmware_Changelog_Ham_Version.zip
+Ian Spencer's great tutorial in MP3 and PDF format can be found at
+http://www.spencerweb.net/Downloads/OpenGD77/opengd77.html
+
+End of guide.
