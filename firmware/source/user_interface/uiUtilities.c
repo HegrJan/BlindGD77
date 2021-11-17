@@ -53,6 +53,7 @@ static uint32_t lastTG = 0;
 
 volatile uint32_t lastID = 0;// This needs to be volatile as lastHeardClearLastID() is called from an ISR
 LinkItem_t *LinkHead = callsList;
+static bool lastHeardNeedsAnnouncement=false;
 static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool announceVFOName);
 static void dmrDbTextDecode(uint8_t *compressedBufIn, uint8_t *decompressedBufOut, int compressedSize);
 
@@ -593,7 +594,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
 					blocksTA = 0x00;
 					overrideTA = false;
-
+					lastHeardNeedsAnnouncement =(nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD);
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -3617,6 +3618,43 @@ bool IsBitSet(uint8_t bits, int whichBit)
 		*bits|=bit;
 	else
 		*bits&=~bit;
+}
+
+void AnnounceLastHeardContactIfNeeded()
+{
+	if (!lastHeardNeedsAnnouncement) return;
+	if (!LinkHead) return;
+	
+	if (voicePromptsIsPlaying()) return;
+	if (trxGetMode()==RADIO_MODE_ANALOG) return;
+	
+	if (trxIsTransmitting)
+	{
+		lastHeardNeedsAnnouncement=false;
+		return;
+	}
+	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) &&
+				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
+	{// wait till reception has finished.
+		return;
+	}
+	
+	lastHeardNeedsAnnouncement=false;	
+	
+	voicePromptsInit();
+
+	uint8_t offset=0;
+	if (strncmp(LinkHead->contact, "ID:", 3)==0 && LinkHead->contact[3])
+	{
+		offset=3;
+	}
+	if (LinkHead->talkerAlias[0])
+		voicePromptsAppendString(LinkHead->talkerAlias);
+	else if (LinkHead->contact[0])
+		voicePromptsAppendString(LinkHead->contact+offset);
+	else
+		voicePromptsAppendInteger(LinkHead->id);
+	voicePromptsPlay();
 }
 
 

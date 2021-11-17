@@ -68,6 +68,7 @@ typedef enum
 	BIT_ALL_LEDS_DISABLED           = (1 << 6),
 	BIT_SCAN_ON_BOOT_ENABLED        = (1 << 7),
 	BIT_PRI_SCAN_ON_BOOT_ENABLED        = (1 << 8),
+	BIT_ANNOUNCE_LASTHEARD = (1 << 9),
 } bitfieldOptions_t;
 
 typedef struct

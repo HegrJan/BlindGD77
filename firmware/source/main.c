@@ -779,7 +779,6 @@ void mainTask(void *data)
 					PTTToggledDown = false;
 				}
 			}
-//#endif//joe
 
 			if (button_event == EVENT_BUTTON_CHANGE)
 			{
@@ -1205,7 +1204,7 @@ void mainTask(void *data)
 			soundTickMelody();
 			voxTick();
 			RequeueEditBufferForAnnouncementOnSK1IfNeeded();
-
+			AnnounceLastHeardContactIfNeeded();
 #if defined(PLATFORM_RD5R) // Needed for platforms which can't control the poweroff
 			settingsSaveIfNeeded(false);
 #endif

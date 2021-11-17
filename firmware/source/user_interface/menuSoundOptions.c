@@ -37,7 +37,7 @@ static void handleEvent(uiEvent_t *ev);
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
 enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
-	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
+	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
 	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
 	OPTIONS_AUDIO_PROMPT_RATE,
 	NUM_SOUND_MENU_ITEMS};
@@ -202,6 +202,15 @@ static void updateScreen(bool isFirstRun)
 						const char * const *audioPromptOption[] = { &currentLanguage->silent, &currentLanguage->beep,
 								&currentLanguage->voice_prompt_level_1, &currentLanguage->voice_prompt_level_2, &currentLanguage->voice_prompt_level_3 };
 						rightSideConst = (char * const *)audioPromptOption[nonVolatileSettings.audioPromptMode];
+					}
+					break;
+				case OPTIONS_ANNOUNCE_DMR_ID:
+					{
+						leftSide = (char * const *)&currentLanguage->dmr_id;
+						if(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+							rightSideConst = (char * const *)&currentLanguage->n_a;
+						else
+							rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_ANNOUNCE_LASTHEARD) ? &currentLanguage->on : &currentLanguage->off);
 					}
 					break;
 				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
@@ -471,6 +480,15 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_ANNOUNCE_DMR_ID:
+					{
+						if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && voicePromptDataIsLoaded)
+						{
+							if ((nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)==0)
+								settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, true);
+						}
+					}
+					break;
 				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
 					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 					{
@@ -578,6 +596,15 @@ static void handleEvent(uiEvent_t *ev)
 						}
 
 						settingsDecrement(nonVolatileSettings.audioPromptMode, 1);
+					}
+					break;
+				case OPTIONS_ANNOUNCE_DMR_ID:
+					{
+						if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && voicePromptDataIsLoaded)
+						{
+							if (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)
+								settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
+						}
 					}
 					break;
 				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
