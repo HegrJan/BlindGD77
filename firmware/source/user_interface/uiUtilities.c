@@ -2424,7 +2424,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		{
 			announceZoneName(voicePromptWasPlaying);
 		}
-
+		AnnounceLastHeardContactIfNeeded(true,false);
 		announceChannelNameOrVFOFrequency(voicePromptWasPlaying, (voicePromptSequenceState != PROMPT_SEQUENCE_VFO_FREQ_UPDATE));
 		if (uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
 		{
@@ -2730,6 +2730,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
 	
 	voicePromptsInit();
+	AnnounceLastHeardContactIfNeeded(true, false);
 	if (announceName)
 	{
 		announceChannelName(true, true);
@@ -3620,10 +3621,11 @@ bool IsBitSet(uint8_t bits, int whichBit)
 		*bits&=~bit;
 }
 
-void AnnounceLastHeardContactIfNeeded()
+void AnnounceLastHeardContactIfNeeded(bool force, bool playImmediately)
 {
-	if (!lastHeardNeedsAnnouncement) return;
+	if (!lastHeardNeedsAnnouncement && !force) return;
 	if (!LinkHead) return;
+	if (LinkHead->id==0) return;
 	
 	if (voicePromptsIsPlaying()) return;
 	if (trxGetMode()==RADIO_MODE_ANALOG) return;
@@ -3640,8 +3642,8 @@ void AnnounceLastHeardContactIfNeeded()
 	}
 	
 	lastHeardNeedsAnnouncement=false;	
-	
-	voicePromptsInit();
+	if (playImmediately)
+		voicePromptsInit();
 
 	uint8_t offset=0;
 	if (strncmp(LinkHead->contact, "ID:", 3)==0 && LinkHead->contact[3])
@@ -3654,7 +3656,9 @@ void AnnounceLastHeardContactIfNeeded()
 		voicePromptsAppendString(LinkHead->contact+offset);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
-	voicePromptsPlay();
+	
+	if (playImmediately)
+		voicePromptsPlay();
 }
 
 
