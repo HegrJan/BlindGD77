@@ -401,7 +401,11 @@ const menuItemNewData_t mainMenuItems[] =
 
 const menuItemsList_t menuDataMainMenu =
 {
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 	.numItems = 14,
+#else
+	.numItems = 13,
+#endif
 	.items = mainMenuItems
 };
 
