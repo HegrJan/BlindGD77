@@ -3650,7 +3650,9 @@ void AnnounceLastHeardContactIfNeeded(bool force, bool playImmediately)
 	{
 		offset=3;
 	}
-	if (LinkHead->contact[0])
+	if (LinkHead->talkerAlias[0])
+		voicePromptsAppendString(LinkHead->talkerAlias);
+	else if (LinkHead->contact[0])
 		voicePromptsAppendString(LinkHead->contact+offset);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
