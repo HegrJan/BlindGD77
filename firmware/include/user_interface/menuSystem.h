@@ -140,7 +140,9 @@ void uiChannelInitializeCurrentZone(void);
 void uiCPSUpdate(uiCPSCommand_t command, int x, int y, ucFont_t fontSize, ucTextAlign_t alignment, bool isInverted, char *szMsg);
 
 void menuSystemInit(void);
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 void menuSystemLanguageHasChanged(void);
+#endif
 void displayLightTrigger(bool fromKeyEvent);
 void displayLightOverrideTimeout(int timeout);
 int menuSystemGetLastItemIndex(int stackPos);
@@ -233,7 +235,9 @@ enum MENU_SCREENS
 	MENU_CONTACT_LIST_SUBMENU,
 	MENU_CONTACT_DETAILS,
 	MENU_CONTACT_NEW,
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 	MENU_LANGUAGE,
+#endif
 	UI_PRIVATE_CALL,
 	UI_MESSAGE_BOX,
 	MENU_CONTACT_NEW_DTMF,
@@ -313,7 +317,9 @@ menuStatus_t menuContactList(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactListSubMenu(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactDetails(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun);
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 menuStatus_t menuLanguage(uiEvent_t *event, bool isFirstRun);
+#endif
 menuStatus_t menuPrivateCall(uiEvent_t *event, bool isFirstRun);
 
 menuStatus_t uiMessageBox(uiEvent_t *event, bool isFirstRun);

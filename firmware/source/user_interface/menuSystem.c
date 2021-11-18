@@ -89,7 +89,9 @@ menuDataGlobal_t menuDataGlobal =
 				NULL,// Contact List Quick Menu
 				NULL,// Contact Details
 				NULL,// New Contact
-				NULL,// Language
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
+	NULL,// Language
+#endif
 				NULL,// Private Call
 				NULL,// MessageBox
 				NULL,// New DTMF Contact
@@ -130,7 +132,9 @@ static menuFunctionData_t menuFunctions[] =
 		{ menuContactListSubMenu,   0 },
 		{ menuContactDetails,       0 },
 		{ menuContactDetails,       0 },
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 		{ menuLanguage,             0 },
+#endif
 		{ menuPrivateCall,          0 },
 		{ uiMessageBox,             0 },
 		{ menuDTMFContactDetails,   0 }, // New DTMF contact
@@ -365,6 +369,7 @@ void menuSystemInit(void)
 	menuFunctions[menuDataGlobal.controlData.stack[menuDataGlobal.controlData.stackPosition]].function(&ev, true);// Init and display this screen
 }
 
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 void menuSystemLanguageHasChanged(void)
 {
 	// Force full update of menuChannelMode() on next call (if isFirstRun arg. is true)
@@ -373,7 +378,7 @@ void menuSystemLanguageHasChanged(void)
 		uiChannelModeColdStart();
 	}
 }
-
+#endif
 const menuItemNewData_t mainMenuItems[] =
 {
 	{   3, MENU_ZONE_LIST       },
@@ -386,7 +391,9 @@ const menuItemNewData_t mainMenuItems[] =
 	{  10, MENU_DISPLAY         },
 	{  11, MENU_SOUND           },
 	{   177, MENU_RADIO_DETAILS},
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 	{  13, MENU_LANGUAGE        },
+#endif
 	{   8, MENU_FIRMWARE_INFO   },
 	{   2, MENU_CREDITS         },
 	{   175, MENU_AUTOZONE        },
