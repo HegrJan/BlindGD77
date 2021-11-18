@@ -30,8 +30,10 @@
 
 #if defined(LANGUAGE_BUILD_JAPANESE)
 #define NUM_LANGUAGES 2
-#else
+#elif defined( ACCESSIBLEGD77_MULTILINGUAL_SUPPORT)
 #define NUM_LANGUAGES 15
+#else
+#define NUM_LANGUAGES 1
 #endif
 
 #define LANGUAGE_TEXTS_LENGTH 17
@@ -249,7 +251,7 @@ enum languageNamesOrder
 	englishLanguageName = 0,
 #if defined(LANGUAGE_BUILD_JAPANESE)
 	japaneseLanguageName,
-#else
+#elif defined(ACCESSIBLEGD77_MULTILINGUAL_SUPPORT)
 	catalanLanguageName,
 	danishLanguageName,
 	frenchLanguageName,
