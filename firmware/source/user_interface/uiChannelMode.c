@@ -62,9 +62,9 @@ typedef enum
 	GD77S_OPTION_DMR_MIC_GAIN,
 	GD77S_OPTION_FM_BEEP,
 	GD77S_OPTION_DMR_BEEP,
+	GD77S_OPTION_DMR_ID,
 	GD77S_OPTION_BAND_LIMITS,
 	GD77S_OPTION_VHF_SQUELCH,
-	GD77S_OPTION_220_SQUELCH,
 	GD77S_OPTION_UHF_SQUELCH,
 	GD77S_OPTION_TOT_MASTER,
 	GD77S_OPTION_PTT_LATCH,
@@ -3320,12 +3320,6 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] - 1) * 5);// 5% steps
 			voicePromptsAppendString(rightSideVar);
 			break;
-		case GD77S_OPTION_220_SQUELCH:
-			if (!voicePromptWasPlaying)
-				voicePromptsAppendLanguageString(&currentLanguage->squelch_220);
-			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] - 1) * 5);// 5% steps
-			voicePromptsAppendString(rightSideVar);
-			break;
 		case GD77S_OPTION_UHF_SQUELCH:
 			if (!voicePromptWasPlaying)
 				voicePromptsAppendLanguageString(&currentLanguage->squelch_UHF);
@@ -3398,6 +3392,13 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions>>2]);
 			break;
 		}
+		case GD77S_OPTION_DMR_ID:
+			voicePromptsAppendLanguageString(&currentLanguage->dmr_id);
+			if (settingsIsOptionBitSet(BIT_ANNOUNCE_LASTHEARD))
+				voicePromptsAppendLanguageString(&currentLanguage->on);
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
 		case 	GD77S_OPTION_VOX_THRESHOLD:
 			voicePromptsAppendLanguageString(&currentLanguage->vox_threshold);
 			if (nonVolatileSettings.voxThreshold > 0)
@@ -3985,7 +3986,6 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			}
 			break;
 		case GD77S_OPTION_VHF_SQUELCH:
-		case GD77S_OPTION_220_SQUELCH:
 		case GD77S_OPTION_UHF_SQUELCH:
 		{
 			int band=GD77SParameters.option-GD77S_OPTION_VHF_SQUELCH;
@@ -4116,6 +4116,24 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 				dmrBeepOptions= BEEP_TX_START | BEEP_TX_STOP;
 			}
 			settingsSet(nonVolatileSettings.beepOptions, ((fmBeepOptions<<2)|dmrBeepOptions));
+			break;
+		}
+		case GD77S_OPTION_DMR_ID:
+		{
+			if (dir > 0)
+			{
+				if (!settingsIsOptionBitSet(BIT_ANNOUNCE_LASTHEARD))
+					settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, true);
+			}
+			else if (dir < 0)
+			{
+				if (settingsIsOptionBitSet(BIT_ANNOUNCE_LASTHEARD))
+					settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
+			}
+			else // default
+			{
+				settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
+			}
 			break;
 		}
 		case 	GD77S_OPTION_VOX_THRESHOLD:
