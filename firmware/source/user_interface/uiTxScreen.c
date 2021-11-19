@@ -58,6 +58,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason);
 
 static const int PIT_COUNTS_PER_SECOND = 10000;
 static int timeInSeconds;
+static int timeout;
 static uint32_t nextSecondPIT;
 static bool isShowingLastHeard;
 static bool startBeepPlayed;
@@ -68,6 +69,31 @@ static bool pttWasReleased = false;
 static bool isTransmittingTone = false;
 
 
+static bool ShouldPlayStartStopBeep(bool isTxStop, bool isDMR)
+{
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_BEEP)
+		return false;
+	if (isDMR)
+	{
+		if ((nonVolatileSettings.beepOptions & BEEP_TX_START) && !isTxStop)
+			return true;
+		if ((nonVolatileSettings.beepOptions & BEEP_TX_STOP) && isTxStop)
+			return true;
+	}
+	else
+	{	// first check fm tx //joe
+		if ((nonVolatileSettings.beepOptions&BEEP_FM_TX_START) && !isTxStop)
+			return true;
+		if (!isDMR && (nonVolatileSettings.beepOptions&BEEP_FM_TX_STOP) && isTxStop)
+			return true;
+	}
+	if ((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) == 0)
+		return false;	
+	if (currentChannelData->tot==0 && nonVolatileSettings.totMaster==0)
+		return false;
+	
+	return true;
+}
 
 menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 {
@@ -88,6 +114,10 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 			clockManagerSetRunMode(kAPP_PowerModeHsrun);
 		}
 
+#if defined(PLATFORM_GD77S)
+		uiChannelModeHeartBeatActivityForGD77S(ev); // Dim all lit LEDs
+#endif
+
 		// If the user was currently entering a new frequency and the PTT get pressed, "leave" that input screen.
 		if (uiDataGlobal.FreqEnter.index > 0)
 		{
@@ -99,14 +129,24 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		{
 			nextSecondPIT = PITCounter + PIT_COUNTS_PER_SECOND;
 			timeInSeconds = currentChannelData->tot * 15;
-
+			if (timeInSeconds==0)
+				timeInSeconds=nonVolatileSettings.totMaster*15;
+			timeout=timeInSeconds;
 			LEDs_PinWrite(GPIO_LEDgreen, Pin_LEDgreen, 0);
 			LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, 1);
 
 			txstopdelay = 0;
 			clearIsWakingState();
 			if (trxGetMode() == RADIO_MODE_ANALOG)
-			{
+			{// If PTT Latch is on, play a beep to alert the user.
+				if (ShouldPlayStartStopBeep(false, false))
+				{
+					soundSetMelody(MELODY_DMR_TX_START_BEEP);
+					while (soundMelodyIsPlaying())
+					{// wait for beep to stop before tx!
+						soundTickMelody();
+					}
+				}
 				trxSetTxCSS(currentChannelData->txTone);
 				trxSetTX();
 			}
@@ -130,10 +170,6 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 	}
 	else
 	{
-
-#if defined(PLATFORM_GD77S)
-		uiChannelModeHeartBeatActivityForGD77S(ev);
-#endif
 
 		// Keep displaying the "RX Only" or "Out Of Band" error message
 		if (xmitErrorTimer > 0)
@@ -164,7 +200,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		{
 			if (PITCounter >= nextSecondPIT)
 			{
-				if (currentChannelData->tot == 0)
+				if (timeout == 0)
 				{
 					timeInSeconds++;
 				}
@@ -180,7 +216,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 					}
 				}
 
-				if ((currentChannelData->tot != 0) && (timeInSeconds == 0))
+				if ((timeout != 0) && (timeInSeconds == 0))
 				{
 					handleTxTermination(ev, TXSTOP_TIMEOUT);
 					keepScreenShownOnError = true;
@@ -201,7 +237,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 				if (mode == RADIO_MODE_DIGITAL)
 				{
-					if ((nonVolatileSettings.beepOptions & BEEP_TX_START) &&
+					if (ShouldPlayStartStopBeep(false,true) &&
 							(startBeepPlayed == false) && (trxIsTransmitting == true)
 							&& (melody_play == NULL))
 					{
@@ -215,7 +251,8 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				}
 
 				// Do not update Mic level on Timeout.
-				if ((((currentChannelData->tot != 0) && (timeInSeconds == 0)) == false) && (ev->time - micm) > 100)
+#if !defined(PLATFORM_GD77S)
+				if ((((timeout != 0) && (timeInSeconds == 0)) == false) && (ev->time - micm) > 100)
 				{
 					if (mode == RADIO_MODE_DIGITAL)
 					{
@@ -229,7 +266,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 					ucRenderRows(1, 2);
 					micm = ev->time;
 				}
-
+#endif
 			}
 			//DTMF latch
 			if (dtmfLatchState==dtmfPTTLatched)
@@ -247,7 +284,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 		// Timeout happened, postpone going further otherwise timeout
 		// screen won't be visible at all.
-		if (((currentChannelData->tot != 0) && (timeInSeconds == 0)) || keepScreenShownOnError)
+		if (((timeout != 0) && (timeInSeconds == 0)) || keepScreenShownOnError)
 		{
 			// Wait the voice ends, then count-down 500ms;
 			if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
@@ -287,7 +324,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 
 		// Got an event, or
 		if (ev->hasEvent || // PTT released, Timeout triggered,
-				( (((ev->buttons & BUTTON_PTT) == 0) || ((currentChannelData->tot != 0) && (timeInSeconds == 0))) ||
+				( (((ev->buttons & BUTTON_PTT) == 0) || ((timeout != 0) && (timeInSeconds == 0))) ||
 						// or waiting for DMR ending (meanwhile, updating every 100ms)
 						((trxTransmissionEnabled == false) && ((ev->time - m) > 100))))
 		{
@@ -314,6 +351,7 @@ bool menuTxScreenDisplaysLastHeard(void)
 
 static void updateScreen(void)
 {
+#if !defined(PLATFORM_GD77S)
 	uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 	if (menuDataGlobal.controlData.stack[0] == UI_VFO_MODE)
 	{
@@ -328,13 +366,14 @@ static void updateScreen(void)
 	{
 		displayLightOverrideTimeout(-1);
 	}
+#endif
 }
 
 static void handleEvent(uiEvent_t *ev)
 {
 	// Xmiting ends (normal or timeouted)
 	if ((((ev->buttons & BUTTON_PTT) == 0) && (dtmfLatchState==dtmfNotLatched))
-			|| ((currentChannelData->tot != 0) && (timeInSeconds == 0)))
+			|| ((timeout != 0) && (timeInSeconds == 0)))
 	{
 		if (trxTransmissionEnabled)
 		{
@@ -354,6 +393,10 @@ static void handleEvent(uiEvent_t *ev)
 				trxActivateRx();
 				trxIsTransmitting = false;
 				//taskEXIT_CRITICAL();
+				if (ShouldPlayStartStopBeep(true, false))
+				{
+					soundSetMelody(MELODY_DMR_TX_STOP_BEEP);
+				}
 
 				menuSystemPopPreviousMenu();
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN; // we need immediate redraw
@@ -374,7 +417,7 @@ static void handleEvent(uiEvent_t *ev)
 			// In DMR mode, wait for the DMR system to finish before exiting
 			if (trxIsTransmitting == false)
 			{
-				if ((nonVolatileSettings.beepOptions & BEEP_TX_STOP) && (melody_play == NULL))
+				if (ShouldPlayStartStopBeep(true, true) && (melody_play == NULL))
 				{
 					soundSetMelody(MELODY_DMR_TX_STOP_BEEP);
 				}
@@ -421,10 +464,13 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				trxSetDTMF(keyval);
 				isTransmittingTone = true;
-				dtmfLatchState=dtmfTransmittingCode;
-				dtmfPTTLatchTimeout=0;
 				PTTToggledDown = true; // released after a timeout when the dtmf key is released.
-				dtmfPTTLatch=true;
+				if (nonVolatileSettings.dtmfLatch > 0)
+				{
+					dtmfLatchState=dtmfTransmittingCode;
+					dtmfPTTLatchTimeout=0;
+					dtmfPTTLatch=true;
+				}
 				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_DTMF);
 				enableAudioAmp(AUDIO_AMP_MODE_RF);
 				GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1);
@@ -439,12 +485,13 @@ static void handleEvent(uiEvent_t *ev)
 		if (dtmfLatchState==dtmfTransmittingCode)
 		{
 			dtmfLatchState=dtmfPTTLatched;
-			dtmfPTTLatchTimeout=1500;
+			dtmfPTTLatchTimeout=nonVolatileSettings.dtmfLatch * 500; // nonVolatileSettings.dtmfLatch 	is units of 500 ms.	
 		}
 		trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
 		disableAudioAmp(AUDIO_AMP_MODE_RF);
 	}
 
+#if !defined(PLATFORM_GD77S)
 	if ((trxGetMode() == RADIO_MODE_DIGITAL) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (trxTransmissionEnabled == true))
 	{
 		isShowingLastHeard = !isShowingLastHeard;
@@ -464,6 +511,7 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		menuLastHeardHandleEvent(ev);
 	}
+#endif
 
 }
 
@@ -473,37 +521,46 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 	voxReset();
 	dtmfPTTLatch=false;
 
-	ucClearBuf();
-
 	voicePromptsTerminate();
 	voicePromptsInit();
 
+#if !defined(PLATFORM_GD77S)
+	ucClearBuf();
 	ucDrawRoundRectWithDropShadow(4, 4, 120, (DISPLAY_SIZE_Y - 6), 5, true);
+#endif
 
 	switch (reason)
 	{
 		case TXSTOP_RX_ONLY:
 		case TXSTOP_OUT_OF_BAND:
+#if !defined(PLATFORM_GD77S)
 			ucPrintCentered(4, currentLanguage->error, FONT_SIZE_4);
+#endif
 
 			voicePromptsAppendLanguageString(&currentLanguage->error);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 			if ((currentChannelData->flag4 & 0x04) != 0x00)
 			{
+#if !defined(PLATFORM_GD77S)
 				ucPrintCentered((DISPLAY_SIZE_Y - 24), currentLanguage->rx_only, FONT_SIZE_3);
+#endif
 				voicePromptsAppendLanguageString(&currentLanguage->rx_only);
 			}
 			else
 			{
+#if !defined(PLATFORM_GD77S)
 				ucPrintCentered((DISPLAY_SIZE_Y - 24), currentLanguage->out_of_band, FONT_SIZE_3);
+#endif
 				voicePromptsAppendLanguageString(&currentLanguage->out_of_band);
 			}
 			xmitErrorTimer = (100 * 10U);
 			break;
 
 		case TXSTOP_TIMEOUT:
+#if !defined(PLATFORM_GD77S)
 			ucPrintCentered(16, currentLanguage->timeout, FONT_SIZE_4);
+#endif
 			voicePromptsAppendLanguageString(&currentLanguage->timeout);
 			mto = ev->time;
 			break;
@@ -511,8 +568,10 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 			return ; // silent timeout.
 	}
 
+#if !defined(PLATFORM_GD77S)
 	ucRender();
 	displayLightOverrideTimeout(-1);
+#endif
 
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{

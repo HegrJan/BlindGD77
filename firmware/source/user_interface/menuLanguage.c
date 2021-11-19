@@ -25,6 +25,8 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
+
 #include "functions/settings.h"
 #include "user_interface/menuSystem.h"
 #include "user_interface/uiLocalisation.h"
@@ -242,10 +244,11 @@ static void updateScreen(bool isFirstRun)
 
 					clearNonLatinChar((uint8_t *)&buffer[0]);
 
-					if (!isFirstRun)
+					if (isFirstRun == false)
 					{
 						voicePromptsInit();
 					}
+
 					voicePromptsAppendString(buffer);
 					promptsPlayNotAfterTx();
 				}
@@ -311,3 +314,4 @@ static void handleEvent(uiEvent_t *ev)
 		return;
 	}
 }
+#endif

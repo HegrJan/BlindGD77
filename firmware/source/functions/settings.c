@@ -37,12 +37,15 @@
 #include "functions/rxPowerSaving.h"
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
-static const int STORAGE_MAGIC_NUMBER 		= 0x475D; // NOTE: never use 0xDEADBEEF, it's reserved value
+// VK7JS updated on Sep 19 for GD77S new options menu.
+static const int STORAGE_MAGIC_NUMBER 		= 0x2110; // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
 const uint8_t BEEP_TX_START = 0x01;
 const uint8_t BEEP_TX_STOP  = 0x02;
+const uint8_t BEEP_FM_TX_START = 0x04;
+const uint8_t BEEP_FM_TX_STOP = 0x08;
 
 #if defined(PLATFORM_RD5R)
 static uint32_t dirtyTime = 0;
@@ -50,6 +53,8 @@ static uint32_t dirtyTime = 0;
 
 static bool settingsDirty = false;
 static bool settingsVFODirty = false;
+static int16_t ZoneChannelIndexMax=0;
+
 settingsStruct_t nonVolatileSettings;
 struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
@@ -61,8 +66,9 @@ int settingsUsbMode = USB_MODE_CPS;
 int *nextKeyBeepMelody = (int *)MELODY_KEY_BEEP;
 struct_codeplugGeneralSettings_t settingsCodeplugGeneralSettings;
 
-monitorModeSettingsStruct_t monitorModeData = {.isEnabled = false};
+monitorModeSettingsStruct_t monitorModeData = { .isEnabled = false, .qsoInfoUpdated = true, .dmrIsValid = false };
 const int ECO_LEVEL_MAX = 5;
+const uint16_t NO_PRIORITY_CHANNEL=0xffffU;
 
 bool settingsSaveSettings(bool includeVFOs)
 {
@@ -162,7 +168,7 @@ bool settingsLoadSettings(void)
 	trxSetAnalogFilterLevel(nonVolatileSettings.analogFilterLevel);
 
 	codeplugInitChannelsPerZone();// Initialise the codeplug channels per zone
-
+	ZoneChannelIndexMax=sizeof(nonVolatileSettings.zoneChannelIndices)/sizeof(int16_t);
 	settingsVFODirty = false;
 
 	rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
@@ -172,6 +178,24 @@ bool settingsLoadSettings(void)
 	{
 		settingsSet(nonVolatileSettings.initialMenuNumber, UI_CHANNEL_MODE);
 	}
+	if (nonVolatileSettings.sk2Latch > 10)
+		nonVolatileSettings.sk2Latch = 0;
+	else if (nonVolatileSettings.sk2Latch ==1) // convert old to new
+		nonVolatileSettings.sk2Latch =6; // 3 seconds.
+		// ensure dtmfLatch is set to a sensible value
+	if (nonVolatileSettings.dtmfLatch > 6)
+		nonVolatileSettings.dtmfLatch = 3; // defaults to 1.5 seconds.
+	else if (nonVolatileSettings.dtmfLatch ==1)
+		nonVolatileSettings.dtmfLatch =2; // 1 seconds.
+	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
+	if (nonVolatileSettings.vhfOffset==0 || nonVolatileSettings.vhfOffset > 1000)
+		nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
+	if (nonVolatileSettings.uhfOffset==0 || nonVolatileSettings.uhfOffset > 9000) 
+		nonVolatileSettings.uhfOffset=5000; // repeater offset for 70 cm band.
+	if (nonVolatileSettings.voicePromptVolumePercent < 10 || nonVolatileSettings.voicePromptVolumePercent > 100)
+		nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
+	if (nonVolatileSettings.voicePromptRate > 9)
+		nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 
 	return hasRestoredDefaultsettings;
 }
@@ -208,7 +232,7 @@ void settingsRestoreDefaultSettings(void)
 #endif
 	nonVolatileSettings.backLightTimeout = 0U;//0 = never timeout. 1 - 255 time in seconds
 	nonVolatileSettings.displayContrast =
-#if defined(PLATFORM_DM1801)
+#if defined(PLATFORM_DM1801) || defined(PLATFORM_DM1801A)
 			0x0e; // 14
 #elif defined (PLATFORM_RD5R)
 			0x06;
@@ -312,28 +336,37 @@ void settingsRestoreDefaultSettings(void)
 
 	nonVolatileSettings.temperatureCalibration = 0;
 	nonVolatileSettings.batteryCalibration = 5;
+	nonVolatileSettings.priorityChannelIndex = NO_PRIORITY_CHANNEL;
+	nonVolatileSettings.sk2Latch=0;
+	nonVolatileSettings.dtmfLatch=3; // 1.5 second.
 
-#if defined(PLATFORM_GD77S)
-	nonVolatileSettings.ecoLevel = 3;
-#else
 	nonVolatileSettings.ecoLevel = 1;
-#endif
 
+	nonVolatileSettings.vfoSweepSettings = ((((sizeof(VFO_SWEEP_SCAN_RANGE_SAMPLE_STEP_TABLE) / sizeof(VFO_SWEEP_SCAN_RANGE_SAMPLE_STEP_TABLE[0])) - 1) << 12) | (VFO_SWEEP_RSSI_NOISE_FLOOR_DEFAULT << 7) | VFO_SWEEP_GAIN_DEFAULT);
+
+	nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
+	nonVolatileSettings.uhfOffset=5000; // repeater offset for 70 cm band.
+	nonVolatileSettings.totMaster=0;
+	nonVolatileSettings.autoZone.flags=0;
+	nonVolatileSettings.autoZonesEnabled=0;
+	memset(nonVolatileSettings.zoneChannelIndices, 0, sizeof(nonVolatileSettings.zoneChannelIndices));	
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
-
+	nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
+	nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 	settingsDirty = true;
 
 	settingsSaveSettings(false);
 }
 
-void enableVoicePromptsIfLoaded(void)
+void enableVoicePromptsIfLoaded(bool enableFullPrompts)
 {
 	if (voicePromptDataIsLoaded)
 	{
 #if defined(PLATFORM_GD77S)
 		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #else
-		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
+
+		nonVolatileSettings.audioPromptMode = enableFullPrompts?AUDIO_PROMPT_MODE_VOICE_LEVEL_3:AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
 #endif
 		settingsDirty = true;
 		settingsSaveSettings(false);
@@ -516,4 +549,22 @@ void settingsSaveIfNeeded(bool immediately)
 int settingsGetScanStepTimeMilliseconds(void)
 {
 	return TIMESLOT_DURATION + (nonVolatileSettings.scanStepTime * TIMESLOT_DURATION);
+}
+
+void settingsSetCurrentChannelIndexForZone(int16_t channelIndex, int16_t zoneIndex)
+{
+	settingsSet(nonVolatileSettings.currentChannelIndexInZone, channelIndex);
+	if (zoneIndex >= ZoneChannelIndexMax)
+		return; // can't save it.
+	
+	nonVolatileSettings.zoneChannelIndices[zoneIndex]=channelIndex;
+	settingsSetDirty();
+}
+
+int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex)
+{
+	if (zoneIndex >= ZoneChannelIndexMax)
+		return 0;
+	
+	return nonVolatileSettings.zoneChannelIndices[zoneIndex];
 }

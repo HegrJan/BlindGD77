@@ -71,8 +71,19 @@ typedef enum
 	PROMPT_COLORCODE_MODE,
 	PROMPT_HERTZ,
 	PROMPT_SETTINGS_UPDATE,
-	PROMPT_HASH,
 	PROMPT_STAR,
+	PROMPT_HASH,
+	PROMPT_VOX,
+	PROMPT_SWEEP_SCAN_MODE,
+	PROMPT_ECO_MODE,
+	PROMPT_UNUSED_3,
+	PROMPT_UNUSED_4,
+	PROMPT_UNUSED_5,
+	PROMPT_UNUSED_6,
+	PROMPT_UNUSED_7,
+	PROMPT_UNUSED_8,
+	PROMPT_UNUSED_9,
+	PROMPT_UNUSED_10,
 	NUM_VOICE_PROMPTS
 } voicePrompt_t;
 
@@ -85,7 +96,7 @@ void voicePromptsCacheInit(void);
 void voicePromptsTick(void);// Called from HR-C6000.c
 
 void voicePromptsInit(void);// Call before building the prompt sequence
-void voicePromptsAppendPrompt(voicePrompt_t prompt);// Append an individual prompt item. This can be a single letter number or a phrase
+void voicePromptsAppendPrompt(uint16_t prompt);// Append an individual prompt item. This can be a single letter number or a phrase
 void voicePromptsAppendString(char *);// Append a text string e.g. "VK3KYY"
 void voicePromptsAppendInteger(int32_t value); // Append a signed integer
 void voicePromptsAppendLanguageString(const char * const *);//Append a text from the current language e.g. &currentLanguage->battery

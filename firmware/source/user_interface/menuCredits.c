@@ -39,8 +39,8 @@ static const int NUM_LINES_PER_SCREEN = 4;
 static const int NUM_LINES_PER_SCREEN = 6;
 #endif
 
-static const int NUM_CREDITS = 9;
-static const char *creditTexts[] = {"Roger VK3KYY","Daniel F1RMB","Dzmitry EW1ADG","Colin G4EML","Alex DL4LEX","Kai DG4KLU","Jason VK7ZJA","Joseph VK7JS", "Jan OK1TE"};
+static const int NUM_CREDITS = 10;
+static const char *creditTexts[] = {"Roger VK3KYY","Daniel F1RMB","Dzmitry EW1ADG","Colin G4EML","Alex DL4LEX","Kai DG4KLU","Jason VK7ZJA","Joseph VK7JS", "Jan OK1TE", "Bill AK3Q"};
 
 static menuStatus_t menuCreditsExitCode = MENU_STATUS_SUCCESS;
 static int voicePromptCreditIndex=0;

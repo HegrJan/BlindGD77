@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- * Joseph Stephen VK7JS
+ *                         Joseph Stephen VK7JS
+ *                         Jan Hegr, OK1TE
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
@@ -43,6 +44,9 @@ static int dBm = 0;
 static const int barX = 9;
 DECLARE_SMETER_ARRAY(rssiMeterBar, (DISPLAY_SIZE_X - (barX - 1)));
 
+static bool shouldBeep = false;
+#define RSSI_LOWEST_TONE 330
+static int signal_beep[4] = { RSSI_LOWEST_TONE, RSSI_UPDATE_COUNTER_RELOAD + 5, -1, -1 };
 
 menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 {
@@ -56,6 +60,7 @@ menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 		menuDisplayTitle(currentLanguage->rssi);
 		ucRenderRows(0, 2);
 
+		shouldBeep = false;
 		updateScreen(true, true);
 	}
 	else
@@ -79,11 +84,6 @@ menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 // Returns S-Unit 0..9..10(S9+10dB)..15(S9+60)
 static int32_t getSignalStrength(int dbm)
 {
-	if (dbm < DBM_LEVELS[1])
-	{
-		return 0;
-	}
-
 	for (int8_t i = 15; i >= 0; i--)
 	{
 		if (dbm >= DBM_LEVELS[i])
@@ -97,7 +97,7 @@ static int32_t getSignalStrength(int dbm)
 
 static void updateScreen(bool forceRedraw, bool isFirstRun)
 {
-	char buffer[17];
+	char buffer[SCREEN_LINE_BUFFER_SIZE];
 	int barWidth;
 
 	dBm = getRSSIdBm();
@@ -175,7 +175,7 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 		ucFillRect(((DISPLAY_SIZE_X - (7 * 8)) >> 1), DISPLAY_Y_POS_RSSI_VALUE, (7 * 8), FONT_SIZE_3_HEIGHT, true);
 	}
 
-	snprintf(buffer, 17, "%d%s", dBm, "dBm");
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%d%s", dBm, "dBm");
 	ucPrintCentered(DISPLAY_Y_POS_RSSI_VALUE, buffer, FONT_SIZE_3);
 
 #if 0 // DEBUG
@@ -222,14 +222,29 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 		ucRenderRows((DISPLAY_Y_POS_RSSI_BAR / 8), (DISPLAY_Y_POS_RSSI_BAR / 8) + 1);
 #endif
 	}
+
+	if (shouldBeep)
+	{
+		if (trxGetMode() == RADIO_MODE_DIGITAL)
+		{
+			*signal_beep = RSSI_LOWEST_TONE + 10 * barWidth;
+			soundSetMelody(signal_beep);
+		}
+	}
 }
 
 static void handleEvent(uiEvent_t *ev)
 {
+	if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) == 0)
+	{
+		shouldBeep = false;
+	}
+
 	if (handleMonitorMode(ev))
 	{
 		return;
 	}
+
 	if (ev->events & BUTTON_EVENT)
 	{
 		bool wasPlaying = false;
@@ -250,6 +265,11 @@ static void handleEvent(uiEvent_t *ev)
 				voicePromptsTerminate();
 			}
 			return;
+		}
+
+		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (ev->buttons < BUTTON_SK2))
+		{
+			shouldBeep = true;
 		}
 	}
 

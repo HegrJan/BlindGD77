@@ -36,6 +36,7 @@
 #include "hardware/SPI_Flash.h"
 #include "functions/ticks.h"
 #include "functions/trx.h"
+#include "functions/autozone.h"
 
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
 
@@ -52,6 +53,10 @@ static uint32_t lastTG = 0;
 
 volatile uint32_t lastID = 0;// This needs to be volatile as lastHeardClearLastID() is called from an ISR
 LinkItem_t *LinkHead = callsList;
+static uint32_t lastHeardNeedsAnnouncementTimer=-1; //reset is -1.
+// Try and avoid triggering speaking of last heard if reception breaks up, wait 750 ms after end of reception.
+#define LAST_HEARD_TIMER_TIMEOUT 750
+
 static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool announceVFOName);
 static void dmrDbTextDecode(uint8_t *compressedBufIn, uint8_t *decompressedBufOut, int compressedSize);
 
@@ -480,12 +485,12 @@ static void updateLHItem(LinkItem_t *item)
 		case CONTACT_DISPLAY_PRIO_TA_CC_DB:
 			if (contactIDLookup(item->id, CONTACT_CALLTYPE_PC, buffer) == true)
 			{
-				snprintf(item->contact, 17, "%s", buffer);
+				snprintf(item->contact, SCREEN_LINE_BUFFER_SIZE, "%s", buffer);
 			}
 			else
 			{
 				dmrIDLookup(item->id, &currentRec);
-				snprintf(item->contact, 17, "%s", currentRec.text);
+				snprintf(item->contact, SCREEN_LINE_BUFFER_SIZE, "%s", currentRec.text);
 			}
 			break;
 
@@ -493,17 +498,17 @@ static void updateLHItem(LinkItem_t *item)
 		case CONTACT_DISPLAY_PRIO_TA_DB_CC:
 			if (dmrIDLookup(item->id, &currentRec) == true)
 			{
-				snprintf(item->contact, 17, "%s", currentRec.text);
+				snprintf(item->contact, SCREEN_LINE_BUFFER_SIZE, "%s", currentRec.text);
 			}
 			else
 			{
 				if (contactIDLookup(item->id, CONTACT_CALLTYPE_PC, buffer) == true)
 				{
-					snprintf(item->contact, 17, "%s", buffer);
+					snprintf(item->contact, SCREEN_LINE_BUFFER_SIZE, "%s", buffer);
 				}
 				else
 				{
-					snprintf(item->contact, 17, "%s", currentRec.text);
+					snprintf(item->contact, SCREEN_LINE_BUFFER_SIZE, "%s", currentRec.text);
 				}
 			}
 			break;
@@ -513,12 +518,12 @@ static void updateLHItem(LinkItem_t *item)
 		{
 			if (contactIDLookup(item->talkGroupOrPcId & 0x00FFFFFF, CONTACT_CALLTYPE_PC, buffer) == true)
 			{
-				snprintf(item->talkgroup, 17, "%s", buffer);
+				snprintf(item->talkgroup, SCREEN_LINE_BUFFER_SIZE, "%s", buffer);
 			}
 			else
 			{
 				dmrIDLookup(item->talkGroupOrPcId & 0x00FFFFFF, &currentRec);
-				snprintf(item->talkgroup, 17, "%s", currentRec.text);
+				snprintf(item->talkgroup, SCREEN_LINE_BUFFER_SIZE, "%s", currentRec.text);
 			}
 		}
 	}
@@ -527,11 +532,11 @@ static void updateLHItem(LinkItem_t *item)
 		// TalkGroup
 		if (contactIDLookup(item->talkGroupOrPcId, CONTACT_CALLTYPE_TG, buffer) == true)
 		{
-			snprintf(item->talkgroup, 17, "%s", buffer);
+			snprintf(item->talkgroup, SCREEN_LINE_BUFFER_SIZE, "%s", buffer);
 		}
 		else
 		{
-			snprintf(item->talkgroup, 17, "%s %u", currentLanguage->tg, (item->talkGroupOrPcId & 0x00FFFFFF));
+			snprintf(item->talkgroup, SCREEN_LINE_BUFFER_SIZE, "%s %u", currentLanguage->tg, (item->talkGroupOrPcId & 0x00FFFFFF));
 		}
 
 		switch (nonVolatileSettings.contactDisplayPriority)
@@ -585,214 +590,221 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 		{
 			uint32_t id = (dmrDataBuffer[6] << 16) + (dmrDataBuffer[7] << 8) + (dmrDataBuffer[8] << 0);
 
-			if (id != lastID)
+			if ((id != 0) && (talkGroupOrPcId != 0))
 			{
-				memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
-				blocksTA = 0x00;
-				overrideTA = false;
-
-				retVal = true;// something has changed
-				lastID = id;
-
-				LinkItem_t *item = lastheardFindInList(id);
-
-				// Already in the list
-				if (item != NULL)
+				if (id != lastID)
 				{
-					if (item->talkGroupOrPcId != talkGroupOrPcId)
-					{
-						item->talkGroupOrPcId = talkGroupOrPcId; // update the TG in case they changed TG
-						updateLHItem(item);
-					}
+					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
+					blocksTA = 0x00;
+					overrideTA = false;
+					lastHeardNeedsAnnouncementTimer = ((nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)) ? LAST_HEARD_TIMER_TIMEOUT : -1;
+					retVal = true;// something has changed
+					lastID = id;
 
-					item->time = fw_millis();
-					lastTG = talkGroupOrPcId;
+					LinkItem_t *item = lastheardFindInList(id);
 
-					if (item == LinkHead)
+					// Already in the list
+					if (item != NULL)
 					{
-						uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
-						return true;// already at top of the list
+						if (item->talkGroupOrPcId != talkGroupOrPcId)
+						{
+							item->talkGroupOrPcId = talkGroupOrPcId; // update the TG in case they changed TG
+							updateLHItem(item);
+						}
+
+						item->time = fw_millis();
+						lastTG = talkGroupOrPcId;
+
+						if (item == LinkHead)
+						{
+							uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
+							return true;// already at top of the list
+						}
+						else
+						{
+							// not at top of the list
+							// Move this item to the top of the list
+							LinkItem_t *next = item->next;
+							LinkItem_t *prev = item->prev;
+
+							// set the previous item to skip this item and link to 'items' next item.
+							prev->next = next;
+
+							if (item->next != NULL)
+							{
+								// not the last in the list
+								next->prev = prev;// backwards link the next item to the item before us in the list.
+							}
+
+							item->next = LinkHead;// link our next item to the item at the head of the list
+
+							LinkHead->prev = item;// backwards link the hold head item to the item moving to the top of the list.
+
+							item->prev = NULL;// change the items prev to NULL now we are at teh top of the list
+							LinkHead = item;// Change the global for the head of the link to the item that is to be at the top of the list.
+							if (item->talkGroupOrPcId != 0)
+							{
+								uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
+							}
+						}
 					}
 					else
 					{
-						// not at top of the list
-						// Move this item to the top of the list
-						LinkItem_t *next = item->next;
-						LinkItem_t *prev = item->prev;
+						// Not in the list
+						item = LinkHead;// setup to traverse the list from the top.
 
-						// set the previous item to skip this item and link to 'items' next item.
-						prev->next = next;
-
-						if (item->next != NULL)
+						if (uiDataGlobal.lastHeardCount < NUM_LASTHEARD_STORED)
 						{
-							// not the last in the list
-							next->prev = prev;// backwards link the next item to the item before us in the list.
+							uiDataGlobal.lastHeardCount++;
 						}
 
-						item->next = LinkHead;// link our next item to the item at the head of the list
+						// need to use the last item in the list as the new item at the top of the list.
+						// find last item in the list
+						while(item->next != NULL)
+						{
+							item = item->next;
+						}
+						//item is now the last
 
-						LinkHead->prev = item;// backwards link the hold head item to the item moving to the top of the list.
+						(item->prev)->next = NULL;// make the previous item the last
 
-						item->prev = NULL;// change the items prev to NULL now we are at teh top of the list
-						LinkHead = item;// Change the global for the head of the link to the item that is to be at the top of the list.
+						LinkHead->prev = item;// set the current head item to back reference this item.
+						item->next = LinkHead;// set this items next to the current head
+						LinkHead = item;// Make this item the new head
+
+						item->id = id;
+						item->talkGroupOrPcId = talkGroupOrPcId;
+						item->time = fw_millis();
+						item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
+						lastTG = talkGroupOrPcId;
+
+						memset(item->contact, 0, sizeof(item->contact)); // Clear contact's datas
+						memset(item->talkgroup, 0, sizeof(item->talkgroup));
+						memset(item->talkerAlias, 0, sizeof(item->talkerAlias));
+						memset(item->locator, 0, sizeof(item->locator));
+
+						updateLHItem(item);
+
 						if (item->talkGroupOrPcId != 0)
 						{
 							uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
 						}
 					}
 				}
-				else
+				else // update TG even if the DMRID did not change
 				{
-					// Not in the list
-					item = LinkHead;// setup to traverse the list from the top.
+					LinkItem_t *item = lastheardFindInList(id);
 
-					if (uiDataGlobal.lastHeardCount < NUM_LASTHEARD_STORED)
+					if (lastTG != talkGroupOrPcId)
 					{
-						uiDataGlobal.lastHeardCount++;
+						if (item != NULL)
+						{
+							// Already in the list
+							item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
+							updateLHItem(item);
+							item->time = fw_millis();
+						}
+
+						lastTG = talkGroupOrPcId;
+						memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
+						blocksTA = 0x00;
+						overrideTA = false;
+						retVal = true;// something has changed
 					}
 
-					// need to use the last item in the list as the new item at the top of the list.
-					// find last item in the list
-					while(item->next != NULL)
-					{
-						item = item->next;
-					}
-					//item is now the last
-
-					(item->prev)->next = NULL;// make the previous item the last
-
-					LinkHead->prev = item;// set the current head item to back reference this item.
-					item->next = LinkHead;// set this items next to the current head
-					LinkHead = item;// Make this item the new head
-
-					item->id = id;
-					item->talkGroupOrPcId = talkGroupOrPcId;
-					item->time = fw_millis();
-					item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
-					lastTG = talkGroupOrPcId;
-
-					memset(item->contact, 0, sizeof(item->contact)); // Clear contact's datas
-					memset(item->talkgroup, 0, sizeof(item->talkgroup));
-					memset(item->talkerAlias, 0, sizeof(item->talkerAlias));
-					memset(item->locator, 0, sizeof(item->locator));
-
-					updateLHItem(item);
-
-					if (item->talkGroupOrPcId != 0)
-					{
-						uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
-					}
+					item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();// Always update this in case the TS changed.
 				}
-			}
-			else // update TG even if the DMRID did not change
-			{
-				LinkItem_t *item = lastheardFindInList(id);
-
-				if (lastTG != talkGroupOrPcId)
-				{
-					if (item != NULL)
-					{
-						// Already in the list
-						item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
-						updateLHItem(item);
-						item->time = fw_millis();
-					}
-
-					lastTG = talkGroupOrPcId;
-					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
-					blocksTA = 0x00;
-					overrideTA = false;
-					retVal = true;// something has changed
-				}
-
-				item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();// Always update this in case the TS changed.
 			}
 		}
 		else
 		{
 			// Data contains the Talker Alias Data
-			uint8_t blockID = (forceOnHotspot ? dmrDataBuffer[0] : DMR_frame_buffer[0]) - 4;
+			uint8_t blockID = (forceOnHotspot ? dmrDataBuffer[0] : DMR_frame_buffer[0]);
 
-			// ID 0x04..0x07: TA
-			if (blockID < 4)
+			if (blockID >= 4)
 			{
+				blockID -= 4; // shift the blockID for maths reasons
 
-				// Already stored first byte in block TA Header has changed, lets clear other blocks too
-				if ((blockID == 0) && ((blocksTA & (1 << blockID)) != 0) &&
-						(bufferTA[0] != (forceOnHotspot ? dmrDataBuffer[2] : DMR_frame_buffer[2])))
+				if (blockID < 4) // ID 0x04..0x07: TA
 				{
-					blocksTA &= ~(1 << 0);
 
-					// Clear all other blocks if they're already stored
-					if ((blocksTA & (1 << 1)) != 0)
+					// Already stored first byte in block TA Header has changed, lets clear other blocks too
+					if ((blockID == 0) && ((blocksTA & (1 << blockID)) != 0) &&
+							(bufferTA[0] != (forceOnHotspot ? dmrDataBuffer[2] : DMR_frame_buffer[2])))
 					{
-						blocksTA &= ~(1 << 1);
-						memset(bufferTA + 7, 0, 7); // Clear 2nd TA block
-					}
-					if ((blocksTA & (1 << 2)) != 0)
-					{
-						blocksTA &= ~(1 << 2);
-						memset(bufferTA + 14, 0, 7); // Clear 3rd TA block
-					}
-					if ((blocksTA & (1 << 3)) != 0)
-					{
-						blocksTA &= ~(1 << 3);
-						memset(bufferTA + 21, 0, 7); // Clear 4th TA block
-					}
-					overrideTA = true;
-				}
+						blocksTA &= ~(1 << 0);
 
-				// We don't already have this TA block
-				if ((blocksTA & (1 << blockID)) == 0)
-				{
-					static const uint8_t blockLen = 7;
-					uint32_t blockOffset = blockID * blockLen;
-
-					blocksTA |= (1 << blockID);
-
-					if ((blockOffset + blockLen) < sizeof(bufferTA))
-					{
-						memcpy(bufferTA + blockOffset, (void *)(forceOnHotspot ? &dmrDataBuffer[2] : &DMR_frame_buffer[2]), blockLen);
-
-						// Format and length infos are available, we can decode now
-						if (bufferTA[0] != 0x0)
+						// Clear all other blocks if they're already stored
+						if ((blocksTA & (1 << 1)) != 0)
 						{
-							uint8_t *decodedTA;
+							blocksTA &= ~(1 << 1);
+							memset(bufferTA + 7, 0, 7); // Clear 2nd TA block
+						}
+						if ((blocksTA & (1 << 2)) != 0)
+						{
+							blocksTA &= ~(1 << 2);
+							memset(bufferTA + 14, 0, 7); // Clear 3rd TA block
+						}
+						if ((blocksTA & (1 << 3)) != 0)
+						{
+							blocksTA &= ~(1 << 3);
+							memset(bufferTA + 21, 0, 7); // Clear 4th TA block
+						}
+						overrideTA = true;
+					}
 
-							if ((decodedTA = decodeTA(&bufferTA[0])) != NULL)
+					// We don't already have this TA block
+					if ((blocksTA & (1 << blockID)) == 0)
+					{
+						static const uint8_t blockLen = 7;
+						uint32_t blockOffset = blockID * blockLen;
+
+						blocksTA |= (1 << blockID);
+
+						if ((blockOffset + blockLen) < sizeof(bufferTA))
+						{
+							memcpy(bufferTA + blockOffset, (void *)(forceOnHotspot ? &dmrDataBuffer[2] : &DMR_frame_buffer[2]), blockLen);
+
+							// Format and length infos are available, we can decode now
+							if (bufferTA[0] != 0x0)
 							{
-								// TAs doesn't match, update contact and screen.
-								if (overrideTA || (strlen((const char *)decodedTA) > strlen((const char *)&LinkHead->talkerAlias)))
+								uint8_t *decodedTA;
+
+								if ((decodedTA = decodeTA(&bufferTA[0])) != NULL)
 								{
-									memcpy(&LinkHead->talkerAlias, decodedTA, 31);// Brandmeister seems to send callsign as 6 chars only
-
-									if ((blocksTA & (1 << 1)) != 0) // we already received the 2nd TA block, check for 'DMR ID:'
+									// TAs doesn't match, update contact and screen.
+									if (overrideTA || (strlen((const char *)decodedTA) > strlen((const char *)&LinkHead->talkerAlias)))
 									{
-										char *p = NULL;
+										memcpy(&LinkHead->talkerAlias, decodedTA, 31);// Brandmeister seems to send callsign as 6 chars only
 
-										// Get rid of 'DMR ID:xxxxxxx' part of the TA, sent by BM
-										if (((p = strstr(&LinkHead->talkerAlias[0], "DMR ID:")) != NULL) || ((p = strstr(&LinkHead->talkerAlias[0], "DMR I")) != NULL))
+										if ((blocksTA & (1 << 1)) != 0) // we already received the 2nd TA block, check for 'DMR ID:'
 										{
-											*p = 0;
-										}
-									}
+											char *p = NULL;
 
-									overrideTA = false;
-									uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;
+											// Get rid of 'DMR ID:xxxxxxx' part of the TA, sent by BM
+											if (((p = strstr(&LinkHead->talkerAlias[0], "DMR ID:")) != NULL) || ((p = strstr(&LinkHead->talkerAlias[0], "DMR I")) != NULL))
+											{
+												*p = 0;
+											}
+										}
+
+										overrideTA = false;
+										uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;
+									}
 								}
 							}
 						}
 					}
 				}
-			}
-			else if (blockID == 4) // ID 0x08: GPS
-			{
-				uint8_t *locator = decodeGPSPosition((uint8_t *)(forceOnHotspot ? &dmrDataBuffer[0] : &DMR_frame_buffer[0]));
-
-				if (strncmp((char *)&LinkHead->locator, (char *)locator, 7) != 0)
+				else if (blockID == 4) // ID 0x08: GPS
 				{
-					memcpy(&LinkHead->locator, locator, 7);
-					uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA_UPDATE;
+					uint8_t *locator = decodeGPSPosition((uint8_t *)(forceOnHotspot ? &dmrDataBuffer[0] : &DMR_frame_buffer[0]));
+
+					if (strncmp((char *)&LinkHead->locator, (char *)locator, 7) != 0)
+					{
+						memcpy(&LinkHead->locator, locator, 7);
+						uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA_UPDATE;
+					}
 				}
 			}
 		}
@@ -1043,7 +1055,10 @@ bool contactIDLookup(uint32_t id, uint32_t calltype, char *buffer)
 	struct_codeplugContact_t contact;
 	int8_t manTS = tsGetManualOverrideFromCurrentChannel();
 
-	int contactIndex = codeplugContactIndexByTGorPC((id & 0x00FFFFFF), calltype, &contact, (manTS ? manTS : (trxGetDMRTimeSlot() + 1)));
+	int contactIndex = codeplugContactIndexByTGorPC((id & 0x00FFFFFF), calltype, &contact,
+			((monitorModeData.isEnabled && (dmrMonitorCapturedTS != -1)) ? (dmrMonitorCapturedTS + 1) :
+			(manTS ? manTS : (trxGetDMRTimeSlot() + 1))));
+
 	if (contactIndex != -1)
 	{
 		codeplugUtilConvertBufToString(contact.name, buffer, 16);
@@ -1338,7 +1353,7 @@ void uiUtilityRenderQSODataAndUpdateScreen(void)
 	if (isQSODataAvailableForCurrentTalker())
 	{
 		ucClearBuf();
-		uiUtilityRenderHeader(false);
+		uiUtilityRenderHeader(notScanning);
 		uiUtilityRenderQSOData();
 		ucRender();
 	}
@@ -1385,7 +1400,7 @@ void uiUtilityRenderQSOData(void)
 			uiUtilityDisplayInformation(LinkHead->talkgroup, different ? DISPLAY_INFO_CONTACT_INVERTED : DISPLAY_INFO_CONTACT, -1);
 
 			// If voice prompt feedback is enabled. Play a short beep to indicate the inverse video display showing the TG / TS / CC does not match the current Tx config
-			if (different && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+			if (different && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 			{
 				soundSetMelody(MELODY_RX_TGTSCC_WARNING_BEEP);
 			}
@@ -1444,18 +1459,31 @@ void uiUtilityRenderQSOData(void)
 	}
 }
 
-void uiUtilityRenderHeader(bool isVFODualWatchScanning)
+void uiUtilityRenderHeader(HeaderScanIndicatorType_t headerScanIndicatorType)
 {
 	const int MODE_TEXT_X_OFFSET = 1;
 	const int FILTER_TEXT_X_OFFSET = 25;
-	static const int bufferLen = 17;
-	char buffer[bufferLen];
+	const int COLOR_CODE_X_POSITION = 84;
+	char buffer[SCREEN_LINE_BUFFER_SIZE];
+	char scanTypeIndicator[5] = "";
+	if (headerScanIndicatorType == vfoDualWatch || headerScanIndicatorType == channelDualWatch)
+	{
+		strcpy(scanTypeIndicator, "[DW]");
+	}
+	else if (headerScanIndicatorType == channelPriorityScan)
+	{
+		strcpy(scanTypeIndicator, "[PR]");
+	}
+
 	static bool scanBlinkPhase = true;
 	static uint32_t blinkTime = 0;
 	int powerLevel = trxGetPowerLevel();
 	bool isPerChannelPower = (currentChannelData->libreDMR_Power != 0x00);
+	bool scanIsActive = (uiDataGlobal.Scan.active || uiDataGlobal.Scan.toneActive);
+	bool batteryIsLow = batteryIsLowWarning();
 
-	if (isVFODualWatchScanning == false)
+
+	if (headerScanIndicatorType == notScanning)
 	{
 		if (!trxTransmissionEnabled)
 		{
@@ -1470,7 +1498,7 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 		}
 	}
 
-	if (uiDataGlobal.Scan.active || uiDataGlobal.Scan.toneActive)
+	if (scanIsActive || batteryIsLow)
 	{
 		int blinkPeriod = 1000;
 		if (scanBlinkPhase)
@@ -1489,22 +1517,33 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 		scanBlinkPhase = false;
 	}
 
+	if (headerScanIndicatorType == vfoSweepScan)
+	{
+		int span = (VFO_SWEEP_SCAN_RANGE_SAMPLE_STEP_TABLE[uiDataGlobal.Scan.sweepStepSizeIndex] * VFO_SWEEP_NUM_SAMPLES) / (VFO_SWEEP_PIXELS_PER_STEP * 100);
+
+		sprintf(buffer, "+/-%dkHz", (span >> 1));
+		ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_LEFT, false);
+	}
+
 	switch(trxGetMode())
 	{
 	case RADIO_MODE_ANALOG:
-		if (isVFODualWatchScanning)
+		if (headerScanIndicatorType != vfoSweepScan)
 		{
-			strcpy(buffer, "[DW]");
-		}
-		else
-		{
-			strcpy(buffer, (trxGetBandwidthIs25kHz()?"FM":"FMN"));
+			if (*scanTypeIndicator)
+			{
+				strcpy(buffer, scanTypeIndicator);
+			}
+			else
+			{
+				strcpy(buffer, (trxGetBandwidthIs25kHz() ? "FM" : "FMN"));
+			}
+
+			ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, buffer,
+					(((nonVolatileSettings.hotspotType != HOTSPOT_TYPE_OFF) && (uiDataGlobal.dmrDisabled == false)) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, (scanIsActive ? scanBlinkPhase : false));
 		}
 
-		ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, buffer,
-				(((nonVolatileSettings.hotspotType != HOTSPOT_TYPE_OFF) && (uiDataGlobal.dmrDisabled == false)) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, scanBlinkPhase);
-
-		if ((monitorModeData.isEnabled == false) &&
+		if ((monitorModeData.isEnabled == false) && (headerScanIndicatorType != vfoSweepScan) &&
 				((currentChannelData->txTone != CODEPLUG_CSS_TONE_NONE) || (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)))
 		{
 			bool cssTextInverted = (trxGetAnalogFilterLevel() == ANALOG_FILTER_NONE);//(nonVolatileSettings.analogFilterLevel == ANALOG_FILTER_NONE);
@@ -1548,49 +1587,61 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 				tsManOverride = (contactTSActive ? tsIsContactHasBeenOverriddenFromCurrentChannel() : (tsGetManualOverrideFromCurrentChannel() != 0));
 			}
 
-			if (isVFODualWatchScanning == false)
+			if (headerScanIndicatorType == notScanning)
 			{
-				if (!scanBlinkPhase && (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE))
+				if ((scanIsActive ? (scanBlinkPhase == false) : true) && (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE))
 				{
 					ucFillRect(0, DISPLAY_Y_POS_HEADER - 1, 20, 9, false);
 				}
 			}
 
-			if (!scanBlinkPhase)
+			if (headerScanIndicatorType != vfoSweepScan)
 			{
-				bool isInverted = isVFODualWatchScanning ? false : (scanBlinkPhase ^ (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE));
-				ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, isVFODualWatchScanning ? "[DW]" : "DMR", ((nonVolatileSettings.hotspotType != HOTSPOT_TYPE_OFF) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, isInverted);
-			}
-
-			if (isVFODualWatchScanning == false)
-			{
-				bool tsInverted = false;
-
-				snprintf(buffer, bufferLen, "%s%d", contactTSActive ? "cS" : currentLanguage->ts, trxGetDMRTimeSlot() + 1);
-
-				if (!(nonVolatileSettings.dmrCcTsFilter & DMR_TS_FILTER_PATTERN))
+				if (scanIsActive ? scanBlinkPhase == false : true)
 				{
-					ucFillRect(FILTER_TEXT_X_OFFSET - 2, DISPLAY_Y_POS_HEADER - 1, 21, 9, false);
-					tsInverted = true;
+					bool isInverted = headerScanIndicatorType ? false : (scanBlinkPhase ^ (nonVolatileSettings.dmrDestinationFilter > DMR_DESTINATION_FILTER_NONE));
+					ucPrintCore(MODE_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, headerScanIndicatorType != notScanning ? scanTypeIndicator : "DMR", ((nonVolatileSettings.hotspotType != HOTSPOT_TYPE_OFF) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, isInverted);
 				}
-				ucPrintCore(FILTER_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, buffer, (tsManOverride ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, tsInverted);
+
+				if (headerScanIndicatorType == notScanning)
+				{
+					bool tsInverted = false;
+
+					snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%s%d",
+							((contactTSActive && (monitorModeData.isEnabled == false)) ? "cS" : currentLanguage->ts),
+							((monitorModeData.isEnabled && (dmrMonitorCapturedTS != -1))? (dmrMonitorCapturedTS + 1) : trxGetDMRTimeSlot() + 1));
+
+					if (!(nonVolatileSettings.dmrCcTsFilter & DMR_TS_FILTER_PATTERN))
+					{
+						ucFillRect(FILTER_TEXT_X_OFFSET - 2, DISPLAY_Y_POS_HEADER - 1, 21, 9, false);
+						tsInverted = true;
+					}
+					ucPrintCore(FILTER_TEXT_X_OFFSET, DISPLAY_Y_POS_HEADER, buffer, (tsManOverride ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_LEFT, tsInverted);
+				}
 			}
 		}
 		break;
 	}
 
+	// Power
 	sprintf(buffer,"%s%s", POWER_LEVELS[powerLevel], POWER_LEVEL_UNITS[powerLevel]);
-	ucPrintCore(0, DISPLAY_Y_POS_HEADER, buffer,
-			((isPerChannelPower && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH))) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_CENTER, false);
+	if (headerScanIndicatorType == vfoSweepScan) // Need to shift to the right due to sweep span
+	{
+		ucPrintCore(COLOR_CODE_X_POSITION - 20, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_LEFT, false);
+	}
+	else
+	{
+		ucPrintCore(0, DISPLAY_Y_POS_HEADER, buffer,
+				((isPerChannelPower && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH))) ? FONT_SIZE_1_BOLD : FONT_SIZE_1), TEXT_ALIGN_CENTER, false);
+	}
 
 	// In hotspot mode the CC is show as part of the rest of the display and in Analog mode the CC is meaningless
-	if((isVFODualWatchScanning == false) && (((settingsUsbMode == USB_MODE_HOTSPOT) || (trxGetMode() == RADIO_MODE_ANALOG)) == false))
+	if((headerScanIndicatorType == notScanning) && (((settingsUsbMode == USB_MODE_HOTSPOT) || (trxGetMode() == RADIO_MODE_ANALOG)) == false))
 	{
-		const int COLOR_CODE_X_POSITION = 84;
 		int ccode = trxGetDMRColourCode();
 		bool isNotFilteringCC = !(nonVolatileSettings.dmrCcTsFilter & DMR_CC_FILTER_PATTERN);
 
-		snprintf(buffer, bufferLen, "C%d", ccode);
+		snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "C%d", ccode);
 
 		if (isNotFilteringCC)
 		{
@@ -1608,29 +1659,37 @@ void uiUtilityRenderHeader(bool isVFODualWatchScanning)
 
 		getBatteryVoltage(&volts, &mvolts);
 
-		snprintf(buffer, bufferLen, "%1d", volts);
-		ucPrintCore(xV, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_LEFT, false);
+		snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%1d", volts);
+		ucPrintCore(xV, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_LEFT, ((batteryIsLow ? scanBlinkPhase : false)));
 
-		ucDrawRect(xV + 6, DISPLAY_Y_POS_HEADER + 5, 2, 2, true);
+		ucDrawRect(xV + 6, DISPLAY_Y_POS_HEADER + 5, 2, 2, ((batteryIsLow ? !scanBlinkPhase : true)));
 
-		snprintf(buffer, bufferLen, "%1dV", mvolts);
-		ucPrintCore(xV + 6 + 3, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_LEFT, false);
+		snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%1dV", mvolts);
+		ucPrintCore(xV + 6 + 3, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_LEFT, ((batteryIsLow ? scanBlinkPhase : false)));
 	}
 	else
 	{
-		snprintf(buffer, bufferLen, "%d%%", getBatteryPercentage());
-		ucPrintCore(0, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_RIGHT, false);// Display battery percentage at the right
+		snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%d%%", getBatteryPercentage());
+		ucPrintCore(0, DISPLAY_Y_POS_HEADER, buffer, FONT_SIZE_1, TEXT_ALIGN_RIGHT, ((batteryIsLow ? scanBlinkPhase : false)));// Display battery percentage at the right
 	}
 }
 
-void uiUtilityRedrawHeaderOnly(bool isVFODualWatchScanning)
+void uiUtilityRedrawHeaderOnly(HeaderScanIndicatorType_t headerScanIndicatorType)
 {
+	if (headerScanIndicatorType == vfoSweepScan)
+	{
+		ucFillRect(0, 0, DISPLAY_SIZE_X, 9, true);
+	}
+	else
+	{
 #if defined(PLATFORM_RD5R)
-	ucClearRows(0, 1, false);
+		ucClearRows(0, 1, false);
 #else
-	ucClearRows(0, 2, false);
+		ucClearRows(0, 2, false);
 #endif
-	uiUtilityRenderHeader(isVFODualWatchScanning);
+	}
+
+	uiUtilityRenderHeader(headerScanIndicatorType);
 	ucRenderRows(0, 2);
 }
 
@@ -1750,13 +1809,12 @@ void setOverrideTGorPC(uint32_t tgOrPc, bool privateCall)
 
 void uiUtilityDisplayFrequency(uint8_t y, bool isTX, bool hasFocus, uint32_t frequency, bool displayVFOChannel, bool isScanMode, uint8_t dualWatchVFO)
 {
-	static const int bufferLen = 17;
-	char buffer[bufferLen];
+	char buffer[SCREEN_LINE_BUFFER_SIZE];
 	int val_before_dp = frequency / 100000;
 	int val_after_dp = frequency - val_before_dp * 100000;
 
 	// Focus + direction
-	snprintf(buffer, bufferLen, "%c%c", ((hasFocus && !isScanMode)? '>' : ' '), (isTX ? 'T' : 'R'));
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%c%c", ((hasFocus && !isScanMode)? '>' : ' '), (isTX ? 'T' : 'R'));
 
 	ucPrintAt(0, y, buffer, FONT_SIZE_3);
 	// VFO
@@ -1765,7 +1823,7 @@ void uiUtilityDisplayFrequency(uint8_t y, bool isTX, bool hasFocus, uint32_t fre
 		ucPrintAt(16, y + VFO_LETTER_Y_OFFSET, (((dualWatchVFO == 0) && (nonVolatileSettings.currentVFONumber == 0)) || (dualWatchVFO == 1)) ? "A" : "B", FONT_SIZE_1);
 	}
 	// Frequency
-	snprintf(buffer, bufferLen, "%d.%05d", val_before_dp, val_after_dp);
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%d.%05d", val_before_dp, val_after_dp);
 	ucPrintAt(FREQUENCY_X_POS, y, buffer, FONT_SIZE_3);
 	ucPrintAt(DISPLAY_SIZE_X - (3 * 8), y, "MHz", FONT_SIZE_3);
 }
@@ -1881,28 +1939,40 @@ ANNOUNCE_STATIC void announceRadioMode(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->mode);
 	}
+
 	voicePromptsAppendPrompt( (trxGetMode() == RADIO_MODE_DIGITAL) ? PROMPT_DMR : PROMPT_FM);
 }
 
 ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying)
 {
+	char nameBuf[17];
+
 	if (!voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->zone);
 	}
-	if (strcmp(currentZone.name,currentLanguage->all_channels) == 0)
+
+	codeplugUtilConvertBufToString(currentZone.name, nameBuf, 16);
+
+	if (strcmp(nameBuf, currentLanguage->all_channels) == 0)
+	{
 		voicePromptsAppendLanguageString(&currentLanguage->all_channels);
+	}
 	else
 	{
-		int len=strlen(currentLanguage->zone);
-		if (strncmp(currentZone.name,currentLanguage->zone, len)==0)
+		int len = strlen(currentLanguage->zone);
+		if (strncmp(nameBuf, currentLanguage->zone, len)==0)
 		{
 			voicePromptsAppendLanguageString(&currentLanguage->zone);
 			if (strlen(currentZone.name) > len)
+			{
 				voicePromptsAppendString(currentZone.name+len);
+			}
 		}
 		else
+		{
 			voicePromptsAppendString(currentZone.name);
+		}
 	}
 }
 
@@ -1975,6 +2045,48 @@ ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying)
 	}
 }
 
+#if defined(PLATFORM_GD77S)
+void announceEcoLevel(bool voicePromptWasPlaying)
+{
+
+	if (!voicePromptWasPlaying)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->eco_level);
+	}
+
+	voicePromptsAppendInteger(nonVolatileSettings.ecoLevel);
+}
+
+void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital)
+{
+	if (announcePrompt)
+	{
+		if (isDigital)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->dmr_mic_gain);
+		}
+		else
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->fm_mic_gain);
+		}
+	}
+	if (announceValue)
+	{
+		if (isDigital)
+		{
+			char buf[SCREEN_LINE_BUFFER_SIZE];
+			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
+
+			voicePromptsAppendString(buf);
+		}
+		else
+		{
+			voicePromptsAppendInteger(nonVolatileSettings.micGainFM - 16);
+		}
+	}
+}
+#endif
+
 ANNOUNCE_STATIC void announceTemperature(bool voicePromptWasPlaying)
 {
 	char buffer[17];
@@ -2019,16 +2131,49 @@ ANNOUNCE_STATIC void announceCC(void)
 	voicePromptsAppendInteger(trxGetDMRColourCode());
 }
 
-ANNOUNCE_STATIC void announceChannelName(bool voicePromptWasPlaying)
+static bool IsThisThePriorityChannel()
+{
+	uint16_t channelIndexRelativeToAllChannels=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+	
+	return (uiDataGlobal.priorityChannelIndex == channelIndexRelativeToAllChannels) || uiDataGlobal.priorityChannelActive;
+}
+
+static bool PriorityChannelExistsInCurrentZone()
+{
+	if (uiDataGlobal.priorityChannelIndex==NO_PRIORITY_CHANNEL)
+		return false;
+
+	uint16_t indexRelativeToCurrentZone=NO_PRIORITY_CHANNEL;	
+	return codeplugFindAllChannelsIndexInCurrentZone(uiDataGlobal.priorityChannelIndex, &indexRelativeToCurrentZone) && indexRelativeToCurrentZone!=NO_PRIORITY_CHANNEL;
+}
+
+ANNOUNCE_STATIC void announceChannelName(bool announceChannelPrompt, bool announceChannelNumberIfDifferentToName)
 {
 	char voiceBuf[17];
-	codeplugUtilConvertBufToString(channelScreenChannelData.name, voiceBuf, 16);
-
-	if (!voicePromptWasPlaying)
+	char voiceBufChNumber[5];
+	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
+	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
+	// We can't announce  the channel number if this is the priority channel but it does not exist in the current zone, otherwise it won't make sense.
+	bool thisIsThePriorityChannel=IsThisThePriorityChannel();
+	bool announceChannelNumber=announceChannelNumberIfDifferentToName;
+	if (thisIsThePriorityChannel && !PriorityChannelExistsInCurrentZone())
+		announceChannelNumber=false;
+		
+	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
+	
+	if (announceChannelPrompt)
 	{
-		voicePromptsAppendPrompt(PROMPT_CHANNEL);
+		if (thisIsThePriorityChannel)
+			voicePromptsAppendLanguageString(&currentLanguage->priorityChannel);
+		else
+			voicePromptsAppendPrompt(PROMPT_CHANNEL);
 	}
-
+	// If the number and name differ, then append.
+	if (announceChannelNumber && strcmp(voiceBufChNumber, voiceBuf) != 0)
+	{
+		voicePromptsAppendString(voiceBufChNumber);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+	}
 	voicePromptsAppendString(voiceBuf);
 }
 
@@ -2061,7 +2206,6 @@ static void announceQRG(uint32_t qrg, bool unit)
 		voicePromptsAppendPrompt(PROMPT_MEGAHERTZ);
 	}
 }
-
 
 static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool announceTx)
 {
@@ -2140,29 +2284,28 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 	switch(direction)
 	{
 	case DIRECTION_RECEIVE:
-		voicePromptsAppendString("RX");
+		//voicePromptsAppendString("RX");
+		voicePromptsAppendPrompt(PROMPT_RECEIVE);
 		break;
 	case DIRECTION_TRANSMIT:
-		voicePromptsAppendString("TX");
+		//voicePromptsAppendString("TX");
+		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
 		break;
 	default:
 		break;
 	}
 
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-
 	if (cssType == CSS_TYPE_NONE)
 	{
 		voicePromptsAppendString("CSS");
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->none);
 	}
 	else if (cssType == CSS_TYPE_CTCSS)
 	{
 		if (announceType)
 		{
-			voicePromptsAppendString("CTCSS");
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			//voicePromptsAppendString("CTCSS");
+			voicePromptsAppendLanguageString(&currentLanguage->tone);
 		}
 		snprintf(buf, BUFFER_LEN, "%d.%d", tone / 10, tone % 10);
 		voicePromptsAppendString(buf);
@@ -2173,7 +2316,6 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 		if (announceType)
 		{
 			voicePromptsAppendString("DCS");
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
 
 		dcsPrintf(buf, BUFFER_LEN, NULL, tone);
@@ -2220,7 +2362,7 @@ static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool a
 {
 	if (menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE)
 	{
-		announceChannelName(voicePromptWasPlaying);
+		announceChannelName(!voicePromptWasPlaying, false);
 	}
 	else
 	{
@@ -2228,35 +2370,64 @@ static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool a
 	}
 }
 
-void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnounceThreshold)
+static void 		announceBandWidth(bool voicePromptWasPlaying)
+{
+	if (!voicePromptWasPlaying)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->bandwidth);
+	}
+	bool wide=(currentChannelData->flag4&0x02) ? true : false;
+	char buffer[17]="\0";
+	if (wide)
+		strcpy(buffer, "25");
+	else
+		strcpy(buffer, "12.5");
+	voicePromptsAppendString(buffer);
+	voicePromptsAppendPrompt(PROMPT_KILOHERTZ);
+}
+
+void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshold_t immediateAnnounceThreshold)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
 		return;
 	}
 
-	bool level2=nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2;
+	bool lessVerbose =nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2;
 	// If voice prompts are already playing and further speech is requested, a less verbose sequence is spoken.
 	// This is known as follow-on.
 	// For example, at level 3, if the name and mode are being spoken,
 	// the user would hear "channel" name "mode" fm.
 	// If follow-on occurs, they'd just hear name fm.
 	// At voice prompt level 2, we always enforce follow-on to reduce verbosity.
-	bool voicePromptWasPlaying = voicePromptsIsPlaying() || level2;
+	bool voicePromptWasPlaying = voicePromptsIsPlaying() || lessVerbose;
 
 	voicePromptSequenceState = item;
 
-	voicePromptsInit();
+	if (init)
+	{
+		voicePromptsInit();
+	}
 
 	switch(voicePromptSequenceState)
 	{
 	case PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ:
 	case PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE:
 	case PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE:
+	case PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE:
+	case PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC:
+	case PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC:
 	case PROMPT_SEQUENCE_VFO_FREQ_UPDATE:
 	{
 		uint32_t lFreq, hFreq;
 
+		if (((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2) || (immediateAnnounceThreshold == PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY)) &&
+				((voicePromptSequenceState == PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE) ||
+						(voicePromptSequenceState == PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC)))
+		{
+			announceZoneName(voicePromptWasPlaying);
+		}
+		AnnounceLastHeardContact();
 		announceChannelNameOrVFOFrequency(voicePromptWasPlaying, (voicePromptSequenceState != PROMPT_SEQUENCE_VFO_FREQ_UPDATE));
 		if (uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
 		{
@@ -2274,7 +2445,8 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 		{
 			announceVFOChannelName();
 		}
-		announceRadioMode(voicePromptWasPlaying);
+		if (!lessVerbose)// At level 2, do not say FM or DMR, only say contact which will indicate DMR, no contact will presumably be fm.
+			announceRadioMode(voicePromptWasPlaying);
 		if (voicePromptSequenceState == PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE)
 		{
 			break;
@@ -2303,7 +2475,7 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 		if (voicePromptSequenceState==PROMPT_SEQUENCE_ZONE)
 			break;
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		announceChannelName(voicePromptWasPlaying);
+		announceChannelName(!voicePromptWasPlaying, false);
 	//	deliberate fall through to announce mode.
 	case PROMPT_SEQUENCE_MODE:
 		announceRadioMode(voicePromptWasPlaying);
@@ -2347,7 +2519,19 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 		voicePromptsAppendPrompt(PROMPT_TRANSMIT);
 		announceFrequencyEx(false, false, true);
 		break;
+	case PROMPT_SEQUENCE_BANDWIDTH:
+		announceBandWidth(voicePromptWasPlaying);
+		break;
 	}
+	case PROMPT_SEQUENCE_DIRECTION_TX:
+		voicePromptsAppendString("TX");
+		break;
+	case PROMPT_SEQUENCE_DIRECTION_RX:
+		voicePromptsAppendString("RX");
+		break;
+	case PROMPT_SEQUENCE_CHANNEL_NUMBER_AND_NAME:
+		announceChannelName(!voicePromptWasPlaying, true);
+		break;
 	default:
 		break;
 	}
@@ -2362,6 +2546,11 @@ void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnoun
 	{
 		voicePromptsPlay();
 	}
+}
+
+void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnounceThreshold)
+{
+	announceItemWithInit(true, item, immediateAnnounceThreshold);
 }
 
 void promptsPlayNotAfterTx(void)
@@ -2443,9 +2632,71 @@ void acceptPrivateCall(uint32_t id, int timeslot)
 	announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
 }
 
+bool rebuildVoicePromptOnExtraLongSK1(uiEvent_t *ev)
+{
+	if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
+	{
+		// SK2 is still held down, but SK1 just get released.
+		if (uiDataGlobal.reverseRepeater)
+		{
+			return false;
+		}
+
+		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+		{
+			int currentMenu = menuSystemGetCurrentMenuNumber();
+
+			if ((((currentMenu == UI_CHANNEL_MODE) && (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED))) ||
+					((currentMenu == UI_VFO_MODE) && ((uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED)) || uiDataGlobal.Scan.toneActive))) == false)
+			{
+				if (voicePromptsIsPlaying())
+				{
+					voicePromptsTerminate();
+				}
+				else
+				{
+					announceItem(((currentMenu == UI_VFO_MODE) ?
+							PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC : PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC),
+							PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
+
+					if (trxGetMode() == RADIO_MODE_ANALOG)
+					{
+						CodeplugCSSTypes_t type = codeplugGetCSSType(currentChannelData->rxTone);
+						if ((type & CSS_TYPE_NONE) == 0)
+						{
+							buildCSSCodeVoicePrompts(currentChannelData->rxTone, type, DIRECTION_RECEIVE, true);
+							voicePromptsAppendPrompt(PROMPT_SILENCE);
+						}
+
+						type = codeplugGetCSSType(currentChannelData->txTone);
+						if ((type & CSS_TYPE_NONE) == 0)
+						{
+							buildCSSCodeVoicePrompts(currentChannelData->txTone, type, DIRECTION_TRANSMIT, true);
+							voicePromptsAppendPrompt(PROMPT_SILENCE);
+						}
+					}
+
+					announceItemWithInit(false, PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
+
+					if (currentMenu == UI_VFO_MODE)
+					{
+						announceItemWithInit(false, (uiVFOModeIsTXFocused() ? PROMPT_SEQUENCE_DIRECTION_TX : PROMPT_SEQUENCE_DIRECTION_RX), PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
+					}
+
+					voicePromptsPlay();
+				}
+
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 {
-	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (ev->keys.key == 0))
+	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
 	{
 		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 		{
@@ -2477,34 +2728,37 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	return false;
 }
 
-void AnnounceChannelSummary(bool voicePromptWasPlaying)
+void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
-		char voiceBuf[17];
-	char voiceBufChNumber[5];
-	int channelNumber = CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : (nonVolatileSettings.currentChannelIndexInZone+1);
-
-	codeplugUtilConvertBufToString(currentChannelData->name, voiceBuf, 16);
-	snprintf(voiceBufChNumber, 5, "%d", channelNumber);
-
+	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
+	
 	voicePromptsInit();
-	voicePromptsAppendPrompt(PROMPT_CHANNEL);
-	// If the number and name differ, then append.
-	if (strncmp(voiceBufChNumber, voiceBuf, strlen(voiceBufChNumber)) != 0)
+	AnnounceLastHeardContact();
+	if (announceName)
 	{
-		voicePromptsAppendString(voiceBufChNumber);
-		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		announceChannelName(true, true);
 	}
-	voicePromptsAppendString(voiceBuf);
-
-	if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
-	{
-		announceRadioMode(voicePromptWasPlaying);
-	}
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-
+	
 	announceFrequency();
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	
+	uint32_t lFreq, hFreq;
 
+	if (!isChannelScreen && uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
+	{
+		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+		voicePromptsAppendLanguageString(&currentLanguage->low);
+		announceQRG(lFreq, true);
+		voicePromptsAppendLanguageString(&currentLanguage->high);
+		announceQRG(hFreq, true);
+	}
+	
+	announceRadioMode(voicePromptWasPlaying);
+	bool narrow=(currentChannelData->flag4&0x02)==0 ? true : false;
+	if (narrow && trxGetMode() == RADIO_MODE_ANALOG)
+		voicePromptsAppendPrompt(PROMPT_N);
+
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	
 	if (trxGetMode() == RADIO_MODE_DIGITAL)
 	{
 		announceContactNameTgOrPc(voicePromptsIsPlaying());
@@ -2533,96 +2787,130 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying)
 			buildCSSCodeVoicePrompts(currentChannelData->txTone,
 			(isCTCSS ? CSS_TYPE_CTCSS : ((currentChannelData->txTone & CSS_TYPE_DCS_MASK ) ? CSS_TYPE_DCS_INVERTED : CSS_TYPE_DCS)), DIRECTION_TRANSMIT, true);
 		}
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
 	}
 
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	announcePowerLevel(voicePromptWasPlaying);
-	if (currentChannelData->libreDMR_Power == 0)
+	if (isChannelScreen)
 	{
-		voicePromptsAppendLanguageString(&currentLanguage->from_master);
-	}
+		if (currentChannelData->libreDMR_Power == 0)
+			voicePromptsAppendLanguageString(&currentLanguage->from_master);
+	
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
+		announceZoneName(voicePromptWasPlaying);
+	}
 	voicePromptsPlay();
 }
 
 bool handleMonitorMode(uiEvent_t *ev)
 {
 	// Time by which a DMR signal should have been decoded, including locking on to a DMR signal on a different CC
-	const int DMR_MODE_CC_DETECT_TIME_MS = 250;// Normally it seems to take about 125mS to detect DMR even if the CC is incorrect.
+	const int DMR_MODE_CC_DETECT_TIME_MS = 375;// WAS:250;// Normally it seems to take about 125mS to detect DMR even if the CC is incorrect.
 
 	if (monitorModeData.isEnabled)
 	{
 #if defined(PLATFORM_GD77S)
-		// PLATFORM_GD77S
-		if ((BUTTONCHECK_DOWN(ev, BUTTON_SK1) == false) || (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == false) || BUTTONCHECK_DOWN(ev, BUTTON_ORANGE) || (ev->events & ROTARY_EVENT))
+		if ((BUTTONCHECK_DOWN(ev, BUTTON_SK1) == 0) || (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) || BUTTONCHECK_DOWN(ev, BUTTON_ORANGE) || (ev->events & ROTARY_EVENT))
 #else
-		if ((BUTTONCHECK_DOWN(ev, BUTTON_SK2) == false) || (ev->keys.key != 0) || BUTTONCHECK_DOWN(ev, BUTTON_SK1)
+		if ((BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) || (ev->keys.key != 0) || BUTTONCHECK_DOWN(ev, BUTTON_SK1)
 #if !defined(PLATFORM_RD5R)
 				|| BUTTONCHECK_DOWN(ev, BUTTON_ORANGE)
 #endif
 			)
 #endif
 		{
-			bool wasRadioModeWasChanged = (trxGetMode() != monitorModeData.savedRadioMode);
-			if (wasRadioModeWasChanged)
-			{
-				trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
-				currentChannelData->sql = monitorModeData.savedSquelch;
-			}
+			monitorModeData.isEnabled = false;
+
+			// Blindly set mode and BW, as maybe only FM BW has changed (MonitorMode ends to FM 25kHz if no DMR is detected)
+			// Anyway, trxSetModeAndBandwidth() won't do anything if the current mode and BW are identical,
+			trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
+
+			currentChannelData->sql = monitorModeData.savedSquelch;
+			nonVolatileSettings.dmrCcTsFilter = monitorModeData.savedDMRCcTsFilter;
+			nonVolatileSettings.dmrDestinationFilter = monitorModeData.savedDMRDestinationFilter;
+
 			switch (monitorModeData.savedRadioMode)
 			{
-			case RADIO_MODE_ANALOG:
-				currentChannelData->sql = monitorModeData.savedSquelch;
-				trxSetRxCSS(currentChannelData->rxTone);
-				break;
-			case RADIO_MODE_DIGITAL:
-				nonVolatileSettings.dmrCcTsFilter = monitorModeData.savedDMRCcTsFilter;
-				nonVolatileSettings.dmrDestinationFilter = monitorModeData.savedDMRDestinationFilter;
-				trxSetDMRColourCode(monitorModeData.savedDMRCc);
-				trxSetDMRTimeSlot(monitorModeData.savedDMRTs);
-				break;
+				case RADIO_MODE_ANALOG:
+					trxSetRxCSS(currentChannelData->rxTone);
+					break;
+				case RADIO_MODE_DIGITAL:
+					trxSetDMRColourCode(monitorModeData.savedDMRCc);
+					trxSetDMRTimeSlot(monitorModeData.savedDMRTs);
+					init_digital_DMR_RX();
+					disableAudioAmp(AUDIO_AMP_MODE_RF);
+					break;
 			}
-			monitorModeData.isEnabled = false;
+
 			headerRowIsDirty = true;
+
+			if (uiVFOModeSweepScanning(true))
+			{
+				uiVFOSweepScanModePause(false, false);
+			}
+			else
+			{
+				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				addTimerCallback(uiUtilityRenderQSODataAndUpdateScreen, 2000, menuSystemGetCurrentMenuNumber(), true);
+			}
+
 			return true;
 		}
 	}
 	else
 	{
 #if defined(PLATFORM_GD77S)
-		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
+		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2)
+#else
+		if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2) && (BUTTONCHECK_DOWN(ev, BUTTON_SK1) == 0) && (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) == 0)
+#endif
+				&& (((uiDataGlobal.Scan.toneActive == false) &&
+						((uiDataGlobal.Scan.active == false) || (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state == SCAN_PAUSED))))
+						|| uiVFOModeSweepScanning(false))
+		)
 		{
 			if (voicePromptsIsPlaying())
 			{
 				voicePromptsTerminate();
 			}
-#else
-		if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2))
-		{
-#endif
+
+			if (uiVFOModeSweepScanning(false))
+			{
+				uiVFOSweepScanModePause(true, true);
+			}
+
 			monitorModeData.savedRadioMode = trxGetMode();
 			monitorModeData.savedSquelch = currentChannelData->sql;
+			monitorModeData.savedDMRCcTsFilter = nonVolatileSettings.dmrCcTsFilter;
+			monitorModeData.savedDMRDestinationFilter = nonVolatileSettings.dmrDestinationFilter;
+			monitorModeData.savedDMRCc = trxGetDMRColourCode();
+			monitorModeData.savedDMRTs = trxGetDMRTimeSlot();
 
-			switch (monitorModeData.savedRadioMode)
-			{
-			case RADIO_MODE_ANALOG:
-				monitorModeData.savedSquelch = currentChannelData->sql;
-				currentChannelData->sql = CODEPLUG_MIN_VARIABLE_SQUELCH;
-				trxSetRxCSS(CODEPLUG_CSS_TONE_NONE);
-				break;
-			case RADIO_MODE_DIGITAL:
-				monitorModeData.savedDMRCcTsFilter = nonVolatileSettings.dmrCcTsFilter;
-				monitorModeData.savedDMRDestinationFilter = nonVolatileSettings.dmrDestinationFilter;
-				monitorModeData.savedDMRCc = trxGetDMRColourCode();
-				monitorModeData.savedDMRTs = trxGetDMRTimeSlot();
+			// Temporary override DMR filtering
+			nonVolatileSettings.dmrCcTsFilter = DMR_CCTS_FILTER_NONE;
+			nonVolatileSettings.dmrDestinationFilter = DMR_DESTINATION_FILTER_NONE;
+			monitorModeData.dmrTimeout = DMR_MODE_CC_DETECT_TIME_MS;
 
-				// Temporary override DMR filtering
-				nonVolatileSettings.dmrCcTsFilter = DMR_CCTS_FILTER_NONE;
-				nonVolatileSettings.dmrDestinationFilter = DMR_DESTINATION_FILTER_NONE;
-				monitorModeData.DMRTimeout = DMR_MODE_CC_DETECT_TIME_MS;
-				break;
-			}
+			monitorModeData.dmrIsValid = false;
+			monitorModeData.qsoInfoUpdated = true;
 			monitorModeData.isEnabled = true;
+
+			// Start with DMR autodetection
+			if (monitorModeData.savedRadioMode != RADIO_MODE_DIGITAL)
+			{
+				trxSetModeAndBandwidth(RADIO_MODE_DIGITAL, false);
+			}
+
+			trxSetDMRColourCode(0);
+			trxSetDMRTimeSlot(0);
+			clearActiveDMRID();
+			lastHeardClearLastID();
+
+			init_digital_DMR_RX();
+			disableAudioAmp(AUDIO_AMP_MODE_RF);
+
 			headerRowIsDirty = true;
 			return true;
 		}
@@ -3124,7 +3412,285 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 	}
 }
 
+ bool dtmfConvertCodeToChars(uint8_t *code, char *text, int maxSize)
+{
+	if (!text || !code)
+	{
+		return false;
+	}
+	int j=0;
+
+	for (int i = 0; i < maxSize; i++)
+	{
+		if (code[i] < 16)
+			text[j++] = DTMF_AllowedChars[code[i]];
+	}
+	text[j] = 0;
+
+	return true;
+}
+
+extern int toupper(int __c);
+
+ bool dtmfConvertCharsToCode(char *text, uint8_t *code, int maxSize)
+{// initialize to empty.
+	if (!text || !*text || !code)
+	{
+		return false;
+	}
+
+	memset(code, 0xFFU, DTMF_CODE_MAX_LEN);
+	for (int i = 0; (i < maxSize) && text[i]; i++)
+	{
+		char *symbol = strchr(DTMF_AllowedChars, toupper(text[i]));
+		if (!symbol)
+		{
+			return false;
+		}
+		code[i] = (symbol - DTMF_AllowedChars);
+	}
+
+	return true;
+}
+
 void resetOriginalSettingsData(void)
 {
 	originalNonVolatileSettings.magicNumber = 0xDEADBEEF;
+}
+
+bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel)
+{
+	if (!channel)
+		return false;
+	
+	if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) || BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+		return false;
+	
+	if (!KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+		return false;
+	
+	if (channel->chMode != RADIO_MODE_ANALOG)
+		return false;
+	uint8_t mask=channel->flag4;
+	if (mask&0x02) // wide, set to narrow.
+	mask&=~0x02;
+	else // narrow, set to wide.
+	mask|=0x02;
+	channel->flag4=mask;
+	
+	trxSetModeAndBandwidth(channel->chMode, ((channel->flag4&0x02)==0x02));
+	
+	return true;
+}
+void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeaterOffsetDirection)
+{
+	if (repeaterOffsetDirection==0)
+	{
+		*txFreq=*rxFreq;
+		return;	
+	}
+	int bandType=trxGetBandFromFrequency(*rxFreq);
+	bool isVHF=bandType==RADIO_BAND_VHF;
+	bool isUHF=bandType==RADIO_BAND_UHF;
+	
+	uint16_t offset=0;
+	if (isVHF)
+	{
+		offset=nonVolatileSettings.vhfOffset;
+	}
+	else if (isUHF)
+	{
+		offset=nonVolatileSettings.uhfOffset;
+	}
+	if (offset==0)
+	{
+		return;
+	}
+	
+	uint32_t newFreq=(*rxFreq);
+	if (repeaterOffsetDirection== 1)
+	{
+		newFreq+=(offset*100);
+	}
+	else
+	{
+		newFreq-=(offset*100);
+	}
+	
+	if (!trxCheckFrequencyInAmateurBand(newFreq))
+	{
+			return;
+	}
+	
+	(*txFreq)=newFreq;
+}
+
+static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
+{
+	bool IsAutoZone= AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && AutoZoneIsValid();
+
+	if (!IsAutoZone)
+		return false;
+	
+	voicePromptsInit();
+	
+	int direction=0;
+	if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)
+	{
+		direction =(nonVolatileSettings.autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
+	
+		if ((nonVolatileSettings.autoZone.flags&AutoZoneDuplexEnabled)==0)
+			nonVolatileSettings.autoZone.flags|=AutoZoneDuplexEnabled;
+		else
+			nonVolatileSettings.autoZone.flags&=~AutoZoneDuplexEnabled;
+	
+		if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)
+		{
+			if (direction > 0)
+				voicePromptsAppendPrompt(PROMPT_PLUS);
+			else
+				voicePromptsAppendPrompt(PROMPT_MINUS);
+		}		
+	}
+	if ((nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)==0 || (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)==0)
+	{
+		direction=0;
+		voicePromptsAppendLanguageString(&currentLanguage->none);
+		if (newMenuStatus)
+			*newMenuStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
+	}
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		voicePromptsPlay();
+	AutoZoneGetFrequenciesForIndex(uiDataGlobal.currentSelectedChannelNumber, &currentChannelData->rxFreq, &currentChannelData->txFreq);
+	AutoZoneApplyChannelRestrictions(uiDataGlobal.currentSelectedChannelNumber, currentChannelData);
+	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+	return true;
+}
+	
+void CycleRepeaterOffset(menuStatus_t* newMenuStatus)
+{
+	if (AutoZoneCycleRepeaterOffset(newMenuStatus))
+		return;
+	
+	voicePromptsInit();
+	if (uiDataGlobal.repeaterOffsetDirection==0)
+	{
+		uiDataGlobal.repeaterOffsetDirection=1;
+		voicePromptsAppendPrompt(PROMPT_PLUS);
+	}
+	else if (uiDataGlobal.repeaterOffsetDirection == 1)
+	{
+		uiDataGlobal.repeaterOffsetDirection=-1;
+		voicePromptsAppendPrompt(PROMPT_MINUS);
+	}
+	else
+	{
+		uiDataGlobal.repeaterOffsetDirection=0;
+		voicePromptsAppendLanguageString(&currentLanguage->none);
+		if (newMenuStatus)
+		{
+			*newMenuStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
+		}
+	}
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		voicePromptsPlay();
+	AdjustTXFreqByRepeaterOffset(&currentChannelData->rxFreq, &currentChannelData->txFreq, uiDataGlobal.repeaterOffsetDirection);
+	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+}
+
+bool IsBitSet(uint8_t bits, int whichBit)
+{
+	if (whichBit < 1 || whichBit > 8)
+		return false;
+	
+	whichBit--; // 1 is bit 0;
+	
+	uint8_t bit=1<<whichBit;
+	return bits & bit ? true : false;
+}
+
+ void SetBit(uint8_t* bits, int whichBit, bool set)
+{
+	if (!bits)
+		return;
+	if (whichBit < 1 || whichBit > 8)
+		return;
+	
+	whichBit--; // 1 is bit 0;
+	uint8_t bit=1<<whichBit;
+	if (set)
+		*bits|=bit;
+	else
+		*bits&=~bit;
+}
+
+static bool IsLastHeardContactRelevant()
+{
+	if (!LinkHead) return false;
+	if (LinkHead->id==0) return false;
+	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
+	
+	return true;
+}
+
+void AnnounceLastHeardContact()
+{
+	if (!IsLastHeardContactRelevant()) return;
+	
+	uint8_t offset=0;
+	if (strncmp(LinkHead->contact, "ID:", 3)==0 && LinkHead->contact[3])
+	{
+		offset=3;
+	}
+	char buffer[MAX_DMR_ID_CONTACT_TEXT_LENGTH]="\0";
+	if (LinkHead->talkerAlias[0])
+		strcpy(buffer, LinkHead->talkerAlias);
+	else if (LinkHead->contact[0])
+		strcpy(buffer, LinkHead->contact+offset);
+	// terminate at first space so we only read the callsign or first piece of data.
+	int endOffset=0;
+	while (buffer[endOffset] && buffer[endOffset]!=' ')
+	{
+		endOffset++;
+	}
+	if (endOffset)
+		buffer[endOffset]='\0';
+	if (buffer[0])
+		voicePromptsAppendString(buffer);
+	else
+		voicePromptsAppendInteger(LinkHead->id);
+}
+
+void AnnounceLastHeardContactIfNeeded()
+{
+	if (lastHeardNeedsAnnouncementTimer ==-1) return;
+
+	if (!IsLastHeardContactRelevant()) return;
+	
+	if (voicePromptsIsPlaying()) return;
+	
+	if (trxIsTransmitting)
+	{
+		lastHeardNeedsAnnouncementTimer = -1;
+		return;
+	}
+	
+	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) &&
+				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
+	{// wait till reception has finished.
+		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT;
+		return;
+	}
+	
+	if (lastHeardNeedsAnnouncementTimer > 0)
+	{
+		lastHeardNeedsAnnouncementTimer--;
+		return; // wait for timer to expire, start counting  after end of transmission.
+	}
+	
+	lastHeardNeedsAnnouncementTimer=-1; // reset.
+
+	voicePromptsInit();
+	AnnounceLastHeardContact();
+		voicePromptsPlay();
 }

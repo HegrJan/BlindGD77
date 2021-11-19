@@ -30,8 +30,10 @@
 
 #if defined(LANGUAGE_BUILD_JAPANESE)
 #define NUM_LANGUAGES 2
-#else
+#elif defined( ACCESSIBLEGD77_MULTILINGUAL_SUPPORT)
 #define NUM_LANGUAGES 15
+#else
+#define NUM_LANGUAGES 1
 #endif
 
 #define LANGUAGE_TEXTS_LENGTH 17
@@ -124,8 +126,8 @@ typedef struct
    const char *rx_group;
    const char *on;
    const char *timeout_beep;
+   const char *list_full;
    const char *UNUSED_1;
-   const char *calibration;
    const char *band_limits;
    const char *beep_volume;
    const char *dmr_mic_gain;
@@ -174,7 +176,7 @@ typedef struct
    const char *vox_tail;
    const char *audio_prompt;
    const char *silent;
-   const char *normal;
+   const char *UNUSED_2;
    const char *beep;
    const char *voice_prompt_level_1;
    const char *transmitTalkerAlias;
@@ -220,31 +222,50 @@ typedef struct
    const char *scan_on_boot;
    const char* dtmf_entry;
    const char* name;
-   const char* vox;
+   const char *openDM1801A;
    const char* sk2Latch;
+   const char* dtmfLatch;
+   const char* priorityChannel;
+   const char* priorityScan;
+   const char* vhfRptOffset;
+   const char* uhfRptOffset;
+   const char* tone;
+   const char * autoZone;
+   const char* dtmf_code;
+   const char* user_info;
+   const char* callsign;
+   const char* alphanumeric;
+   const char* numeric;
+   const char* delete_from_zone;
+   const char* delete_from_all_zones;
+   const char* reorder_channels;
+   const char* voice_prompt_vol;
+   const char* voice_prompt_rate;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
 extern const stringsTable_t *currentLanguage;
 
-enum languageNamesOrder  { 	englishLanguageName = 0,
+enum languageNamesOrder
+{
+	englishLanguageName = 0,
 #if defined(LANGUAGE_BUILD_JAPANESE)
-							japaneseLanguageName,
-#else
-							catalanLanguageName,
-							danishLanguageName,
-							frenchLanguageName,
-							deutschGermanLanguageName,
-							italianLanguageName,
-							portuguesLanguageName,
-							spanishLanguageName,
-							suomiFinnishLanguageName,
-							polishLanguageName,
-							turkishLanguageName,
-							czechLanguageName,
-							nederlandsDutchLanguageName,
-							slovenianLanguageName,
-							portuguesBrazilLanguageName
+	japaneseLanguageName,
+#elif defined(ACCESSIBLEGD77_MULTILINGUAL_SUPPORT)
+	catalanLanguageName,
+	danishLanguageName,
+	frenchLanguageName,
+	deutschGermanLanguageName,
+	italianLanguageName,
+	portuguesLanguageName,
+	spanishLanguageName,
+	suomiFinnishLanguageName,
+	polishLanguageName,
+	turkishLanguageName,
+	czechLanguageName,
+	nederlandsDutchLanguageName,
+	slovenianLanguageName,
+	portuguesBrazilLanguageName
 #endif
 };
 

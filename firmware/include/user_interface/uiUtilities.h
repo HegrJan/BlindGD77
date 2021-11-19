@@ -44,10 +44,12 @@ ANNOUNCE_STATIC void announceRadioMode(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying);
+void announceEcoLevel(bool voicePromptWasPlaying);
+void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital);
 ANNOUNCE_STATIC void announceBatteryPercentage(void);
 ANNOUNCE_STATIC void announceTS(void);
 ANNOUNCE_STATIC void announceCC(void);
-ANNOUNCE_STATIC void announceChannelName(bool voicePromptWasPlaying);
+ANNOUNCE_STATIC void announceChannelName(bool announceChannelPrompt, bool announceChannelNumberIfDifferentToName);
 ANNOUNCE_STATIC void announceFrequency(void);
 ANNOUNCE_STATIC void announceVFOChannelName(void);
 ANNOUNCE_STATIC void announceVFOAndFrequency(bool announceVFOName);
@@ -65,6 +67,9 @@ typedef enum
 typedef enum
 {
 	PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE,
+	PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE,
+	PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC,
+	PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC,
 	PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE,
 	PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ,
 	PROMPT_SEQUENCE_VFO_FREQ_UPDATE,
@@ -80,6 +85,10 @@ typedef enum
 	PROMPT_SEQUENCE_ZONE_AND_CHANNEL_NAME,
 	PROMPT_SEQUENCE_VFO_INPUT_RX_FIELD_AND_FREQ,
 	PROMPT_SEQUENCE_VFO_INPUT_TX_FIELD_AND_FREQ,
+	PROMPT_SEQUENCE_BANDWIDTH,
+	PROMPT_SEQUENCE_DIRECTION_TX,
+	PROMPT_SEQUENCE_DIRECTION_RX,
+	PROMPT_SEQUENCE_CHANNEL_NUMBER_AND_NAME,
 	NUM_PROMPT_SEQUENCES
 } voicePromptItem_t;
 
@@ -124,8 +133,8 @@ void dmrIDCacheInit(void);
 bool dmrIDLookup(uint32_t targetId, dmrIdDataStruct_t *foundRecord);
 bool contactIDLookup(uint32_t id, uint32_t calltype, char *buffer);
 void uiUtilityRenderQSOData(void);
-void uiUtilityRenderHeader(bool isVFODualWatchScanning);
-void uiUtilityRedrawHeaderOnly(bool isVFODualWatchScanning);
+void uiUtilityRenderHeader(HeaderScanIndicatorType_t headerScanIndicatorType);
+void uiUtilityRedrawHeaderOnly(HeaderScanIndicatorType_t headerScanIndicatorType);
 LinkItem_t *lastheardFindInList(uint32_t id);
 void lastheardInitList(void);
 bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot);
@@ -146,24 +155,29 @@ size_t dcsPrintf(char *dest, size_t maxLen, char *prefix, uint16_t tone);
 
 void freqEnterReset(void);
 int freqEnterRead(int startDigit, int endDigit, bool simpleDigits);
+void AdjustTXFreqByRepeaterOffset(uint32_t* rxFreq,uint32_t* txFreq, int repeaterOffsetDirection);
+void CycleRepeaterOffset();
 
 int getBatteryPercentage(void);
 void getBatteryVoltage(int *volts, int *mvolts);
 bool decreasePowerLevel(void);
 bool increasePowerLevel(bool allowFullPower);
+bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel);
 
 void announceChar(char ch);
 
 void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Direction_t direction, bool announceType);
 void announceCSSCode(uint16_t tone, CodeplugCSSTypes_t cssType, Direction_t direction, bool announceType, audioPromptThreshold_t immediateAnnounceThreshold);
 
+void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshold_t immediateAnnounceThreshold);
 void announceItem(voicePromptItem_t item, audioPromptThreshold_t immediateAnnouceThreshold);
 void promptsPlayNotAfterTx(void);
 void playNextSettingSequence(void);
 void uiUtilityBuildTgOrPCDisplayName(char *nameBuf, int bufferLen);
 void acceptPrivateCall(uint32_t id, int timeslot);
+bool rebuildVoicePromptOnExtraLongSK1(uiEvent_t *ev);
 bool repeatVoicePromptOnSK1(uiEvent_t *ev);
-void AnnounceChannelSummary(bool voicePromptWasPlaying);
+void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName);
 bool handleMonitorMode(uiEvent_t *ev);
 void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int8_t yOverride);
 void uiUtilityRenderQSODataAndUpdateScreen(void);
@@ -186,7 +200,12 @@ void dtmfSequencePrepare(uint8_t *seq, bool autoStart);
 void dtmfSequenceStart(void);
 void dtmfSequenceStop(void);
 void dtmfSequenceTick(bool popPreviousMenuOnEnding);
+ bool dtmfConvertCharsToCode(char *text, uint8_t *code, int maxSize);
+ bool dtmfConvertCodeToChars(uint8_t *code, char *text, int maxSize);
+bool IsBitSet(uint8_t bits, int whichBit);
+void SetBit(uint8_t* bits, int whichBit, bool set);
 
 void resetOriginalSettingsData(void);
-
+void AnnounceLastHeardContact();
+void AnnounceLastHeardContactIfNeeded();
 #endif

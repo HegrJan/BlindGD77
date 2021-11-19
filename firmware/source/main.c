@@ -38,6 +38,7 @@
 #include "interfaces/clockManager.h"
 #include "functions/rxPowerSaving.h"
 #include "interfaces/wdog.h"
+#include "user_interface/editHandler.h"
 
 #if defined(USING_EXTERNAL_DEBUGGER)
 #include "SeggerRTT/RTT/SEGGER_RTT.h"
@@ -53,8 +54,11 @@ void debugReadCPUID(void);
 TaskHandle_t mainTaskHandle;
 
 static uint32_t lowbatteryTimer = 0;
-static const int LOW_BATTERY_INTERVAL = ((1000 * 60) * 5); // 5 minute;
-static const int LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL = 6;	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
+static uint32_t lowBatteryCount = 0;
+static bool lowBatteryReached = false;
+#define LOW_BATTERY_INTERVAL                       ((1000 * 60) * 5) // 5 minute;
+#define LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL   6	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
+#define LOW_BATTERY_VOLTAGE_RECOVERY_TIME          10000 // 10 seconds
 static bool updateMessageOnScreen = false;
 
 void mainTaskInit(void)
@@ -68,6 +72,21 @@ void mainTaskInit(void)
 	);
 
 	vTaskStartScheduler();
+}
+
+bool batteryIsLowWarning(void)
+{
+	return (batteryVoltage < ((CUTOFF_VOLTAGE_LOWER_HYST + LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL) + (nonVolatileSettings.batteryCalibration - 5)));
+}
+
+static bool batteryIsLowCritical(void)
+{
+	return (batteryVoltage < (CUTOFF_VOLTAGE_LOWER_HYST + (nonVolatileSettings.batteryCalibration - 5)));
+}
+
+static bool batteryLastReadingIsCritical(void)
+{
+	return (adcGetBatteryVoltage() < (CUTOFF_VOLTAGE_UPPER_HYST + (nonVolatileSettings.batteryCalibration - 5)));
 }
 
 static void die(bool usbMonitoring)
@@ -108,7 +127,7 @@ void powerOffFinalStage(void)
 	}
 
 	// Restore DMR filter settings if the radio is turned off whilst in monitor mode
-	if (monitorModeData.isEnabled && (monitorModeData.savedRadioMode == RADIO_MODE_DIGITAL))
+	if (monitorModeData.isEnabled)
 	{
 		nonVolatileSettings.dmrCcTsFilter = monitorModeData.savedDMRCcTsFilter;
 		nonVolatileSettings.dmrDestinationFilter = monitorModeData.savedDMRDestinationFilter;
@@ -161,7 +180,7 @@ static void showLowBattery(void)
 
 static void keyBeepHandler(uiEvent_t *ev, bool ptttoggleddown)
 {
-	bool isScanning = uiVFOModeIsScanning() || uiChannelModeIsScanning();
+	bool isScanning = (uiVFOModeIsScanning() || uiChannelModeIsScanning()) && !uiVFOModeSweepScanning(false);
 
 	// Do not send any beep while scanning, otherwise enabling the AMP will be handled as a valid signal detection.
 	if (((ev->keys.event & (KEY_MOD_LONG | KEY_MOD_PRESS)) == (KEY_MOD_LONG | KEY_MOD_PRESS)) ||
@@ -328,13 +347,13 @@ void mainTask(void *data)
 
 	// Wait up to 100mS. For the voltage to stabilise, especially on the RD5R and DM1801.
 	int batteryLowRetries = 100;
-	while((batteryLowRetries-- > 0) && (adcGetBatteryVoltage() < CUTOFF_VOLTAGE_UPPER_HYST))
+	while((batteryLowRetries-- > 0) && batteryLastReadingIsCritical())
 	{
 		adcTriggerConversion(1);
 		vTaskDelay(portTICK_PERIOD_MS * 1);
 	}
 
-	if (adcGetBatteryVoltage() < CUTOFF_VOLTAGE_UPPER_HYST)
+	if (batteryLastReadingIsCritical())
 	{
 		showLowBattery();
 #if !defined(PLATFORM_RD5R)
@@ -379,7 +398,7 @@ void mainTask(void *data)
 
 	if (wasRestoringDefaultsettings || forceVoicePromptsOn)
 	{
-		enableVoicePromptsIfLoaded();
+		enableVoicePromptsIfLoaded(true);
 	}
 
 	// Need to take care if the user has already been fully notified about the settings update
@@ -473,7 +492,7 @@ void mainTask(void *data)
 				uiDataGlobal.MessageBox.validatorCallback = validateUpdateCallback;
 				menuSystemPushNewMenu(UI_MESSAGE_BOX);
 
-				addTimerCallback(settingsUpdateAudioAlert, 500, false);// Need to delay playing this for a while, because otherwise it may get played before the volume is turned up enough to hear it.
+				addTimerCallback(settingsUpdateAudioAlert, 500, UI_MESSAGE_BOX, false);// Need to delay playing this for a while, because otherwise it may get played before the volume is turned up enough to hear it.
 			}
 #endif
 
@@ -522,35 +541,45 @@ void mainTask(void *data)
 				buttons &= ~BUTTON_PTT;
 			}
 // SK2 latch.
-// if sk2 is being released with no other buttons, we'll latch it, otherwise we wil not latch it.
+// if sk2 is being released with no other buttons, we'll latch it, otherwise we will not latch it.
 #if !defined(PLATFORM_GD77S)
-	if (nonVolatileSettings.sk2Latch && ((buttons&BUTTON_SK2_SHORT_UP) ==BUTTON_SK2_SHORT_UP) && keys.key==0)
-	{
-		sk2Latch =!sk2Latch;
-		if (voicePromptsIsPlaying())
-			voicePromptsTerminate();
-		if (sk2Latch)
-			soundSetMelody(melody_sk2_beep);
-		else
-			soundSetMelody(melody_sk1_beep);
-		sk2LatchTimeout=3000;
-	}
-	if (sk2Latch)
-	{
-		buttons|=BUTTON_SK2;
-		if (sk2LatchTimeout && ((buttons&~BUTTON_SK2)==0 && keys.key==0))
-			sk2LatchTimeout--;
+
+			if (nonVolatileSettings.sk2Latch > 0 && ((buttons & BUTTON_SK2_SHORT_UP) == BUTTON_SK2_SHORT_UP) && keys.key == 0 && !trxTransmissionEnabled)
+			{
+				sk2Latch = !sk2Latch;
+				if (voicePromptsIsPlaying())
+				{
+					voicePromptsTerminate();
+				}
+				if (sk2Latch)
+				{
+					soundSetMelody(melody_sk2_beep);
+				}
+				else
+				{
+					soundSetMelody(melody_sk1_beep);
+				}
+				sk2LatchTimeout = nonVolatileSettings.sk2Latch * 500; // units are in half seconds.
+			}
+
+			if (sk2Latch)
+			{
+				buttons |= BUTTON_SK2;
+				if (sk2LatchTimeout && ((buttons & ~BUTTON_SK2) == 0 && keys.key == 0))
+				{
+					sk2LatchTimeout--;
+				}
 #if !defined(PLATFORM_RD5R)
-		bool releaseSK2Latch=(buttons&(BUTTON_ORANGE_SHORT_UP|BUTTON_SK1_SHORT_UP)) || (keys.key!=0 && (keys.event&KEY_MOD_UP)) || (sk2LatchTimeout==0);
+				bool releaseSK2Latch = (buttons & (BUTTON_ORANGE_SHORT_UP | BUTTON_SK1_SHORT_UP)) || (keys.key != 0 && (keys.event & KEY_MOD_UP)) || (sk2LatchTimeout == 0);
 #else
-		bool releaseSK2Latch=(buttons&(BUTTON_SK1_SHORT_UP)) || (keys.key!=0 && (keys.event&KEY_MOD_UP)) || (sk2LatchTimeout==0);
+				bool releaseSK2Latch = (buttons & (BUTTON_SK1_SHORT_UP)) || (keys.key != 0 && (keys.event & KEY_MOD_UP)) || (sk2LatchTimeout == 0);
 #endif
-		if (releaseSK2Latch)
-		{
-			sk2Latch=false;
-			soundSetMelody(melody_sk1_beep);
-		}
-	}
+				if (releaseSK2Latch)
+				{
+					sk2Latch = false;
+					soundSetMelody(melody_sk1_beep);
+				}
+			}
 #endif // !defined(PLATFORM_GD77S)
 
 			// EVENT_*_CHANGED can be cleared later, so check this now as hasEvent has to be set anyway.
@@ -562,12 +591,19 @@ void mainTask(void *data)
 
 				if ((currentMenu == UI_CHANNEL_MODE) || (currentMenu == UI_VFO_MODE))
 				{
+					if (uiVFOModeSweepScanning(true))
+					{
+						ucFillRect(0, 0, DISPLAY_SIZE_X, 9, true);
+					}
+					else
+					{
 #if defined(PLATFORM_RD5R)
-					ucFillRect(0, 0, 128, 8, true);
+						ucFillRect(0, 0, DISPLAY_SIZE_X, 9, true);
 #else
-					ucClearRows(0, 2, false);
+						ucClearRows(0, 2, false);
 #endif
-					uiUtilityRenderHeader(uiVFOModeDualWatchIsScanning());
+					}
+					uiUtilityRenderHeader(uiVFOGetHeaderScanIndicatorType());
 					ucRenderRows(0, 2);
 				}
 
@@ -663,13 +699,28 @@ void mainTask(void *data)
 #if ! defined(PLATFORM_GD77S)
 			if ((key_event == EVENT_KEY_CHANGE) && ((buttons & BUTTON_PTT) == 0) && (keys.key != 0))
 			{
-				if (KEYCHECK_LONGDOWN(keys, KEY_RED) && (uiVFOModeIsScanning() == false) && (uiChannelModeIsScanning() == false))
+				int currentMenu = menuSystemGetCurrentMenuNumber();
+
+				// Longpress RED send back to root menu, it's only available from
+				// any menu but VFO and Channel
+				if (((currentMenu != UI_CHANNEL_MODE) && (currentMenu != UI_VFO_MODE)) &&
+						KEYCHECK_LONGDOWN(keys, KEY_RED) && (uiVFOModeIsScanning() == false) && (uiChannelModeIsScanning() == false))
 				{
 					uiDataGlobal.currentSelectedContactIndex = 0;
 					menuSystemPopAllAndDisplayRootMenu();
+					soundSetMelody(MELODY_KEY_BEEP);
+
+					// Clear button/key event/state.
+					buttons = BUTTON_NONE;
+					rotary = 0;
+					key_event = EVENT_KEY_NONE;
+					button_event = EVENT_BUTTON_NONE;
+					rotary_event = EVENT_ROTARY_NONE;
+					keys.key = 0;
+					keys.event = 0;
 				}
 			}
-
+#endif
 			//
 			// PTT toggle feature
 			//
@@ -693,7 +744,7 @@ void mainTask(void *data)
 			}
 
 			// PTT toggle action
-			bool pttLatchEnabled=((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) && (currentChannelData->tot != 0)) || dtmfPTTLatch;
+			bool pttLatchEnabled=((nonVolatileSettings.bitfieldOptions & BIT_PTT_LATCH) && (currentChannelData->tot != 0 || nonVolatileSettings.totMaster!=0)) || dtmfPTTLatch;
 
 			if (pttLatchEnabled)
 			{
@@ -704,7 +755,7 @@ void mainTask(void *data)
 						if (PTTToggledDown == false)
 						{
 							// PTT toggle works only if a TOT value is defined.
-							if (currentChannelData->tot != 0)
+							if (currentChannelData->tot != 0 || nonVolatileSettings.totMaster !=0)
 							{
 								PTTToggledDown = true;
 							}
@@ -728,11 +779,22 @@ void mainTask(void *data)
 					PTTToggledDown = false;
 				}
 			}
-#endif
 
 			if (button_event == EVENT_BUTTON_CHANGE)
 			{
-				displayLightTrigger(true);
+				// Toggle backlight
+				if (nonVolatileSettings.backlightMode == BACKLIGHT_MODE_MANUAL)
+				{
+					if (buttons == BUTTON_SK1) // SK1 alone
+					{
+						displayEnableBacklight(! displayIsBacklightLit());
+					}
+				}
+				else
+				{
+					displayLightTrigger(true);
+				}
+
 				if ((buttons & BUTTON_PTT) != 0)
 				{
 					int currentMenu = menuSystemGetCurrentMenuNumber();
@@ -775,7 +837,7 @@ void mainTask(void *data)
 						if (wasScanning)
 						{
 							// Mode was blinking, hence it needs to be redrawn as it could be in its hidden phase.
-							uiUtilityRedrawHeaderOnly(false);
+							uiUtilityRedrawHeaderOnly(uiVFOGetHeaderScanIndicatorType());
 						}
 						//else // VK7js commented out to fix ptt not txing after scan stops.
 						{
@@ -827,12 +889,6 @@ void mainTask(void *data)
 					soundSetMelody(MELODY_ACK_BEEP);
 				}
 #endif
-
-				// Toggle backlight
-				if ((nonVolatileSettings.backlightMode == BACKLIGHT_MODE_MANUAL) && (buttons & BUTTON_SK1))
-				{
-					displayEnableBacklight(! displayIsBacklightLit());
-				}
 			}
 
 			if (!trxTransmissionEnabled && (updateLastHeard == true))
@@ -1048,13 +1104,20 @@ void mainTask(void *data)
 			}
 #endif
 
+			bool batteryLowWarning = batteryIsLowWarning();
 
+			if (batteryLowWarning && ((PITCounter & 5000) == 0))
+			{
+				headerRowIsDirty = true;
+			}
+
+			if ((settingsUsbMode != USB_MODE_HOTSPOT) &&
 #if defined(PLATFORM_GD77S)
-			if (trxTransmissionEnabled == false &&
+					(trxTransmissionEnabled == false) &&
 #else
-			if ((menuSystemGetCurrentMenuNumber() != UI_TX_SCREEN) &&
+					(menuSystemGetCurrentMenuNumber() != UI_TX_SCREEN) &&
 #endif
-					(batteryVoltage < (CUTOFF_VOLTAGE_LOWER_HYST + LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL)) &&
+					batteryLowWarning &&
 					(fw_millis() > lowbatteryTimer))
 			{
 
@@ -1070,27 +1133,48 @@ void mainTask(void *data)
 						voicePromptsAppendLanguageString(&currentLanguage->low_battery);
 						voicePromptsPlay();
 					}
+
 					lowbatteryTimer = fw_millis() + LOW_BATTERY_INTERVAL;
 				}
 			}
 
-			// Low battery or poweroff (non RD-5R)
-#if defined(PLATFORM_RD5R)
-			if ((batteryVoltage < CUTOFF_VOLTAGE_LOWER_HYST)
-					&& (menuSystemGetCurrentMenuNumber() != UI_POWER_OFF))
-#else
-			if (((GPIO_PinRead(GPIO_Power_Switch, Pin_Power_Switch) != 0)
-					|| (batteryVoltage < CUTOFF_VOLTAGE_LOWER_HYST))
-					&& (menuSystemGetCurrentMenuNumber() != UI_POWER_OFF))
-#endif
-			{
-				GPIO_PinWrite(GPIO_audio_amp_enable, Pin_audio_amp_enable, 0);
-				soundSetMelody(NULL);
+			// Check if the battery has reached critical voltage (power off)
+			lowBatteryReached = batteryIsLowCritical();
 
-				if (batteryVoltage < CUTOFF_VOLTAGE_LOWER_HYST)
+			// The battery level fluctuates, reset the low battery counter
+			if (lowBatteryCount && (lowBatteryReached == false))
+			{
+				lowBatteryCount = 0;
+			}
+
+			// Low battery or poweroff (non RD-5R)
+			bool powerSwitchIsOff =
+#if defined(PLATFORM_RD5R)
+					false; // Set it always to ON for the RD-5R
+#else
+					(GPIO_PinRead(GPIO_Power_Switch, Pin_Power_Switch) != 0);
+#endif
+
+			if ((powerSwitchIsOff || lowBatteryReached) && (menuSystemGetCurrentMenuNumber() != UI_POWER_OFF))
+			{
+				// is considered as flat (stable value), now stop the firmware: make it silent
+				if ((lowBatteryReached && (lowBatteryCount >= LOW_BATTERY_VOLTAGE_RECOVERY_TIME)) || powerSwitchIsOff)
 				{
-					showLowBattery();
-					powerOffFinalStage();
+					GPIO_PinWrite(GPIO_audio_amp_enable, Pin_audio_amp_enable, 0);
+					soundSetMelody(NULL);
+				}
+
+				// Avoids delayed power off (on non RD-5R) if the power switch is turned off while in low battery condition
+				if (lowBatteryReached && (powerSwitchIsOff == false))
+				{
+					lowBatteryCount++;
+
+					// Now, the battery is considered as flat (stable value), powering off.
+					if (lowBatteryCount > LOW_BATTERY_VOLTAGE_RECOVERY_TIME)
+					{
+						showLowBattery();
+						powerOffFinalStage();
+					}
 				}
 #if ! defined(PLATFORM_RD5R)
 				else
@@ -1116,14 +1200,11 @@ void mainTask(void *data)
 					displayEnableBacklight(false);
 				}
 			}
-
-			if (voicePromptsIsPlaying())
-			{
-				voicePromptsTick();
-			}
+			voicePromptsTick();
 			soundTickMelody();
 			voxTick();
-
+			RequeueEditBufferForAnnouncementOnSK1IfNeeded();
+			AnnounceLastHeardContactIfNeeded();
 #if defined(PLATFORM_RD5R) // Needed for platforms which can't control the poweroff
 			settingsSaveIfNeeded(false);
 #endif
@@ -1172,8 +1253,7 @@ void mainTask(void *data)
 					}
 				}
 
-				rxPowerSavingTick(&ev,hasSignal);
-
+				rxPowerSavingTick(&ev, hasSignal);
 			}
 		}
 		vTaskDelay(0);
@@ -1201,7 +1281,7 @@ void debugReadCPUID(void)
 	vTaskDelay(portTICK_PERIOD_MS * 1);
 
 	buf[0] = 0;
-#if defined(PLATFORM_DM1801)
+#if defined(PLATFORM_DM1801) || defined(PLATFORM_DM1801A)
 	p = (uint8_t *)0x3800;
 #else
 	p = (uint8_t *)0x7f800;

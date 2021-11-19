@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
- *
+ * Joseph Stephen VK7JS.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
  * are met:
@@ -31,6 +31,8 @@
 #include "functions/codeplug.h"
 #include "user_interface/uiLocalisation.h"
 #include "functions/ticks.h"
+ enum SplashScreenPhase_t {splashInit, splashPlayingTune, splashAnnouncingText, splashExit};
+static int splashScreenPhase;
 
 static void updateScreen(void);
 static void handleEvent(uiEvent_t *ev);
@@ -43,11 +45,24 @@ static void pincodeAudioAlert(void);
 
 const uint32_t SILENT_PROMPT_HOLD_DURATION_MILLISECONDS = 2000;
 static uint32_t initialEventTime;
+static char line1[17];
+static char line2[17];
+static uint8_t bootScreenType;
 
 #if ! defined(PLATFORM_GD77S)
 static bool pinHandled = false;
 static int32_t pinCode;
 #endif
+
+static void AnnounceBootText()
+{
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_3)
+		return;
+	voicePromptsInit();
+	voicePromptsAppendString(line1);
+	voicePromptsAppendString(line2);
+	voicePromptsPlay();
+}
 
 menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 {
@@ -55,6 +70,15 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 
 	if (isFirstRun)
 	{
+		splashScreenPhase=splashInit;
+
+		codeplugGetBootScreenData(line1, line2, &bootScreenType);
+
+		strcpy(talkAliasText, line1);
+		if (*talkAliasText)
+			strcat(talkAliasText, " ");
+		strcat(talkAliasText, line2);
+
 #if ! defined(PLATFORM_GD77S)
 		if (pinHandled)
 		{
@@ -73,7 +97,7 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 				uiDataGlobal.MessageBox.validatorCallback = validatePinCodeCallback;
 				menuSystemPushNewMenu(UI_MESSAGE_BOX);
 
-				addTimerCallback(pincodeAudioAlert, 500, false);// Need to delay playing this for a while, because otherwise it may get played before the volume is turned up enough to hear it.
+				addTimerCallback(pincodeAudioAlert, 500, UI_MESSAGE_BOX, false); // Need to delay playing this for a while, because otherwise it may get played before the volume is turned up enough to hear it.
 				return MENU_STATUS_SUCCESS;
 			}
 		}
@@ -81,31 +105,37 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 
 		initialEventTime = ev->time;
 
-#if defined(PLATFORM_GD77S)
-		// Don't play boot melody when the 77S is already speaking, otherwise if will mute the speech halfway
-		if (voicePromptsIsPlaying() == false)
-#endif
+		bool hasBootMelody=false;
+		bool hasBootText=line1[0] !=0 || line2[0] !=0;
+		if (codeplugGetOpenGD77CustomData(CODEPLUG_CUSTOM_DATA_TYPE_BEEP, melodyBuf))
 		{
-			if (codeplugGetOpenGD77CustomData(CODEPLUG_CUSTOM_DATA_TYPE_BEEP, melodyBuf))
+			hasBootMelody=(melodyBuf[0] != 0) && (melodyBuf[1] != 0);
+			if (hasBootMelody)
 			{
-				if ((melodyBuf[0] == 0) && (melodyBuf[1] == 0))
-				{
-					exitSplashScreen();
-					return MENU_STATUS_SUCCESS;
-				}
-				else
-				{
-					soundCreateSong(melodyBuf);
-					soundSetMelody(melody_generic);
-				}
-
-			}
-			else
-			{
-				soundSetMelody(MELODY_POWER_ON);
+				soundCreateSong(melodyBuf);
+				soundSetMelody(melody_generic);
 			}
 		}
-
+		else
+		{
+			soundSetMelody(MELODY_POWER_ON);
+			hasBootMelody=true;
+		}
+		if (!hasBootMelody && !hasBootText)
+		{
+			exitSplashScreen();
+			return MENU_STATUS_SUCCESS;
+		}
+		if (hasBootMelody)
+		{
+			splashScreenPhase=splashPlayingTune;
+		}
+		else
+		{
+			splashScreenPhase=splashAnnouncingText;
+			AnnounceBootText();
+		}
+		
 		updateScreen();
 	}
 	else
@@ -118,15 +148,7 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 
 static void updateScreen(void)
 {
-	char line1[17];
-	char line2[17];
-	uint8_t bootScreenType;
 	bool customDataHasImage = false;
-
-	codeplugGetBootScreenData(line1, line2, &bootScreenType);
-
-	strcpy(talkAliasText, line1);
-	strcat(talkAliasText, line2);
 
 	if (bootScreenType == 0)
 	{
@@ -138,11 +160,13 @@ static void updateScreen(void)
 		ucClearBuf();
 
 #if defined(PLATFORM_RD5R)
-		ucPrintCentered(0, "OpenRD5R", FONT_SIZE_3);
+		ucPrintCentered(0, "AccessibleRD5R", FONT_SIZE_3);
 #elif defined(PLATFORM_GD77)
-		ucPrintCentered(8, "OpenGD77", FONT_SIZE_3);
+		ucPrintCentered(8, "AccessibleGD77", FONT_SIZE_3);
 #elif defined(PLATFORM_DM1801)
-		ucPrintCentered(8, "OpenDM1801", FONT_SIZE_3);
+		ucPrintCentered(8, "AccessibleDM1801", FONT_SIZE_3);
+#elif defined(PLATFORM_DM1801A)
+		ucPrintCentered(8, "Acc. DM1801A", FONT_SIZE_3);
 #endif
 		ucPrintCentered((DISPLAY_SIZE_Y / 4) * 2, line1, FONT_SIZE_3);
 		ucPrintCentered((DISPLAY_SIZE_Y / 4) * 3, line2, FONT_SIZE_3);
@@ -155,14 +179,36 @@ static void handleEvent(uiEvent_t *ev)
 {
 	if (nonVolatileSettings.audioPromptMode != AUDIO_PROMPT_MODE_SILENT)
 	{
-		if ((melody_play == NULL) || (ev->events != NO_EVENT))
+		bool anEventOccurred=(ev->events &(BUTTON_EVENT|KEY_EVENT)) ? true : false;
+		switch (splashScreenPhase)
+		{
+			case splashPlayingTune:
+			{
+				if (melody_play == NULL)
+				{
+					splashScreenPhase = splashAnnouncingText;
+					AnnounceBootText();
+				}
+				else if (anEventOccurred)
+				{
+					splashScreenPhase = splashExit;
+				}
+				break;
+			}
+			case splashAnnouncingText:
+			{
+				if (!voicePromptsIsPlaying() || anEventOccurred)
+					splashScreenPhase=splashExit;
+				break;
+			}
+			case splashExit:
+				break;
+		}
+		if (splashScreenPhase==splashExit)
 		{
 			// Any button or key event, stop the melody then leave
-			if (melody_play != NULL)
-			{
-				soundStopMelody();
-			}
-
+			soundStopMelody();
+			voicePromptsTerminate();
 			exitSplashScreen();
 		}
 	}

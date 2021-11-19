@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019-2021 Roger Clark, VK3KYY / G4KYF
  *                         Daniel Caujolle-Bert, F1RMB
+ *                         Jan Hegr, OK1TE
  *
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions
@@ -34,9 +35,12 @@ static const int DISPLAYED_LINES_MAX = 3;
 
 static bool displayLHDetails = false;
 static menuStatus_t menuLastHeardExitCode;
+static menuStatus_t menuLastHeardSubMenuExitCode;
 static LinkItem_t *selectedItem;
 static int lastHeardCount;
+static int submenuEntryCount;
 static int firstDisplayed;
+static bool returnedFromSubMenu = false;
 
 static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t now, uint32_t TGorPC, size_t maxLen, bool displayDetails, bool itemIsSelected, bool isFirstRun);
 static void promptsInit(bool isFirstRun);
@@ -103,7 +107,6 @@ menuStatus_t menuLastHeard(uiEvent_t *ev, bool isFirstRun)
 				menuLastHeardUpdateScreen(true, displayLHDetails, false);
 			}
 		}
-
 	}
 
 	return menuLastHeardExitCode;
@@ -130,7 +133,7 @@ void menuLastHeardUpdateScreen(bool showTitleOrHeader, bool displayDetails, bool
 	}
 	else
 	{
-		uiUtilityRenderHeader(false);
+		uiUtilityRenderHeader(notScanning);
 	}
 
 	// skip over the first menuDataGlobal.currentItemIndex in the listing
@@ -196,6 +199,132 @@ void menuLastHeardUpdateScreen(bool showTitleOrHeader, bool displayDetails, bool
 
 	ucRender();
 	uiDataGlobal.displayQSOState = QSO_DISPLAY_IDLE;
+}
+
+enum LAST_HEARD_SUBMENU_ITEMS
+{
+	LAST_HEARD_SUBMENU_CALLER = 0,
+	LAST_HEARD_SUBMENU_CALLEE,
+	NUM_LAST_HEARD_SUBMENU_ITEMS
+};
+
+static void updateSubMenuScreen(bool isFirstRun)
+{
+	int mNum = 0;
+	static const int bufferLen = 17;
+	char contact[bufferLen];
+
+	if (!isFirstRun)
+	{
+		voicePromptsInit();
+	}
+	ucClearBuf();
+
+	menuDisplayTitle(currentLanguage->select_tx);
+
+	submenuEntryCount = NUM_LAST_HEARD_SUBMENU_ITEMS;
+	for(int i = -1; i <= 1; i++)
+	{
+		mNum = menuGetMenuOffset(submenuEntryCount, i);
+		switch(mNum)
+		{
+			case LAST_HEARD_SUBMENU_CALLER:
+				strncpy(contact, selectedItem->contact, bufferLen);
+				break;
+			case LAST_HEARD_SUBMENU_CALLEE:
+				strncpy(contact, selectedItem->talkgroup, bufferLen);
+				break;
+		}
+
+		if (i == 0)
+		{
+			voicePromptsAppendString(contact);
+			promptsPlayNotAfterTx();
+		}
+
+		menuDisplayEntry(i, mNum, contact);
+	}
+
+	ucRender();
+}
+
+void setContactAndTsUsed(uint32_t id)
+{
+	setOverrideTGorPC(id, true);
+
+	int timeslot = selectedItem->receivedTS;
+	if ((timeslot != -1) && (timeslot != trxGetDMRTimeSlot()))
+	{
+		trxSetDMRTimeSlot(timeslot);
+		tsSetManualOverride(((menuSystemGetRootMenuNumber() == UI_CHANNEL_MODE) ? CHANNEL_CHANNEL : (CHANNEL_VFO_A + nonVolatileSettings.currentVFONumber)), (timeslot + 1));
+	}
+	announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
+	menuSystemPopAllAndDisplayRootMenu();
+}
+
+static void handleSubMenuEvent(uiEvent_t *ev)
+{
+	if (ev->events & BUTTON_EVENT)
+	{
+		if (repeatVoicePromptOnSK1(ev))
+		{
+			return;
+		}
+	}
+
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+	{
+		returnedFromSubMenu = true;
+		menuSystemPopPreviousMenu();
+	}
+	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+	{
+		switch (menuDataGlobal.currentItemIndex)
+		{
+			case LAST_HEARD_SUBMENU_CALLER:
+				setContactAndTsUsed(selectedItem->id);
+				break;
+			case LAST_HEARD_SUBMENU_CALLEE:
+				setContactAndTsUsed(selectedItem->talkGroupOrPcId);
+				break;
+		}
+	}
+	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
+	{
+		menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
+		updateSubMenuScreen(false);
+	}
+	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
+	{
+		menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, submenuEntryCount);
+		updateSubMenuScreen(false);
+	}
+}
+
+menuStatus_t menuLastHeardSubMenu(uiEvent_t *ev, bool isFirstRun)
+{
+	if (isFirstRun)
+	{
+		menuDataGlobal.currentItemIndex = 0;
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->quick_menu);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+
+		updateSubMenuScreen(isFirstRun);
+		keyboardInit();
+		menuLastHeardSubMenuExitCode = (MENU_STATUS_LIST_TYPE | MENU_STATUS_SUCCESS);
+	}
+	else
+	{
+		menuLastHeardSubMenuExitCode = MENU_STATUS_SUCCESS;
+
+		if (ev->hasEvent)
+		{
+			handleSubMenuEvent(ev);
+		}
+	}
+
+	return menuLastHeardSubMenuExitCode;
 }
 
 void menuLastHeardHandleEvent(uiEvent_t *ev)
@@ -276,17 +405,14 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 		}
 		else if ((currentMenu == MENU_LAST_HEARD) && KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
-			int timeslot = selectedItem->receivedTS;
-
-			setOverrideTGorPC(selectedItem->id, true);
-
-			if ((timeslot != -1) && (timeslot != trxGetDMRTimeSlot()))
+			if (*selectedItem->talkgroup)
 			{
-				trxSetDMRTimeSlot(timeslot);
-				tsSetManualOverride(((menuSystemGetRootMenuNumber() == UI_CHANNEL_MODE) ? CHANNEL_CHANNEL : (CHANNEL_VFO_A + nonVolatileSettings.currentVFONumber)), (timeslot + 1));
+				menuSystemPushNewMenu(MENU_LAST_HEARD_SUBMENU);
 			}
-			announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
-			menuSystemPopAllAndDisplayRootMenu();
+			else
+			{
+				setContactAndTsUsed(selectedItem->id);
+			}
 			return;
 		}
 	}
@@ -337,23 +463,25 @@ void menuLastHeardHandleEvent(uiEvent_t *ev)
 
 void menuLastHeardInit(void)
 {
+	if (returnedFromSubMenu)
+	{
+		returnedFromSubMenu = false;
+	}
+	else
+	{
+		menuDataGlobal.currentItemIndex = 0;
+		selectedItem = NULL;
+		firstDisplayed = 0;
+	}
 	menuDataGlobal.startIndex = LinkHead->id;// reuse this global to store the ID of the first item in the list
-	menuDataGlobal.currentItemIndex = 0;
-	menuDataGlobal.endIndex = uiDataGlobal.lastHeardCount;
-	selectedItem = NULL;
-	firstDisplayed = 0;
-	displayLHDetails = false;
 	lastHeardCount = uiDataGlobal.lastHeardCount;
+	menuDataGlobal.endIndex = lastHeardCount;
+	displayLHDetails = false;
 	menuLastHeardExitCode = MENU_STATUS_SUCCESS;
 }
 
 static void promptsInit(bool isFirstRun)
 {
-	if (voicePromptsIsPlaying())
-	{
-		voicePromptsTerminate();
-	}
-
 	voicePromptsInit();
 	if (isFirstRun)
 	{
@@ -373,14 +501,14 @@ static void promptsInit(bool isFirstRun)
 static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t now, uint32_t TGorPC, size_t maxLen, bool displayDetails, bool itemIsSelected, bool isFirstRun)
 {
 	char buffer[37]; // Max: TA 27 (in 7bit format) + ' [' + 6 (Maidenhead)  + ']' + NULL
-	char tg_Buffer[17];
-	char timeBuffer[17];
+	char tg_Buffer[SCREEN_LINE_BUFFER_SIZE];
+	char timeBuffer[SCREEN_LINE_BUFFER_SIZE];
 	uint32_t tg = (TGorPC & 0xFFFFFF);
 	bool isPC = ((TGorPC >> 24) == PC_CALL_FLAG);
 
 	// Do TG and Time stuff first as its always needed for the Voice prompts
 
-	snprintf(tg_Buffer, 17, "%s %u", (isPC ? currentLanguage->pc : currentLanguage->tg), tg);// PC or TG
+	snprintf(tg_Buffer, SCREEN_LINE_BUFFER_SIZE, "%s %u", (isPC ? currentLanguage->pc : currentLanguage->tg), tg);// PC or TG
 	snprintf(timeBuffer, 6, "%u", (((now - time) / 1000U) / 60U));// Time
 
 	if (itemIsSelected && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
@@ -413,8 +541,8 @@ static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t no
 				else // Nope, look for first name
 				{
 					uint32_t npos;
-					char nameBuf[17];
-					char outputBuf[17];
+					char nameBuf[SCREEN_LINE_BUFFER_SIZE];
+					char outputBuf[SCREEN_LINE_BUFFER_SIZE];
 
 					memset(nameBuf, 0, sizeof(nameBuf));
 
@@ -429,7 +557,7 @@ static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t no
 						memcpy(nameBuf, (text + cpos + 1), npos);
 						nameBuf[npos] = 0;
 
-						snprintf(outputBuf, 17, "%s %s", chomp(buffer), chomp(nameBuf));
+						snprintf(outputBuf, SCREEN_LINE_BUFFER_SIZE, "%s %s", chomp(buffer), chomp(nameBuf));
 
 						ucPrintCore(0,y, chomp(outputBuf), FONT_SIZE_3,TEXT_ALIGN_CENTER, itemIsSelected);
 					}
@@ -440,7 +568,7 @@ static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t no
 						buffer[cpos] = 0;
 
 						memcpy(nameBuf, (text + cpos + 1), strlen(text) - cpos - 1);
-						nameBuf[16] = 0;
+						nameBuf[(SCREEN_LINE_BUFFER_SIZE - 1)] = 0;
 
 						snprintf(outputBuf, 17, "%s %s", chomp(buffer), chomp(nameBuf));
 
@@ -451,8 +579,8 @@ static void displayTalkerAlias(uint8_t y, char *text, uint32_t time, uint32_t no
 			else
 			{
 				// No space found, use a chainsaw
-				memcpy(buffer, text, 16);
-				buffer[16] = 0;
+				memcpy(buffer, text, (SCREEN_LINE_BUFFER_SIZE - 1));
+				buffer[(SCREEN_LINE_BUFFER_SIZE - 1)] = 0;
 
 				ucPrintCore(0, y, chomp(buffer), FONT_SIZE_3,TEXT_ALIGN_CENTER, itemIsSelected);
 			}

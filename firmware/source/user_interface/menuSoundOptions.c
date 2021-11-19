@@ -36,8 +36,10 @@ static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
-enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
-	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
+enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
+	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
+	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
+	OPTIONS_AUDIO_PROMPT_RATE,
 	NUM_SOUND_MENU_ITEMS};
 
 menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
@@ -81,16 +83,18 @@ menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
 static void updateScreen(bool isFirstRun)
 {
 	int mNum = 0;
-	static const int bufferLen = 17;
-	char buf[bufferLen];
+	char buf[SCREEN_LINE_BUFFER_SIZE];
 	char * const *leftSide = NULL;// initialise to please the compiler
 	char * const *rightSideConst = NULL;// initialise to please the compiler
-	char rightSideVar[bufferLen];
+	char rightSideVar[SCREEN_LINE_BUFFER_SIZE];
+	char leftSideVar[SCREEN_LINE_BUFFER_SIZE];
+
 	voicePrompt_t rightSideUnitsPrompt;
 	const char * rightSideUnitsStr;
+	const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
 
 	ucClearBuf();
-	bool settingOption = uiShowQuickKeysChoices(buf, bufferLen,currentLanguage->sound_options);
+	bool settingOption = uiShowQuickKeysChoices(buf, SCREEN_LINE_BUFFER_SIZE, currentLanguage->sound_options);
 
 	// Can only display 3 of the options at a time menu at -1, 0 and +1
 	for(int i = -1; i <= 1; i++)
@@ -117,7 +121,7 @@ static void updateScreen(bool isFirstRun)
 					{
 						if (nonVolatileSettings.txTimeoutBeepX5Secs != 0)
 						{
-							snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.txTimeoutBeepX5Secs * 5);
+							snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.txTimeoutBeepX5Secs * 5);
 							rightSideUnitsPrompt = PROMPT_SECONDS;
 							rightSideUnitsStr = "s";
 						}
@@ -135,7 +139,7 @@ static void updateScreen(bool isFirstRun)
 					}
 					else
 					{
-						snprintf(rightSideVar, bufferLen, "%ddB", (2 - nonVolatileSettings.beepVolumeDivider) * 3);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%ddB", (2 - nonVolatileSettings.beepVolumeDivider) * 3);
 						soundBeepVolumeDivider = nonVolatileSettings.beepVolumeDivider;
 					}
 
@@ -148,21 +152,32 @@ static void updateScreen(bool isFirstRun)
 					}
 					else
 					{
-						const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
-						rightSideConst = (char * const *)beepTX[nonVolatileSettings.beepOptions];
+						rightSideConst = (char * const *)beepTX[nonVolatileSettings.beepOptions&(BEEP_TX_START+BEEP_TX_STOP)];
 					}
+					break;
+				case OPTIONS_MENU_FM_BEEP:
+					snprintf(leftSideVar, SCREEN_LINE_BUFFER_SIZE, "FM %s", currentLanguage->beep);
+					if (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_SILENT)
+					{
+						rightSideConst = (char * const *)&currentLanguage->n_a;
+					}
+					else
+					{
+						rightSideConst = (char * const *)beepTX[nonVolatileSettings.beepOptions>>2];
+					}
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSideVar, *rightSideConst);
 					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
 					leftSide = (char * const *)&currentLanguage->dmr_mic_gain;
-					snprintf(rightSideVar, bufferLen, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
 					break;
 				case OPTIONS_MIC_GAIN_FM: // FM Mic gain
 					leftSide = (char * const *)&currentLanguage->fm_mic_gain;
-					snprintf(rightSideVar, bufferLen, "%d", (nonVolatileSettings.micGainFM - 16));
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", (nonVolatileSettings.micGainFM - 16));
 					break;
 				case OPTIONS_VOX_THRESHOLD:
 					leftSide = (char * const *)&currentLanguage->vox_threshold;
-					snprintf(rightSideVar, bufferLen, "%d", nonVolatileSettings.voxThreshold);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.voxThreshold);
 					break;
 				case OPTIONS_VOX_TAIL:
 					leftSide = (char * const *)&currentLanguage->vox_tail;
@@ -172,7 +187,7 @@ static void updateScreen(bool isFirstRun)
 						uint8_t secs = (uint8_t)tail;
 						uint8_t fracSec = (tail - secs) * 10;
 
-						snprintf(rightSideVar, bufferLen, "%d.%d", secs, fracSec);
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d.%d", secs, fracSec);
 						rightSideUnitsPrompt = PROMPT_SECONDS;
 						rightSideUnitsStr = "s";
 					}
@@ -189,9 +204,41 @@ static void updateScreen(bool isFirstRun)
 						rightSideConst = (char * const *)audioPromptOption[nonVolatileSettings.audioPromptMode];
 					}
 					break;
+				case OPTIONS_ANNOUNCE_DMR_ID:
+					{
+						leftSide = (char * const *)&currentLanguage->dmr_id;
+						if(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+							rightSideConst = (char * const *)&currentLanguage->n_a;
+						else
+							rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_ANNOUNCE_LASTHEARD) ? &currentLanguage->on : &currentLanguage->off);
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						leftSide = (char * const *)&currentLanguage->voice_prompt_vol;
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", nonVolatileSettings.voicePromptVolumePercent);
+					}
+					else
+					{
+						leftSide = (char * const *)&currentLanguage->n_a;
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_RATE:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						leftSide = (char * const *)&currentLanguage->voice_prompt_rate;
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.voicePromptRate+1);
+					}
+					else
+					{
+						leftSide = (char * const *)&currentLanguage->n_a;
+					}
+					break;
+				
 			}
 
-			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSide? *leftSide:"", (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 
 			if (i == 0)
 			{
@@ -204,10 +251,17 @@ static void updateScreen(bool isFirstRun)
 
 				if (!wasPlaying || menuDataGlobal.newOptionSelected)
 				{
-					voicePromptsAppendLanguageString((const char * const *)leftSide);
+					if (mNum==OPTIONS_MENU_FM_BEEP)
+					{
+						// hack for FM Beep.
+						voicePromptsAppendPrompt(PROMPT_FM);
+						voicePromptsAppendLanguageString(&currentLanguage->beep);
+					}
+					else
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
 				}
 
-				if ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL)))
+				if ((mNum!=OPTIONS_MENU_FM_BEEP) && ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL))))
 				{
 					voicePromptsAppendString(rightSideVar);
 				}
@@ -223,7 +277,7 @@ static void updateScreen(bool isFirstRun)
 
 				if (rightSideUnitsStr != NULL)
 				{
-					strncat(rightSideVar, rightSideUnitsStr, bufferLen);
+					strncat(rightSideVar, rightSideUnitsStr, SCREEN_LINE_BUFFER_SIZE);
 				}
 
 				if (menuDataGlobal.menuOptionsTimeout != -1)
@@ -245,7 +299,7 @@ static void updateScreen(bool isFirstRun)
 			{
 				if (rightSideUnitsStr != NULL)
 				{
-					strncat(buf, rightSideUnitsStr, bufferLen);
+					strncat(buf, rightSideUnitsStr, SCREEN_LINE_BUFFER_SIZE);
 				}
 
 				menuDisplayEntry(i, mNum, buf);
@@ -362,12 +416,27 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
+				case OPTIONS_MENU_FM_BEEP:
 					if (nonVolatileSettings.audioPromptMode != AUDIO_PROMPT_MODE_SILENT)
 					{
-						if (nonVolatileSettings.beepOptions < (BEEP_TX_START | BEEP_TX_STOP))
+						uint8_t dmrBeepOptions=nonVolatileSettings.beepOptions&(BEEP_TX_START | BEEP_TX_STOP); // only care about bits 0 and 1, 2 and 3 are used for fm.
+						uint8_t fmBeepOptions=(nonVolatileSettings.beepOptions&(BEEP_FM_TX_START | BEEP_FM_TX_STOP))>>2;
+
+						if (menuDataGlobal.currentItemIndex == OPTIONS_MENU_DMR_BEEP)
 						{
-							settingsIncrement(nonVolatileSettings.beepOptions, 1);
+							if (dmrBeepOptions < (BEEP_TX_START | BEEP_TX_STOP))
+							{
+								dmrBeepOptions++;
+							}
 						}
+						else
+						{
+							if (fmBeepOptions < (BEEP_TX_START | BEEP_TX_STOP)) // we shifted right by 2 for ease of manipulation and testing
+							{
+								fmBeepOptions++;
+							}
+						}
+						settingsSet(nonVolatileSettings.beepOptions, ((fmBeepOptions<<2)|dmrBeepOptions));
 					}
 					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
@@ -411,7 +480,33 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
-
+				case OPTIONS_ANNOUNCE_DMR_ID:
+					{
+						if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && voicePromptDataIsLoaded)
+						{
+							if ((nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)==0)
+								settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, true);
+						}
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptVolumePercent < 100)
+						{
+							settingsIncrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+						}
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_RATE:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptRate < 9)
+						{
+							settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
+						}
+					}
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -439,12 +534,27 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
+				case OPTIONS_MENU_FM_BEEP:
 					if (nonVolatileSettings.audioPromptMode != AUDIO_PROMPT_MODE_SILENT)
 					{
-						if (nonVolatileSettings.beepOptions > BEEP_TX_NONE)
+						uint8_t dmrBeepOptions=nonVolatileSettings.beepOptions&(BEEP_TX_START | BEEP_TX_STOP); // only care about bits 0 and 1, 2 and 3 are used for fm.
+						uint8_t fmBeepOptions=(nonVolatileSettings.beepOptions&(BEEP_FM_TX_START | BEEP_FM_TX_STOP))>>2;
+
+						if (menuDataGlobal.currentItemIndex == OPTIONS_MENU_DMR_BEEP)
 						{
-							settingsDecrement(nonVolatileSettings.beepOptions, 1);
+							if (dmrBeepOptions > 0)
+							{
+								dmrBeepOptions--;
+							}
 						}
+						else
+						{
+							if (fmBeepOptions > 0)
+							{
+								fmBeepOptions--;
+							}
+						}
+						settingsSet(nonVolatileSettings.beepOptions, ((fmBeepOptions<<2)|dmrBeepOptions));
 					}
 					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
@@ -486,6 +596,33 @@ static void handleEvent(uiEvent_t *ev)
 						}
 
 						settingsDecrement(nonVolatileSettings.audioPromptMode, 1);
+					}
+					break;
+				case OPTIONS_ANNOUNCE_DMR_ID:
+					{
+						if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && voicePromptDataIsLoaded)
+						{
+							if (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)
+								settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
+						}
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					if (nonVolatileSettings.audioPromptMode >=AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptVolumePercent > 10)
+						{
+							settingsDecrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+						}
+					}
+					break;
+				case OPTIONS_AUDIO_PROMPT_RATE:
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						if (nonVolatileSettings.voicePromptRate > 0)
+						{
+							settingsDecrement(nonVolatileSettings.voicePromptRate, 1);
+						}
 					}
 					break;
 			}

@@ -32,7 +32,7 @@
 
 #include "functions/codeplug.h"
 #include "functions/trx.h"
-
+#include "functions/autozone.h"
 enum USB_MODE { USB_MODE_CPS, USB_MODE_HOTSPOT, USB_MODE_DEBUG };
 enum SETTINGS_UI_MODE { SETTINGS_CHANNEL_MODE = 0, SETTINGS_VFO_A_MODE, SETTINGS_VFO_B_MODE };
 enum BACKLIGHT_MODE { BACKLIGHT_MODE_AUTO = 0, BACKLIGHT_MODE_SQUELCH, BACKLIGHT_MODE_MANUAL, BACKLIGHT_MODE_BUTTONS, BACKLIGHT_MODE_NONE };
@@ -48,6 +48,9 @@ extern const int ECO_LEVEL_MAX;
 extern const uint8_t BEEP_TX_NONE;
 extern const uint8_t BEEP_TX_START;
 extern const uint8_t BEEP_TX_STOP;
+extern const uint8_t BEEP_FM_TX_START;
+extern const uint8_t BEEP_FM_TX_STOP;
+extern const uint16_t NO_PRIORITY_CHANNEL;
 
 extern int settingsCurrentChannelNumber;
 extern int *nextKeyBeepMelody;
@@ -63,7 +66,9 @@ typedef enum
 	BIT_SETTINGS_UPDATED            = (1 << 4),
 	BIT_TX_RX_FREQ_LOCK             = (1 << 5),
 	BIT_ALL_LEDS_DISABLED           = (1 << 6),
-	BIT_SCAN_ON_BOOT_ENABLED        = (1 << 7)
+	BIT_SCAN_ON_BOOT_ENABLED        = (1 << 7),
+	BIT_PRI_SCAN_ON_BOOT_ENABLED        = (1 << 8),
+	BIT_ANNOUNCE_LASTHEARD = (1 << 9),
 } bitfieldOptions_t;
 
 typedef struct
@@ -115,7 +120,19 @@ typedef struct
 	int8_t			temperatureCalibration;// Units of 0.5 deg C
 	uint8_t			batteryCalibration; // Units of 0.01V
 	uint8_t			ecoLevel;// Power saving / economy level
-	uint8_t sk2Latch;
+	uint8_t sk2Latch; // 0 off, then increments of 500 ms, starting at 1 s to 5 s, i.e. valid vvalues 0, 2-10.
+	uint8_t dtmfLatch; // 0 off, then increments of 500 ms, valid values from 2 to 6 i.e. 1 to 3 seconds.
+	uint16_t		priorityChannelIndex; // priority channel index.
+	uint16_t vhfOffset; // repeater offset for 2m band.
+	uint16_t uhfOffset; // repeater offset for 2m band.
+	struct_AutoZoneParams_t autoZone;
+	uint8_t autoZonesEnabled;// 1-bit per autozone type.
+	uint16_t		vfoSweepSettings; // 3bits: channel step | 5 bits: RSSI noise floor | 7bits: gain
+	uint8_t totMaster; // Master timeout timer value.
+	int16_t			zoneChannelIndices[16]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, but 16   zone channel indices are in this array.
+	uint8_t voicePromptVolumePercent; // percent of max volume
+	uint8_t voicePromptRate;
+	// Currently this struct is 184 bytes. It can be a maximum of 256 bytes JKS 23 Oct 2021. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
@@ -168,14 +185,17 @@ typedef enum PROMPT_AUTOPLAY_THRESHOLD
 
 typedef struct
 {
-	bool 	isEnabled;
-	int 	DMRTimeout;
-	int 	savedRadioMode;
-	uint8_t savedSquelch;
-	int 	savedDMRCcTsFilter;
-	int 	savedDMRDestinationFilter;
-	int 	savedDMRCc;
-	int 	savedDMRTs;
+	volatile bool	isEnabled;
+	volatile bool	qsoInfoUpdated;
+	volatile bool   dmrIsValid;
+	int				dmrTimeout;
+	uint8_t			dmrFrameSkip;
+	int 			savedRadioMode;
+	uint8_t			savedSquelch;
+	int 			savedDMRCcTsFilter;
+	int 			savedDMRDestinationFilter;
+	int 			savedDMRCc;
+	int 			savedDMRTs;
 } monitorModeSettingsStruct_t;
 
 extern settingsStruct_t nonVolatileSettings;
@@ -263,7 +283,9 @@ bool settingsLoadSettings(void);
 void settingsRestoreDefaultSettings(void);
 void settingsEraseCustomContent(void);
 void settingsInitVFOChannel(int vfoNumber);
-void enableVoicePromptsIfLoaded(void);
+void enableVoicePromptsIfLoaded(bool enableFullPrompts);
 int settingsGetScanStepTimeMilliseconds(void);
+void settingsSetCurrentChannelIndexForZone(int16_t channelIndex, int16_t zoneIndex);
+int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex);
 
 #endif

@@ -114,7 +114,6 @@ typedef struct
 	const menuItemNewData_t *items;
 } menuItemsList_t;
 
-
 void menuDisplayTitle(const char *title);
 void menuDisplayEntry(int loopOffset, int focusedItem,const char *entryText);
 
@@ -124,18 +123,29 @@ void uiChannelModeUpdateScreen(int txTimeSecs);
 void uiChannelModeColdStart(void);
 void uiVFOModeUpdateScreen(int txTimeSecs);
 void uiVFOLoadContact(struct_codeplugContact_t *contact);
+bool uiVFOModeIsTXFocused(void);
 void uiVFOModeStopScanning(void);
 bool uiVFOModeIsScanning(void);
 bool uiVFOModeDualWatchIsScanning(void);
+bool uiVFOModeSweepScanning(bool includePaused);
+void uiVFOSweepScanModePause(bool pause, bool forceDigitalOnPause);
 bool uiVFOModeFrequencyScanningIsActiveAndEnabled(uint32_t *lowFreq, uint32_t *highFreq);
+ HeaderScanIndicatorType_t uiVFOGetHeaderScanIndicatorType();
 void uiChannelModeStopScanning(void);
 bool uiChannelModeIsScanning(void);
+
+void uiChannelInitializeCurrentZone(void);
+
+
 void uiCPSUpdate(uiCPSCommand_t command, int x, int y, ucFont_t fontSize, ucTextAlign_t alignment, bool isInverted, char *szMsg);
 
 void menuSystemInit(void);
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 void menuSystemLanguageHasChanged(void);
+#endif
 void displayLightTrigger(bool fromKeyEvent);
 void displayLightOverrideTimeout(int timeout);
+int menuSystemGetLastItemIndex(int stackPos);
 void menuSystemPushNewMenu(int menuNumber);
 
 void menuSystemSetCurrentMenu(int menuNumber);
@@ -151,9 +161,6 @@ void menuSystemPopAllAndDisplaySpecificRootMenu(int newRootMenu, bool resetKeybo
 
 void menuSystemCallCurrentMenuTick(uiEvent_t *ev);
 int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly);
-void menuUpdateCursor(int pos, bool moved, bool render);
-void moveCursorLeftInString(char *str, int *pos, bool delete);
-void moveCursorRightInString(char *str, int *pos, int max, bool insert);
 
 void menuRadioInfosInit(void);
 void menuRadioInfosPushBackVoltage(int32_t voltage);
@@ -198,6 +205,7 @@ void uiChannelModeHeartBeatActivityForGD77S(uiEvent_t *ev);
 enum MENU_SCREENS
 {
 	MENU_EMPTY = -1,
+	MENU_ANY = MENU_EMPTY,
 	UI_SPLASH_SCREEN = 0,
 	UI_POWER_OFF,
 	UI_VFO_MODE,
@@ -227,10 +235,15 @@ enum MENU_SCREENS
 	MENU_CONTACT_LIST_SUBMENU,
 	MENU_CONTACT_DETAILS,
 	MENU_CONTACT_NEW,
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 	MENU_LANGUAGE,
+#endif
 	UI_PRIVATE_CALL,
 	UI_MESSAGE_BOX,
 	MENU_CONTACT_NEW_DTMF,
+	MENU_LAST_HEARD_SUBMENU,
+	MENU_AUTOZONE,
+	MENU_RADIO_DETAILS,
 	NUM_MENU_ENTRIES
 };
 
@@ -292,6 +305,7 @@ menuStatus_t menuNumericalEntry(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuTxScreen(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuRSSIScreen(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuLastHeard(uiEvent_t *event, bool isFirstRun);
+menuStatus_t menuLastHeardSubMenu(uiEvent_t *ev, bool isFirstRun);
 menuStatus_t menuOptions(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuDisplayOptions(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuSoundOptions(uiEvent_t *event, bool isFirstRun);
@@ -303,10 +317,13 @@ menuStatus_t menuContactList(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactListSubMenu(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuContactDetails(uiEvent_t *event, bool isFirstRun);
 menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun);
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 menuStatus_t menuLanguage(uiEvent_t *event, bool isFirstRun);
+#endif
 menuStatus_t menuPrivateCall(uiEvent_t *event, bool isFirstRun);
 
 menuStatus_t uiMessageBox(uiEvent_t *event, bool isFirstRun);
-
+menuStatus_t menuAutoZone(uiEvent_t *ev, bool isFirstRun);
+menuStatus_t menuRadioDetails(uiEvent_t *ev, bool isFirstRun);
 
 #endif

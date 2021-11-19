@@ -39,6 +39,7 @@ extern const int CODEPLUG_MIN_VARIABLE_SQUELCH;
 extern const int CODEPLUG_MIN_PER_CHANNEL_POWER;
 
 extern const int VFO_FREQ_STEP_TABLE[8];
+extern const int VFO_SWEEP_SCAN_RANGE_SAMPLE_STEP_TABLE[7];
 
 #define CODEPLUG_ADDR_QUICKKEYS                                0x7524 // LSB,HSB
 #define CODEPLUG_QUICKKEYS_SIZE                                    10
@@ -64,6 +65,10 @@ extern const int VFO_FREQ_STEP_TABLE[8];
 
 // DTMF Contact
 #define CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE                     32
+#define DTMF_CODE_MAX_LEN 16 // should match the max size of the struct_codeplugDTMFContact_t .code field in codeplug.h.
+#define DTMF_NAME_MAX_LEN 16 // should match the max size of the struct_codeplugDTMFContact_t .name field in codeplug.h.
+ // The order is mandatory
+#define DTMF_AllowedChars "0123456789ABCD*#"
 
 // General Settings
 #define CODEPLUG_GENERAL_SETTINGS_DATA_STRUCT_SIZE                 40
@@ -113,19 +118,19 @@ typedef enum
 } Channel_t;
 
 // AllChannels zone indexNumber is -1
-#define CODEPLUG_ZONE_IS_ALLCHANNELS(z) ((z).NOT_IN_CODEPLUGDATA_indexNumber < 0)
-
+#define CODEPLUG_ZONE_IS_ALLCHANNELS(z) ((z).NOT_IN_CODEPLUGDATA_indexNumber ==-1)
 
 typedef struct
 {
 	char		name[16];
-	uint16_t	channels[80];// 16 for the original codeplug, but set this to  80 to allow for the new codeplug zones format
+	uint16_t	channels[80];// 16 for the original codeplug, 80 for standard and 99 for autozone.
+	uint16_t	NOT_IN_CODEPLUGDATA_ExtraChannels[19];// extra 19 for autozone, not used by real zones.
 	int			NOT_IN_CODEPLUGDATA_numChannelsInZone;// This property is not part of the codeplug data, its initialised by the code
 	int			NOT_IN_CODEPLUGDATA_highestIndex; // Highest index in the array of channels
 	int			NOT_IN_CODEPLUGDATA_indexNumber;// This property is not part of the codeplug data, its initialised by the code. Index > 0 are real zone. -1 indicates the virtual "All channels" zone
 } struct_codeplugZone_t;
 
-typedef struct
+ typedef struct
 {
 	char name[16];
 	uint32_t rxFreq;
@@ -277,6 +282,7 @@ void codeplugZoneGetSelected(int *selectedZone,int *selectedChannel);
 void codeplugZoneSetSelected(int selectedZone,int selectedChannel);
  */
 int codeplugZonesGetCount(void);
+int codeplugZonesGetRealCount(void); // just real zones, excluding allChannels and autoZones.
 bool codeplugZoneGetDataForNumber(int indexNum,struct_codeplugZone_t *returnBuf);
 uint32_t codeplugChannelGetOptionalDMRID(struct_codeplugChannel_t *channelBuf);
 void codeplugChannelSetOptionalDMRID(uint32_t dmrID, struct_codeplugChannel_t *channelBuf);
@@ -299,11 +305,16 @@ uint32_t codeplugGetUserDMRID(void);
 void codeplugSetUserDMRID(uint32_t dmrId);
 void codeplugGetRadioName(char *buf);
 void codeplugGetBootScreenData(char *line1, char *line2, uint8_t *displayType);
+// save boot screen info
+bool codeplugSetRadioName(char *buf);
+bool codeplugSetBootScreenData(char *line1, char *line2);
+
 void codeplugGetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber);
 void codeplugSetVFO_ChannelData(struct_codeplugChannel_t *vfoBuf, Channel_t VFONumber);
 bool codeplugAllChannelsIndexIsInUse(int index);
-void codeplugAllChannelsIndexSetUsed(int index);
+void codeplugAllChannelsIndexSetUsed(int index, bool flag);
 bool codeplugChannelSaveDataForIndex(int index, struct_codeplugChannel_t *channelBuf);
+bool codeplugDeleteChannelWithIndex(int index);
 CodeplugCSSTypes_t codeplugGetCSSType(uint16_t tone);
 
 
@@ -311,6 +322,7 @@ int codeplugDTMFContactsGetCount(void);
 int codeplugContactsGetCount(uint32_t callType);
 int codeplugContactGetDataForNumberInType(int number, uint32_t callType, struct_codeplugContact_t *contact);
 int codeplugDTMFContactGetDataForNumber(int number, struct_codeplugDTMFContact_t *contact);
+int codeplugContactIndexByTGorPCFromNumber(int number, uint32_t tgorpc, uint32_t callType, struct_codeplugContact_t *contact, uint8_t optionalTS);
 int codeplugContactIndexByTGorPC(uint32_t tgorpc, uint32_t callType, struct_codeplugContact_t *contact, uint8_t optionalTS);
 int codeplugContactSaveDataForIndex(int index, struct_codeplugContact_t *contact);
 int codeplugContactSaveDTMFDataForIndex(int index, struct_codeplugDTMFContact_t *contact);
@@ -328,6 +340,9 @@ bool codeplugGetGeneralSettings(struct_codeplugGeneralSettings_t *generalSetting
 bool codeplugGetSignallingDTMF(struct_codeplugSignalling_DTMF_t *signallingDTMFBuffer);
 bool codeplugGetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_t *signallingDTMFDurationsBuffer);
 bool codeplugZoneAddChannelToZoneAndSave(int channelIndex, struct_codeplugZone_t *zoneBuf);
+bool codeplugZoneDeleteChannelFromZone(int channelIndex, struct_codeplugZone_t *zoneBuf);
+// Used for rearanging channels in a zone.
+bool codeplugZoneReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2, struct_codeplugZone_t *zoneBuf);
 bool codeplugGetDeviceInfo(struct_codeplugDeviceInfo_t *deviceInfoBuffer);
 
 uint16_t codeplugGetQuickkeyFunctionID(char key);
@@ -335,4 +350,12 @@ bool codeplugSetQuickkeyFunctionID(char key, uint16_t functionId);
 
 int codeplugGetRepeaterWakeAttempts(void);
 int codeplugGetPasswordPin(int32_t *pinCode);
+uint16_t codeplugGetTotalNumberOfChannels();
+uint16_t codeplugGetAllChannelsHighestChannelIndex();
+bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChannelsZone, uint16_t* indexRelativeToCurrentZone);
+bool codeplugIsAutozoneValid();
+uint16_t codeplugAutozoneGetTotalChannels();
+bool codeplugAutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq);
+bool codeplugAutoZoneGetChannelData(struct_codeplugChannel_t *channelBuf, uint16_t index);
+
 #endif

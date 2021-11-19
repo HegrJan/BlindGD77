@@ -89,10 +89,15 @@ menuDataGlobal_t menuDataGlobal =
 				NULL,// Contact List Quick Menu
 				NULL,// Contact Details
 				NULL,// New Contact
-				NULL,// Language
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
+	NULL,// Language
+#endif
 				NULL,// Private Call
 				NULL,// MessageBox
 				NULL,// New DTMF Contact
+				NULL,// Last Heard SubMenu
+				NULL, // AutoZone
+				NULL, // MENU_RADIO_DETAILS
 		}
 };
 
@@ -127,10 +132,15 @@ static menuFunctionData_t menuFunctions[] =
 		{ menuContactListSubMenu,   0 },
 		{ menuContactDetails,       0 },
 		{ menuContactDetails,       0 },
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 		{ menuLanguage,             0 },
+#endif
 		{ menuPrivateCall,          0 },
 		{ uiMessageBox,             0 },
-		{ menuDTMFContactDetails,       0 }, // New DTMF contact
+		{ menuDTMFContactDetails,   0 }, // New DTMF contact
+		{ menuLastHeardSubMenu,     0 },
+		{ menuAutoZone,             0 },
+		{ menuRadioDetails, 		0 },
 };
 
 static void menuSystemCheckForFirstEntryAudible(menuStatus_t status)
@@ -146,8 +156,11 @@ static void menuSystemCheckForFirstEntryAudible(menuStatus_t status)
 			nextKeyBeepMelody = (int *)MELODY_KEY_BEEP_FIRST_ITEM;
 		}
 		else if (status & MENU_STATUS_INPUT_TYPE)
-		{
-			nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
+		{// If voice prompts are active, the voice prompt prevents this melody from playing until too late.
+		// Only play it if the voice prompt level is beep,
+		// or if higher, if a voice prompt isn't active.
+			if ((nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_BEEP) || (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && !voicePromptsIsPlaying()))
+				nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
 		}
 	}
 }
@@ -181,6 +194,16 @@ static void menuSystemPushMenuFirstRun(void)
 		menuDataGlobal.currentItemIndex = 0;
 	}
 	menuSystemCheckForFirstEntryAudible(status);
+}
+
+int menuSystemGetLastItemIndex(int stackPos)
+{
+	if ((stackPos >= 0) && (stackPos <= menuDataGlobal.controlData.stackPosition))
+	{
+		return menuFunctions[menuDataGlobal.controlData.stack[stackPos]].lastItemIndex;
+	}
+
+	return -1;
 }
 
 void menuSystemPushNewMenu(int menuNumber)
@@ -307,17 +330,12 @@ void menuSystemCallCurrentMenuTick(uiEvent_t *ev)
 
 void displayLightTrigger(bool fromKeyEvent)
 {
+	// BACKLIGHT_MODE_MANUAL is handled in main.c
 	if ((menuSystemGetCurrentMenuNumber() != UI_TX_SCREEN) &&
 			(((nonVolatileSettings.backlightMode == BACKLIGHT_MODE_AUTO) || (nonVolatileSettings.backlightMode == BACKLIGHT_MODE_SQUELCH))
-					|| ((nonVolatileSettings.backlightMode == BACKLIGHT_MODE_MANUAL) && displayIsBacklightLit())
 					|| ((nonVolatileSettings.backlightMode == BACKLIGHT_MODE_BUTTONS) && fromKeyEvent)))
 	{
-		if ((nonVolatileSettings.backlightMode == BACKLIGHT_MODE_AUTO) ||
-				(nonVolatileSettings.backlightMode == BACKLIGHT_MODE_SQUELCH) ||
-				(nonVolatileSettings.backlightMode == BACKLIGHT_MODE_BUTTONS))
-		{
-			menuDataGlobal.lightTimer = nonVolatileSettings.backLightTimeout * 1000;
-		}
+		menuDataGlobal.lightTimer = nonVolatileSettings.backLightTimeout * 1000;
 
 		displayEnableBacklight(true);
 	}
@@ -351,6 +369,7 @@ void menuSystemInit(void)
 	menuFunctions[menuDataGlobal.controlData.stack[menuDataGlobal.controlData.stackPosition]].function(&ev, true);// Init and display this screen
 }
 
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 void menuSystemLanguageHasChanged(void)
 {
 	// Force full update of menuChannelMode() on next call (if isFirstRun arg. is true)
@@ -359,26 +378,34 @@ void menuSystemLanguageHasChanged(void)
 		uiChannelModeColdStart();
 	}
 }
-
+#endif
 const menuItemNewData_t mainMenuItems[] =
 {
 	{   3, MENU_ZONE_LIST       },
-	{   4, MENU_RSSI_SCREEN     },
-	{ 150, MENU_RADIO_INFOS     },
+	{  12, MENU_CHANNEL_DETAILS },
 	{   6, MENU_CONTACTS_MENU   },
 	{   7, MENU_LAST_HEARD      },
-	{   8, MENU_FIRMWARE_INFO   },
+	{   4, MENU_RSSI_SCREEN     },
+	{ 150, MENU_RADIO_INFOS     },
 	{   9, MENU_OPTIONS         },
 	{  10, MENU_DISPLAY         },
 	{  11, MENU_SOUND           },
-	{  12, MENU_CHANNEL_DETAILS },
+	{   177, MENU_RADIO_DETAILS},
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
 	{  13, MENU_LANGUAGE        },
+#endif
+	{   8, MENU_FIRMWARE_INFO   },
 	{   2, MENU_CREDITS         },
+	{   175, MENU_AUTOZONE        },
 };
 
 const menuItemsList_t menuDataMainMenu =
 {
-	.numItems = 12,
+#ifdef ACCESSIBLEGD77_MULTILINGUAL_SUPPORT
+	.numItems = 14,
+#else
+	.numItems = 13,
+#endif
 	.items = mainMenuItems
 };
 
@@ -452,6 +479,7 @@ int menuGetMenuOffset(int maxMenuEntries, int loopOffset)
  */
 int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly)
 {
+#if !defined(PLATFORM_GD77S)
 	uint32_t keypadKeys[] =
 	{
 			KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9,
@@ -465,84 +493,9 @@ int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly)
 				return i;
 		}
 	}
-
-	return 99;
-}
-
-void menuUpdateCursor(int pos, bool moved, bool render)
-{
-#if defined(PLATFORM_RD5R)
-	const int MENU_CURSOR_Y = 32;
-#else
-	const int MENU_CURSOR_Y = 46;
 #endif
 
-	static uint32_t lastBlink = 0;
-	static bool     blink = false;
-	uint32_t        m = fw_millis();
-
-	if (moved)
-	{
-		blink = true;
-	}
-
-	if (moved || (m - lastBlink) > 500)
-	{
-		ucDrawFastHLine(pos * 8, MENU_CURSOR_Y, 8, blink);
-
-		blink = !blink;
-		lastBlink = m;
-
-		if (render)
-		{
-			ucRenderRows(MENU_CURSOR_Y / 8, MENU_CURSOR_Y / 8 + 1);
-		}
-	}
-}
-
-void moveCursorLeftInString(char *str, int *pos, bool delete)
-{
-	int nLen = strlen(str);
-
-	if (*pos > 0)
-	{
-		*pos -=1;
-		announceChar(str[*pos]); // speak the new char or the char about to be backspaced out.
-
-		if (delete)
-		{
-			for (int i = *pos; i <= nLen; i++)
-			{
-				str[i] = str[i + 1];
-			}
-		}
-	}
-}
-
-void moveCursorRightInString(char *str, int *pos, int max, bool insert)
-{
-	int nLen = strlen(str);
-
-	if (*pos < strlen(str))
-	{
-		if (insert)
-		{
-			if (nLen < max)
-			{
-				for (int i = nLen; i > *pos; i--)
-				{
-					str[i] = str[i - 1];
-				}
-				str[*pos] = ' ';
-			}
-		}
-
-		if (*pos < max-1)
-		{
-			*pos += 1;
-			announceChar(str[*pos]); // speak the new char or the char about to be backspaced out.
-		}
-	}
+	return 99;
 }
 
 void menuSystemMenuIncrement(int32_t *currentItem, int32_t numItems)
