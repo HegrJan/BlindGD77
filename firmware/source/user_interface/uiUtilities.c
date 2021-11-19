@@ -3642,10 +3642,21 @@ void AnnounceLastHeardContact()
 	{
 		offset=3;
 	}
+	char buffer[MAX_DMR_ID_CONTACT_TEXT_LENGTH]="\0";
 	if (LinkHead->talkerAlias[0])
-		voicePromptsAppendString(LinkHead->talkerAlias);
+		strcpy(buffer, LinkHead->talkerAlias);
 	else if (LinkHead->contact[0])
-		voicePromptsAppendString(LinkHead->contact+offset);
+		strcpy(buffer, LinkHead->contact+offset);
+	// terminate at first space so we only read the callsign or first piece of data.
+	int endOffset=0;
+	while (buffer[endOffset] && buffer[endOffset]!=' ')
+	{
+		endOffset++;
+	}
+	if (endOffset)
+		buffer[endOffset]='\0';
+	if (buffer[0])
+		voicePromptsAppendString(buffer);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
 }

@@ -75,6 +75,8 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 		codeplugGetBootScreenData(line1, line2, &bootScreenType);
 
 		strcpy(talkAliasText, line1);
+		if (*talkAliasText)
+			strcat(talkAliasText, " ");
 		strcat(talkAliasText, line2);
 
 #if ! defined(PLATFORM_GD77S)
