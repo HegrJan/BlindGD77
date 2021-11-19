@@ -206,5 +206,6 @@ bool IsBitSet(uint8_t bits, int whichBit);
 void SetBit(uint8_t* bits, int whichBit, bool set);
 
 void resetOriginalSettingsData(void);
-void AnnounceLastHeardContactIfNeeded(bool force, bool playImmediately);
+void AnnounceLastHeardContact();
+void AnnounceLastHeardContactIfNeeded();
 #endif

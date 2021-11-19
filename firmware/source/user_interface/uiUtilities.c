@@ -53,7 +53,10 @@ static uint32_t lastTG = 0;
 
 volatile uint32_t lastID = 0;// This needs to be volatile as lastHeardClearLastID() is called from an ISR
 LinkItem_t *LinkHead = callsList;
-static bool lastHeardNeedsAnnouncement=false;
+static uint32_t lastHeardNeedsAnnouncementTimer=-1; //reset is -1.
+// Try and avoid triggering speaking of last heard if reception breaks up, wait 750 ms after end of reception.
+#define LAST_HEARD_TIMER_TIMEOUT 750
+
 static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool announceVFOName);
 static void dmrDbTextDecode(uint8_t *compressedBufIn, uint8_t *decompressedBufOut, int compressedSize);
 
@@ -594,7 +597,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
 					blocksTA = 0x00;
 					overrideTA = false;
-					lastHeardNeedsAnnouncement =(nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD);
+					lastHeardNeedsAnnouncementTimer = ((nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)) ? LAST_HEARD_TIMER_TIMEOUT : -1;
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -2424,7 +2427,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		{
 			announceZoneName(voicePromptWasPlaying);
 		}
-		AnnounceLastHeardContactIfNeeded(true,false);
+		AnnounceLastHeardContact();
 		announceChannelNameOrVFOFrequency(voicePromptWasPlaying, (voicePromptSequenceState != PROMPT_SEQUENCE_VFO_FREQ_UPDATE));
 		if (uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
 		{
@@ -2730,7 +2733,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
 	
 	voicePromptsInit();
-	AnnounceLastHeardContactIfNeeded(true, false);
+	AnnounceLastHeardContact();
 	if (announceName)
 	{
 		announceChannelName(true, true);
@@ -3621,30 +3624,19 @@ bool IsBitSet(uint8_t bits, int whichBit)
 		*bits&=~bit;
 }
 
-void AnnounceLastHeardContactIfNeeded(bool force, bool playImmediately)
+static bool IsLastHeardContactRelevant()
 {
-	if (!lastHeardNeedsAnnouncement && !force) return;
-	if (!LinkHead) return;
-	if (LinkHead->id==0) return;
+	if (!LinkHead) return false;
+	if (LinkHead->id==0) return false;
+	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	
-	if (voicePromptsIsPlaying()) return;
-	if (trxGetMode()==RADIO_MODE_ANALOG) return;
-	
-	if (trxIsTransmitting)
-	{
-		lastHeardNeedsAnnouncement=false;
-		return;
-	}
-	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) &&
-				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
-	{// wait till reception has finished.
-		return;
-	}
-	
-	lastHeardNeedsAnnouncement=false;	
-	if (playImmediately)
-		voicePromptsInit();
+	return true;
+}
 
+void AnnounceLastHeardContact()
+{
+	if (!IsLastHeardContactRelevant()) return;
+	
 	uint8_t offset=0;
 	if (strncmp(LinkHead->contact, "ID:", 3)==0 && LinkHead->contact[3])
 	{
@@ -3656,9 +3648,38 @@ void AnnounceLastHeardContactIfNeeded(bool force, bool playImmediately)
 		voicePromptsAppendString(LinkHead->contact+offset);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
-	
-	if (playImmediately)
-		voicePromptsPlay();
 }
 
+void AnnounceLastHeardContactIfNeeded()
+{
+	if (lastHeardNeedsAnnouncementTimer ==-1) return;
 
+	if (!IsLastHeardContactRelevant()) return;
+	
+	if (voicePromptsIsPlaying()) return;
+	
+	if (trxIsTransmitting)
+	{
+		lastHeardNeedsAnnouncementTimer = -1;
+		return;
+	}
+	
+	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) &&
+				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
+	{// wait till reception has finished.
+		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT;
+		return;
+	}
+	
+	if (lastHeardNeedsAnnouncementTimer > 0)
+	{
+		lastHeardNeedsAnnouncementTimer--;
+		return; // wait for timer to expire, start counting  after end of transmission.
+	}
+	
+	lastHeardNeedsAnnouncementTimer=-1; // reset.
+
+	voicePromptsInit();
+	AnnounceLastHeardContact();
+		voicePromptsPlay();
+}

@@ -1204,7 +1204,7 @@ void mainTask(void *data)
 			soundTickMelody();
 			voxTick();
 			RequeueEditBufferForAnnouncementOnSK1IfNeeded();
-			AnnounceLastHeardContactIfNeeded(false, true);
+			AnnounceLastHeardContactIfNeeded();
 #if defined(PLATFORM_RD5R) // Needed for platforms which can't control the poweroff
 			settingsSaveIfNeeded(false);
 #endif
