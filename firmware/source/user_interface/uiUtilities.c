@@ -3682,8 +3682,8 @@ void AnnounceLastHeardContactIfNeeded()
 		AnnounceLastHeardContact(); // just queue, do not play.
 		lastHeardNeedsAnnouncementTimer--; // so we do  not do it again until it changes.
 	}
-	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS == -1) ||
-				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || (trxDMRModeRx == DMR_MODE_RMO))))
+	
+	if (getAudioAmpStatus() & (AUDIO_AMP_MODE_RF | AUDIO_AMP_MODE_BEEP | AUDIO_AMP_MODE_PROMPT))
 	{// wait till reception has finished.
 		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT-1; // avoid requeueing the DMR ID unless it actually changes.
 		return;
