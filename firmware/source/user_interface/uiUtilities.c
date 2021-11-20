@@ -3674,11 +3674,18 @@ void AnnounceLastHeardContactIfNeeded()
 		lastHeardNeedsAnnouncementTimer = -1;
 		return;
 	}
-	
+// at this point, if we have detected that the DMR ID has changed, queue it for speaking but do not speak it until reception has finished.
+// If we don't queue it, sk1 will still speak the old callsign if pressed.
+	if (lastHeardNeedsAnnouncementTimer==LAST_HEARD_TIMER_TIMEOUT)
+	{
+		voicePromptsInit();
+		AnnounceLastHeardContact(); // just queue, do not play.
+		lastHeardNeedsAnnouncementTimer--; // so we do  not do it again until it changes.
+	}
 	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS == -1) ||
 				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || (trxDMRModeRx == DMR_MODE_RMO))))
 	{// wait till reception has finished.
-		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT;
+		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT-1; // avoid requeueing the DMR ID unless it actually changes.
 		return;
 	}
 	
@@ -3687,30 +3694,12 @@ void AnnounceLastHeardContactIfNeeded()
 		lastHeardNeedsAnnouncementTimer--;
 		return; // wait for timer to expire, start counting  after end of transmission.
 	}
-		voicePromptsInit();
-
-// debugging!
-/*switch(trxDMRModeRx)
-{
-	case DMR_MODE_AUTO:
-	voicePromptsAppendLanguageString(&currentLanguage->Auto);
-	break;
-	case DMR_MODE_DMO:
-	voicePromptsAppendString("DMO");
-	break;
-	case DMR_MODE_RMO:
-	voicePromptsAppendString("RMO");
-	break;
-	case DMR_MODE_SFR:
-	voicePromptsAppendString("SFR");
-	break;
-}
-voicePromptsAppendPrompt(PROMPT_TIMESLOT);
-voicePromptsAppendInteger(dmrMonitorCapturedTS);
-voicePromptsAppendInteger(trxGetDMRTimeSlot());*/
 
 	lastHeardNeedsAnnouncementTimer=-1; // reset.
+	
+	voicePromptsInit();
 
 	AnnounceLastHeardContact();
-		voicePromptsPlay();
+	
+	voicePromptsPlay();
 }
