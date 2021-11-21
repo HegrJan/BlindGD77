@@ -597,7 +597,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
 					blocksTA = 0x00;
 					overrideTA = false;
-					lastHeardNeedsAnnouncementTimer = ((nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)) ? LAST_HEARD_TIMER_TIMEOUT : -1;
+					lastHeardNeedsAnnouncementTimer = ((id !=trxDMRID) &&(nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)) ? LAST_HEARD_TIMER_TIMEOUT : -1;
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -3659,6 +3659,12 @@ void AnnounceLastHeardContact()
 		voicePromptsAppendString(buffer);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
+	uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
+//joe
+	if ((trxTalkGroupOrPcId != tg) && (LinkHead->talkgroup[0]))
+	{
+		voicePromptsAppendString(LinkHead->talkgroup);
+	}
 }
 
 void AnnounceLastHeardContactIfNeeded()
