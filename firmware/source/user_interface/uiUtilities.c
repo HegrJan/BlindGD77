@@ -3628,6 +3628,8 @@ static bool IsLastHeardContactRelevant()
 {
 	if (!LinkHead) return false;
 	if (LinkHead->id==0) return false;
+	if (LinkHead->id==trxDMRID) return false; // one's own ID.
+	
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	
 	return true;
@@ -3660,7 +3662,7 @@ void AnnounceLastHeardContact()
 	else
 		voicePromptsAppendInteger(LinkHead->id);
 	uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
-//joe
+	
 	if ((trxTalkGroupOrPcId != tg) && (LinkHead->talkgroup[0]))
 	{
 		voicePromptsAppendString(LinkHead->talkgroup);
