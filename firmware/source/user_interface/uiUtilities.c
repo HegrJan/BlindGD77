@@ -3629,7 +3629,7 @@ static bool IsLastHeardContactRelevant()
 	if (!LinkHead) return false;
 	if (LinkHead->id==0) return false;
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
-	
+	if ((fw_millis() - LinkHead->time) > 600000) return false; // If it is older than 10 minutes.
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	
 	return true;
