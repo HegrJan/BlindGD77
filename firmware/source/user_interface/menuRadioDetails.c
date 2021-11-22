@@ -227,6 +227,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				trxDMRID=newDmrID;
 				codeplugSetUserDMRID(trxDMRID);
+				uiDataGlobal.userDMRId = trxDMRID;
 			}
 			//joe
 			codeplugSetRadioName(userInfo[DETAILS_CALLSIGN]);
