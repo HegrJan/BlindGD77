@@ -853,11 +853,6 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 
-		if (rebuildVoicePromptOnExtraLongSK1(ev))
-		{
-			return;
-		}
-
 		if (repeatVoicePromptOnSK1(ev))
 		{
 			return;

@@ -2632,68 +2632,6 @@ void acceptPrivateCall(uint32_t id, int timeslot)
 	announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
 }
 
-bool rebuildVoicePromptOnExtraLongSK1(uiEvent_t *ev)
-{
-	if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
-	{
-		// SK2 is still held down, but SK1 just get released.
-		if (uiDataGlobal.reverseRepeater)
-		{
-			return false;
-		}
-
-		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-		{
-			int currentMenu = menuSystemGetCurrentMenuNumber();
-
-			if ((((currentMenu == UI_CHANNEL_MODE) && (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED))) ||
-					((currentMenu == UI_VFO_MODE) && ((uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED)) || uiDataGlobal.Scan.toneActive))) == false)
-			{
-				if (voicePromptsIsPlaying())
-				{
-					voicePromptsTerminate();
-				}
-				else
-				{
-					announceItem(((currentMenu == UI_VFO_MODE) ?
-							PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC : PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC),
-							PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
-
-					if (trxGetMode() == RADIO_MODE_ANALOG)
-					{
-						CodeplugCSSTypes_t type = codeplugGetCSSType(currentChannelData->rxTone);
-						if ((type & CSS_TYPE_NONE) == 0)
-						{
-							buildCSSCodeVoicePrompts(currentChannelData->rxTone, type, DIRECTION_RECEIVE, true);
-							voicePromptsAppendPrompt(PROMPT_SILENCE);
-						}
-
-						type = codeplugGetCSSType(currentChannelData->txTone);
-						if ((type & CSS_TYPE_NONE) == 0)
-						{
-							buildCSSCodeVoicePrompts(currentChannelData->txTone, type, DIRECTION_TRANSMIT, true);
-							voicePromptsAppendPrompt(PROMPT_SILENCE);
-						}
-					}
-
-					announceItemWithInit(false, PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
-
-					if (currentMenu == UI_VFO_MODE)
-					{
-						announceItemWithInit(false, (uiVFOModeIsTXFocused() ? PROMPT_SEQUENCE_DIRECTION_TX : PROMPT_SEQUENCE_DIRECTION_RX), PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
-					}
-
-					voicePromptsPlay();
-				}
-
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
 bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 {
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
@@ -3629,7 +3567,7 @@ static bool IsLastHeardContactRelevant()
 	if (!LinkHead) return false;
 	if (LinkHead->id==0) return false;
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
-	if ((fw_millis() - LinkHead->time) > 600000) return false; // If it is older than 10 minutes.
+	if ((fw_millis() - LinkHead->time) > 10000) return false; // If it is older than 10 seconds.
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	
 	return true;
