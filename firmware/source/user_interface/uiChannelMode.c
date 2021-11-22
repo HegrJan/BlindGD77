@@ -3714,7 +3714,6 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			if (changeUserDMRID)
 			{
 				trxDMRID=dmrID;
-				uiDataGlobal.userDMRId = dmrID;
 				codeplugSetUserDMRID(trxDMRID);
 				voicePromptsInit();
 				voicePromptsAppendLanguageString(&currentLanguage->user_dmr_id);
