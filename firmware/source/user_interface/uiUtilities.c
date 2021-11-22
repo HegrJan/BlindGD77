@@ -54,6 +54,7 @@ static uint32_t lastTG = 0;
 volatile uint32_t lastID = 0;// This needs to be volatile as lastHeardClearLastID() is called from an ISR
 LinkItem_t *LinkHead = callsList;
 static uint32_t lastHeardNeedsAnnouncementTimer=-1; //reset is -1.
+static uint32_t lastHeardUpdateTime=0;
 // Try and avoid triggering speaking of last heard if reception breaks up, wait 750 ms after end of reception.
 #define LAST_HEARD_TIMER_TIMEOUT 750
 
@@ -613,6 +614,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						}
 
 						item->time = fw_millis();
+						lastHeardUpdateTime=item->time;
 						lastTG = talkGroupOrPcId;
 
 						if (item == LinkHead)
@@ -675,6 +677,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						item->id = id;
 						item->talkGroupOrPcId = talkGroupOrPcId;
 						item->time = fw_millis();
+						lastHeardUpdateTime=item->time;
 						item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
 						lastTG = talkGroupOrPcId;
 
@@ -703,6 +706,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 							item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
 							updateLHItem(item);
 							item->time = fw_millis();
+							lastHeardUpdateTime=item->time;
 						}
 
 						lastTG = talkGroupOrPcId;
@@ -3567,7 +3571,7 @@ static bool IsLastHeardContactRelevant()
 	if (!LinkHead) return false;
 	if (LinkHead->id==0) return false;
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
-	if ((fw_millis() - LinkHead->time) > 10000) return false; // If it is older than 10 seconds.
+	if ((fw_millis() - lastHeardUpdateTime) > 10000) return false; // If it is older than 10 seconds.
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	
 	return true;
@@ -3632,6 +3636,7 @@ void AnnounceLastHeardContactIfNeeded()
 	if (getAudioAmpStatus() & (AUDIO_AMP_MODE_RF | AUDIO_AMP_MODE_BEEP | AUDIO_AMP_MODE_PROMPT))
 	{// wait till reception has finished.
 		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT-1; // avoid requeueing the DMR ID unless it actually changes.
+		lastHeardUpdateTime=fw_millis();
 		return;
 	}
 	
@@ -3642,7 +3647,7 @@ void AnnounceLastHeardContactIfNeeded()
 	}
 
 	lastHeardNeedsAnnouncementTimer=-1; // reset.
-	
+	lastHeardUpdateTime=fw_millis(); // start from now because last TX may have been longer than our timeout!
 	voicePromptsInit();
 
 	AnnounceLastHeardContact();
