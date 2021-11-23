@@ -37,8 +37,8 @@
 #include "functions/rxPowerSaving.h"
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
-// VK7JS updated on Sep 19 for GD77S new options menu.
-static const int STORAGE_MAGIC_NUMBER 		= 0x2110; // NOTE: never use 0xDEADBEEF, it's reserved value
+// VK7JS updated on Nov 23 2021 after removing autoZone from settings.
+static const int STORAGE_MAGIC_NUMBER 		= 0x2111; // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
@@ -347,7 +347,6 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
 	nonVolatileSettings.uhfOffset=5000; // repeater offset for 70 cm band.
 	nonVolatileSettings.totMaster=0;
-	nonVolatileSettings.autoZone.flags=0;
 	nonVolatileSettings.autoZonesEnabled=0;
 	memset(nonVolatileSettings.zoneChannelIndices, 0, sizeof(nonVolatileSettings.zoneChannelIndices));	
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO

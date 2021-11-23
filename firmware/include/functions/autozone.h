@@ -95,4 +95,5 @@ bool AutoZoneGetChannelData(uint16_t index, struct_codeplugChannel_t *channelBuf
 void AutoZoneApplyChannelRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf);
 bool AutoZoneGetData(AutoZoneType_t type, struct_AutoZoneParams_t* autoZone);
 uint8_t AutoZoneGetEnabledCount(); // Count the number of autoZones actually enabled.
+	extern struct_AutoZoneParams_t autoZone;
 #endif //_OPENGD77_AUTOZONE_H_

@@ -84,9 +84,7 @@ typedef struct
 	uint16_t         dtmfListSelected;
 	int32_t          dtmfListCount;
 	bool virtualVFOMode;
-	uint8_t autoZonesEnabled;
-	uint8_t autozoneTypeIndex;
-	struct_AutoZoneParams_t autoZone;
+	uint8_t autoZoneTypeIndex;// when setting up autozones
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 	bool cycleFunctionsInReverse;
 	GD77S_OPTIONS_t option; // used in Options mode.
@@ -100,8 +98,7 @@ static GD77SParameters_t GD77SParameters =
 		.dtmfListSelected = 0,
 		.dtmfListCount = 0,
 		.virtualVFOMode=false,
-		.autoZonesEnabled=0,
-		.autozoneTypeIndex=1,
+		.autoZoneTypeIndex=1,
 		.channelbankOffset=0,
 		.cycleFunctionsInReverse=false,
 		.option=GD77S_OPTION_POWER
@@ -333,8 +330,8 @@ static void EnsurePriorityChannelIsSet()
 {
 		if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
 	{
-		if (nonVolatileSettings.autoZone.priorityChannelIndex > 0)
-			uiDataGlobal.priorityChannelIndex=nonVolatileSettings.autoZone.priorityChannelIndex;
+		if (autoZone.priorityChannelIndex > 0)
+			uiDataGlobal.priorityChannelIndex=autoZone.priorityChannelIndex;
 		else
 			uiDataGlobal.priorityChannelIndex=NO_PRIORITY_CHANNEL;
 	}
@@ -343,6 +340,7 @@ static void EnsurePriorityChannelIsSet()
 	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 	}
 }
+
 menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 {
 	static uint32_t m = 0, sqm = 0;
@@ -402,9 +400,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
 			}
 
-
 			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
-			GD77SParameters.autoZonesEnabled=nonVolatileSettings.autoZonesEnabled;
 		}
 #endif
 		uiChannelModeUpdateScreen(0);
@@ -3343,9 +3339,9 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 		case GD77S_OPTION_AUTOZONE:
 			if (!voicePromptWasPlaying)
 				voicePromptsAppendLanguageString(&currentLanguage->autoZone);
-			AutoZoneGetData(GD77SParameters.autozoneTypeIndex, &GD77SParameters.autoZone);
-			voicePromptsAppendString((char*)GD77SParameters.autoZone.name);
-			if (IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex))
+			AutoZoneInitialize(GD77SParameters.autoZoneTypeIndex);
+			voicePromptsAppendString((char*)autoZone.name);
+			if (IsBitSet(nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex))
 				voicePromptsAppendLanguageString(&currentLanguage->on);
 			else
 				voicePromptsAppendLanguageString(&currentLanguage->off);
@@ -3879,12 +3875,11 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 
 static void SaveGD77SAutoZoneParams()
 {
-	nonVolatileSettings.autoZonesEnabled=GD77SParameters.autoZonesEnabled;
 	GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
 
-	if (GD77SParameters.autoZonesEnabled==0)
+	if (nonVolatileSettings.autoZonesEnabled==0)
 	{
-		nonVolatileSettings.autoZone.flags=0;
+		autoZone.flags=0;
 		if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
 		{
 			nonVolatileSettings.currentZone = 0;
@@ -4184,19 +4179,19 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 		case GD77S_OPTION_AUTOZONE:
 			if (dir > 0)
 			{
-				if (GD77SParameters.autozoneTypeIndex < AutoZone_TYPE_MAX-1)
-					GD77SParameters.autozoneTypeIndex++;
+				if (GD77SParameters.autoZoneTypeIndex < AutoZone_TYPE_MAX-1)
+					GD77SParameters.autoZoneTypeIndex++;
 				else
-					GD77SParameters.autozoneTypeIndex=1;
+					GD77SParameters.autoZoneTypeIndex=1;
 			}
 			else if (dir < 0)
 			{
-				bool isBitSet=IsBitSet(GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex);
-				SetBit(&GD77SParameters.autoZonesEnabled, GD77SParameters.autozoneTypeIndex, !isBitSet);
+				bool isBitSet=IsBitSet(nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex);
+				SetBit(&nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex, !isBitSet);
 			}
 			else
 			{
-				GD77SParameters.autoZonesEnabled=0;
+				nonVolatileSettings.autoZonesEnabled=0;
 			}
 			SaveGD77SAutoZoneParams();
 			break;
@@ -4614,7 +4609,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 			}
 		}
-		else if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && (nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable) && BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
+		else if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber) && (autoZone.flags & AutoZoneDuplexAvailable) && BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
 			CycleRepeaterOffset(NULL);
 		}

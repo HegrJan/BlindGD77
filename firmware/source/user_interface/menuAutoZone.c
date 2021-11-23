@@ -153,10 +153,14 @@ static void handleEvent(uiEvent_t *ev)
 	else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 	{
 		nonVolatileSettings.autoZonesEnabled=autoZonesEnabled;
-		if (autoZonesEnabled==0)
-			nonVolatileSettings.autoZone.flags=0;
+		if(autoZonesEnabled==0)
+			autoZone.flags=0;
 		if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+		{
 			currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+			if (autoZonesEnabled==0)
+				nonVolatileSettings.currentZone = 0;
+		}
 		settingsSetDirty();
 		menuSystemPopAllAndDisplayRootMenu();
 		return;
