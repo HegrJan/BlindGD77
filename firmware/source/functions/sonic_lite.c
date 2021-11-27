@@ -13,7 +13,7 @@
 #define SONIC_MAX_PERIOD (SONIC_SAMPLE_RATE / SONIC_MIN_PITCH)
 #define SONIC_MIN_PERIOD (SONIC_SAMPLE_RATE / SONIC_MAX_PITCH)
 #define SONIC_SKIP (SONIC_SAMPLE_RATE / SONIC_AMDF_FREQ)
-#define SONIC_INPUT_BUFFER_SIZE 720 // Do not increase or you risk memory corruption on GD77!
+#define SONIC_INPUT_BUFFER_SIZE 760 
 
 struct sonicStruct {
   short inputBuffer[SONIC_INPUT_BUFFER_SIZE];
