@@ -50,6 +50,7 @@ const struct_AutoZoneParams_t AutoZoneData[AutoZone_TYPE_MAX]=
 		{AutoZone_US_RAILWAY, "US RAIL", 0x41, 16012500, 16156500, 1500, 0, 0, 97, 0, 0, 0, 0, &ApplyUSRailRestrictions},// note first 4 channels must be fudged, see AdjustUSRailFrequencies.
 	};
 
+<<<<<<< HEAD
 static struct_AutoZoneParams_t* autoZone=&nonVolatileSettings.autoZone;
 
 bool AutoZoneIsValid()
@@ -61,6 +62,36 @@ bool AutoZoneIsValid()
 	if (autoZone->endFrequency <= autoZone->startFrequency)
 		return false;
 	if (autoZone->channelSpacing==0)
+=======
+ struct_AutoZoneParams_t autoZone=
+{
+	.type=0,
+	.name=0,
+	.flags=0,
+	.startFrequency=0,
+	.endFrequency=0,
+	.channelSpacing=0,
+	.repeaterOffset=0,
+	.priorityChannelIndex=0,
+	.totalChannelsInBaseBank=0,
+	.baseChannelNumberStart=0,
+	.interleaveChannelNumberStart=0,
+	.offsetBankChannelNumberStart=0,
+	.offsetBankInterleavedChannelNumberStart=0,
+	.ApplyChannelRestrictionsFunc=0
+};
+
+
+bool AutoZoneIsValid()
+{
+	if ((autoZone.flags & AutoZoneEnabled)==0) // turned off.
+	return false;
+	if (autoZone.name[0]==0xff || autoZone.name[0]==0)
+		return false;
+	if (autoZone.endFrequency <= autoZone.startFrequency)
+		return false;
+	if (autoZone.channelSpacing==0)
+>>>>>>> development
 		return false;
 	
 	return true;	
@@ -80,12 +111,20 @@ static void ApplyMarineRestrictions(uint16_t index, struct_codeplugChannel_t *ch
 	|| (index >=47 && index <=55); // physical channels 47 to 55 correspond to named channels 78 to 86.
 	if (duplexAllowed)
 	{
+<<<<<<< HEAD
 		autoZone->flags |=AutoZoneDuplexAvailable;
+=======
+		autoZone.flags |=AutoZoneDuplexAvailable;
+>>>>>>> development
 	}
 	else
 	{	// Force simplex.
 		channelBuf->rxFreq=channelBuf->txFreq;
+<<<<<<< HEAD
 		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
+=======
+		autoZone.flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
+>>>>>>> development
 	}
 }
 
@@ -108,19 +147,32 @@ static void ApplyUHFCBRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 	if ((index > 8 && index < 41) || (index > 48)) // force simplex since repeaters are only allowed on 1-8 and 41-48.
 	{
 		channelBuf->txFreq=channelBuf->rxFreq;
+<<<<<<< HEAD
 		autoZone->flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
 	}
 	else
 		autoZone->flags |=AutoZoneDuplexAvailable;
+=======
+		autoZone.flags&=~(AutoZoneDuplexEnabled|AutoZoneDuplexAvailable);
+	}
+	else
+		autoZone.flags |=AutoZoneDuplexAvailable;
+>>>>>>> development
 }
 
 static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	// duplex is not allowed on interstitials
 	if (index < 9)
+<<<<<<< HEAD
 		autoZone->flags|=AutoZoneDuplexAvailable;
 	else
 		autoZone->flags&=~AutoZoneDuplexAvailable;
+=======
+		autoZone.flags|=AutoZoneDuplexAvailable;
+	else
+		autoZone.flags&=~AutoZoneDuplexAvailable;
+>>>>>>> development
 	if (index >= 24)
 		channelBuf->flag4&=~0x02; // narrow.
 	else
@@ -134,7 +186,11 @@ static  void ApplyGMRSRestrictions(uint16_t index, struct_codeplugChannel_t *cha
 static  void ApplyFRSRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
 	// duplex is never allowed
+<<<<<<< HEAD
 	autoZone->flags&=~AutoZoneDuplexAvailable;
+=======
+	autoZone.flags&=~AutoZoneDuplexAvailable;
+>>>>>>> development
 	channelBuf->flag4&=~0x02; // narrow.
 	// channels 8-14 must use 0.5 w, the rest 2 w.
 	if (index >=24)
@@ -211,38 +267,63 @@ Apply specific hacks, e.g. channels 22, 23, 61-63 in UHF CB in Australian band a
 */
  void AutoZoneApplyChannelRestrictions(uint16_t index, struct_codeplugChannel_t *channelBuf)
 {
+<<<<<<< HEAD
 	if (autoZone->type <1 || autoZone->type >=AutoZone_TYPE_MAX)
 		return;
 	if (!AutoZoneData[autoZone->type-1].ApplyChannelRestrictionsFunc)
 		return;
 	AutoZoneData[autoZone->type-1].ApplyChannelRestrictionsFunc(index, channelBuf);
+=======
+	if (autoZone.type <1 || autoZone.type >=AutoZone_TYPE_MAX)
+		return;
+	if (!AutoZoneData[autoZone.type-1].ApplyChannelRestrictionsFunc)
+		return;
+	AutoZoneData[autoZone.type-1].ApplyChannelRestrictionsFunc(index, channelBuf);
+>>>>>>> development
 }	
 
 void AutoZoneInitialize(AutoZoneType_t type)
 {
 	if (type >=AutoZone_TYPE_MAX)
 		return;
+<<<<<<< HEAD
 	memcpy(autoZone, &AutoZoneData[type-1], sizeof(struct_AutoZoneParams_t));
+=======
+	memcpy(&autoZone, &AutoZoneData[type-1], sizeof(struct_AutoZoneParams_t));
+>>>>>>> development
 }
 
 static uint16_t GetDisplayChannelNumber(uint16_t index)
 {
 		bool channelIsInBankAtOffset=false;
+<<<<<<< HEAD
 		if ((autoZone->flags&AutoZoneHasBankAtOffset) && (index > autoZone->totalChannelsInBaseBank) && (index <=(autoZone->totalChannelsInBaseBank*2)))
 	{
 		index-=autoZone->totalChannelsInBaseBank;
+=======
+		if ((autoZone.flags&AutoZoneHasBankAtOffset) && (index > autoZone.totalChannelsInBaseBank) && (index <=(autoZone.totalChannelsInBaseBank*2)))
+	{
+		index-=autoZone.totalChannelsInBaseBank;
+>>>>>>> development
 		channelIsInBankAtOffset=true;
 	}
 
 	uint16_t channelNumber=index;
 	
+<<<<<<< HEAD
 	if (autoZone->flags &AutoZoneHasBaseIndex)
 	{
 		uint16_t totalChannelsRoundedUpToEven=autoZone->totalChannelsInBaseBank;
+=======
+	if (autoZone.flags &AutoZoneHasBaseIndex)
+	{
+		uint16_t totalChannelsRoundedUpToEven=autoZone.totalChannelsInBaseBank;
+>>>>>>> development
 		if ((totalChannelsRoundedUpToEven%2)==1)
 			totalChannelsRoundedUpToEven++; // so when we divide by 2, if odd number, we round up.
 		// see which base offset we should use.
 		int baseChannelOffset=0;
+<<<<<<< HEAD
 		if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2)) // its in the interleaved group.
 		{
 			baseChannelOffset=channelIsInBankAtOffset ? autoZone->offsetBankInterleavedChannelNumberStart : autoZone->interleaveChannelNumberStart;
@@ -252,6 +333,17 @@ static uint16_t GetDisplayChannelNumber(uint16_t index)
 		{
 		}
 		if ((autoZone->flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2))
+=======
+		if ((autoZone.flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2)) // its in the interleaved group.
+		{
+			baseChannelOffset=channelIsInBankAtOffset ? autoZone.offsetBankInterleavedChannelNumberStart : autoZone.interleaveChannelNumberStart;
+		}
+		else
+			baseChannelOffset=channelIsInBankAtOffset ? autoZone.offsetBankChannelNumberStart : autoZone.baseChannelNumberStart;
+		{
+		}
+		if ((autoZone.flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2))
+>>>>>>> development
 			channelNumber=(index - totalChannelsRoundedUpToEven/2) + baseChannelOffset -1;
 		else
 			channelNumber+= baseChannelOffset -1;
@@ -291,11 +383,19 @@ static bool 		GetGMRSZoneChannelIndices(struct_codeplugZone_t *returnBuf, bool r
 
 static bool 	AutoZoneGetChannelIndices(struct_codeplugZone_t *returnBuf)
 {
+<<<<<<< HEAD
 	switch (autoZone->type)
 	{
 		case AutoZone_GMRS:
 		case AutoZone_FRS:
 			return GetGMRSZoneChannelIndices(returnBuf, autoZone->type==AutoZone_FRS);
+=======
+	switch (autoZone.type)
+	{
+		case AutoZone_GMRS:
+		case AutoZone_FRS:
+			return GetGMRSZoneChannelIndices(returnBuf, autoZone.type==AutoZone_FRS);
+>>>>>>> development
 			break;
 		default:
 		break;
@@ -343,6 +443,7 @@ bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf)
 	uint8_t type=AutoZoneGetTypeFromBit(autoZoneEnabledBit);
 	if (type < 1 || type >=AutoZone_TYPE_MAX)
 		return false;
+<<<<<<< HEAD
 	if ((type!=autoZone->type) || !AutoZoneIsValid())
 		AutoZoneInitialize(type);
 	// This is the autogenerated zone.
@@ -354,6 +455,19 @@ bool AutoZoneGetZoneDataForIndex(int zoneNum, struct_codeplugZone_t *returnBuf)
 	int total=autoZone->totalChannelsInBaseBank;
 		
 	if (autoZone->flags&AutoZoneHasBankAtOffset)
+=======
+	if ((type!=autoZone.type) || !AutoZoneIsValid())
+		AutoZoneInitialize(type);
+	// This is the autogenerated zone.
+	int nameLen = SAFE_MIN(((int)sizeof(returnBuf->name)), ((int)strlen(autoZone.name)));
+	// Codeplug name is 0xff filled, codeplugUtilConvertBufToString() handles the conversion
+	memset(returnBuf->name, 0xff, sizeof(returnBuf->name));
+	memcpy(returnBuf->name, autoZone.name, nameLen);
+	
+	int total=autoZone.totalChannelsInBaseBank;
+		
+	if (autoZone.flags&AutoZoneHasBankAtOffset)
+>>>>>>> development
 		total*=2;
 	returnBuf->NOT_IN_CODEPLUGDATA_numChannelsInZone = total;
 
@@ -379,6 +493,7 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 		return false;
 	
 	bool channelIsInBankAtOffset=false;
+<<<<<<< HEAD
 	if ((autoZone->flags&AutoZoneHasBankAtOffset) && (index > autoZone->totalChannelsInBaseBank) && (index <= (autoZone->totalChannelsInBaseBank*2)))
 	{
 		index-=autoZone->totalChannelsInBaseBank;
@@ -427,6 +542,56 @@ bool AutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* 
 		AdjustMURSFrequencies(index, rxFreq, txFreq);
 	}
 	else if (autoZone->type==AutoZone_US_RAILWAY)
+=======
+	if ((autoZone.flags&AutoZoneHasBankAtOffset) && (index > autoZone.totalChannelsInBaseBank) && (index <= (autoZone.totalChannelsInBaseBank*2)))
+	{
+		index-=autoZone.totalChannelsInBaseBank;
+		channelIsInBankAtOffset=true;
+	}
+	if (index > autoZone.totalChannelsInBaseBank)
+		return false;
+	
+	uint16_t multiplier=(index-1);
+	// If interleaved, first half of channels start at startFrequency and the channel step is defined by autoZone.channelSpacing kHz.
+	// Second half are offset by autoZone.channelSpacing/2 kHz between the first half of the channels
+	// and may start prior.
+	uint16_t interleaveOffset=0;
+	uint16_t totalChannelsRoundedUpToEven=autoZone.totalChannelsInBaseBank;
+	if ((totalChannelsRoundedUpToEven%2)==1)
+		totalChannelsRoundedUpToEven++; // so when we divide by 2, if odd number, we round up.
+	if ((autoZone.flags&AutoZoneInterleaveChannels) && (index > totalChannelsRoundedUpToEven/2))
+	{
+		interleaveOffset=autoZone.channelSpacing/2;
+		multiplier -= (totalChannelsRoundedUpToEven/2);
+	}
+	if (autoZone.flags&AutoZoneInterleavingStartsPrior)
+		*rxFreq = autoZone.startFrequency-interleaveOffset+(multiplier * autoZone.channelSpacing);
+	else
+		*rxFreq = autoZone.startFrequency+interleaveOffset+(multiplier * autoZone.channelSpacing);
+	*txFreq = *rxFreq;
+	// adjust by repeater offset if duplex is on.
+	if ((autoZone.flags&AutoZoneDuplexEnabled) && (autoZone.repeaterOffset > 0) && !channelIsInBankAtOffset)
+	{
+		if (autoZone.flags&AutoZoneOffsetDirectionPlus)
+			(*txFreq)+=(autoZone.repeaterOffset*100);
+		else
+			(*txFreq)-=(autoZone.repeaterOffset*100);
+	}
+	else if (autoZone.flags&(AutoZoneSimplexUsesTXFrequency) || (channelIsInBankAtOffset && (autoZone.flags&AutoZoneHasBankAtOffset)))
+	{
+		if (autoZone.flags&AutoZoneOffsetDirectionPlus)
+			(*txFreq)+=(autoZone.repeaterOffset*100);
+		else
+			(*txFreq)-=(autoZone.repeaterOffset*100);
+		*rxFreq=*txFreq;
+	}
+	// Hack for MURS.
+	if (autoZone.type==AutoZone_MURS)
+	{
+		AdjustMURSFrequencies(index, rxFreq, txFreq);
+	}
+	else if (autoZone.type==AutoZone_US_RAILWAY)
+>>>>>>> development
 	{//similar hack because first four channels don't follow pattern.
 		AdjustUSRailFrequencies(index, rxFreq, txFreq);
 	}
@@ -458,12 +623,20 @@ bool AutoZoneGetChannelData( uint16_t index, struct_codeplugChannel_t *channelBu
 	AutoZoneGetChannelNameForIndex(index, channelBuf);
 	channelBuf->rxFreq=rxFreq;
 	channelBuf->txFreq=txFreq;
+<<<<<<< HEAD
 	channelBuf->chMode=(autoZone->flags & AutoZoneModeDigital) ? RADIO_MODE_DIGITAL : RADIO_MODE_ANALOG;
+=======
+	channelBuf->chMode=(autoZone.flags & AutoZoneModeDigital) ? RADIO_MODE_DIGITAL : RADIO_MODE_ANALOG;
+>>>>>>> development
 	channelBuf->libreDMR_Power=0; // From master unless overridden by restriction.
 	channelBuf->rxTone=CODEPLUG_CSS_TONE_NONE;
 	channelBuf->txTone=CODEPLUG_CSS_TONE_NONE;
 
+<<<<<<< HEAD
 	if (autoZone->flags & AutoZoneNarrow)
+=======
+	if (autoZone.flags & AutoZoneNarrow)
+>>>>>>> development
 		channelBuf->flag4&=~0x02; // clear.
 	else
 		channelBuf->flag4|=0x02; // bits... 0x80 = Power, 0x40 = Vox, 0x20 = ZoneSkip (AutoScan), 0x10 = AllSkip (LoneWoker), 0x08 = AllowTalkaround, 0x04 = OnlyRx, 0x02 = Channel width, 0x01 = Squelch
@@ -484,4 +657,10 @@ bool AutoZoneGetData(AutoZoneType_t type, struct_AutoZoneParams_t* autoZone)
 uint8_t AutoZoneGetEnabledCount()
 {
 	return __builtin_popcount(nonVolatileSettings.autoZonesEnabled);
+<<<<<<< HEAD
 }
+=======
+}
+
+	
+>>>>>>> development

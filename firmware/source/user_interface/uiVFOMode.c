@@ -852,11 +852,14 @@ static void handleEvent(uiEvent_t *ev)
 			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2),false);
 			return;
 		}
+<<<<<<< HEAD
 
 		if (rebuildVoicePromptOnExtraLongSK1(ev))
 		{
 			return;
 		}
+=======
+>>>>>>> development
 
 		if (repeatVoicePromptOnSK1(ev))
 		{
@@ -2275,6 +2278,7 @@ static void updateQuickMenuScreen(bool isFirstRun)
 			if (i == 0)
 			{
 				if (!isFirstRun && (menuDataGlobal.menuOptionsSetQuickkey == 0))
+<<<<<<< HEAD
 				{
 					voicePromptsInit();
 				}
@@ -2306,6 +2310,39 @@ static void updateQuickMenuScreen(bool isFirstRun)
 				}
 				else
 				{
+=======
+				{
+					voicePromptsInit();
+				}
+
+				if (prompt != -1)
+				{
+					voicePromptsAppendPrompt(prompt);
+				}
+				else
+				{
+					if (leftSide != NULL)
+					{
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
+					}
+
+					if ((rightSideVar[0] != 0) && (rightSideConst == NULL))
+					{
+						voicePromptsAppendString(rightSideVar);
+					}
+					else
+					{
+						voicePromptsAppendLanguageString((const char * const *)rightSideConst);
+					}
+				}
+
+				if (menuDataGlobal.menuOptionsTimeout != -1)
+				{
+					promptsPlayNotAfterTx();
+				}
+				else
+				{
+>>>>>>> development
 					menuDataGlobal.menuOptionsTimeout = 0;// clear flag indicating that a QuickKey has just been set
 				}
 			}

@@ -54,6 +54,10 @@ static uint32_t lastTG = 0;
 volatile uint32_t lastID = 0;// This needs to be volatile as lastHeardClearLastID() is called from an ISR
 LinkItem_t *LinkHead = callsList;
 static uint32_t lastHeardNeedsAnnouncementTimer=-1; //reset is -1.
+<<<<<<< HEAD
+=======
+static uint32_t lastHeardUpdateTime=0;
+>>>>>>> development
 // Try and avoid triggering speaking of last heard if reception breaks up, wait 750 ms after end of reception.
 #define LAST_HEARD_TIMER_TIMEOUT 750
 
@@ -597,7 +601,11 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
 					blocksTA = 0x00;
 					overrideTA = false;
+<<<<<<< HEAD
 					lastHeardNeedsAnnouncementTimer = ((nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)) ? LAST_HEARD_TIMER_TIMEOUT : -1;
+=======
+					lastHeardNeedsAnnouncementTimer = (id !=trxDMRID) ? LAST_HEARD_TIMER_TIMEOUT : -1;
+>>>>>>> development
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -613,6 +621,10 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						}
 
 						item->time = fw_millis();
+<<<<<<< HEAD
+=======
+						lastHeardUpdateTime=item->time;
+>>>>>>> development
 						lastTG = talkGroupOrPcId;
 
 						if (item == LinkHead)
@@ -657,6 +669,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						{
 							uiDataGlobal.lastHeardCount++;
 						}
+<<<<<<< HEAD
 
 						// need to use the last item in the list as the new item at the top of the list.
 						// find last item in the list
@@ -685,6 +698,37 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 
 						updateLHItem(item);
 
+=======
+
+						// need to use the last item in the list as the new item at the top of the list.
+						// find last item in the list
+						while(item->next != NULL)
+						{
+							item = item->next;
+						}
+						//item is now the last
+
+						(item->prev)->next = NULL;// make the previous item the last
+
+						LinkHead->prev = item;// set the current head item to back reference this item.
+						item->next = LinkHead;// set this items next to the current head
+						LinkHead = item;// Make this item the new head
+
+						item->id = id;
+						item->talkGroupOrPcId = talkGroupOrPcId;
+						item->time = fw_millis();
+						lastHeardUpdateTime=item->time;
+						item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
+						lastTG = talkGroupOrPcId;
+
+						memset(item->contact, 0, sizeof(item->contact)); // Clear contact's datas
+						memset(item->talkgroup, 0, sizeof(item->talkgroup));
+						memset(item->talkerAlias, 0, sizeof(item->talkerAlias));
+						memset(item->locator, 0, sizeof(item->locator));
+
+						updateLHItem(item);
+
+>>>>>>> development
 						if (item->talkGroupOrPcId != 0)
 						{
 							uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
@@ -703,6 +747,10 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 							item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
 							updateLHItem(item);
 							item->time = fw_millis();
+<<<<<<< HEAD
+=======
+							lastHeardUpdateTime=item->time;
+>>>>>>> development
 						}
 
 						lastTG = talkGroupOrPcId;
@@ -758,9 +806,15 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					{
 						static const uint8_t blockLen = 7;
 						uint32_t blockOffset = blockID * blockLen;
+<<<<<<< HEAD
 
 						blocksTA |= (1 << blockID);
 
+=======
+
+						blocksTA |= (1 << blockID);
+
+>>>>>>> development
 						if ((blockOffset + blockLen) < sizeof(bufferTA))
 						{
 							memcpy(bufferTA + blockOffset, (void *)(forceOnHotspot ? &dmrDataBuffer[2] : &DMR_frame_buffer[2]), blockLen);
@@ -3535,6 +3589,7 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	voicePromptsInit();
 	
 	int direction=0;
+<<<<<<< HEAD
 	if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)
 	{
 		direction =(nonVolatileSettings.autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
@@ -3545,6 +3600,18 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 			nonVolatileSettings.autoZone.flags&=~AutoZoneDuplexEnabled;
 	
 		if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)
+=======
+	if (autoZone.flags & AutoZoneDuplexAvailable)
+	{
+		direction =(autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
+	
+		if ((autoZone.flags&AutoZoneDuplexEnabled)==0)
+			autoZone.flags|=AutoZoneDuplexEnabled;
+		else
+			autoZone.flags&=~AutoZoneDuplexEnabled;
+	
+		if (autoZone.flags & AutoZoneDuplexEnabled)
+>>>>>>> development
 		{
 			if (direction > 0)
 				voicePromptsAppendPrompt(PROMPT_PLUS);
@@ -3552,7 +3619,11 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 				voicePromptsAppendPrompt(PROMPT_MINUS);
 		}		
 	}
+<<<<<<< HEAD
 	if ((nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)==0 || (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)==0)
+=======
+	if ((autoZone.flags & AutoZoneDuplexAvailable)==0 || (autoZone.flags & AutoZoneDuplexEnabled)==0)
+>>>>>>> development
 	{
 		direction=0;
 		voicePromptsAppendLanguageString(&currentLanguage->none);
@@ -3628,6 +3699,11 @@ static bool IsLastHeardContactRelevant()
 {
 	if (!LinkHead) return false;
 	if (LinkHead->id==0) return false;
+<<<<<<< HEAD
+=======
+	if (LinkHead->id==trxDMRID) return false; // one's own ID.
+	if ((fw_millis() - lastHeardUpdateTime) > 10000) return false; // If it is older than 10 seconds.
+>>>>>>> development
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	
 	return true;
@@ -3659,6 +3735,15 @@ void AnnounceLastHeardContact()
 		voicePromptsAppendString(buffer);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
+<<<<<<< HEAD
+=======
+	uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
+	
+	if ((trxTalkGroupOrPcId != tg) && (LinkHead->talkgroup[0]))
+	{
+		voicePromptsAppendString(LinkHead->talkgroup);
+	}
+>>>>>>> development
 }
 
 void AnnounceLastHeardContactIfNeeded()
@@ -3674,11 +3759,27 @@ void AnnounceLastHeardContactIfNeeded()
 		lastHeardNeedsAnnouncementTimer = -1;
 		return;
 	}
+<<<<<<< HEAD
 	
 	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) &&
 				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
 	{// wait till reception has finished.
 		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT;
+=======
+// at this point, if we have detected that the DMR ID has changed, queue it for speaking but do not speak it until reception has finished.
+// If we don't queue it, sk1 will still speak the old callsign if pressed.
+	if (lastHeardNeedsAnnouncementTimer==LAST_HEARD_TIMER_TIMEOUT)
+	{
+		voicePromptsInit();
+		AnnounceLastHeardContact(); // just queue, do not play.
+		lastHeardNeedsAnnouncementTimer--; // so we do  not do it again until it changes.
+	}
+	
+	if (getAudioAmpStatus() & (AUDIO_AMP_MODE_RF | AUDIO_AMP_MODE_BEEP | AUDIO_AMP_MODE_PROMPT))
+	{// wait till reception has finished.
+		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT-1; // avoid requeueing the DMR ID unless it actually changes.
+		lastHeardUpdateTime=fw_millis();
+>>>>>>> development
 		return;
 	}
 	
@@ -3687,10 +3788,23 @@ void AnnounceLastHeardContactIfNeeded()
 		lastHeardNeedsAnnouncementTimer--;
 		return; // wait for timer to expire, start counting  after end of transmission.
 	}
+<<<<<<< HEAD
 	
 	lastHeardNeedsAnnouncementTimer=-1; // reset.
 
 	voicePromptsInit();
 	AnnounceLastHeardContact();
 		voicePromptsPlay();
+=======
+
+	lastHeardNeedsAnnouncementTimer=-1; // reset.
+	lastHeardUpdateTime=fw_millis(); // start from now because last TX may have been longer than our timeout!
+	if ((nonVolatileSettings.audioPromptMode < 1) || (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)==0)
+		return;// Don't automatically announce it.
+	voicePromptsInit();
+
+	AnnounceLastHeardContact();
+	
+	voicePromptsPlay();
+>>>>>>> development
 }
