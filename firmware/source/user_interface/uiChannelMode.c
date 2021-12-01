@@ -38,6 +38,8 @@
 
 
 #define NAME_BUFFER_LEN   23
+#define NO_ZONE 255
+#define NO_CHANNEL -1
 
 #if defined(PLATFORM_GD77S)
 typedef enum
@@ -132,6 +134,8 @@ static void updateTrxID(void);
 static char currentZoneName[SCREEN_LINE_BUFFER_SIZE];
 static int directChannelNumber = 0;
 static bool scanAllZones=false;
+static int scanStartZone=NO_ZONE; //unset, must use 255 since autozones and all channels zone are negative.
+static int scanStartChannel=NO_CHANNEL; // unset
 
 static struct_codeplugChannel_t channelNextChannelData = { .rxFreq = 0 };
 static bool nextChannelReady = false;
@@ -2770,15 +2774,17 @@ static void scanStart(bool longPressBeep)
 	{
 		soundSetMelody(MELODY_KEY_LONG_BEEP);
 	}
-
+	scanStartZone=nonVolatileSettings.currentZone;
 	// Set current channel index
 	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 	{
 		nextChannelIndex = nonVolatileSettings.currentChannelIndexInAllZone;
+		scanStartChannel=nonVolatileSettings.currentChannelIndexInAllZone;
 	}
 	else
 	{
 		nextChannelIndex = currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+		scanStartChannel=nonVolatileSettings.currentChannelIndexInZone;
 	}
 
 	nextChannelReady = false;
@@ -2864,6 +2870,7 @@ static void scanning(void)
 			if(trxCarrierDetected())
 			{
 				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
+
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
 
@@ -2932,6 +2939,27 @@ static void scanning(void)
 void uiChannelModeStopScanning(void)
 {
 	scanAllZones=false;
+	// If these are still set, return to them.
+	// Nothing was found during the scan.
+	if (uiDataGlobal.Scan.state == SCAN_SCANNING)
+	{
+		if ((scanStartZone!=NO_ZONE) && (scanStartZone !=nonVolatileSettings.currentZone))
+		{//joe
+			settingsSet(nonVolatileSettings.currentZone, scanStartZone);
+			currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	
+			codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+		}
+		if (scanStartChannel!=NO_CHANNEL)
+		{
+			if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+				settingsSet(nonVolatileSettings.currentChannelIndexInAllZone, (int16_t) scanStartChannel);
+			else
+				settingsSetCurrentChannelIndexForZone((int16_t) scanStartChannel, nonVolatileSettings.currentZone);
+		}
+	}
+	scanStartZone = NO_ZONE;
+	scanStartChannel = NO_CHANNEL;
 	uiDataGlobal.Scan.active = false;
 	if (dualWatchChannelData.dualWatchActive)
 	{
