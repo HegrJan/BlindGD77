@@ -131,6 +131,7 @@ static void updateTrxID(void);
 
 static char currentZoneName[SCREEN_LINE_BUFFER_SIZE];
 static int directChannelNumber = 0;
+static bool scanAllZones=false;
 
 static struct_codeplugChannel_t channelNextChannelData = { .rxFreq = 0 };
 static bool nextChannelReady = false;
@@ -615,6 +616,37 @@ static bool canCurrentZoneBeScanned(int *availableChannels)
 
 	return (enabledChannels > 1);
 }
+
+static void SetNextZoneToScanIfNeeded(int curChannelIndex)
+{
+	// detect and handle multizone scan.
+	if (!scanAllZones) return;
+
+	bool loadNextZone=false;
+
+	if (uiDataGlobal.Scan.direction == 1)	
+	{
+		loadNextZone=nextChannelIndex <= curChannelIndex;
+	}
+	else
+	{
+		loadNextZone=nextChannelIndex >= curChannelIndex;
+	}
+	
+	if (!loadNextZone) return;
+	
+	// record the current zone in case we cycle back to the same zone.
+	int prevZoneIndex=nonVolatileSettings.currentZone;
+	do 
+	{
+		selectPrevNextZone(uiDataGlobal.Scan.direction == 1);
+		if (nonVolatileSettings.currentZone==prevZoneIndex)
+			return;
+		if (nextChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_highestIndex)
+			nextChannelIndex =currentZone.NOT_IN_CODEPLUGDATA_highestIndex;
+	} while (canCurrentZoneBeScanned(&uiDataGlobal.Scan.availableChannelsCount) == false || CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone));
+}
+
 #if  defined(PLATFORM_GD77S) // GD77S vfo scan
 static bool InitGD77SScan()
 {
@@ -685,6 +717,7 @@ return false;
 	return true;
 }
 #endif
+
 static void scanSearchForNextChannel(void)
 {
 	if (DoDualWatchScan())
@@ -697,7 +730,7 @@ static void scanSearchForNextChannel(void)
 #endif
 
 	int channel = 0;
-
+	int curChannelIndex=nextChannelIndex;
 	// All Channels virtual zone
 	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 	{
@@ -709,12 +742,12 @@ static void scanSearchForNextChannel(void)
 				nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 						((((nextChannelIndex - 1) + 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1) :
 						((((nextChannelIndex - 1) + currentZone.NOT_IN_CODEPLUGDATA_highestIndex - 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1));
+				SetNextZoneToScanIfNeeded(curChannelIndex);
 			} while (!codeplugAllChannelsIndexIsInUse(nextChannelIndex));
 
 			// Check if the channel is skipped.
 			// Get flag4 only
 			codeplugChannelGetDataWithOffsetAndLengthForIndex(nextChannelIndex, &channelNextChannelData, CODEPLUG_CHANNEL_FLAG4_OFFSET, 1);
-
 		} while (CODEPLUG_CHANNEL_IS_FLAG_SET(&channelNextChannelData, CODEPLUG_CHANNEL_FLAG_ALL_SKIP));
 
 		channel = nextChannelIndex;
@@ -728,6 +761,7 @@ static void scanSearchForNextChannel(void)
 			nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 					((nextChannelIndex + 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone) :
 					((nextChannelIndex + currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone));
+			SetNextZoneToScanIfNeeded(curChannelIndex);
 
 			// Check if the channel is skipped.
 			// Get flag4 only
@@ -754,7 +788,7 @@ static void scanSearchForNextChannel(void)
 			}
 		}
 	}
-
+	
 	nextChannelReady = true;
 }
 
@@ -1211,7 +1245,7 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		// stop the scan on any button except UP without Shift (allows scan to be manually continued)
 		// or SK2 on its own (allows Backlight to be triggered)
-		if (((ev->keys.key == KEY_UP) && BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) == false)
+		if (ev->keys.key != KEY_UP)
 		{
 			uiChannelModeStopScanning();
 			keyboardReset();
@@ -1937,19 +1971,10 @@ static void handleEvent(uiEvent_t *ev)
 			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 			uiChannelModeUpdateScreen(0);
 		}
-		else if (KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
 		{
 			handleUpKey(ev);
 			return;
-		}
-		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_UP) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{
-			StopDualWatch(true); // change to regular scan.
-
-			if (uiDataGlobal.Scan.active == false)
-			{
-				scanStart(true);
-			}
 		}
 		else
 		{
@@ -2048,8 +2073,22 @@ static void selectPrevNextZone(bool nextZone)
 static void handleUpKey(uiEvent_t *ev)
 {
 	uiDataGlobal.displaySquelch = false;
-	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+	bool longHoldUp = KEYCHECK_LONGDOWN(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP);
+	bool sk2held=BUTTONCHECK_DOWN(ev, BUTTON_SK2);
+	if (sk2held || longHoldUp)
 	{
+		// long hold sk2+up scan all zones.
+		if (longHoldUp)
+		{
+			if (codeplugZonesGetCount() > 1)
+				scanAllZones=sk2held;
+			if (!uiDataGlobal.Scan.active)
+			{
+				StopDualWatch(true); // change to regular scan.
+				scanStart(true);
+			}
+			return;
+		}
 		selectPrevNextZone(true);
 		menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, false);
 		uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN; // Force screen redraw
@@ -2887,6 +2926,7 @@ static void scanning(void)
 
 void uiChannelModeStopScanning(void)
 {
+	scanAllZones=false;
 	uiDataGlobal.Scan.active = false;
 	if (dualWatchChannelData.dualWatchActive)
 	{
