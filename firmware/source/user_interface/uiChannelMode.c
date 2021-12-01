@@ -644,6 +644,9 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 			return;
 		if (nextChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_highestIndex)
 			nextChannelIndex =currentZone.NOT_IN_CODEPLUGDATA_highestIndex;
+#if  defined(PLATFORM_GD77S)
+		GD77SParameters.channelbankOffset=(nextChannelIndex/16)*16;
+#endif
 	} while (canCurrentZoneBeScanned(&uiDataGlobal.Scan.availableChannelsCount) == false || CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone));
 }
 
