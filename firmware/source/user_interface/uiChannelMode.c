@@ -112,9 +112,9 @@ static uint16_t getCurrentChannelInCurrentZoneForGD77S(void);
 
 #else // ! PLATFORM_GD77S
 
-static void selectPrevNextZone(bool nextZone);
 static void handleUpKey(uiEvent_t *ev);
 #endif // PLATFORM_GD77S
+static void selectPrevNextZone(bool nextZone);
 
 static void handleEvent(uiEvent_t *ev);
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement);
@@ -2023,12 +2023,12 @@ static void handleEvent(uiEvent_t *ev)
 	}
 #endif // ! PLATFORM_GD77S
 }
-
-#if ! defined(PLATFORM_GD77S)
+// This is used by GD77S scan for multizone scan or by GD77 etc for manual zone selection or multizone scan 
 static void selectPrevNextZone(bool nextZone)
 {
 	int numZones = codeplugZonesGetCount();
-	settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
+	if (!scanAllZones)
+		settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 	if (nextZone)
 	{
 		settingsIncrement(nonVolatileSettings.currentZone, 1);
@@ -2062,7 +2062,8 @@ static void selectPrevNextZone(bool nextZone)
 
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
-	settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
+	if (!scanAllZones)
+		settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
 	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 	
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
@@ -2070,6 +2071,7 @@ static void selectPrevNextZone(bool nextZone)
 	uiDataGlobal.priorityChannelActive=false;
 }
 
+#if ! defined(PLATFORM_GD77S)
 static void handleUpKey(uiEvent_t *ev)
 {
 	uiDataGlobal.displaySquelch = false;
@@ -4532,6 +4534,15 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_SCAN:
 					if (uiDataGlobal.Scan.active)
 					{
+						if ( scanAllZones==false)
+						{
+							scanAllZones=true;
+							voicePromptsInit();
+							voicePromptsAppendLanguageString(&currentLanguage->scan);
+							voicePromptsAppendLanguageString(&currentLanguage->all);
+							voicePromptsPlay();
+							return;
+						}
 						uiChannelModeStopScanning();
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiChannelModeUpdateScreen(0);
