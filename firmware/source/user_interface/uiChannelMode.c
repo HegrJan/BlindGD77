@@ -2094,8 +2094,16 @@ static void handleUpKey(uiEvent_t *ev)
 				scanAllZones=sk2held;
 			if (!uiDataGlobal.Scan.active)
 			{
-				StopDualWatch(true); // change to regular scan.
-				scanStart(true);
+				StopDualWatch(true); // change to regular scan.//joe
+				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+				{
+					voicePromptsInit();
+					voicePromptsAppendLanguageString(&currentLanguage->scan);
+					if (scanAllZones)
+						voicePromptsAppendLanguageString(&currentLanguage->all);
+					voicePromptsPlay();
+				}
+				scanStart(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 			}
 			return;
 		}
@@ -2737,11 +2745,6 @@ static void scanStart(bool longPressBeep)
 		return;
 	}
 
-	if (voicePromptsIsPlaying())
-	{
-		voicePromptsTerminate();
-	}
-
 	directChannelNumber = 0;
 	uiDataGlobal.Scan.direction = 1;
 
@@ -2831,6 +2834,7 @@ static void updateTrxID(void)
 
 static void scanning(void)
 {
+	if (voicePromptsIsPlaying()) return;
 	// If Dual Watch is active, only hold and pause are relevant since we want to continue watching both channels until cancelled.
 	int scanMode=nonVolatileSettings.scanModePause;
 	if (dualWatchChannelData.dualWatchActive && scanMode==SCAN_MODE_STOP )
