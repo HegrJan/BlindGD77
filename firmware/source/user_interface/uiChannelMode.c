@@ -2070,9 +2070,10 @@ static void selectPrevNextZone(bool nextZone)
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
 	if (!scanAllZones)
+	{
 		settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
-	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-	
+		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	}
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
 	EnsurePriorityChannelIsSet();
 	uiDataGlobal.priorityChannelActive=false;
