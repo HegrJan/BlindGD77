@@ -3159,20 +3159,9 @@ static void scanning(void)
 		if (screenOperationMode[nonVolatileSettings.currentVFONumber] == VFO_SCREEN_OPERATION_SCAN)
 		{
 			//check all nuisance delete entries and skip channel if there is a match
-			for(int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
+			if (ScanShouldSkipFrequency(currentChannelData->rxFreq))
 			{
-				if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
-				{
-					break;
-				}
-				else
-				{
-					if(uiDataGlobal.Scan.nuisanceDelete[i] == currentChannelData->rxFreq)
-					{
-						uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;
-						break;
-					}
-				}
+				uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;
 			}
 		}
 	}

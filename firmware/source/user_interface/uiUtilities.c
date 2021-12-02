@@ -3656,3 +3656,22 @@ void AnnounceLastHeardContactIfNeeded()
 	
 	voicePromptsPlay();
 }
+
+bool ScanShouldSkipFrequency(uint32_t freq)
+{
+	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
+	{
+		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
+		{
+			break;
+		}
+		else
+		{
+			if(uiDataGlobal.Scan.nuisanceDelete[i] == freq)
+			{
+				return true;
+			}
+		}
+	}
+	return false;	
+}

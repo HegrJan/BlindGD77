@@ -654,6 +654,21 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 	} while (canCurrentZoneBeScanned(&uiDataGlobal.Scan.availableChannelsCount) == false || CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone));
 }
 
+static void AddFrequencyToNuisanceList(uint32_t freq)
+{
+				// There is two channels available in the Zone, just stop scanning
+	if (!scanAllZones && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
+	{
+		uiDataGlobal.Scan.lastIteration = true;
+	}
+
+	uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = freq;
+	uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
+	uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
+	uiDataGlobal.Scan.state = SCAN_SCANNING;
+	keyboardReset();
+}
+
 #if  defined(PLATFORM_GD77S) // GD77S vfo scan
 static bool InitGD77SScan()
 {
@@ -697,25 +712,9 @@ return false;
 		else
 			freq = nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A];
 	}
-	//check all nuisance delete entries and skip channel if there is a match
-	bool skipped=false;
-	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
-	{
-		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
-		{
-			break;
-		}
-		else
-		{
-			if(uiDataGlobal.Scan.nuisanceDelete[i] == freq)
-			{
-				skipped=true;
-				break;
-			}
-		}
-	}
 	settingsVFOChannel[CHANNEL_VFO_A].txFreq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq=freq;
-	if (skipped)
+	//check all nuisance delete entries and skip channel if there is a match
+	if (ScanShouldSkipFrequency(freq))
 		return true;
 	memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
@@ -778,20 +777,8 @@ static void scanSearchForNextChannel(void)
 	}
 
 	//check all nuisance delete entries and skip channel if there is a match
-	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
-	{
-		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
-		{
-			break;
-		}
-		else
-		{
-			if(uiDataGlobal.Scan.nuisanceDelete[i] == channelNextChannelData.rxFreq)
-			{
-				return;
-			}
-		}
-	}
+	if (ScanShouldSkipFrequency(channelNextChannelData.rxFreq)) 
+		return;
 	
 	nextChannelReady = true;
 }
@@ -1225,17 +1212,7 @@ static void handleEvent(uiEvent_t *ev)
 			// if we are scanning and down key is pressed then enter current channel into nuisance delete array.
 			if((uiDataGlobal.Scan.state == SCAN_PAUSED) && (ev->keys.key == KEY_RIGHT))
 			{
-				// There is two channels available in the Zone, just stop scanning
-				if (uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
-				{
-					uiDataGlobal.Scan.lastIteration = true;
-				}
-
-				uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = currentChannelData->rxFreq;
-				uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
-				uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
-				uiDataGlobal.Scan.state = SCAN_SCANNING;
-				keyboardReset();
+				AddFrequencyToNuisanceList(currentChannelData->rxFreq);
 				return;
 			}
 
@@ -4798,16 +4775,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 						// if we are scanning and down key is pressed then enter current channel into nuisance delete array.
 						if(uiDataGlobal.Scan.state == SCAN_PAUSED)
 						{
-							// There is two channels available in the Zone, just stop scanning
-							if (!GD77SParameters.virtualVFOMode && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
-							{
-								uiDataGlobal.Scan.lastIteration = true;
-							}
-							uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = currentChannelData->rxFreq;
-							uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
-							uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
-							uiDataGlobal.Scan.state = SCAN_SCANNING;
-							keyboardReset();
+							AddFrequencyToNuisanceList(currentChannelData->rxFreq);
 
 							return;
 						}

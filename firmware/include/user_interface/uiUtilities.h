@@ -207,4 +207,5 @@ void SetBit(uint8_t* bits, int whichBit, bool set);
 void resetOriginalSettingsData(void);
 void AnnounceLastHeardContact();
 void AnnounceLastHeardContactIfNeeded();
+bool ScanShouldSkipFrequency(uint32_t freq);
 #endif
