@@ -2101,6 +2101,9 @@ static void handleUpKey(uiEvent_t *ev)
 					voicePromptsAppendLanguageString(&currentLanguage->scan);
 					if (scanAllZones)
 						voicePromptsAppendLanguageString(&currentLanguage->all);
+					else
+						voicePromptsAppendLanguageString(&currentLanguage->zone);
+
 					voicePromptsPlay();
 				}
 				scanStart(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
