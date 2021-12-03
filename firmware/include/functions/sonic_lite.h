@@ -27,7 +27,7 @@ extern "C" {
 #define SONIC_SAMPLE_RATE 8000
 // uncomment the following to track sonic memory usage.
 // long hold SK1 will speak memory usage after channel summary.
-//#define SONIC_MEM_TRACK
+//#define SONIC_MEM_TRACK 1
 
 /* This is the number of samples in the buffer size passed to Sonic.  */
 #define SONIC_INPUT_SAMPLES 80
