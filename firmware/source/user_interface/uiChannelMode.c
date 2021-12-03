@@ -4035,7 +4035,7 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 		case GD77S_OPTION_VHF_SQUELCH:
 		case GD77S_OPTION_UHF_SQUELCH:
 		{
-			int band=GD77SParameters.option-GD77S_OPTION_VHF_SQUELCH;
+			int band=GD77SParameters.option==GD77S_OPTION_VHF_SQUELCH?RADIO_BAND_VHF : RADIO_BAND_UHF;
 			if (dir > 0)
 			{
 				if (nonVolatileSettings.squelchDefaults[band] < CODEPLUG_MAX_VARIABLE_SQUELCH)
@@ -4045,16 +4045,14 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			}
 			else if (dir < 0)
 			{
-				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] > 1)
+				if (nonVolatileSettings.squelchDefaults[band] > 1)
 				{
 					settingsDecrement(nonVolatileSettings.squelchDefaults[band], 1);
 				}
 			}
 			else
 			{
-				nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]=10u;
-				nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz]=10u;
-				nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF]=10u;
+				nonVolatileSettings.squelchDefaults[band]=10u;
 			}
 		}
 		case GD77S_OPTION_TOT_MASTER:
