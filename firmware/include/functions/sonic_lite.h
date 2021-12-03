@@ -25,6 +25,9 @@ extern "C" {
 
 /* This is the sample frequency.  You must hard-code it rather than passing it in. */
 #define SONIC_SAMPLE_RATE 8000
+// uncomment the following to track sonic memory usage.
+// long hold SK1 will speak memory usage after channel summary.
+//#define SONIC_MEM_TRACK
 
 /* This is the number of samples in the buffer size passed to Sonic.  */
 #define SONIC_INPUT_SAMPLES 80
@@ -46,6 +49,12 @@ int sonicSamplesAvailable(void);
 void sonicSetSpeed(float speed);
 /* Set the scaling factor of the stream. */
 void sonicSetVolume(float volume);
+
+
+#ifdef SONIC_MEM_TRACK
+int sonicGetMaxInput();
+int sonicGetMaxOutput();
+#endif
 
 #ifdef __cplusplus
 }

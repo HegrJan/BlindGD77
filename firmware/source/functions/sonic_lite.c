@@ -18,6 +18,11 @@
 // max observed was 1156
 #define SONIC_OUTPUT_BUFFER_SIZE 1200
 
+#ifdef SONIC_MEM_TRACK
+static int maxInput=0;
+static int maxOutput=0;
+#endif
+
 struct sonicStruct {
   short inputBuffer[SONIC_INPUT_BUFFER_SIZE];
   short outputBuffer [SONIC_OUTPUT_BUFFER_SIZE];
@@ -84,6 +89,12 @@ static int addShortSamplesToInputBuffer(short *samples,
   memcpy(sonicStream.inputBuffer + sonicStream.numInputSamples,
          samples, numSamples * sizeof(short));
   sonicStream.numInputSamples += numSamples;
+
+#ifdef SONIC_MEM_TRACK
+  if (sonicStream.numInputSamples >maxInput)
+	  maxInput=sonicStream.numInputSamples;
+#endif
+
   return 1;
 }
 
@@ -104,6 +115,11 @@ static void copyToOutput(short *samples, int numSamples) {
   memcpy(sonicStream.outputBuffer + sonicStream.numOutputSamples,
          samples, numSamples * sizeof(short));
   sonicStream.numOutputSamples += numSamples;
+  
+#ifdef SONIC_MEM_TRACK
+  if (sonicStream.numOutputSamples > maxOutput)
+	  maxOutput=sonicStream.numOutputSamples;
+#endif
 }
 
 /* Just copy from the input buffer to the output buffer. */
@@ -369,3 +385,15 @@ void sonicWriteShortToStream(short *samples, int numSamples) {
   addShortSamplesToInputBuffer(samples, numSamples);
   processStreamInput();
 }
+#ifdef SONIC_MEM_TRACK
+
+int sonicGetMaxInput()
+{
+	return maxInput;
+}
+
+int sonicGetMaxOutput()
+{
+	return maxOutput;
+}
+#endif
