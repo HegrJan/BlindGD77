@@ -13,11 +13,14 @@
 #define SONIC_MAX_PERIOD (SONIC_SAMPLE_RATE / SONIC_MIN_PITCH)
 #define SONIC_MIN_PERIOD (SONIC_SAMPLE_RATE / SONIC_MAX_PITCH)
 #define SONIC_SKIP (SONIC_SAMPLE_RATE / SONIC_AMDF_FREQ)
-#define SONIC_INPUT_BUFFER_SIZE 984 
+// Max observed was 325 samples.
+#define SONIC_INPUT_BUFFER_SIZE 384
+// max observed was 1156
+#define SONIC_OUTPUT_BUFFER_SIZE 1200
 
 struct sonicStruct {
   short inputBuffer[SONIC_INPUT_BUFFER_SIZE];
-  short outputBuffer [SONIC_INPUT_BUFFER_SIZE];
+  short outputBuffer [SONIC_OUTPUT_BUFFER_SIZE];
   short downSampleBuffer[SONIC_INPUT_BUFFER_SIZE / SONIC_SKIP];
   float speed;
   float volume;
