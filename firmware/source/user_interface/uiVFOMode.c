@@ -2073,7 +2073,7 @@ static bool validateNewChannel(void)
 			memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);// Don't copy the name of the vfo, which are in the first 16 bytes
 			channelScreenChannelData.rxTone = currentChannelData->rxTone;
 			channelScreenChannelData.txTone = currentChannelData->txTone;
-
+			
 			// Codeplug string aren't NULL terminated.
 			snprintf(nameBuf, SCREEN_LINE_BUFFER_SIZE, "%s %d", currentLanguage->new_channel, newChannelIndex);
 			memset(&channelScreenChannelData.name, 0xFF, sizeof(channelScreenChannelData.name));
@@ -2088,23 +2088,29 @@ static bool validateNewChannel(void)
 			{
 				channelScreenChannelData.flag2 &= 0xBF;// Clear TS 2 bit
 			}
+			// If an autoZone is currently active, set the current zone to the last real physical zone since you can't save to an autoZone.
+			if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+			{// set the current zone to the last physical zone so the channel gets added there.
+				settingsSet(nonVolatileSettings.currentZone, (int16_t) (codeplugZonesGetRealCount() - 1));//set zone to all channels and channel index to free channel found
+				codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+			}
 
 			codeplugChannelSaveDataForIndex(newChannelIndex, &channelScreenChannelData);
 			codeplugAllChannelsIndexSetUsed(newChannelIndex, true); //Set channel index as valid
-
+			
 			// Check if currentZone is initialized
 			if (currentZone.NOT_IN_CODEPLUGDATA_indexNumber == 0xDEADBEEF)
 			{
 				uiChannelInitializeCurrentZone();
 			}
-
 			// check if its real zone and or the virtual zone "All Channels" whose index is -1
-			if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) || AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+			if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 			{
 				// All Channels virtual zone
 				settingsSet(nonVolatileSettings.currentZone, (int16_t) (codeplugZonesGetCount() - 1));//set zone to all channels and channel index to free channel found
 
 				settingsSet(nonVolatileSettings.currentChannelIndexInAllZone, newChannelIndex);// Change to the index of the new channel
+				settingsSetCurrentChannelIndexForZone(newChannelIndex, nonVolatileSettings.currentZone);
 
 				settingsSet(nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE], nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_VFO_A_MODE + nonVolatileSettings.currentVFONumber]);
 				currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone++;
@@ -2114,6 +2120,7 @@ static bool validateNewChannel(void)
 				if (codeplugZoneAddChannelToZoneAndSave(newChannelIndex, &currentZone))
 				{
 					settingsSet(nonVolatileSettings.currentChannelIndexInZone , currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1);
+					settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 				}
 				else
 				{
@@ -3201,20 +3208,9 @@ static void scanning(void)
 		if (screenOperationMode[nonVolatileSettings.currentVFONumber] == VFO_SCREEN_OPERATION_SCAN)
 		{
 			//check all nuisance delete entries and skip channel if there is a match
-			for(int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
+			if (ScanShouldSkipFrequency(currentChannelData->rxFreq))
 			{
-				if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
-				{
-					break;
-				}
-				else
-				{
-					if(uiDataGlobal.Scan.nuisanceDelete[i] == currentChannelData->rxFreq)
-					{
-						uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;
-						break;
-					}
-				}
+				uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;
 			}
 		}
 	}

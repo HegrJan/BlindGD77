@@ -13,15 +13,19 @@
 #define SONIC_MAX_PERIOD (SONIC_SAMPLE_RATE / SONIC_MIN_PITCH)
 #define SONIC_MIN_PERIOD (SONIC_SAMPLE_RATE / SONIC_MAX_PITCH)
 #define SONIC_SKIP (SONIC_SAMPLE_RATE / SONIC_AMDF_FREQ)
-<<<<<<< HEAD
-#define SONIC_INPUT_BUFFER_SIZE 720 // Do not increase or you risk memory corruption on GD77!
-=======
-#define SONIC_INPUT_BUFFER_SIZE 984 
->>>>>>> development
+// Max observed was 325 samples.
+#define SONIC_INPUT_BUFFER_SIZE 384
+// max observed was 1156
+#define SONIC_OUTPUT_BUFFER_SIZE 1200
+
+#ifdef SONIC_MEM_TRACK
+static int maxInput=0;
+static int maxOutput=0;
+#endif
 
 struct sonicStruct {
   short inputBuffer[SONIC_INPUT_BUFFER_SIZE];
-  short outputBuffer [SONIC_INPUT_BUFFER_SIZE];
+  short outputBuffer [SONIC_OUTPUT_BUFFER_SIZE];
   short downSampleBuffer[SONIC_INPUT_BUFFER_SIZE / SONIC_SKIP];
   float speed;
   float volume;
@@ -85,6 +89,12 @@ static int addShortSamplesToInputBuffer(short *samples,
   memcpy(sonicStream.inputBuffer + sonicStream.numInputSamples,
          samples, numSamples * sizeof(short));
   sonicStream.numInputSamples += numSamples;
+
+#ifdef SONIC_MEM_TRACK
+  if (sonicStream.numInputSamples >maxInput)
+	  maxInput=sonicStream.numInputSamples;
+#endif
+
   return 1;
 }
 
@@ -105,6 +115,11 @@ static void copyToOutput(short *samples, int numSamples) {
   memcpy(sonicStream.outputBuffer + sonicStream.numOutputSamples,
          samples, numSamples * sizeof(short));
   sonicStream.numOutputSamples += numSamples;
+  
+#ifdef SONIC_MEM_TRACK
+  if (sonicStream.numOutputSamples > maxOutput)
+	  maxOutput=sonicStream.numOutputSamples;
+#endif
 }
 
 /* Just copy from the input buffer to the output buffer. */
@@ -370,3 +385,15 @@ void sonicWriteShortToStream(short *samples, int numSamples) {
   addShortSamplesToInputBuffer(samples, numSamples);
   processStreamInput();
 }
+#ifdef SONIC_MEM_TRACK
+
+int sonicGetMaxInput()
+{
+	return maxInput;
+}
+
+int sonicGetMaxOutput()
+{
+	return maxOutput;
+}
+#endif

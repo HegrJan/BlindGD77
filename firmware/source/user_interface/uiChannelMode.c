@@ -38,6 +38,8 @@
 
 
 #define NAME_BUFFER_LEN   23
+#define NO_ZONE 255
+#define NO_CHANNEL -1
 
 #if defined(PLATFORM_GD77S)
 typedef enum
@@ -123,9 +125,9 @@ static uint16_t getCurrentChannelInCurrentZoneForGD77S(void);
 
 #else // ! PLATFORM_GD77S
 
-static void selectPrevNextZone(bool nextZone);
 static void handleUpKey(uiEvent_t *ev);
 #endif // PLATFORM_GD77S
+static void selectPrevNextZone(bool nextZone);
 
 static void handleEvent(uiEvent_t *ev);
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement);
@@ -142,6 +144,9 @@ static void updateTrxID(void);
 
 static char currentZoneName[SCREEN_LINE_BUFFER_SIZE];
 static int directChannelNumber = 0;
+static bool scanAllZones=false;
+static int scanStartZone=NO_ZONE; //unset, must use 255 since autozones and all channels zone are negative.
+static int scanStartChannel=NO_CHANNEL; // unset
 
 static struct_codeplugChannel_t channelNextChannelData = { .rxFreq = 0 };
 static bool nextChannelReady = false;
@@ -680,6 +685,55 @@ static bool canCurrentZoneBeScanned(int *availableChannels)
 
 	return (enabledChannels > 1);
 }
+
+static void SetNextZoneToScanIfNeeded(int curChannelIndex)
+{
+	// detect and handle multizone scan.
+	if (!scanAllZones) return;
+
+	bool loadNextZone=false;
+
+	if (uiDataGlobal.Scan.direction == 1)	
+	{
+		loadNextZone=nextChannelIndex <= curChannelIndex;
+	}
+	else
+	{
+		loadNextZone=nextChannelIndex >= curChannelIndex;
+	}
+	
+	if (!loadNextZone) return;
+	
+	// record the current zone in case we cycle back to the same zone.
+	int prevZoneIndex=nonVolatileSettings.currentZone;
+	do 
+	{
+		selectPrevNextZone(uiDataGlobal.Scan.direction == 1);
+		if (nonVolatileSettings.currentZone==prevZoneIndex)
+			return;
+		if (nextChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_highestIndex)
+			nextChannelIndex =currentZone.NOT_IN_CODEPLUGDATA_highestIndex;
+#if  defined(PLATFORM_GD77S)
+		GD77SParameters.channelbankOffset=(nextChannelIndex/16)*16;
+#endif
+	} while (canCurrentZoneBeScanned(&uiDataGlobal.Scan.availableChannelsCount) == false || CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone));
+}
+
+static void AddFrequencyToNuisanceList(uint32_t freq)
+{
+				// There is two channels available in the Zone, just stop scanning
+	if (!scanAllZones && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
+	{
+		uiDataGlobal.Scan.lastIteration = true;
+	}
+
+	uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = freq;
+	uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
+	uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
+	uiDataGlobal.Scan.state = SCAN_SCANNING;
+	keyboardReset();
+}
+
 #if  defined(PLATFORM_GD77S) // GD77S vfo scan
 static bool InitGD77SScan()
 {
@@ -723,25 +777,9 @@ return false;
 		else
 			freq = nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A];
 	}
-	//check all nuisance delete entries and skip channel if there is a match
-	bool skipped=false;
-	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
-	{
-		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
-		{
-			break;
-		}
-		else
-		{
-			if(uiDataGlobal.Scan.nuisanceDelete[i] == freq)
-			{
-				skipped=true;
-				break;
-			}
-		}
-	}
 	settingsVFOChannel[CHANNEL_VFO_A].txFreq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq=freq;
-	if (skipped)
+	//check all nuisance delete entries and skip channel if there is a match
+	if (ScanShouldSkipFrequency(freq))
 		return true;
 	memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
@@ -750,6 +788,7 @@ return false;
 	return true;
 }
 #endif
+
 static void scanSearchForNextChannel(void)
 {
 	if (DoDualWatchScan())
@@ -761,8 +800,7 @@ static void scanSearchForNextChannel(void)
 	}
 #endif
 
-	int channel = 0;
-
+	int curChannelIndex=nextChannelIndex;
 	// All Channels virtual zone
 	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 	{
@@ -774,15 +812,14 @@ static void scanSearchForNextChannel(void)
 				nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 						((((nextChannelIndex - 1) + 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1) :
 						((((nextChannelIndex - 1) + currentZone.NOT_IN_CODEPLUGDATA_highestIndex - 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1));
+				SetNextZoneToScanIfNeeded(curChannelIndex);
 			} while (!codeplugAllChannelsIndexIsInUse(nextChannelIndex));
 
 			// Check if the channel is skipped.
 			// Get flag4 only
 			codeplugChannelGetDataWithOffsetAndLengthForIndex(nextChannelIndex, &channelNextChannelData, CODEPLUG_CHANNEL_FLAG4_OFFSET, 1);
-
 		} while (CODEPLUG_CHANNEL_IS_FLAG_SET(&channelNextChannelData, CODEPLUG_CHANNEL_FLAG_ALL_SKIP));
 
-		channel = nextChannelIndex;
 		codeplugChannelGetDataForIndex(nextChannelIndex, &channelNextChannelData);
 	}
 	else
@@ -793,6 +830,7 @@ static void scanSearchForNextChannel(void)
 			nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 					((nextChannelIndex + 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone) :
 					((nextChannelIndex + currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone));
+			SetNextZoneToScanIfNeeded(curChannelIndex);
 
 			// Check if the channel is skipped.
 			// Get flag4 only
@@ -800,26 +838,13 @@ static void scanSearchForNextChannel(void)
 
 		} while (CODEPLUG_CHANNEL_IS_FLAG_SET(&channelNextChannelData, CODEPLUG_CHANNEL_FLAG_ZONE_SKIP));
 
-		channel = currentZone.channels[nextChannelIndex];
 		codeplugChannelGetDataForIndex(currentZone.channels[nextChannelIndex], &channelNextChannelData);
 	}
 
 	//check all nuisance delete entries and skip channel if there is a match
-	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
-	{
-		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
-		{
-			break;
-		}
-		else
-		{
-			if(uiDataGlobal.Scan.nuisanceDelete[i] == channel)
-			{
-				return;
-			}
-		}
-	}
-
+	if (ScanShouldSkipFrequency(channelNextChannelData.rxFreq)) 
+		return;
+	
 	nextChannelReady = true;
 }
 
@@ -1252,17 +1277,7 @@ static void handleEvent(uiEvent_t *ev)
 			// if we are scanning and down key is pressed then enter current channel into nuisance delete array.
 			if((uiDataGlobal.Scan.state == SCAN_PAUSED) && (ev->keys.key == KEY_RIGHT))
 			{
-				// There is two channels available in the Zone, just stop scanning
-				if (uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
-				{
-					uiDataGlobal.Scan.lastIteration = true;
-				}
-
-				uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = uiDataGlobal.currentSelectedChannelNumber;
-				uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
-				uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
-				uiDataGlobal.Scan.state = SCAN_SCANNING;
-				keyboardReset();
+				AddFrequencyToNuisanceList(currentChannelData->rxFreq);
 				return;
 			}
 
@@ -1276,7 +1291,7 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		// stop the scan on any button except UP without Shift (allows scan to be manually continued)
 		// or SK2 on its own (allows Backlight to be triggered)
-		if (((ev->keys.key == KEY_UP) && BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) == false)
+		if (ev->keys.key != KEY_UP)
 		{
 			uiChannelModeStopScanning();
 			keyboardReset();
@@ -2010,19 +2025,10 @@ static void handleEvent(uiEvent_t *ev)
 			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 			uiChannelModeUpdateScreen(0);
 		}
-		else if (KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
 		{
 			handleUpKey(ev);
 			return;
-		}
-		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_UP) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{
-			StopDualWatch(true); // change to regular scan.
-
-			if (uiDataGlobal.Scan.active == false)
-			{
-				scanStart(true);
-			}
 		}
 		else
 		{
@@ -2071,12 +2077,12 @@ static void handleEvent(uiEvent_t *ev)
 	}
 #endif // ! PLATFORM_GD77S
 }
-
-#if ! defined(PLATFORM_GD77S)
+// This is used by GD77S scan for multizone scan or by GD77 etc for manual zone selection or multizone scan 
 static void selectPrevNextZone(bool nextZone)
 {
 	int numZones = codeplugZonesGetCount();
-	settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
+	if (!scanAllZones)
+		settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 	if (nextZone)
 	{
 		settingsIncrement(nonVolatileSettings.currentZone, 1);
@@ -2110,19 +2116,47 @@ static void selectPrevNextZone(bool nextZone)
 
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
-	settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
-	currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
-	
+	if (!scanAllZones)
+	{
+		settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
+		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	}
 	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
 	EnsurePriorityChannelIsSet();
 	uiDataGlobal.priorityChannelActive=false;
 }
 
+#if ! defined(PLATFORM_GD77S)
 static void handleUpKey(uiEvent_t *ev)
 {
 	uiDataGlobal.displaySquelch = false;
-	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+	bool longHoldUp = KEYCHECK_LONGDOWN(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP);
+	bool sk2held=BUTTONCHECK_DOWN(ev, BUTTON_SK2);
+	if (sk2held || longHoldUp)
 	{
+		// long hold sk2+up scan all zones.
+		if (longHoldUp)
+		{
+			if (codeplugZonesGetCount() > 1)
+				scanAllZones=sk2held;
+			if (!uiDataGlobal.Scan.active)
+			{
+				StopDualWatch(true); // change to regular scan.
+				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+				{
+					voicePromptsInit();
+					voicePromptsAppendLanguageString(&currentLanguage->scan);
+					if (scanAllZones)
+						voicePromptsAppendLanguageString(&currentLanguage->all);
+					else
+						voicePromptsAppendLanguageString(&currentLanguage->zone);
+
+					voicePromptsPlay();
+				}
+				scanStart(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+			}
+			return;
+		}
 		selectPrevNextZone(true);
 		menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, false);
 		uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN; // Force screen redraw
@@ -2761,11 +2795,6 @@ static void scanStart(bool longPressBeep)
 		return;
 	}
 
-	if (voicePromptsIsPlaying())
-	{
-		voicePromptsTerminate();
-	}
-
 	directChannelNumber = 0;
 	uiDataGlobal.Scan.direction = 1;
 
@@ -2799,15 +2828,17 @@ static void scanStart(bool longPressBeep)
 	{
 		soundSetMelody(MELODY_KEY_LONG_BEEP);
 	}
-
+	scanStartZone=nonVolatileSettings.currentZone;
 	// Set current channel index
 	if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 	{
 		nextChannelIndex = nonVolatileSettings.currentChannelIndexInAllZone;
+		scanStartChannel=nonVolatileSettings.currentChannelIndexInAllZone;
 	}
 	else
 	{
 		nextChannelIndex = currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+		scanStartChannel=nonVolatileSettings.currentChannelIndexInZone;
 	}
 
 	nextChannelReady = false;
@@ -2853,6 +2884,7 @@ static void updateTrxID(void)
 
 static void scanning(void)
 {
+	if (voicePromptsIsPlaying()) return;
 	// If Dual Watch is active, only hold and pause are relevant since we want to continue watching both channels until cancelled.
 	int scanMode=nonVolatileSettings.scanModePause;
 	if (dualWatchChannelData.dualWatchActive && scanMode==SCAN_MODE_STOP )
@@ -2893,6 +2925,7 @@ static void scanning(void)
 			if(trxCarrierDetected())
 			{
 				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
+
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
 
@@ -2960,6 +2993,28 @@ static void scanning(void)
 
 void uiChannelModeStopScanning(void)
 {
+	scanAllZones=false;
+	// If these are still set, return to them.
+	// Nothing was found during the scan.
+	if (uiDataGlobal.Scan.state == SCAN_SCANNING)
+	{
+		if ((scanStartZone!=NO_ZONE) && (scanStartZone !=nonVolatileSettings.currentZone))
+		{
+			settingsSet(nonVolatileSettings.currentZone, scanStartZone);
+			currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
+	
+			codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+		}
+		if (scanStartChannel!=NO_CHANNEL)
+		{
+			if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
+				settingsSet(nonVolatileSettings.currentChannelIndexInAllZone, (int16_t) scanStartChannel);
+			else
+				settingsSetCurrentChannelIndexForZone((int16_t) scanStartChannel, nonVolatileSettings.currentZone);
+		}
+	}
+	scanStartZone = NO_ZONE;
+	scanStartChannel = NO_CHANNEL;
 	uiDataGlobal.Scan.active = false;
 	if (dualWatchChannelData.dualWatchActive)
 	{
@@ -4183,7 +4238,7 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 		case GD77S_OPTION_VHF_SQUELCH:
 		case GD77S_OPTION_UHF_SQUELCH:
 		{
-			int band=GD77SParameters.option-GD77S_OPTION_VHF_SQUELCH;
+			int band=GD77SParameters.option==GD77S_OPTION_VHF_SQUELCH?RADIO_BAND_VHF : RADIO_BAND_UHF;
 			if (dir > 0)
 			{
 				if (nonVolatileSettings.squelchDefaults[band] < CODEPLUG_MAX_VARIABLE_SQUELCH)
@@ -4193,16 +4248,14 @@ static void SetGD77Option(int dir) // 0 default, 1 increment, -1 decrement
 			}
 			else if (dir < 0)
 			{
-				if (nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] > 1)
+				if (nonVolatileSettings.squelchDefaults[band] > 1)
 				{
 					settingsDecrement(nonVolatileSettings.squelchDefaults[band], 1);
 				}
 			}
 			else
 			{
-				nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]=10u;
-				nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz]=10u;
-				nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF]=10u;
+				nonVolatileSettings.squelchDefaults[band]=10u;
 			}
 		}
 		case GD77S_OPTION_TOT_MASTER:
@@ -4711,6 +4764,15 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_SCAN:
 					if (uiDataGlobal.Scan.active)
 					{
+						if ( scanAllZones==false)
+						{
+							scanAllZones=true;
+							voicePromptsInit();
+							voicePromptsAppendLanguageString(&currentLanguage->scan);
+							voicePromptsAppendLanguageString(&currentLanguage->all);
+							voicePromptsPlay();
+							return;
+						}
 						uiChannelModeStopScanning();
 						uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 						uiChannelModeUpdateScreen(0);
@@ -4934,16 +4996,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 						// if we are scanning and down key is pressed then enter current channel into nuisance delete array.
 						if(uiDataGlobal.Scan.state == SCAN_PAUSED)
 						{
-							// There is two channels available in the Zone, just stop scanning
-							if (!GD77SParameters.virtualVFOMode && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
-							{
-								uiDataGlobal.Scan.lastIteration = true;
-							}
-							uiDataGlobal.Scan.nuisanceDelete[uiDataGlobal.Scan.nuisanceDeleteIndex] = GD77SParameters.virtualVFOMode ? currentChannelData->rxFreq : uiDataGlobal.currentSelectedChannelNumber;
-							uiDataGlobal.Scan.nuisanceDeleteIndex = (uiDataGlobal.Scan.nuisanceDeleteIndex + 1) % MAX_ZONE_SCAN_NUISANCE_CHANNELS;
-							uiDataGlobal.Scan.timer = SCAN_SKIP_CHANNEL_INTERVAL;	//force scan to continue;
-							uiDataGlobal.Scan.state = SCAN_SCANNING;
-							keyboardReset();
+							AddFrequencyToNuisanceList(currentChannelData->rxFreq);
 
 							return;
 						}

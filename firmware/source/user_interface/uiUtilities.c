@@ -38,6 +38,9 @@
 #include "functions/trx.h"
 #include "functions/autozone.h"
 
+//see sonic_lite.h
+#include "functions/sonic_lite.h"
+
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
 
 static __attribute__((section(".data.$RAM2"))) LinkItem_t callsList[NUM_LASTHEARD_STORED];
@@ -2855,6 +2858,18 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 
 		announceZoneName(voicePromptWasPlaying);
 	}
+
+#ifdef SONIC_MEM_TRACK
+	voicePromptsAppendPrompt(PROMPT_I);
+	voicePromptsAppendInteger(sonicGetMaxInput());
+	
+	voicePromptsAppendPrompt(PROMPT_O);
+	voicePromptsAppendInteger( sonicGetMaxOutput());
+	// settings struct size.
+	voicePromptsAppendPrompt(PROMPT_S);
+	voicePromptsAppendInteger(sizeof(nonVolatileSettings));
+#endif
+
 	voicePromptsPlay();
 }
 
@@ -3807,4 +3822,23 @@ void AnnounceLastHeardContactIfNeeded()
 	
 	voicePromptsPlay();
 >>>>>>> development
+}
+
+bool ScanShouldSkipFrequency(uint32_t freq)
+{
+	for (int i = 0; i < MAX_ZONE_SCAN_NUISANCE_CHANNELS; i++)
+	{
+		if (uiDataGlobal.Scan.nuisanceDelete[i] == -1)
+		{
+			break;
+		}
+		else
+		{
+			if(uiDataGlobal.Scan.nuisanceDelete[i] == freq)
+			{
+				return true;
+			}
+		}
+	}
+	return false;	
 }
