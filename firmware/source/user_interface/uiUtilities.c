@@ -2425,6 +2425,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 	case PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC:
 	case PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC:
 	case PROMPT_SEQUENCE_VFO_FREQ_UPDATE:
+	case PROMPT_SEQUENCE_VFO_SCAN_RANGE_UPDATE:
 	{
 		uint32_t lFreq, hFreq;
 
@@ -2435,7 +2436,8 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 			announceZoneName(voicePromptWasPlaying);
 		}
 		AnnounceLastHeardContact();
-		announceChannelNameOrVFOFrequency(voicePromptWasPlaying, (voicePromptSequenceState != PROMPT_SEQUENCE_VFO_FREQ_UPDATE));
+		if (voicePromptSequenceState!=PROMPT_SEQUENCE_VFO_SCAN_RANGE_UPDATE)
+			announceChannelNameOrVFOFrequency(voicePromptWasPlaying, (voicePromptSequenceState != PROMPT_SEQUENCE_VFO_FREQ_UPDATE));
 		if (uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
 		{
 			voicePromptsAppendPrompt(PROMPT_SCAN_MODE);

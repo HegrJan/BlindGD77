@@ -1169,10 +1169,13 @@ static void handleEvent(uiEvent_t *ev)
 					screenOperationMode[nonVolatileSettings.currentVFONumber] = VFO_SCREEN_OPERATION_NORMAL;
 					nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
 					uiVFOModeStopScanning();
-					voicePromptsInit();
-					voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
-					voicePromptsAppendLanguageString( &currentLanguage->off);
-					voicePromptsPlay();
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+					{
+						voicePromptsInit();
+						voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+						voicePromptsAppendLanguageString( &currentLanguage->off);
+						voicePromptsPlay();
+					}
 					keyboardReset();
 
 					return;
@@ -1206,7 +1209,7 @@ static void handleEvent(uiEvent_t *ev)
 						(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SWEEP))
 				{
 					scanInit();
-					announceItem(PROMPT_SEQUENCE_VFO_FREQ_UPDATE, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+					announceItem(PROMPT_SEQUENCE_VFO_SCAN_RANGE_UPDATE, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
 					
 					return;
 				}
