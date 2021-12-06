@@ -56,7 +56,7 @@ typedef enum
 	SWEEP_SETTING_RSSI,
 	SWEEP_SETTING_GAIN
 } sweepSetting_t;
-//joe
+
  HeaderScanIndicatorType_t uiVFOGetHeaderScanIndicatorType()
 {
 	if (uiVFOModeDualWatchIsScanning())
@@ -1169,6 +1169,12 @@ static void handleEvent(uiEvent_t *ev)
 					screenOperationMode[nonVolatileSettings.currentVFONumber] = VFO_SCREEN_OPERATION_NORMAL;
 					nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
 					uiVFOModeStopScanning();
+					voicePromptsInit();
+					voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+					voicePromptsAppendLanguageString( &currentLanguage->off);
+					voicePromptsPlay();
+					keyboardReset();
+
 					return;
 				}
 			}
@@ -1200,6 +1206,8 @@ static void handleEvent(uiEvent_t *ev)
 						(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SWEEP))
 				{
 					scanInit();
+					announceItem(PROMPT_SEQUENCE_VFO_FREQ_UPDATE, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+					
 					return;
 				}
 				else
@@ -1211,11 +1219,15 @@ static void handleEvent(uiEvent_t *ev)
 						if (uiDataGlobal.Scan.active == false)
 						{
 							uiDataGlobal.Scan.active = true;
-							if (voicePromptsIsPlaying())
+							if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 							{
-								voicePromptsTerminate();
+								voicePromptsInit();
+								voicePromptsAppendLanguageString(&currentLanguage->scan);
+								voicePromptsAppendLanguageString( &currentLanguage->start);
+								voicePromptsPlay();
 							}
-							soundSetMelody(MELODY_KEY_LONG_BEEP);
+							else
+								soundSetMelody(MELODY_KEY_LONG_BEEP);
 						}
 					}
 				}

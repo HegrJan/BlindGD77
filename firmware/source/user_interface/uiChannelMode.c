@@ -3523,7 +3523,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 
 		case GD77S_UIMODE_SCAN: // Scan
 			voicePromptsAppendLanguageString(&currentLanguage->scan);
-			voicePromptsAppendLanguageString(uiDataGlobal.Scan.active ? &currentLanguage->on : &currentLanguage->off);
+			voicePromptsAppendLanguageString(uiDataGlobal.Scan.active ? &currentLanguage->start : &currentLanguage->stop);
 			break;
 
 		case GD77S_UIMODE_TS: // Timeslot

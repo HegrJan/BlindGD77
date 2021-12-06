@@ -2678,6 +2678,9 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
 	
 	voicePromptsInit();
+	if (uiDataGlobal.Scan.active)
+		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+
 	AnnounceLastHeardContact();
 	if (announceName)
 	{
@@ -2690,7 +2693,6 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 
 	if (!isChannelScreen && uiVFOModeFrequencyScanningIsActiveAndEnabled(&lFreq, &hFreq))
 	{
-		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
 		voicePromptsAppendLanguageString(&currentLanguage->low);
 		announceQRG(lFreq, true);
 		voicePromptsAppendLanguageString(&currentLanguage->high);
