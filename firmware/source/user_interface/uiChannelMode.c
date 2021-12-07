@@ -139,6 +139,7 @@ static int scanStartChannel=NO_CHANNEL; // unset
 static struct_codeplugChannel_t channelNextChannelData = { .rxFreq = 0 };
 static bool nextChannelReady = false;
 static int nextChannelIndex = 0;
+static int scanZoneIndexApplied=0;
 static bool scobAlreadyTriggered = false;
 static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel confirmation window
 static bool quickmenuDeleteChannelHandled=false;
@@ -620,10 +621,10 @@ static bool canCurrentZoneBeScanned(int *availableChannels)
 	return (enabledChannels > 1);
 }
 
-static void SetNextZoneToScanIfNeeded(int curChannelIndex)
+static bool SetNextZoneToScanIfNeeded(int curChannelIndex)
 {
 	// detect and handle multizone scan.
-	if (!uiDataGlobal.Scan.scanAllZones) return;
+	if (!uiDataGlobal.Scan.scanAllZones) return false;
 
 	bool loadNextZone=false;
 
@@ -636,7 +637,7 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 		loadNextZone=nextChannelIndex >= curChannelIndex;
 	}
 	
-	if (!loadNextZone) return;
+	if (!loadNextZone) return false;
 	
 	// record the current zone in case we cycle back to the same zone.
 	int prevZoneIndex=nonVolatileSettings.currentZone;
@@ -644,13 +645,14 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 	{
 		selectPrevNextZone(uiDataGlobal.Scan.direction == 1);
 		if (nonVolatileSettings.currentZone==prevZoneIndex)
-			return;
+			return false;
 		if (nextChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_highestIndex)
 			nextChannelIndex =currentZone.NOT_IN_CODEPLUGDATA_highestIndex;
 #if  defined(PLATFORM_GD77S)
 		GD77SParameters.channelbankOffset=(nextChannelIndex/16)*16;
 #endif
 	} while (canCurrentZoneBeScanned(&uiDataGlobal.Scan.availableChannelsCount) == false || CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone));
+	return true;
 }
 
 static void AddFrequencyToNuisanceList(uint32_t freq)
@@ -746,7 +748,8 @@ static void scanSearchForNextChannel(void)
 				nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 						((((nextChannelIndex - 1) + 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1) :
 						((((nextChannelIndex - 1) + currentZone.NOT_IN_CODEPLUGDATA_highestIndex - 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1));
-				SetNextZoneToScanIfNeeded(curChannelIndex);
+				if (SetNextZoneToScanIfNeeded(curChannelIndex))
+					curChannelIndex=nextChannelIndex;
 			} while (!codeplugAllChannelsIndexIsInUse(nextChannelIndex));
 
 			// Check if the channel is skipped.
@@ -764,8 +767,9 @@ static void scanSearchForNextChannel(void)
 			nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 					((nextChannelIndex + 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone) :
 					((nextChannelIndex + currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone));
-			SetNextZoneToScanIfNeeded(curChannelIndex);
-
+			if (SetNextZoneToScanIfNeeded(curChannelIndex))
+				curChannelIndex=nextChannelIndex;
+			
 			// Check if the channel is skipped.
 			// Get flag4 only
 			codeplugChannelGetDataWithOffsetAndLengthForIndex(currentZone.channels[nextChannelIndex], &channelNextChannelData, CODEPLUG_CHANNEL_FLAG4_OFFSET, 1);
@@ -798,7 +802,7 @@ static void scanApplyNextChannel(void)
 	{
 		settingsSetCurrentChannelIndexForZone((int16_t) nextChannelIndex, nonVolatileSettings.currentZone);
 	}
-
+	scanZoneIndexApplied=nonVolatileSettings.currentZone;
 	lastHeardClearLastID();
 
 	memcpy(&channelScreenChannelData, &channelNextChannelData, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
@@ -2710,7 +2714,7 @@ static void scanStart(bool longPressBeep)
 		menuChannelExitStatus |= MENU_STATUS_ERROR;
 		return;
 	}
-
+	scanZoneIndexApplied = nonVolatileSettings.currentZone;
 	directChannelNumber = 0;
 	uiDataGlobal.Scan.direction = 1;
 
@@ -2798,6 +2802,22 @@ static void updateTrxID(void)
 	menuPrivateCallClear();
 }
 
+/*
+When scanning, there are two channel buffers, the current channel on which the radio is listening, and the next channel which is ready to be scanned.
+With zones however, we only use the currentZone which means that the currentZone may already be synchronized to the next channel rather than the current channel on which the signal is received.
+This means that if you hit long hold SK1 when a signal is being received, or stop the scan, the zone may be out of sync.
+To use two zone buffers would waste a lot of memory so instead we keep track of the zoneIndex at the time the scan channel was applied.
+When the scan stops or is paused, we restore the zone in the event it is synchronized with the next channel rather than the current.
+*/
+static void EnsureScanZoneIsSetToSameAsAppliedChannel()
+{
+	if (scanZoneIndexApplied == nonVolatileSettings.currentZone) 
+		return;
+	// currentZone has already been updated to point to the next scan channel, bring it back to the one containing the received channel.
+	settingsSet(nonVolatileSettings.currentZone, scanZoneIndexApplied);
+	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+}
+
 static void scanning(void)
 {
 	if (voicePromptsIsPlaying()) return;
@@ -2815,6 +2835,7 @@ static void scanning(void)
 				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
 		{
 			uiDataGlobal.Scan.state = SCAN_PAUSED;
+			EnsureScanZoneIsSetToSameAsAppliedChannel();
 
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 			// Reload the channel as voice prompts aren't set while scanning
@@ -2823,7 +2844,6 @@ static void scanning(void)
 				loadChannelData(true, true);
 			}
 #endif
-
 			if (scanMode == SCAN_MODE_STOP)
 			{
 				uiChannelModeStopScanning();
@@ -2841,6 +2861,7 @@ static void scanning(void)
 			if(trxCarrierDetected())
 			{
 				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
+				EnsureScanZoneIsSetToSameAsAppliedChannel();
 
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
