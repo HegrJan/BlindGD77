@@ -75,7 +75,7 @@ uiDataGlobal_t uiDataGlobal =
 				.scanSweepCurrentFreq		= 0,
 				.sweepSampleIndex			= 0,
 				.sweepSampleIndexIncrement	= 1,
-
+				.scanAllZones=false
 		},
 
 		.QuickMenu =

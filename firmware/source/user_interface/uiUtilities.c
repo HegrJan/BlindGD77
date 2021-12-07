@@ -2541,6 +2541,21 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 	case PROMPT_SEQUENCE_CHANNEL_NUMBER_AND_NAME:
 		announceChannelName(!voicePromptWasPlaying, true);
 		break;
+	case PROMPT_SEQUENCE_SCAN_TYPE:
+	{
+		if (uiDataGlobal.Scan.active)
+		{
+			voicePromptsAppendLanguageString(&currentLanguage->scan);
+			if (menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE)
+			{
+				if (uiDataGlobal.Scan.scanAllZones)
+					voicePromptsAppendLanguageString(&currentLanguage->all);
+				else
+					voicePromptsAppendLanguageString(&currentLanguage->zone);
+			}
+		}
+		break;
+	}	
 	default:
 		break;
 	}
@@ -2680,15 +2695,16 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
 	
 	voicePromptsInit();
-	if (uiDataGlobal.Scan.active)
-		voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
-
+	announceItemWithInit(false, PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY); // since this function calling does the init and play.
 	AnnounceLastHeardContact();
 	if (announceName)
 	{
-		announceChannelName(true, true);
+		if (isChannelScreen)
+			announceChannelName(true, true);
+		else
+			announceVFOChannelName();
 	}
-	
+
 	announceFrequency();
 	
 	uint32_t lFreq, hFreq;

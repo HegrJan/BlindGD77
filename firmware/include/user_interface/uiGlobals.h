@@ -290,6 +290,7 @@ typedef struct
 		int					sweepSampleIndex;
 		int					sweepStepSizeIndex;
 		int					sweepSampleIndexIncrement;
+		bool scanAllZones;
 	} Scan;
 
 	struct

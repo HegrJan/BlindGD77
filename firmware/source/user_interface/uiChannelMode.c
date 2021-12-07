@@ -133,7 +133,6 @@ static void updateTrxID(void);
 
 static char currentZoneName[SCREEN_LINE_BUFFER_SIZE];
 static int directChannelNumber = 0;
-static bool scanAllZones=false;
 static int scanStartZone=NO_ZONE; //unset, must use 255 since autozones and all channels zone are negative.
 static int scanStartChannel=NO_CHANNEL; // unset
 
@@ -624,7 +623,7 @@ static bool canCurrentZoneBeScanned(int *availableChannels)
 static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 {
 	// detect and handle multizone scan.
-	if (!scanAllZones) return;
+	if (!uiDataGlobal.Scan.scanAllZones) return;
 
 	bool loadNextZone=false;
 
@@ -657,7 +656,7 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 static void AddFrequencyToNuisanceList(uint32_t freq)
 {
 				// There is two channels available in the Zone, just stop scanning
-	if (!scanAllZones && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
+	if (!uiDataGlobal.Scan.scanAllZones && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
 	{
 		uiDataGlobal.Scan.lastIteration = true;
 	}
@@ -2008,7 +2007,7 @@ static void handleEvent(uiEvent_t *ev)
 static void selectPrevNextZone(bool nextZone)
 {
 	int numZones = codeplugZonesGetCount();
-	if (!scanAllZones)
+	if (!uiDataGlobal.Scan.scanAllZones)
 		settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 	if (nextZone)
 	{
@@ -2043,7 +2042,7 @@ static void selectPrevNextZone(bool nextZone)
 
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
-	if (!scanAllZones)
+	if (!uiDataGlobal.Scan.scanAllZones)
 	{
 		settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
 		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
@@ -2065,22 +2064,12 @@ static void handleUpKey(uiEvent_t *ev)
 		if (longHoldUp)
 		{
 			if (codeplugZonesGetCount() > 1)
-				scanAllZones=sk2held;
+				uiDataGlobal.Scan.scanAllZones=sk2held;
 			if (!uiDataGlobal.Scan.active)
 			{
 				StopDualWatch(true); // change to regular scan.
-				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
-				{
-					voicePromptsInit();
-					voicePromptsAppendLanguageString(&currentLanguage->scan);
-					if (scanAllZones)
-						voicePromptsAppendLanguageString(&currentLanguage->all);
-					else
-						voicePromptsAppendLanguageString(&currentLanguage->zone);
-
-					voicePromptsPlay();
-				}
 				scanStart(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+				announceItem(PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_2);
 			}
 			return;
 		}
@@ -2920,7 +2909,7 @@ static void scanning(void)
 
 void uiChannelModeStopScanning(void)
 {
-	scanAllZones=false;
+	uiDataGlobal.Scan.scanAllZones=false;
 	// If these are still set, return to them.
 	// Nothing was found during the scan.
 	if (uiDataGlobal.Scan.state == SCAN_SCANNING)
@@ -4545,13 +4534,10 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_SCAN:
 					if (uiDataGlobal.Scan.active)
 					{
-						if ( scanAllZones==false)
+						if (uiDataGlobal.Scan.scanAllZones==false)
 						{
-							scanAllZones=true;
-							voicePromptsInit();
-							voicePromptsAppendLanguageString(&currentLanguage->scan);
-							voicePromptsAppendLanguageString(&currentLanguage->all);
-							voicePromptsPlay();
+							uiDataGlobal.Scan.scanAllZones=true;
+							announceItem(PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_2);
 							return;
 						}
 						uiChannelModeStopScanning();
