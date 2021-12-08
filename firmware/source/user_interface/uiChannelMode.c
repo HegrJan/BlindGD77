@@ -4580,7 +4580,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 
 					voicePromptsInit();
 					voicePromptsAppendLanguageString(&currentLanguage->scan);
-					voicePromptsAppendLanguageString(uiDataGlobal.Scan.active ? &currentLanguage->on : &currentLanguage->off);
+					voicePromptsAppendLanguageString(uiDataGlobal.Scan.active ? &currentLanguage->start : &currentLanguage->stop);
 					voicePromptsPlay();
 					break;
 
