@@ -2661,30 +2661,13 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
 	{
 		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-		{
-			int currentMenu = menuSystemGetCurrentMenuNumber();
-
-			if ((((currentMenu == UI_CHANNEL_MODE) && (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED))) ||
-					((currentMenu == UI_VFO_MODE) && ((uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED)) || uiDataGlobal.Scan.toneActive))) == false)
-			{
-				if (!voicePromptsIsPlaying())
-				{
-					// The following updates the VP buffer, in VFO mode only, and if frequency scanning mode is active
-					if (uiVFOModeFrequencyScanningIsActiveAndEnabled(NULL, NULL) && (voicePromptsDoesItContainPrompt(PROMPT_SCAN_MODE) == false))
-					{
-						voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
-					}
-
-					voicePromptsPlay();
-				}
-				else
-				{
-					voicePromptsTerminate();
-				}
-			}
-		}
-
-		return true;
+		{//joe
+			if (voicePromptsIsPlaying())
+				voicePromptsTerminate();
+			else
+				voicePromptsPlay();
+		}		
+	return true;
 	}
 
 	return false;

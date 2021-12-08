@@ -103,7 +103,6 @@ void voicePromptsAppendLanguageString(const char * const *);//Append a text from
 void voicePromptsPlay(void);// Starts prompt playback
 extern bool voicePromptsIsPlaying(void);
 bool voicePromptsHasDataToPlay(void);
-bool voicePromptsDoesItContainPrompt(voicePrompt_t prompt);
 void voicePromptsTerminate(void);
 bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress);
 

@@ -413,12 +413,3 @@ bool voicePromptsHasDataToPlay(void)
 {
 	return (voicePromptsCurrentSequence.Length > 0);
 }
-
-bool voicePromptsDoesItContainPrompt(voicePrompt_t prompt)
-{
-	if (voicePromptsCurrentSequence.Length > 0)
-	{
-		return (memchr(&voicePromptsCurrentSequence.Buffer[0], (int)prompt, voicePromptsCurrentSequence.Length) != NULL);
-	}
-	return false;
-}

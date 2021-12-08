@@ -1231,6 +1231,13 @@ static void handleEvent(uiEvent_t *ev)
 		// or SK2 on its own (allows Backlight to be triggered)
 		if (ev->keys.key != KEY_UP)
 		{
+			//if scanning is stopped via a key, we will return to the previous channel unless a signal is still being received.
+			// If the scan is stopped with green, however, we'll remain on the last channel even without a signal.
+			if (ev->keys.key == KEY_GREEN)
+			{
+				scanStartZone = NO_ZONE;
+				scanStartChannel = NO_CHANNEL;
+			}
 			uiChannelModeStopScanning();
 			keyboardReset();
 			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
