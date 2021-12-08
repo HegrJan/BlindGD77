@@ -56,7 +56,7 @@ typedef enum
 	SWEEP_SETTING_RSSI,
 	SWEEP_SETTING_GAIN
 } sweepSetting_t;
-//joe
+
  HeaderScanIndicatorType_t uiVFOGetHeaderScanIndicatorType()
 {
 	if (uiVFOModeDualWatchIsScanning())
@@ -849,7 +849,7 @@ static void handleEvent(uiEvent_t *ev)
 		// long hold sk1 now summarizes channel for all models.
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 		{
-			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2),false);
+			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2),true);
 			return;
 		}
 <<<<<<< HEAD
@@ -1177,6 +1177,15 @@ static void handleEvent(uiEvent_t *ev)
 					screenOperationMode[nonVolatileSettings.currentVFONumber] = VFO_SCREEN_OPERATION_NORMAL;
 					nextKeyBeepMelody = (int *)MELODY_ACK_BEEP;
 					uiVFOModeStopScanning();
+					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+					{
+						voicePromptsInit();
+						voicePromptsAppendPrompt(PROMPT_SCAN_MODE);
+						voicePromptsAppendLanguageString( &currentLanguage->off);
+						voicePromptsPlay();
+					}
+					keyboardReset();
+
 					return;
 				}
 			}
@@ -1208,6 +1217,8 @@ static void handleEvent(uiEvent_t *ev)
 						(screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SWEEP))
 				{
 					scanInit();
+					announceItem(PROMPT_SEQUENCE_VFO_SCAN_RANGE_UPDATE, AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+					
 					return;
 				}
 				else
@@ -1219,11 +1230,15 @@ static void handleEvent(uiEvent_t *ev)
 						if (uiDataGlobal.Scan.active == false)
 						{
 							uiDataGlobal.Scan.active = true;
-							if (voicePromptsIsPlaying())
+							if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
 							{
-								voicePromptsTerminate();
+								voicePromptsInit();
+								voicePromptsAppendLanguageString(&currentLanguage->scan);
+								voicePromptsAppendLanguageString( &currentLanguage->start);
+								voicePromptsPlay();
 							}
-							soundSetMelody(MELODY_KEY_LONG_BEEP);
+							else
+								soundSetMelody(MELODY_KEY_LONG_BEEP);
 						}
 					}
 				}

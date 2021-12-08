@@ -144,13 +144,13 @@ static void updateTrxID(void);
 
 static char currentZoneName[SCREEN_LINE_BUFFER_SIZE];
 static int directChannelNumber = 0;
-static bool scanAllZones=false;
 static int scanStartZone=NO_ZONE; //unset, must use 255 since autozones and all channels zone are negative.
 static int scanStartChannel=NO_CHANNEL; // unset
 
 static struct_codeplugChannel_t channelNextChannelData = { .rxFreq = 0 };
 static bool nextChannelReady = false;
 static int nextChannelIndex = 0;
+static int scanZoneIndexApplied=0;
 static bool scobAlreadyTriggered = false;
 static bool quickmenuChannelFromVFOHandled = false; // Quickmenu new channel confirmation window
 static bool quickmenuDeleteChannelHandled=false;
@@ -686,10 +686,10 @@ static bool canCurrentZoneBeScanned(int *availableChannels)
 	return (enabledChannels > 1);
 }
 
-static void SetNextZoneToScanIfNeeded(int curChannelIndex)
+static bool SetNextZoneToScanIfNeeded(int curChannelIndex)
 {
 	// detect and handle multizone scan.
-	if (!scanAllZones) return;
+	if (!uiDataGlobal.Scan.scanAllZones) return false;
 
 	bool loadNextZone=false;
 
@@ -702,7 +702,7 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 		loadNextZone=nextChannelIndex >= curChannelIndex;
 	}
 	
-	if (!loadNextZone) return;
+	if (!loadNextZone) return false;
 	
 	// record the current zone in case we cycle back to the same zone.
 	int prevZoneIndex=nonVolatileSettings.currentZone;
@@ -710,19 +710,20 @@ static void SetNextZoneToScanIfNeeded(int curChannelIndex)
 	{
 		selectPrevNextZone(uiDataGlobal.Scan.direction == 1);
 		if (nonVolatileSettings.currentZone==prevZoneIndex)
-			return;
+			return false;
 		if (nextChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_highestIndex)
 			nextChannelIndex =currentZone.NOT_IN_CODEPLUGDATA_highestIndex;
 #if  defined(PLATFORM_GD77S)
 		GD77SParameters.channelbankOffset=(nextChannelIndex/16)*16;
 #endif
 	} while (canCurrentZoneBeScanned(&uiDataGlobal.Scan.availableChannelsCount) == false || CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone));
+	return true;
 }
 
 static void AddFrequencyToNuisanceList(uint32_t freq)
 {
 				// There is two channels available in the Zone, just stop scanning
-	if (!scanAllZones && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
+	if (!uiDataGlobal.Scan.scanAllZones && uiDataGlobal.Scan.nuisanceDeleteIndex == (uiDataGlobal.Scan.availableChannelsCount - 2))
 	{
 		uiDataGlobal.Scan.lastIteration = true;
 	}
@@ -812,7 +813,8 @@ static void scanSearchForNextChannel(void)
 				nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 						((((nextChannelIndex - 1) + 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1) :
 						((((nextChannelIndex - 1) + currentZone.NOT_IN_CODEPLUGDATA_highestIndex - 1) % currentZone.NOT_IN_CODEPLUGDATA_highestIndex) + 1));
-				SetNextZoneToScanIfNeeded(curChannelIndex);
+				if (SetNextZoneToScanIfNeeded(curChannelIndex))
+					curChannelIndex=nextChannelIndex;
 			} while (!codeplugAllChannelsIndexIsInUse(nextChannelIndex));
 
 			// Check if the channel is skipped.
@@ -830,8 +832,9 @@ static void scanSearchForNextChannel(void)
 			nextChannelIndex = ((uiDataGlobal.Scan.direction == 1) ?
 					((nextChannelIndex + 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone) :
 					((nextChannelIndex + currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1) % currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone));
-			SetNextZoneToScanIfNeeded(curChannelIndex);
-
+			if (SetNextZoneToScanIfNeeded(curChannelIndex))
+				curChannelIndex=nextChannelIndex;
+			
 			// Check if the channel is skipped.
 			// Get flag4 only
 			codeplugChannelGetDataWithOffsetAndLengthForIndex(currentZone.channels[nextChannelIndex], &channelNextChannelData, CODEPLUG_CHANNEL_FLAG4_OFFSET, 1);
@@ -864,7 +867,7 @@ static void scanApplyNextChannel(void)
 	{
 		settingsSetCurrentChannelIndexForZone((int16_t) nextChannelIndex, nonVolatileSettings.currentZone);
 	}
-
+	scanZoneIndexApplied=nonVolatileSettings.currentZone;
 	lastHeardClearLastID();
 
 	memcpy(&channelScreenChannelData, &channelNextChannelData, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
@@ -1293,6 +1296,13 @@ static void handleEvent(uiEvent_t *ev)
 		// or SK2 on its own (allows Backlight to be triggered)
 		if (ev->keys.key != KEY_UP)
 		{
+			//if scanning is stopped via a key, we will return to the previous channel unless a signal is still being received.
+			// If the scan is stopped with green, however, we'll remain on the last channel even without a signal.
+			if (ev->keys.key == KEY_GREEN)
+			{
+				scanStartZone = NO_ZONE;
+				scanStartChannel = NO_CHANNEL;
+			}
 			uiChannelModeStopScanning();
 			keyboardReset();
 			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
@@ -2081,7 +2091,7 @@ static void handleEvent(uiEvent_t *ev)
 static void selectPrevNextZone(bool nextZone)
 {
 	int numZones = codeplugZonesGetCount();
-	if (!scanAllZones)
+	if (!uiDataGlobal.Scan.scanAllZones)
 		settingsSetCurrentChannelIndexForZone(nonVolatileSettings.currentChannelIndexInZone, nonVolatileSettings.currentZone);
 	if (nextZone)
 	{
@@ -2116,7 +2126,7 @@ static void selectPrevNextZone(bool nextZone)
 
 	tsSetManualOverride(CHANNEL_CHANNEL, TS_NO_OVERRIDE);// remove any TS override
 */
-	if (!scanAllZones)
+	if (!uiDataGlobal.Scan.scanAllZones)
 	{
 		settingsSet(nonVolatileSettings.currentChannelIndexInZone, settingsGetCurrentChannelIndexForZone(nonVolatileSettings.currentZone));
 		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
@@ -2138,22 +2148,12 @@ static void handleUpKey(uiEvent_t *ev)
 		if (longHoldUp)
 		{
 			if (codeplugZonesGetCount() > 1)
-				scanAllZones=sk2held;
+				uiDataGlobal.Scan.scanAllZones=sk2held;
 			if (!uiDataGlobal.Scan.active)
 			{
 				StopDualWatch(true); // change to regular scan.
-				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
-				{
-					voicePromptsInit();
-					voicePromptsAppendLanguageString(&currentLanguage->scan);
-					if (scanAllZones)
-						voicePromptsAppendLanguageString(&currentLanguage->all);
-					else
-						voicePromptsAppendLanguageString(&currentLanguage->zone);
-
-					voicePromptsPlay();
-				}
 				scanStart(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2);
+				announceItem(PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_2);
 			}
 			return;
 		}
@@ -2794,7 +2794,7 @@ static void scanStart(bool longPressBeep)
 		menuChannelExitStatus |= MENU_STATUS_ERROR;
 		return;
 	}
-
+	scanZoneIndexApplied = nonVolatileSettings.currentZone;
 	directChannelNumber = 0;
 	uiDataGlobal.Scan.direction = 1;
 
@@ -2882,6 +2882,22 @@ static void updateTrxID(void)
 	menuPrivateCallClear();
 }
 
+/*
+When scanning, there are two channel buffers, the current channel on which the radio is listening, and the next channel which is ready to be scanned.
+With zones however, we only use the currentZone which means that the currentZone may already be synchronized to the next channel rather than the current channel on which the signal is received.
+This means that if you hit long hold SK1 when a signal is being received, or stop the scan, the zone may be out of sync.
+To use two zone buffers would waste a lot of memory so instead we keep track of the zoneIndex at the time the scan channel was applied.
+When the scan stops or is paused, we restore the zone in the event it is synchronized with the next channel rather than the current.
+*/
+static void EnsureScanZoneIsSetToSameAsAppliedChannel()
+{
+	if (scanZoneIndexApplied == nonVolatileSettings.currentZone) 
+		return;
+	// currentZone has already been updated to point to the next scan channel, bring it back to the one containing the received channel.
+	settingsSet(nonVolatileSettings.currentZone, scanZoneIndexApplied);
+	codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
+}
+
 static void scanning(void)
 {
 	if (voicePromptsIsPlaying()) return;
@@ -2899,6 +2915,7 @@ static void scanning(void)
 				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
 		{
 			uiDataGlobal.Scan.state = SCAN_PAUSED;
+			EnsureScanZoneIsSetToSameAsAppliedChannel();
 
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 			// Reload the channel as voice prompts aren't set while scanning
@@ -2907,7 +2924,6 @@ static void scanning(void)
 				loadChannelData(true, true);
 			}
 #endif
-
 			if (scanMode == SCAN_MODE_STOP)
 			{
 				uiChannelModeStopScanning();
@@ -2925,6 +2941,7 @@ static void scanning(void)
 			if(trxCarrierDetected())
 			{
 				uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;		//state 1 = pause and test for valid signal that produces audio
+				EnsureScanZoneIsSetToSameAsAppliedChannel();
 
 #if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
@@ -2993,7 +3010,7 @@ static void scanning(void)
 
 void uiChannelModeStopScanning(void)
 {
-	scanAllZones=false;
+	uiDataGlobal.Scan.scanAllZones=false;
 	// If these are still set, return to them.
 	// Nothing was found during the scan.
 	if (uiDataGlobal.Scan.state == SCAN_SCANNING)
@@ -3714,7 +3731,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 
 		case GD77S_UIMODE_SCAN: // Scan
 			voicePromptsAppendLanguageString(&currentLanguage->scan);
-			voicePromptsAppendLanguageString(uiDataGlobal.Scan.active ? &currentLanguage->on : &currentLanguage->off);
+			voicePromptsAppendLanguageString(uiDataGlobal.Scan.active ? &currentLanguage->start : &currentLanguage->stop);
 			break;
 
 		case GD77S_UIMODE_TS: // Timeslot
@@ -4764,13 +4781,10 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_SCAN:
 					if (uiDataGlobal.Scan.active)
 					{
-						if ( scanAllZones==false)
+						if (uiDataGlobal.Scan.scanAllZones==false)
 						{
-							scanAllZones=true;
-							voicePromptsInit();
-							voicePromptsAppendLanguageString(&currentLanguage->scan);
-							voicePromptsAppendLanguageString(&currentLanguage->all);
-							voicePromptsPlay();
+							uiDataGlobal.Scan.scanAllZones=true;
+							announceItem(PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_2);
 							return;
 						}
 						uiChannelModeStopScanning();
