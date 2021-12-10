@@ -1649,3 +1649,26 @@ bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChanne
 	return false;
 }
 
+int codeplugGetDTMFContactIndex(char* name)
+{
+	if (!name || !*name) return 0;
+
+	int count=codeplugDTMFContactsGetCount();
+
+	for (int index= 1; index <= count; ++index)
+	{
+		struct_codeplugDTMFContact_t record;
+
+		if (codeplugDTMFContactGetDataForIndex(index, &record))
+		{
+			char buf[DTMF_NAME_MAX_LEN+1];
+
+			codeplugUtilConvertBufToString(record.name,buf, DTMF_NAME_MAX_LEN);
+			if (strcmp(name, buf)==0)
+			{
+				return index;
+			}
+		}
+	}
+return 0;
+}

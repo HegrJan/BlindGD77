@@ -90,6 +90,9 @@ typedef struct
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 	bool cycleFunctionsInReverse;
 	GD77S_OPTIONS_t option; // used in Options mode.
+	// the next two fields are used for autodialer feature.
+	uint16_t dialedChannels; // bit 0 ch1, bit 1 ch2, ... bit 15 ch 16.
+	uint16_t dialedZones; // bit 0 zone 1, bit 1 zone 2, ... bit 15 zone 16.
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -103,7 +106,9 @@ static GD77SParameters_t GD77SParameters =
 		.autoZoneTypeIndex=1,
 		.channelbankOffset=0,
 		.cycleFunctionsInReverse=false,
-		.option=GD77S_OPTION_POWER
+		.option=GD77S_OPTION_POWER,
+		.dialedChannels=0,
+		.dialedZones=0
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -3006,6 +3011,50 @@ static int GD77sSelectedCharIndex=0;
 static char GD77SKeypadBuffer[GD77S_KEYPAD_BUF_MAX]="\0";
 static int GD77SKeypadPos=0;
 
+static int GetDTMFContactIndexForZoneAndChannelAutoDial()
+{
+	if (GD77SParameters.dtmfListCount == 0)
+		return 0;
+	if (nonVolatileSettings.currentChannelIndexInZone > 15) return 0; // can only handle 16 channels (0 to 15)
+	if (nonVolatileSettings.currentZone > 15) return 0; // can only handle 16 zones (0 to 15)
+	
+	// See if we've already dialled this combination 	
+	if ((GD77SParameters.dialedZones&(1<<nonVolatileSettings.currentZone)) && (GD77SParameters.dialedChannels&(1<<nonVolatileSettings.currentChannelIndexInZone)))
+		return 0;
+	
+	char autoDialContactForZoneAndChannel[7];
+	snprintf(autoDialContactForZoneAndChannel, 7, "AD%02d%02d", nonVolatileSettings.currentZone+1, nonVolatileSettings.currentChannelIndexInZone + 1);
+	
+	return codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel);
+}
+
+static void ToggleGD77SDTMFAutoDialer(bool announce)
+{
+	bool alreadyDialed = (GD77SParameters.dialedZones&(1<<nonVolatileSettings.currentZone)) && (GD77SParameters.dialedChannels&(1<<nonVolatileSettings.currentChannelIndexInZone));
+	// Only toggle the channel bit as there may be more than one channel in this zone with a dtmf contact associated with it.
+	if (alreadyDialed)
+	{
+		GD77SParameters.dialedChannels&=~(1<<nonVolatileSettings.currentChannelIndexInZone);
+	}
+	else
+	{
+		GD77SParameters.dialedChannels|=(1<<nonVolatileSettings.currentChannelIndexInZone);
+	}
+	if (!announce)
+		return;
+	alreadyDialed=!alreadyDialed; // it was toggled above.
+	
+	voicePromptsInit();
+	
+	if (!voicePromptsIsPlaying())
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->Auto);
+		voicePromptsAppendLanguageString(&currentLanguage->contact);
+	}
+	voicePromptsAppendLanguageString(alreadyDialed ? &currentLanguage->off : &currentLanguage->on);
+	
+	voicePromptsPlay();
+}
 
 bool uiChannelModeTransmitDTMFContactForGD77S(void)
 {// if GD77SParameters.virtualVFOMode is true, we're setting frequency not dtmf code.
@@ -3030,7 +3079,9 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 
 		return false;	
 	}
-	if (GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS)
+	int onceOffChannelContactIndex = GetDTMFContactIndexForZoneAndChannelAutoDial();
+
+	if ((GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS) || (onceOffChannelContactIndex > 0))
 	{
 		if (GD77SParameters.dtmfListCount > 0)
 		{
@@ -3043,9 +3094,16 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 				{
 					voicePromptsTerminate();
 				}
-
-				codeplugDTMFContactGetDataForNumber(GD77SParameters.dtmfListSelected + 1, &dtmfContact);
+				bool dialingContactForChannel = (GD77SParameters.uiMode != GD77S_UIMODE_DTMF_CONTACTS) && (onceOffChannelContactIndex > 0);
+	uint16_t contactIndex = dialingContactForChannel ? onceOffChannelContactIndex : GD77SParameters.dtmfListSelected + 1;
+				codeplugDTMFContactGetDataForNumber(contactIndex, &dtmfContact);
 				dtmfSequencePrepare(dtmfContact.code, true);
+				// mark this as having been diled so it doesn't happen again this session.
+				if (dialingContactForChannel)
+				{
+					GD77SParameters.dialedZones|=(1<<nonVolatileSettings.currentZone);
+					GD77SParameters.dialedChannels|=(1<<nonVolatileSettings.currentChannelIndexInZone);
+				}
 			}
 			else
 			{
@@ -3739,6 +3797,39 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		}
 		announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
 		return true;	
+	}
+	if (strncmp(GD77SKeypadBuffer, "*#", 2)==0 && strlen(GD77SKeypadBuffer) > 8)
+	{// Add a DTMF contact name is first 6 chars after *#, code is rest of string.
+		char name[7]="\0";
+		char code[9]="\0";
+		strncpy(name, GD77SKeypadBuffer+2, 6);
+		name[6]='\0';
+		strncpy(code,GD77SKeypadBuffer+8,8);
+		code[8]='\0';
+		struct_codeplugDTMFContact_t tmpDTMFContact;
+		memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
+		codeplugUtilConvertStringToBuf(name, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
+		dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
+		int dtmfContactIndex =codeplugGetDTMFContactIndex(name);
+		if (dtmfContactIndex==0)
+			dtmfContactIndex=GD77SParameters.dtmfListCount+1;
+		voicePromptsInit();
+
+		if (((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
+			&& (tmpDTMFContact.name[0]!=0xFFU) && (tmpDTMFContact.code[0] != 0xFFU))
+		{
+			codeplugContactSaveDTMFDataForIndex(dtmfContactIndex, &tmpDTMFContact);
+			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
+			GD77SParameters.dtmfListSelected=dtmfContactIndex-1; // GD77S parameters uses 0-based index.
+			voicePromptsAppendString(name);
+			voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
+		}
+		else
+		{// error.
+			voicePromptsAppendLanguageString(&currentLanguage->list_full);
+		}
+		voicePromptsPlay();
+		return true;
 	}
 	if (strncmp(GD77SKeypadBuffer, "**", 2)==0)
 	{// set or clear channel specific power.
@@ -4732,13 +4823,20 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			}
 			else
 			{
-				if (!GD77SParameters.virtualVFOMode && AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+				if (!GD77SParameters.virtualVFOMode)
 				{
-					if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
-						GD77SParameters.channelbankOffset+=16;
+					if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
+					{
+						if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+							GD77SParameters.channelbankOffset+=16;
+						else
+							GD77SParameters.channelbankOffset=0;
+						checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
+					}
 					else
-						GD77SParameters.channelbankOffset=0;
-					checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
+					{// toggle  autodialer for this zone and channel combination.
+						ToggleGD77SDTMFAutoDialer(true);
+					}
 				}
 			}
 		}
