@@ -3006,7 +3006,7 @@ void uiChannelInitializeCurrentZone(void)
 }
 
 #if defined(PLATFORM_GD77S)
-#define GD77S_KEYPAD_BUF_MAX 17
+#define GD77S_KEYPAD_BUF_MAX 33
 static int GD77sSelectedCharIndex=0;
 static char GD77SKeypadBuffer[GD77S_KEYPAD_BUF_MAX]="\0";
 static int GD77SKeypadPos=0;
@@ -3069,8 +3069,8 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 		}			
 		if (GD77SKeypadBuffer[0])
 		{// convert the string to a dialing code.
-			uint8_t dtmfCodeBuffer[GD77S_KEYPAD_BUF_MAX];
-			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, GD77S_KEYPAD_BUF_MAX))
+			uint8_t dtmfCodeBuffer[DTMF_CODE_MAX_LEN+1];
+			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, DTMF_CODE_MAX_LEN))
 			{
 				dtmfSequencePrepare(dtmfCodeBuffer, true);
 				return true;
@@ -3798,36 +3798,48 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
 		return true;	
 	}
-	if (strncmp(GD77SKeypadBuffer, "*#", 2)==0 && strlen(GD77SKeypadBuffer) > 8)
+	if (strncmp(GD77SKeypadBuffer, "*#", 2)==0 && strlen(GD77SKeypadBuffer) >= 8)
 	{// Add a DTMF contact name is first 6 chars after *#, code is rest of string.
 		char name[7]="\0";
-		char code[9]="\0";
+		char code[DTMF_CODE_MAX_LEN+1]="\0";
 		strncpy(name, GD77SKeypadBuffer+2, 6);
 		name[6]='\0';
-		strncpy(code,GD77SKeypadBuffer+8,8);
-		code[8]='\0';
+		bool deleting=strlen(GD77SKeypadBuffer)==8;
+		if (!deleting)
+			strcpy(code,GD77SKeypadBuffer+8);
 		struct_codeplugDTMFContact_t tmpDTMFContact;
 		memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
 		codeplugUtilConvertStringToBuf(name, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
-		dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
+		
 		int dtmfContactIndex =codeplugGetDTMFContactIndex(name);
-		if (dtmfContactIndex==0)
+		// see if we are deleting the contact.
+		if (deleting)
+			memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
+		else
+			dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
+
+		if (dtmfContactIndex==0 && !deleting)
 			dtmfContactIndex=GD77SParameters.dtmfListCount+1;
 		voicePromptsInit();
 
-		if (((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
-			&& (tmpDTMFContact.name[0]!=0xFFU) && (tmpDTMFContact.code[0] != 0xFFU))
+		if ((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
 		{
 			codeplugContactSaveDTMFDataForIndex(dtmfContactIndex, &tmpDTMFContact);
 			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
 			GD77SParameters.dtmfListSelected=dtmfContactIndex-1; // GD77S parameters uses 0-based index.
 			voicePromptsAppendString(name);
+			if (deleting)
+			voicePromptsAppendLanguageString(&currentLanguage->contact_deleted);
+			else
 			voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
 		}
 		else
 		{// error.
-			voicePromptsAppendLanguageString(&currentLanguage->list_full);
-		}
+			if (dtmfContactIndex > CODEPLUG_DTMF_CONTACTS_MAX)
+				voicePromptsAppendLanguageString(&currentLanguage->list_full);
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->error);
+						}
 		voicePromptsPlay();
 		return true;
 	}
