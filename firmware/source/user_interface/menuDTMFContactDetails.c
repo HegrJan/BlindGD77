@@ -87,31 +87,6 @@ static void SetEditParamsForMenuIndex()
 	*editParams.cursorPos = SAFE_MIN(strlen(editParams.editBuffer), editParams.maxLen-1); // place cursor at end.
 }
 
-static bool DTMFContactExists(char* name)
-{
-	if (!name || !*name) return false;
-
-	int count=codeplugDTMFContactsGetCount();
-
-	for (int index= 1; index <= count; ++index)
-	{
-		char buf[DTMF_NAME_MAX_LEN];
-		struct_codeplugDTMFContact_t record;
-
-		if (codeplugDTMFContactGetDataForIndex(index, &record))
-		{
-			buf[0]='\0';
-			codeplugUtilConvertBufToString(record.name,buf, DTMF_NAME_MAX_LEN);
-			if (strcmp(name, buf)==0)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-	}
-
 menuStatus_t menuDTMFContactDetails(uiEvent_t *ev, bool isFirstRun)
 {
 	if (isFirstRun)
@@ -333,7 +308,7 @@ static void handleEvent(uiEvent_t *ev)
 				else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 				{
 					// Check existance.
-					if (createNew && (dtmfContactCount > 0) && DTMFContactExists(contactName))
+					if (createNew && (dtmfContactCount > 0) && codeplugGetDTMFContactIndex(contactName) > 0)
 					{
 						menuDTMFContactDetailsState=MENU_DTMF_CONTACT_DETAILS_EXISTS;
 						menuDTMFContactDetailsTimeout = 2000;
