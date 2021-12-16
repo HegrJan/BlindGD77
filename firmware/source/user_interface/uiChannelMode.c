@@ -3017,7 +3017,7 @@ static int GetDTMFContactIndexForZoneAndChannelAutoDial()
 		return 0;
 	if (nonVolatileSettings.currentChannelIndexInZone > 15) return 0; // can only handle 16 channels (0 to 15)
 	if (nonVolatileSettings.currentZone > 15) return 0; // can only handle 16 zones (0 to 15)
-	
+	if (trxGetMode() == RADIO_MODE_DIGITAL) return 0; // DTMF dialing disallowed for digital channels.
 	// See if we've already dialled this combination 	
 	if ((GD77SParameters.dialedZones&(1<<nonVolatileSettings.currentZone)) && (GD77SParameters.dialedChannels&(1<<nonVolatileSettings.currentChannelIndexInZone)))
 		return 0;
@@ -3025,6 +3025,11 @@ static int GetDTMFContactIndexForZoneAndChannelAutoDial()
 	char autoDialContactForZoneAndChannel[7];
 	snprintf(autoDialContactForZoneAndChannel, 7, "AD%02d%02d", nonVolatileSettings.currentZone+1, nonVolatileSettings.currentChannelIndexInZone + 1);
 	
+	int index = codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel);
+	if (index > 0)
+		return index;
+	// try again without zone 
+	snprintf(autoDialContactForZoneAndChannel, 7, "AD00%02d", nonVolatileSettings.currentChannelIndexInZone + 1);
 	return codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel);
 }
 
@@ -3039,11 +3044,11 @@ static void ToggleGD77SDTMFAutoDialer(bool announce)
 	else
 	{
 		GD77SParameters.dialedChannels|=(1<<nonVolatileSettings.currentChannelIndexInZone);
+		GD77SParameters.dialedZones|=(1<<nonVolatileSettings.currentZone);
 	}
 	if (!announce)
 		return;
-	alreadyDialed=!alreadyDialed; // it was toggled above.
-	
+	alreadyDialed=!alreadyDialed; // toggled above
 	voicePromptsInit();
 	
 	if (!voicePromptsIsPlaying())
