@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-10 November 2021
+17 December 2021
 To contact Joseph Stephen, email joestephen@skymesh.com.au
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -61,7 +61,7 @@ You may wish to reduce the verbosity once you are used to the various functions.
 1. Press Green.
 2. Arrow to Sound Options.
 3. Press Green to select.
-4. Press up arrow thrice to Voice Prompt.
+4. Press up arrow several times to Voice Prompt.
 5. Press Left Arrow once to choose level 2.
 6. Press Green again to confirm.
 7. Press and hold Red (cancel) until you exit the menus.
@@ -137,6 +137,11 @@ From Contacts mode, SK2+# will allow you to enter a different DMR ID into the ra
 
 Note that if you receive a DMR signal on a different talk group to the talkgroup selected for transmit, pressing SK2 will change your current talk group to the received talk group. This is important, otherwise if you attempt to respond to the caller, they would not hear you. Note that if the DMR signal is from a different talk group to your current one, you are alerted with a double beep when the reception begins.
 
+You can have the DMR ID or callsign of the last station received announced automatically after their transmission, or manually request it. Enable the DMR ID option from the Sound Options menu. When DMR ID is off, you can manually request the ID or callsign of the last station by pressing SK1 after the station finishes transmitting. Their ID or callsign is also included in the channel summary on long hold SK1. Long hold SK1 will report the callsign for up to ten seconds after detection after which it is no longer reported as it is most likely no longer relevant.
+If the callsign detected comes in on a different talk group to what you have set as your tx talk group, you'll also hear the talk group name after the callsign, to both alert you that their talk group is different, and, in case you couldn't press SK2 in time to set your tx talk group to theirs while they were transmitting, you can manually set the talk group to theirs after the transmission.
+ 
+If you want to transmit your callsign or name rather than your DMR ID, put your callsign or name in the third field of the User Information screen from the main menu. It is the field called "1". Do not fill in both "1" and "2" or your text will be unnecessarily long. Both line 1 and line 2 are transmitted as caller alias data if Caller Alias is enabled in the Options menu. Note however that not all repeaters are compatible with Talker Alias and on such repeaters you may not be able to be heard. If this is the case, disable Talker Alias and reboot your radio. If you do send both lines 1 and 2, the radio will only read up to the first space of the first line for brevity, ideally this would be your callsign or first name.
+
 In Analog mode, Left and Right Arrow control the squelch level for the current channel.
 SK2+Left and Right allow you to change the power level for the current channel between 50 MW and 5 W. If you are set to 5w, long hold sk2+right will select the user power level which defaults to about 5.5 w. 
 
@@ -151,9 +156,18 @@ If you choose DTMF or DMR Contact List from the Contacts submenu of the main men
 From the main Contacts menu, for DMR contacts, # will cycle the list between showing group call contacts, private call contacts and all call contacts.
  
 Scanning:
-Long hold Up Arrow to start scanning.
+Long hold Up Arrow to start scanning the current zone or SK2+long hold up to scan all zones including enabled autozones.
 While scanning, if the radio stops on a nuisance channel, you can hit Right arrow to add it to the nuisance list to skip it during that scan only.
-Press Red to stop scanning.
+Press Red to stop scanning. If you press Red while there is no signal, you will be returned to the last channel you were on prior to invoking the scan. If you press Red while a signal is being received, i.e. the scan is paused, you will be left on the new channel. If you press Green to stop the scan, you'll always be left on the last channel scanned.
+
+VFO Scan Mode:
+Scanning in VFO mode works slightly differently to Channel mode in that the first time you press long hold Up Arrow, you enter Scan Mode but do not immediately start scanning. In Scan Mode, you can set the scan range. It defaults to the current frequency, to the current frequency plus 1 MHz.
+To enter a new scan range, enter the low and high frequency from the keypad, e.g. 1440000014800000
+Note the low frequency must contain 8 digits and you'll hear a beep after the low frequency has been recognized. You can then enter the high frequency, up to the number of digits necessary to specify the frequency. If you do not enter all 16 digits, hit green once you have entered sufficient digits for the high frequency.
+   You'll then hear the new range.
+Press and hold Up Arrow to start the scan and the radio will say "scan start".
+If you press any key, the scan will stop, but you will remain in Scan Mode to enter a new scan range.
+To exit Scan Mode and revert to the normal VFO entry screen, press and hold Down Arrow. The radio will say Scan Mode Off.
 
 Channel Details.
 If you press SK2+Green from the channel mode screen, you are taken to the Channel Details screen, which is the same screen you reach if you choose Channel Details from the main Menu.

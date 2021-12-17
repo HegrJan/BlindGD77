@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-10 November 2021
+17 December 2021
 To contact Joseph Stephen, email joestephen@skymesh.com.au
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -53,7 +53,7 @@ Pressing and holding SK1 and then pressing orange will cycle backward through th
 Currently, the orange button will cycle you through the following options:
 * Zone Mode: SK1 and SK2 choose the zones.
 * Squelch/TG Mode: SK1 and SK2 adjust squelch for FM channels, or choose talk groups for a DMR channel.
-* Channel Mode: SK1 starts or stops a scan. SK2 adds a channel or frequency to the nuisance list during a scan, or toggles between Channel Mode and VFO Mode if not scanning. (Note in VFO mode, the scan starts from the current VFO frequency and scans for 1 MHz and cycles around to the start frequency again.) Note also that the nuisance list is cleared for each new scan. The scan step in VFO scan will match the bandwidth set in the VFO. I.e. if the bandwidth is narrow, the scan step will be 12.5 KHz and if it is wide, the scan step will be 25 KHz.
+* Channel Mode: SK1 cycles between scan zone, scan all zones and stop scan. SK2 adds a channel or frequency to the nuisance list during a scan, or toggles between Channel Mode and VFO Mode if not scanning. (Note in VFO mode, the scan starts from the current VFO frequency and scans for 1 MHz and cycles around to the start frequency again.) Note also that the nuisance list is cleared for each new scan. The scan step in VFO scan will match the bandwidth set in the VFO. I.e. if the bandwidth is narrow, the scan step will be 12.5 KHz and if it is wide, the scan step will be 25 KHz.
 * Keypad mode (See below).
 * DTMF Contact List (FM channels only), SK1 and SK2 select DTMF contacts, PTT will dial the contact.
 * Filter mode SK1 and SK2 choose CTCSS or DCS codes in analog mode, and choose between several filters for digital channels (tg, contact, receive group, etc).
@@ -69,8 +69,11 @@ Long hold Orange announces the current battery level.
 
 Note that if you receive a DMR signal on a different talk group to your current talkgroup, pressing and holding SK2 for more than half a second from TG Mode will change your current talk group to the received talk group. This is important, otherwise if you attempt to respond to the caller, they would not hear you. Note that if the DMR signal is from a different talk group to your current one, you are alerted with a double beep when the reception begins.
 
+You can have the DMR ID or callsign of the last station received announced automatically after their transmission, or manually request it. Enable the DMR ID option from the Options menu. When DMR ID is off, you can manually request the ID or callsign of the last station with long hold SK1 after the station finishes transmitting. Long hold SK1 will report the callsign for up to ten seconds after detection after which it is no longer reported as it is most likely no longer relevant.
+If the callsign detected comes in on a different talk group to what you have set as your tx talk group, you'll also hear the talk group name after the callsign, to both alert you that their talk group is different, and, in case you couldn't press SK2 in time to set your tx talk group to theirs while they were transmitting, you can manually set the talk group to theirs after the transmission.
+ 
 Monitor Mode:
-To Open the Squelch temporarily, i.e. turn on monitor mode, press and hold SK2 for more than 3 seconds from Squelch/TG mode. When you release it, your squelch level is restored.
+To Open the Squelch temporarily, i.e. turn on monitor mode, press and hold SK1 and SK2 together for more than 3 seconds from Squelch/TG mode. When you release it, your squelch level is restored.
 
 Virtual Keypad mode for GD77S. 
 1. The GD77S now has a virtual keypad mode. Enter it like other modes, by pressing Orange until you hear Keypad.
@@ -110,6 +113,7 @@ Whenever you go to keypad mode, whatever channel was last active is still active
 When you go back to keypad mode, as usual, whatever was last active is still active, however, you can recall the prior saved VFO settings using the command a followed by long hold orange. This makes the saved VFO settings active again. Note that this is the same VFO as reached by pressing SK2 from Channel Mode. 
 If you wish to make the VFO settings more permanent, you can then save these settings to channel 1 through 16 in the current zone using the command a1 through a16 followed by long hold orange. All of the VFO settings are saved to the specified channel in the current zone. The overwritten channel will have its number as its name. e.g. channel 1, channel 16, etc. Of course you cannot save to an AutoZone channel.
 2.11. If you just want to copy a channel to the VFO without issuing any command to change the current channel's settings, after locating the channel you wish to copy, activate Keypad mode, then immediately press long hold orange with an empty keypad buffer. The current channel will be copied to the VFO. If you previously visited keypad mode, remember to clear the keypad buffer with long hold sk2 prior to pressing long hold orange.
+2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
 
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
 
@@ -171,6 +175,14 @@ If you need to reset the radio's settings to their default values, power off the
 You'll then need to reset all of your favorite options.
 Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
 This does not affect your codeplug.
+
+Associating a DTMF contact with a channel (auto dial contact):
+You can associate a DTMF contact with a channel such that the first time you press PTT on that channel during a session, the associated DTMF string will be dialled. It will not be dialled again until you reboot the radio or reset it with long hold SK2.
+TO do this, add a contact to the contacts list and give it the following name format:
+ADXXYY where AD means auto dial, XX is the 1-based  zone number and YY is the 1-based channel number, (padding with leading 0s so each is two digits.) The letters "AD" must be in uppercase if entered from the CPS software's contact list. SO, if you wish to dial a contact on channel 1 in zone 1, call the contact AD0101. If you wish to dial a contact on channel 1 in any zone, use 00 for the zone number, e.g. AD0001.
+To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact.
+You can now add contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
+To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command *#AD0102 followed by long hold orange. 
 
 Note for more detailed information about each of the menu options, please consult the manual, OpenGD77_User_Guide.pdf. It is out of date in some areas, so where there is a conflict, this AccessibleGuideGD77.txt file is more up-to-date.
 
