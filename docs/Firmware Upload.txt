@@ -3,7 +3,7 @@ Uploading the AccessibleGD77 Firmware and Voice Prompts
 
 Please note! If you ever wish to restore your GD77 or GD77S to its factory stock firmware, before you follow the below steps, please follow the steps in the document called "Restoring stock Radioddity Firmware onto a GD77 or GD77S.txt" (other models are the same). If you do not do this, you will not be able to restore the radio to factory firmware in the future.
 
-Although these detailed instructions are for the GD77 the new AccessibleGD77 firmware is also available for the GD77S, the Baofeng DM-1801, DM-1801A, and the RD-5R radios.
+Although these detailed instructions are for the GD77, the new AccessibleGD77 firmware is also available for the GD77S, the Baofeng DM-1801, DM-1801A, and the RD-5R radios.
 
 1. The AccessibleGD77 firmware requires the DMR codec from the official Radioddity firmware because the DMR codec is proprietary and can't be distributede by us. What we do is merge the DMR codec from the official firmware with AccessibleGD77 at the time you upload AccessibleGD77 to your radio. This requires a once-off-step to tell the CPS software where the official firmware resides so that all future firmware updates can refer to this firmware to obtain the DMR codec. This is why we suggest you keep a folder set up for this purpose on your hard disk.
 Download the official Radioddity firmware from the folowing link:
@@ -55,8 +55,10 @@ and choose Open.
 
 19. From this window, tab about 5 times to get to the "Upload Voice Prompts" button and press it.
 
-20. Choose a voice prompt file from the "voice prompt files" folder of the AccessibleGD77 archive and choose Open. (Note there are two versions of each voice prompt file, one at 1.25 times the speed of the original voice, and one at 1.75 times the speed of the original voice.)
+20. Choose a voice prompt file from the "voice prompt files" folder of the AccessibleGD77 archive and choose Open. (Note there are two versions of each voice prompt file, one at 1.25 times the speed of the original voice, and one at 1.75 times the speed of the original voice.). Note that you do not need to update voice prompts each time you update to a new version of the firmware unless the instructions for the firmware update explicitly tell you to, i.e. if new voice prompts have been added for the firmware release. Of course if you've never uploaded voice prompts then you need to do it initialy.
 
 21. Once the voice prompt file has been uploaded, you'll get a confirmation dialog. Choose OK and close the OpenGD77 Support dialog.
 
 22. You can now close the CPS software, turn off your radio, unplug it and turn it back on again. It should come up speaking at voice prompt level 3. You can find instructions in the AccessibleGD77 Quick Start Guide for your particular radio model if you wish to change the verbosity of the radio.
+
+End of document.
