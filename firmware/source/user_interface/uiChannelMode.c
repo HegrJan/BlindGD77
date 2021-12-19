@@ -272,9 +272,9 @@ static void AnnounceDualWatchChannels(bool immediately)
 		voicePromptsAppendLanguageString(&currentLanguage->priorityScan);
 	else
 		voicePromptsAppendLanguageString(&currentLanguage->dual_watch);
-	voicePromptsAppendString(dualWatchChannelData.watchChannelName);
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendString(dualWatchChannelData.currentChannelName);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	voicePromptsAppendString(dualWatchChannelData.watchChannelName);
 
 	if (immediately)
 		voicePromptsPlay();
