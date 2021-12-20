@@ -283,9 +283,9 @@ static void AnnounceDualWatchChannels(bool immediately)
 		voicePromptsAppendLanguageString(&currentLanguage->priorityScan);
 	else
 		voicePromptsAppendLanguageString(&currentLanguage->dual_watch);
-	voicePromptsAppendString(dualWatchChannelData.watchChannelName);
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
 	voicePromptsAppendString(dualWatchChannelData.currentChannelName);
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+	voicePromptsAppendString(dualWatchChannelData.watchChannelName);
 
 	if (immediately)
 		voicePromptsPlay();
@@ -328,8 +328,11 @@ static void StopDualWatch(bool returnToCurrentChannel)
 		return;
 
 	if (returnToCurrentChannel)
+	{
+		scanStartZone = NO_ZONE;
+		scanStartChannel = NO_CHANNEL;
 		EnsureDualWatchReturnsToCurrent();
-
+	}
 	uiChannelModeStopScanning();
 	InitDualWatchData();
 	rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);

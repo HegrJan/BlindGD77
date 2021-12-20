@@ -1,4 +1,6 @@
-AccessibleGD77 Instructions by Joseph Stephen VK7JS
+AccessibleGD77 Instructions by Joseph Stephen VK7JS 
+18 December 2021
+Email: vk7js@faithfulgenerations.com
 Uploading the AccessibleGD77 Firmware and Voice Prompts
 
 Please note! If you ever wish to restore your GD77 or GD77S to its factory stock firmware, before you follow the below steps, please follow the steps in the document called "Restoring stock Radioddity Firmware onto a GD77 or GD77S.txt" (other models are the same). If you do not do this, you will not be able to restore the radio to factory firmware in the future.

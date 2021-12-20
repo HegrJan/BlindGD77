@@ -1,4 +1,5 @@
 AccessibleGD77 Readme.txt file by Joseph Stephen VK7JS.
+Email: vk7js@faithfulgenerations.com
 
 Please note, if you are reading this file in a text editor, please ensure word wrap is enabled 
 
@@ -12,6 +13,49 @@ If you would like to read the quickstart guide for the AccessibleGD77 firmware, 
 "AccessibleDM1801A Quick Start Guide.txt" for the Baofeng DM1801A (which has two less keys than the DM1801),
 "AccessibleRD5R Quick Start Guide.txt" for the Baofeng RD5R.
 The docs folder also contains help files produced by Ian Spencer, DJ0HF, which may assist you in getting started with the CPS software, the software used to communicate with your radio from your computer in order to upload firmware, voice prompts and your channel data (known as a CodePlug).
+If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
+Plese note: The license and copyright information are set out in the file called license.txt.
+
+19 December 2021
+1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
+2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
+3. Fixed bug of DMR ID being announced for a station on the wrong timeslot. I.e. if you were on ts1, and a signal came in on ts2, that DMR ID would be announced even though you couldn't hear them.
+
+17 December 2021
+1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).
+1.1. Added new DMR ID option to the Sound Options menu of models with a keyboard, and the Options menu of the GD77S. This option has two values, off and on. It is off by default.
+1.2. When on, after a station has finished speaking, the radio will wait about 750 ms and then you will hear either their DMR ID, callsign, or name, depending on what their radio transmits, and depending on whether you have a DMR ID database installed on your radio. A timer is used at the end of reception to try and avoid speaking prematurely if rx is broken up. If you want to transmit your callsign or name, so that the other station doesn't need to rely on the DMR ID database, enable Talker Alias in the Options menu. Be aware  though, some repeaters are not compatible with Talker Alias and it may result in you not being heard at all. If you know your repeater or hotspot works with Talker Alias, fill whatever you want in, callsign or name, in the User Information screen from the main menu (in line 1, third field down). You can also fill in line , it will be displayed, but will not be announced for brevity. (Note you can't fill this in on the GD77S without using the CPS, see Boot Screen). You can also use the CPS software to download a DMR ID database to have the radio automatically look up IDS and speak the callsign or name for stations that do not transmit talker alias information. See the document called "Creating and Downloading a DMR ID Database.txt" in the docs folder for more information.
+1.3. You can also turn the feature off and still manually discover the same information by pressing SK1 or long hold SK1 channel summary. The id or callsign will prepend the other information spoken for a DMR channel or frequency, so you can quickly hear it. If you repeat the prompt with short press SK1, it will be repeated so long as you don't cause the radio to speak something else, otherwise it will only be relevant for 10 seconds after detection after which time long hold SK1 will not report it unless it is redetected. Also, if the callsign detected comes in on a different talk group to what you have set as your tx talk group, you'll hear the talk group name after the callsign, to both alert you that their talk group is different, and, in case you couldn't press SK2 in time to set your tx talk group to theirs while they were transmitting, you can identify the talk group so you can manually set it. 
+2. Please note: In order to add new features, to avoid running out of memory, I am retiring features not used. The first feature to be removed is the language menu. Since new voice prompts and language strings have not been translated since the fork of AccessibleGD77, and all users of AccessibleGD77 use English voice prompts, I have removed the Language menu. It can be re-enabled easily if we need to do so and can find other ways of resolving the memory shortage.
+3. Removed extra long hold SK1 rebuild voice prompt. This was not really relevant for our firmware build and it clashed with the summary on long hold SK1 and several people complained about it because if they held SK1 too long, it would truncate whatever the summary was trying to speak. This was from the merge from Roger's firmware back in April but Roger doesn't have the summary on long hold SK1 like our firmware.
+4. Fixed a bug where if you set your user DMR id from either the GD77S ### virtual keypad or the GD77 User Info screen, it wouldn't properly take effect until you rebooted the radio.
+5. Reworked autozones to resolve a frequent issue where after a firmware update, you'd need to reset or reinitialize all autozones to avoid strange behaviour such as crashing, autozone names being read wrongly etc. The root cause was that settings was becoming out of sync with firmware function pointers. Autozones are now properly initialized on boot so this should never happen again. We also use less memory for autozones which should help our overall cause.
+6. Fixed occasional crashes due to the sonic library using more memory than expected.
+7. Added new Multizone scan. 
+7.1. On radios with a keypad, SK2+long hold up will start a multizone scan. All physical plus all enabled autozones will be scanned.
+7.2. On the GD77s, in scan mode, SK1 now cycles between three values, scan start, scan all, and scan stop. When set to scan all, all zones including enabled autozones will be scanned.
+7.3. Note that multizone scan does not scan the all channels zone since it is a superset of all of your physical channels from your real zones. If you start it in the all channels zone, it will start, but after completing a pass of that zone, it will not return to it after scanning other zones.
+7.4.  Multizone scan will honour any channels set to zone skip or any you add to the nuisance list.
+7.5. When you stop a scan during scanning with any key except the green key, it will now return to your starting zone and channel unless it is paused on a signal. If you stop the scan while it is paused receiving a signal, or the scan is set to stop rather than hold or pause, it will of course remain on the new channel in the new zone. If you stop the scan with the green key, it will always remain on the last channel scanned.
+ 7.6. The GD77 and other models with keypad will now say "Scan Zone" or "Scan All" when starting a zone or multizone scan and will splutter much less when you attempt to get channel info during a scan.
+7.7. When you enter scan mode from VFO using long hold up, we now read the scan range. When you actually start the scan with another long hold up, we say "scan start". If you stop the scan but do not exit scan mode, we simply announce the frequency and scan range. When you exit scan mode with long hold down, we now say "scan mode off". This way the user can tell if they are in scan frequency range entry mode or actually scanning, or back at the normal VFO screen.
+7.8. The summary long hold sk1 now tells you if scanning is active as part of the channel or VFO summary.
+8. Fixed following bug:
+a. Go to a channel in an AutoZone.
+b. Select Copy Channel to VFO from quick menu.
+c. Select Copy VFO to new channel.
+d. The VFO is not copied because the last active zone was an AutoZone which is a pseudo zone.
+e. Now, if the last active zone was an AutoZone, the VFO will be copied to the last real, physical zone and that zone and the new channel made active.
+Note: One reason why you might wish to copy a channel from an AutoZone to a real zone is so that you can permanently apply a CTCSS code etc to the channel and treat it as any other channel, or, because you wish to have just that one frequency in your frequently used zone.
+9. Fixed GD77S UHF Squelch in Options menu, you couldn't change it.
+10. Added new auto DTMF contact dial feature to GD77s.
+10.1 You can associate a DTMF contact with a channel such that the first time you press PTT on that channel during a session, the associated DTMF string will be dialled. It will not be dialled again until you reboot the radio or reset it with long hold SK2.
+TO do this, add a contact to the contacts list and give it the following name format:
+ADXXYY where ad means auto dial, XX is the 1-based  zone number and YY is the 1-based channel number, (padding with leading 0s so each is two digits. also, the letters "AD" must be in uppercase) if entered from the CPS software's contact list. SO, if you wish to dial a contact on channel 1 in zone 1, call the contact AD0101. If you wish to dial the same contact on channel 1 in any zone, use 00 for the zone number, i.e. call the contact AD0001. 
+10.2. To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the channel.
+  10.3. You can now add DTMF contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
+10.4. To delete a contact, e.g. AD0102, use the command *#AD0102 followed by long hold orange, i.e. the same command without any DTMF string.
+11. Fixed very long standing issue of not seeming to transmit the first dtmf code after initial boot. Actually, the code was transmitted but was not transmitted using the channel's defined CTCSS tone which meant that if using a hotspot with a tone, the hotspot would not recognize the tone. 
 
 10 November 2021
 1. Added new Voice Volume menu item to Sound Options menu. this allows you to adjust the voice volume from 10 to 100% in increments of 5% relative to the voice's standard volume. This is useful if your radio's voice volume is disproportionately louder than your signal reception volume. 
@@ -459,4 +503,4 @@ Ian Spencer's original package contained both PDF and MP3 files for his document
 The CPS software is also distributed separately. Please request it via email or get it from the web via Ian's link if available.
 
 Joseph Stephen (VK7JS).
-joestephen@skymesh.com.au
+vk7js@faithfulgenerations.com
