@@ -1,4 +1,5 @@
-Restoring a GD77 or GD77S radio to stock Radioddity Firmware:
+Restoring a GD77 or GD77S radio to stock Radioddity Firmware by Joseph Stephen vk7js.
+Email: vk7js@faithfulgenerations.com
 Note: In order to restore a GD77 or GD77S radio to Radioddity stock firmware, it is necessary to take some steps prior to loading a codeplug or voice prompts onto the radio.
 Follow these steps exactly and you should be able to reload the Radioddity firmware:
 (Thanks to Scott Whitaker for this confirmation).

@@ -1,7 +1,8 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-17 December 2021
-To contact Joseph Stephen, email joestephen@skymesh.com.au
+18 December 2021
+To contact Joseph Stephen, email vk7js@faithfulgenerations.com
+
 
 Please note. Turn on word wrap to read this document in a text editor.
 This Guide assumes you are running the forked version of OpenGD77 produced by Joseph Stephen VK7JS and Jan Hegr OK1TE now called AccessibleGD77.
@@ -15,6 +16,8 @@ To upload firmware, see the file called
 Firmware Upload.txt.
 To learn how to create and upload a code plug, see the file called 
 Creating and Uploading a Code Plug.txt.
+If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
+Plese note: The license and copyright information are set out in the file called license.txt.
 
 
 Physical Description
