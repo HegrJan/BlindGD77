@@ -3588,7 +3588,9 @@ static bool IsLastHeardContactRelevant()
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
 	if ((fw_millis() - lastHeardUpdateTime) > 10000) return false; // If it is older than 10 seconds.
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
-	
+	if (dmrMonitorCapturedTS != trxGetDMRTimeSlot())
+		return false;
+
 	return true;
 }
 
