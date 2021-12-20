@@ -315,8 +315,11 @@ static void StopDualWatch(bool returnToCurrentChannel)
 		return;
 
 	if (returnToCurrentChannel)
+	{
+		scanStartZone = NO_ZONE;
+		scanStartChannel = NO_CHANNEL;
 		EnsureDualWatchReturnsToCurrent();
-
+	}
 	uiChannelModeStopScanning();
 	InitDualWatchData();
 	rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
