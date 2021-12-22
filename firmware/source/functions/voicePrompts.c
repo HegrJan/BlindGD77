@@ -313,7 +313,7 @@ static voicePrompt_t Lookup(char* ptr, int* advanceBy)
 		int len=strlen(userDictionary[index].userWord);
 		if (strncasecmp(userDictionary[index].userWord, ptr, len)==0)
 		{
-			*advanceBy=len;
+			*advanceBy=len-1;
 			return userDictionary[index].vp;
 		}
 	}
