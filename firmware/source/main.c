@@ -796,9 +796,12 @@ void mainTask(void *data)
 					displayLightTrigger(true);
 				}
 				if (settingsIsOptionBitSet(BIT_BCL) && (buttons & BUTTON_PTT) && hasSignal)
-				{//joe
-					soundSetMelody(MELODY_ERROR_BEEP);
-					buttons &= !BUTTON_PTT;
+				{// in DMR mode, must only do this if signal is on the same timeslot.
+					if ((trxGetMode() ==RADIO_MODE_ANALOG) || ((dmrMonitorCapturedTS != -1) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())))
+					{
+						soundSetMelody(MELODY_ERROR_BEEP);
+						buttons &= !BUTTON_PTT;
+					}
 				}
 
 				if ((buttons & BUTTON_PTT) != 0)
