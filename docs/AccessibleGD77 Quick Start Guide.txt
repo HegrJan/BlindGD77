@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-18 December 2021
+22 December 2021
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -196,6 +196,8 @@ j. Simple digit input for numeric fields;
 k. Simple DTMF support for DTMF fields;
 l. SK1 will repeat the content of the edit field. 
 
+When adding a channel name or contact, because the radio uses recorded speech rather than a genuine synthesizer, most words will be spelled. There are however a few common words which have been added to the internal dictionary so that they will be pronounced as words rather than spelled out if present in the channel or contact name. These include: hotspot, clearnode, openspot, microhub, allstar, disconnect, parrot, blind hams
+
 Creating a new channel.
 1. Press Red from the Channel Screen to go to VFO.
 2. Enter the receive frequency.
@@ -250,6 +252,9 @@ Note that if you need to dial a 1750 Hz tone, press SK2+ptt.
 
 Last Heard screen.
 There is now a new submenu accessible from the  Last Heard screen. If you hit the green key when an item is selected in the Last Heard list, you will be presented with a submenu with two items containing the ID of the individual who last spoke, and the talk group on which they were talking. If you choose the ID of the individual, you will invoke a private call with the selected last heard station. If you choose the talk group, it will be as if you hit SK2 in reception mode, i.e. your TX will be set to the Talk Group of the last heard station.
+
+Busy Channel Lockout (BCL)
+Set BCL in the Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
 
 AutoZones feature.
 An AutoZone is a pseudo zone created on the fly based on channelized frequencies calculated via a formula with heuristics applied. I.e. these zones do not take up any memory for the channel data.

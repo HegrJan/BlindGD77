@@ -16,10 +16,21 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-19 December 2021
+22 December 2021
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
 2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
 3. Fixed bug of DMR ID being announced for a station on the wrong timeslot. I.e. if you were on ts1, and a signal came in on ts2, that DMR ID would be announced even though you couldn't hear them.
+4. Added ability to process a user dictionary when speaking channel or contact names so that recognized words will be spoken rather than spelled. The word or phrases case is not important, so long as your spelling matches. The word does not have to be the only thing in the channel name either. For example, you could have "hotspot", "hotspot 1", "vk7js hotspot" etc. Currently I've only used the unused voice prompt slots for common words used in channel and contact names. These include the following words/phrases at this point (more may be added later when we can figure out a way of keeping basic compatibility with official OpenGD77 voice prompt files):
+    1 hotspot
+    2 clearnode
+    3 openspot
+    4 microhub
+    5 allstar
+    6disconnect
+    7 parrot
+    8 blind hams
+5. Added support for indicating capital letters when editing text. The word "cap" will be spoken before a capital letter when inserting new text or navigating by character over a capital letter. You won't hear cap when reading back the string.
+6. Added Busy Channel Lockout (BCL) feature to Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).
