@@ -1967,7 +1967,7 @@ ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying)
 	else
 	{
 		int len = strlen(currentLanguage->zone);
-		if (strncmp(nameBuf, currentLanguage->zone, len)==0)
+		if (strncasecmp(nameBuf, currentLanguage->zone, len)==0)
 		{
 			voicePromptsAppendLanguageString(&currentLanguage->zone);
 			if (strlen(currentZone.name) > len)
@@ -2278,7 +2278,7 @@ void announceChar(char ch)
 	char buf[2] = {ch, 0};
 
 	voicePromptsInit();
-	voicePromptsAppendString(buf);
+	voicePromptsAppendStringWithCaps(buf, true);
 	voicePromptsPlay();
 }
 

@@ -78,6 +78,19 @@ __attribute__((section(".data.$RAM2"))) static VoicePromptsSequence_t voicePromp
 
 __attribute__((section(".data.$RAM2"))) uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
+const userDictEntry userDictionary[]=
+{
+	{"hotspot", PROMPT_UNUSED_3},
+	{"clearnode", PROMPT_UNUSED_4},
+	{"openspot", PROMPT_UNUSED_5},
+	{"microhub", PROMPT_UNUSED_6},
+	{"allstar", PROMPT_UNUSED_7},
+	{"disconnect", PROMPT_UNUSED_8},
+	{"parrot", PROMPT_UNUSED_9},
+	{"blind hams", PROMPT_UNUSED_10},
+		{0, 0}
+};
+
 void voicePromptsCacheInit(void)
 {
 	VoicePromptsDataHeader_t header;
@@ -291,8 +304,23 @@ void voicePromptsAppendPrompt(uint16_t prompt)
 		voicePromptsCurrentSequence.Length++;
 	}
 }
+static voicePrompt_t Lookup(char* ptr, int* advanceBy)
+{
+	if (!ptr) return 0;
+	
+	for (int index=0; userDictionary[index].userWord!=0; ++index)
+	{
+		int len=strlen(userDictionary[index].userWord);
+		if (strncasecmp(userDictionary[index].userWord, ptr, len)==0)
+		{
+			*advanceBy=len;
+			return userDictionary[index].vp;
+		}
+	}
+	return 0;
+}
 
-void voicePromptsAppendString(char *promptString)
+void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
@@ -306,12 +334,21 @@ void voicePromptsAppendString(char *promptString)
 
 	while (*promptString != 0)
 	{
-		if ((*promptString >= '0') && (*promptString <= '9'))
+		int advanceBy=0;
+		voicePrompt_t vp=Lookup(promptString, &advanceBy);
+		if (vp)
+		{
+			voicePromptsAppendPrompt(vp);
+			promptString+=advanceBy;
+		}
+		else if ((*promptString >= '0') && (*promptString <= '9'))
 		{
 			voicePromptsAppendPrompt(*promptString - '0' + PROMPT_0);
 		}
 		else if ((*promptString >= 'A') && (*promptString <= 'Z'))
 		{
+			if (indicateCaps)
+				voicePromptsAppendPrompt(PROMPT_CAP);
 			voicePromptsAppendPrompt(*promptString - 'A' + PROMPT_A);
 		}
 		else if ((*promptString >= 'a') && (*promptString <= 'z'))
@@ -350,6 +387,11 @@ void voicePromptsAppendString(char *promptString)
 
 		promptString++;
 	}
+}
+
+void voicePromptsAppendString(char *promptString)
+{
+	voicePromptsAppendStringWithCaps(promptString, false);
 }
 
 void voicePromptsAppendInteger(int32_t value)
