@@ -56,6 +56,7 @@ enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_PRIORITY_CHANNEL,
 							OPTIONS_MENU_VHF_RPT_OFFSET,
 							OPTIONS_MENU_UHF_RPT_OFFSET,
+							OPTIONS_MENU_BCL, // Busy channel lockout.
 							NUM_OPTIONS_MENU_ITEMS};
 
 static uint16_t GetNextValidChannelIndex(uint16_t start)
@@ -127,6 +128,7 @@ static void updateScreen(bool isFirstRun)
 	char buf[SCREEN_LINE_BUFFER_SIZE];
 	char buf2[SCREEN_LINE_BUFFER_SIZE];
 	char * const *leftSide = NULL;// initialize to please the compiler
+	char leftSideStr[SCREEN_LINE_BUFFER_SIZE]="\0";
 	char * const *rightSideConst = NULL;// initialize to please the compiler
 	char rightSideVar[SCREEN_LINE_BUFFER_SIZE];
 	voicePrompt_t rightSideUnitsPrompt;
@@ -346,9 +348,13 @@ static void updateScreen(bool isFirstRun)
 					rightSideUnitsPrompt = PROMPT_KILOHERTZ;
 					rightSideUnitsStr = "kHz";
 					break;
+				case OPTIONS_MENU_BCL:
+					strcpy(leftSideStr, "BCL");
+					rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_BCL) ? &currentLanguage->on : &currentLanguage->off);
+					break;
 			}
 
-			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSide ? *leftSide: leftSideStr, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 
 			if (i == 0)
 			{
@@ -361,7 +367,10 @@ static void updateScreen(bool isFirstRun)
 
 				if (!wasPlaying || menuDataGlobal.newOptionSelected)
 				{
-					voicePromptsAppendLanguageString((const char * const *)leftSide);
+					if (leftSide)
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
+					else if (leftSideStr[0])
+						voicePromptsAppendString(leftSideStr);
 				}
 
 				if ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL)))
@@ -690,6 +699,10 @@ static void handleEvent(uiEvent_t *ev)
 					if (nonVolatileSettings.uhfOffset < 9900)
 						settingsIncrement(nonVolatileSettings.uhfOffset, 100);
 					break;
+				case OPTIONS_MENU_BCL:
+					if (!settingsIsOptionBitSet(BIT_BCL))
+						settingsSetOptionBit(BIT_BCL, true);
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -874,6 +887,10 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_UHF_RPT_OFFSET:
 				if (nonVolatileSettings.uhfOffset > 100)
 					settingsDecrement(nonVolatileSettings.uhfOffset, 100);
+				break;
+			case OPTIONS_MENU_BCL:
+				if (settingsIsOptionBitSet(BIT_BCL))
+					settingsSetOptionBit(BIT_BCL, false);
 				break;
 			}
 		}

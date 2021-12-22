@@ -69,6 +69,7 @@ typedef enum
 	BIT_SCAN_ON_BOOT_ENABLED        = (1 << 7),
 	BIT_PRI_SCAN_ON_BOOT_ENABLED        = (1 << 8),
 	BIT_ANNOUNCE_LASTHEARD = (1 << 9),
+	BIT_BCL = (1 <<10),
 } bitfieldOptions_t;
 
 typedef struct

@@ -60,6 +60,7 @@ static bool lowBatteryReached = false;
 #define LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL   6	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
 #define LOW_BATTERY_VOLTAGE_RECOVERY_TIME          10000 // 10 seconds
 static bool updateMessageOnScreen = false;
+static bool hasSignal=false;
 
 void mainTaskInit(void)
 {
@@ -794,6 +795,11 @@ void mainTask(void *data)
 				{
 					displayLightTrigger(true);
 				}
+				if (settingsIsOptionBitSet(BIT_BCL) && (buttons & BUTTON_PTT) && hasSignal)
+				{//joe
+					soundSetMelody(MELODY_ERROR_BEEP);
+					buttons &= !BUTTON_PTT;
+				}
 
 				if ((buttons & BUTTON_PTT) != 0)
 				{
@@ -1222,7 +1228,7 @@ void mainTask(void *data)
 			}
 			else
 			{
-				bool hasSignal = false;
+				hasSignal = false;
 				if (rxPowerSavingIsRxOn())
 				{
 					switch(trxGetMode())
