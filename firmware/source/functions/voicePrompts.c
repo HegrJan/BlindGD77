@@ -304,6 +304,7 @@ void voicePromptsAppendPrompt(uint16_t prompt)
 		voicePromptsCurrentSequence.Length++;
 	}
 }
+
 static voicePrompt_t Lookup(char* ptr, int* advanceBy)
 {
 	if (!ptr) return 0;

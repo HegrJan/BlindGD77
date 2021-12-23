@@ -92,6 +92,7 @@ typedef struct
 	const char* userWord;
 	voicePrompt_t vp;
 } userDictEntry;
+#define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
 
 extern bool voicePromptDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;

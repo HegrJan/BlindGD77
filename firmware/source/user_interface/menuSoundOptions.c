@@ -258,7 +258,12 @@ static void updateScreen(bool isFirstRun)
 						voicePromptsAppendLanguageString(&currentLanguage->beep);
 					}
 					else
+					{
 						voicePromptsAppendLanguageString((const char * const *)leftSide);
+						// hack to speak voice name.
+						if (mNum==OPTIONS_AUDIO_PROMPT_MODE && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+							voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
+					}
 				}
 
 				if ((mNum!=OPTIONS_MENU_FM_BEEP) && ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL))))
