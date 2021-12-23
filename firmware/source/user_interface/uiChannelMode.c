@@ -3366,6 +3366,12 @@ static void AnnounceGD77SVoiceParams(bool announceVolume, bool announceRate)
 		snprintf(buf, 5, "%d", nonVolatileSettings.voicePromptRate+1);
 		voicePromptsAppendString(buf);
 	}
+	if (announceVolume && announceRate) // orange button is being pressed to select Voice menu, announce the voice name.
+	{
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		voicePromptsAppendLanguageString(&currentLanguage->name);
+		voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
+	}
 	voicePromptsPlay();
 }
 
