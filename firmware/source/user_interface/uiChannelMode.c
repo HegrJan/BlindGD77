@@ -1282,7 +1282,10 @@ static void handleEvent(uiEvent_t *ev)
 	if (ev->events & BUTTON_EVENT)
 	{
 		if ((trxGetMode() == RADIO_MODE_DIGITAL) && BUTTONCHECK_DOWN(ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
-ReplayDMR();
+		{
+			ReplayDMR();
+			return;
+		}
 		// long hold sk1 now summarizes channel for all models.
 		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 		{
