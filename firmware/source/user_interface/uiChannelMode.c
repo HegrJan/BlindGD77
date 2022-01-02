@@ -4865,8 +4865,17 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 						checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
 					}
 					else
-					{// toggle  autodialer for this zone and channel combination.
-						ToggleGD77SDTMFAutoDialer(true);
+					{ // for digital, replay.
+						if (trxGetMode() == RADIO_MODE_DIGITAL)
+						{
+							ReplayDMR();
+							return;
+						}
+						else
+						{
+							// toggle  autodialer for this zone and channel combination for analog.
+							ToggleGD77SDTMFAutoDialer(true);
+						}
 					}
 				}
 			}
