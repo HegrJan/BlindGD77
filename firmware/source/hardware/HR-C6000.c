@@ -1655,7 +1655,7 @@ void tick_HR_C6000(void)
 				if (wavbuffer_count >= 2)
 				{
 					codecEncodeBlock((uint8_t *)deferredUpdateBufferInPtr);
-
+					AddAmbeBlocksToReplayBuffer((uint8_t *)deferredUpdateBufferInPtr, 9, false, true);
 					deferredUpdateBufferInPtr += LENGTH_AMBE_BLOCK;
 
 					if (deferredUpdateBufferInPtr > deferredUpdateBufferEnd)
@@ -1719,6 +1719,7 @@ void tick_HR_C6000(void)
 			if (hasEncodedAudio && (voicePromptsIsPlaying() == false) && (soundMelodyIsPlaying() == false))
 			{
 				hasEncodedAudio = false;
+				AddAmbeBlocksToReplayBuffer((uint8_t *)DMR_frame_buffer + 0x0C, 27, false, true);
 				codecDecode((uint8_t *)DMR_frame_buffer + 0x0C, 3);
 				soundTickRXBuffer();
 			}

@@ -55,7 +55,8 @@ bool voicePromptDataIsLoaded = false;
 static bool voicePromptIsActive = false;
 static int promptDataPosition = -1;
 static int currentPromptLength = -1;
-
+static bool replayingDMR=false;
+ 
 #define PROMPT_TAIL  30
 static int promptTail = 0;
 
@@ -90,6 +91,115 @@ const userDictEntry userDictionary[]=
 	{"blind hams", PROMPT_UNUSED_10},
 		{0, 0}
 };
+// replay logic shares ambe buffer so is colocated here also
+
+// Each ambe buffer is 9 bytes, encoding happens in lots of 3 blocks, i.e. 27 bytes at a time.
+// Buffer is 50 lots of 27 bytes.
+#define ambeREPLAY_BUFFER_LEN 1350
+
+typedef struct
+{
+	uint8_t ambeBuffer[ambeREPLAY_BUFFER_LEN];
+	uint8_t* head;
+	uint8_t* tail;
+	uint8_t* end;
+	bool allowWrap;
+} replayAmbeCircularBuffer_t;
+
+static replayAmbeCircularBuffer_t replayBuffer;
+
+static void replayAmbeCircularBufferInit(replayAmbeCircularBuffer_t *cb)
+{
+	cb->end = &cb->ambeBuffer[ambeREPLAY_BUFFER_LEN - 1];
+	cb->head = cb->ambeBuffer;
+	cb->tail = cb->ambeBuffer;
+	cb->allowWrap=true;
+}
+
+static void replayAmbeCircularBufferPushBack(replayAmbeCircularBuffer_t *cb, uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull)
+{
+	if (reset)
+		replayAmbeCircularBufferInit(cb);
+	cb->allowWrap=wrapWhenFull;
+
+	if (!cb->allowWrap && (cb->head == cb->end))
+		return;
+	size_t  count = 0;
+	uint8_t*p = ambeBlockPtr;
+
+	while (count < blockLen)
+     {
+		*cb->head = *p;
+
+		p++;
+		count++;
+		cb->head++;
+		if (cb->head == cb->end)
+		{
+			if (!cb->allowWrap)
+				return;
+			cb->head= cb->ambeBuffer;
+		}
+		
+		if (cb->tail == cb->head)
+		{// the tail must always be on a block boundary.
+			cb->tail++;
+while (((cb->tail-cb->head)%9)!=0)
+{
+	cb->tail++;
+}
+			if(cb->tail >= cb->end)
+			{
+				int diff=cb->tail - cb->end;
+				cb->tail = cb->ambeBuffer+diff;
+			}
+		}
+	}
+}
+
+static size_t replayAmbeGetLength(replayAmbeCircularBuffer_t *cb)
+{
+	if (!cb->allowWrap)
+		return cb->head-cb->ambeBuffer;
+
+	size_t  count = 0;
+	uint8_t*p = cb->tail;
+
+	while (p != cb->head)
+	{
+		p++;
+		count++;
+
+		if (p == cb->end)
+		{
+			p = cb->ambeBuffer;
+		}
+	}
+	return count;
+}
+
+static size_t replayAmbeGetData(replayAmbeCircularBuffer_t* cb, uint8_t* data, size_t dataLen)
+{
+     size_t  count = 0;
+     uint8_t*p = cb->tail;
+
+     while ((p != cb->head) && (count < dataLen))
+     {
+    	 *(data + count) = *p;
+
+    	 p++;
+    	 count++;
+
+    	 if (p == cb->end)
+    	 {
+			 if (!cb->allowWrap)
+				 return count;
+    		 p = cb->ambeBuffer;
+    	 }
+     }
+
+     return count;
+}
 
 void voicePromptsCacheInit(void)
 {
@@ -124,6 +234,7 @@ void voicePromptsCacheInit(void)
 	{
 		settingsSet(nonVolatileSettings.audioPromptMode, AUDIO_PROMPT_MODE_BEEP);
 	}
+	ReplayInit();
 }
 
 bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress)
@@ -162,6 +273,8 @@ static void RetractWriteBufferPtr(int retractBy)
 
 static void ApplyVolAndRateToCurrentWaveBuffers(int startDecodeIndex, bool flush)
 {
+	if (replayingDMR) return;
+	
 	const int singleBufferSamples=WAV_BUFFER_SIZE/2; // WAV_BUFFER_SIZE is in bytes, each sample takes up two bytes (16 bits).
 	const int maxSamples= 6 * singleBufferSamples; // 6 buffers are decoded at once, each sample takes up two bytes.
 
@@ -260,6 +373,7 @@ void voicePromptsTerminate(void)
 
 		taskENTER_CRITICAL();
 		voicePromptIsActive = false;
+		replayingDMR=false;
 		taskEXIT_CRITICAL();
 	}
 }
@@ -455,4 +569,42 @@ inline bool voicePromptsIsPlaying(void)
 bool voicePromptsHasDataToPlay(void)
 {
 	return (voicePromptsCurrentSequence.Length > 0);
+}
+
+ void ReplayDMR(void)
+{
+	if (voicePromptIsActive) return;
+	
+	rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
+
+	taskENTER_CRITICAL();
+	voicePromptIsActive=true;
+	replayingDMR=true;
+	if (melody_play && (melody_play != MELODY_ERROR_BEEP) && (melody_play != MELODY_ACK_BEEP))
+	{
+		soundStopMelody();
+	}
+	voicePromptsCurrentSequence.Pos=0;
+	voicePromptsCurrentSequence.Length=1;
+	currentPromptLength =replayAmbeGetLength(&replayBuffer);
+	replayAmbeGetData(&replayBuffer, (uint8_t *)&ambeData, currentPromptLength);
+	promptDataPosition = 0;
+
+	GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 0);// set the audio mux HR-C6000 -> audio amp
+	enableAudioAmp(AUDIO_AMP_MODE_PROMPT);
+
+	codecInit(true);
+
+	taskEXIT_CRITICAL();
+}
+
+void ReplayInit()
+{
+	replayingDMR=false;
+	replayAmbeCircularBufferInit(&replayBuffer);
+}
+
+void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull)
+{
+	replayAmbeCircularBufferPushBack(&replayBuffer, ambeBlockPtr, blockLen, reset, wrapWhenFull);
 }

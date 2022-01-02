@@ -112,5 +112,8 @@ extern bool voicePromptsIsPlaying(void);
 bool voicePromptsHasDataToPlay(void);
 void voicePromptsTerminate(void);
 bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress);
+ void ReplayDMR(void);
+void ReplayInit(void);
+void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
 
 #endif
