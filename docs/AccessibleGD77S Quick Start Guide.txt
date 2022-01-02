@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-23 December 2021
+3 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -149,7 +149,7 @@ An AutoZone is a pseudo zone created on the fly based on channelized frequencies
 4. Press orange to exit Options Mode.
 Once you've enabled all the autozones that you want, you can then choose them from the Zones mode using SK1 and SK2 like any other zone.
 
-If an AutoZone has more than 16 channels, use extra long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
+If an AutoZone has more than 16 channels, use long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
 If an AutoZone has duplex available for a particular channel, such as a UHF CB channel, an extra long hold of SK1 will toggle between simplex and  duplex mode from Squelch Mode. (You'll hear none for simplex and either plus or minus for a plus or minus repeater offset as defined by the AutoZone). 
 
 The following autoZones are available: 
@@ -185,6 +185,13 @@ ADXXYY where AD means auto dial, XX is the 1-based  zone number and YY is the 1-
 To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact.
 You can now add contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
 To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command *#AD0102 followed by long hold orange. 
+
+Replay DMR Audio:
+You can now replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. Note long hold SK2 has multiple functions depending on the context:
+* On a DMR channel with no signal: replay last five seconds of audio.
+* On a DMR channel with signal: set TX tg to RX tg.
+* On an analog channel in a non-autozone: toggle DTMF dialer.
+* On an analog channel in an autozone: choose next channel bank.
 
 Note for more detailed information about each of the menu options, please consult the manual, OpenGD77_User_Guide.pdf. It is out of date in some areas, so where there is a conflict, this AccessibleGuideGD77.txt file is more up-to-date.
 
