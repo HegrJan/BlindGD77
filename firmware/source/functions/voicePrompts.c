@@ -324,7 +324,7 @@ void voicePromptsTick(void)
 		}
 		else
 		{
-			if (voicePromptsCurrentSequence.Pos < (voicePromptsCurrentSequence.Length - 1))
+			if (!replayingDMR && voicePromptsCurrentSequence.Pos < (voicePromptsCurrentSequence.Length - 1))
 			{
 				voicePromptsCurrentSequence.Pos++;
 				promptDataPosition = 0;
@@ -584,8 +584,6 @@ bool voicePromptsHasDataToPlay(void)
 	{
 		soundStopMelody();
 	}
-	voicePromptsCurrentSequence.Pos=0;
-	voicePromptsCurrentSequence.Length=1;
 	currentPromptLength =replayAmbeGetLength(&replayBuffer);
 	replayAmbeGetData(&replayBuffer, (uint8_t *)&ambeData, currentPromptLength);
 	promptDataPosition = 0;
