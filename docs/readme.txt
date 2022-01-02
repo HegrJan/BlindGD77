@@ -16,7 +16,7 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-22 December 2021
+2 January 2022
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
 2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
 3. Fixed bug of DMR ID being announced for a station on the wrong timeslot. I.e. if you were on ts1, and a signal came in on ts2, that DMR ID would be announced even though you couldn't hear them.
@@ -31,6 +31,9 @@ Plese note: The license and copyright information are set out in the file called
     8 blind hams
 5. Added support for indicating capital letters when editing text. The word "cap" will be spoken before a capital letter when inserting new text or navigating by character over a capital letter. You won't hear cap when reading back the string.
 6. Added Busy Channel Lockout (BCL) feature to Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
+7. Added support to speak the name of the voice pack being used, as part of the voice level announcement in the sound options menu, or, as part of announcing voice parameters on the GD77S. The voice name of the voice pack is now always encoded as the very last voice prompt as part of the build process. Please update your voice prompts or this won't work!!!
+8. Added new feature to replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio. If you have trouble with this keystroke, remember the SK2 latch feature. When that is on, press SK2, release it and then press SK1 and release it. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note, SK2+SK1 both held down still activates the reverse repeater function, however there is no conflict because this is only used while receiving a signal, wheras replay is used when not currently receiving a signal).
+
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).

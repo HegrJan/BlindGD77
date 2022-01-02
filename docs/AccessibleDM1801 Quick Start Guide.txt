@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-22 December 2021
+2 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 
@@ -88,6 +88,9 @@ To Open the Squelch temporarily, i.e. turn on monitor mode, press and hold SK2 f
 
 Reverse Function:
 If you wish to exchange RX and TX, i.e. turn on the Reverse function on a repeater, during reception, press and hold both SK1 and SK2. While the buttons are depressed, the RX and TX frequencies will be reversed. When you release the buttons, the RX and TX frequencies will return to normal operation.
+
+Replay DMR Audio:
+You can now replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note there is no conflict between this and the Reverse function above because Reverse is only used while receiving a signal, wheras replay is used when not currently receiving a signal, also, reverse is only active while both SK1 and SK2 are pressed.)
 
 Note MR/VFO switches between channel and VFO modes, and the VFO A/B key toggles between VFO A and B in VFO mode.
  Note also that the large square button with a hole in the center, provides arrow navigation, up/left/right/down. Press the respective edge of the button.
