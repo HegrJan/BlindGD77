@@ -35,11 +35,11 @@ Plese note: The license and copyright information are set out in the file called
 8. Added new feature to replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio on radios with a keypad, or, on the GD77s, use long hold SK2 on a DMR channel when not receiving a signal. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note, SK2+SK1 both held down still activates the reverse repeater function, however there is no conflict because this is only used while receiving a signal, whereas replay is used when not currently receiving a signal).
 9. You can now create up to 10 custom voice tags to be spoken for contact or channel names.
 9.1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
-9.2. SK2+SK1 will repeat the prompt for verification.
-9.3. Save the prompt to custom prompt 1 through 10 using SK1+keypad number 1 for 1, 0 for 10.
-9.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
+9.2. SK2+SK1 will repeat the prompt for verification. (On GD77S, use long hold SK2 from Voice mode).
+9.3. Save the prompt to custom prompt 1 through 10 using SK1+keypad number 1 for 1, 0 for 10. On the GD77s, from the virtual keypad mode, use the command *## followed by the digits, e.g. *##1 followed by long hold orange to save custom prompt 1.
+9.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S you will have to edit contact or channel names from the CPS software.
 9.5. Note the prompt will follow the voice rate of the rest of the prompts.
-9.6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete.
+9.6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete. On the GD77S, save an empty prompt and then use *##digits to save it from the virtual keypad.
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).
