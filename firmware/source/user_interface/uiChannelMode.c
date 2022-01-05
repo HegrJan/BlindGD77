@@ -1991,18 +1991,7 @@ static void handleEvent(uiEvent_t *ev)
 				int customPromptNumber=keyval;
 				if (customPromptNumber==0)
 					customPromptNumber=10;
-				if (SaveAMBEBufferAsCustomVoicePrompt(customPromptNumber))
-				{
-				voicePromptsAppendInteger(customPromptNumber);
-				// When appending a custom prompt, we need to add the VOICE_PROMPT_CUSTOM to it so the code knows it is a custom prompt.
-				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
-				}
-				else
-				{
-					voicePromptsAppendLanguageString(&currentLanguage->list_full);
-				}
-				voicePromptsPlay();
-				keyboardReset();
+				SaveCustomVoicePrompt(customPromptNumber);
 				return;
 			}
 			
@@ -3884,6 +3873,12 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		voicePromptsPlay();
 		return true;
 	}
+	if (strncmp(GD77SKeypadBuffer, "*##", 3)==0 && isdigit(GD77SKeypadBuffer[3]))
+	{// save custom voice prompt.
+		int customPromptNumber=atoi(GD77SKeypadBuffer+3);
+		SaveCustomVoicePrompt(customPromptNumber);
+		return true;
+	}
 	if (strncmp(GD77SKeypadBuffer, "**", 2)==0)
 	{// set or clear channel specific power.
 		int number = isdigit(GD77SKeypadBuffer[2]) ? atoi(GD77SKeypadBuffer+2) : 0;
@@ -4535,6 +4530,12 @@ static void handleEventForGD77S(uiEvent_t *ev)
 
 	if (ev->events & BUTTON_EVENT)
 	{
+		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2) && (GD77SParameters.uiMode==GD77S_UIMODE_VOICE))
+		{
+			ReplayDMR();
+			return;
+		}
+
 		if (dtmfSequenceIsKeying() && (ev->buttons & (BUTTON_SK1 | BUTTON_SK2 | BUTTON_ORANGE)))
 		{
 			dtmfSequenceStop();

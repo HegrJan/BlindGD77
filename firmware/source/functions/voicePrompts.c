@@ -652,7 +652,7 @@ void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool r
 	replayAmbeCircularBufferPushBack(&replayBuffer, ambeBlockPtr, blockLen, reset, wrapWhenFull);
 }
 
-bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber)
+static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber)
 {
 	if (!voicePromptDataIsLoaded) return false;
 	uint16_t length=replayAmbeGetLength(&replayBuffer);
@@ -683,4 +683,20 @@ static int GetCustomVoicePromptData(int customPromptNumber)
 	
 	SPI_Flash_read(addr+sizeof(hdr), (uint8_t *)&ambeData, hdr.customVPLength);
 	return hdr.customVPLength;
+}
+
+void SaveCustomVoicePrompt(int customPromptNumber)
+{
+	voicePromptsInit();
+	if (SaveAMBEBufferAsCustomVoicePrompt(customPromptNumber))
+	{
+		voicePromptsAppendInteger(customPromptNumber);
+		// When appending a custom prompt, we need to add the VOICE_PROMPT_CUSTOM to it so the code knows it is a custom prompt.
+		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
+	}
+	else
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->list_full);
+	}
+	voicePromptsPlay();
 }

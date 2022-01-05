@@ -115,6 +115,6 @@ bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress);
  void ReplayDMR(void);
 void ReplayInit(void);
 void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
- bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber);
+void SaveCustomVoicePrompt(int customPromptNumber);
 
 #endif
