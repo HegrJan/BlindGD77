@@ -1281,7 +1281,7 @@ static void handleEvent(uiEvent_t *ev)
 	}
 	if (ev->events & BUTTON_EVENT)
 	{
-		if ((trxGetMode() == RADIO_MODE_DIGITAL) && BUTTONCHECK_DOWN(ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+		if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
 		{
 			ReplayDMR();
 			return;
@@ -1983,8 +1983,30 @@ static void handleEvent(uiEvent_t *ev)
 		else
 		{
 			int keyval = menuGetKeypadKeyValue(ev, true);
+			// save current ambe buffer to custom voice prompt based on number: 
+			if ((keyval < 10) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK2)) && (BUTTONCHECK_DOWN(ev, BUTTON_SK1)) && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+			{
+				voicePromptsInit();
 
-			if ((keyval < 10) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
+				int customPromptNumber=keyval;
+				if (customPromptNumber==0)
+					customPromptNumber=10;
+				if (SaveAMBEBufferAsCustomVoicePrompt(customPromptNumber))
+				{
+				voicePromptsAppendInteger(customPromptNumber);
+				// When appending a custom prompt, we need to add the VOICE_PROMPT_CUSTOM to it so the code knows it is a custom prompt.
+				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
+				}
+				else
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->list_full);
+				}
+				voicePromptsPlay();
+				keyboardReset();
+				return;
+			}
+			
+			if ((keyval < 10) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK2)) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK1)))
 			{
 				directChannelNumber = (directChannelNumber * 10) + keyval;
 				if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))

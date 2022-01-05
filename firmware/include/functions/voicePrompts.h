@@ -93,7 +93,7 @@ typedef struct
 	voicePrompt_t vp;
 } userDictEntry;
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
-
+#define VOICE_PROMPT_CUSTOM 500
 extern bool voicePromptDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
 extern const uint32_t VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS;
@@ -115,5 +115,6 @@ bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress);
  void ReplayDMR(void);
 void ReplayInit(void);
 void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
+ bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber);
 
 #endif

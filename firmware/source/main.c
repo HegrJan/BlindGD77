@@ -806,6 +806,9 @@ void mainTask(void *data)
 
 				if ((buttons & BUTTON_PTT) != 0)
 				{
+					// If SK1 is held down with PTT, record a voice prompt.
+					HRC6000setEncodingOnly(buttons & BUTTON_SK1);
+					
 					int currentMenu = menuSystemGetCurrentMenuNumber();
 
 					/*
