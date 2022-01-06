@@ -879,7 +879,8 @@ void mainTask(void *data)
 #endif
 
 									rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
-									ReplayInit();
+									if (trxGetMode()==RADIO_MODE_DIGITAL)
+										ReplayInit();
 									menuSystemPushNewMenu(UI_TX_SCREEN);
 #if defined(PLATFORM_GD77S)
 								}
