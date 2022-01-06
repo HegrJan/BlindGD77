@@ -1983,15 +1983,6 @@ static void handleEvent(uiEvent_t *ev)
 		else
 		{
 			int keyval = menuGetKeypadKeyValue(ev, true);
-			// save current ambe buffer to custom voice prompt based on number: 
-			if ((keyval < 10) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK2)) && (BUTTONCHECK_DOWN(ev, BUTTON_SK1)) && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-			{
-				int customPromptNumber=keyval;
-				if (customPromptNumber==0)
-					customPromptNumber=10;
-				SaveCustomVoicePrompt(customPromptNumber);
-				return;
-			}
 			
 			if ((keyval < 10) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK2)) && (!BUTTONCHECK_DOWN(ev, BUTTON_SK1)))
 			{
