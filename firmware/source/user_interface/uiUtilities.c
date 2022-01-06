@@ -2048,6 +2048,7 @@ ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying)
 	else
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->user_power);
+		voicePromptsAppendInteger(nonVolatileSettings.userPower);
 	}
 }
 
