@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-5 January 2022
+6 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -203,9 +203,9 @@ When adding a channel name or contact, because the radio uses recorded speech ra
 
 Custom Voice Prompts:
 You can create up to 10 custom voice prompts to be spoken for, or as part of, contact or channel names.
-1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
+1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
 2. SK2+SK1 will repeat the prompt for verification.
-3. Save the prompt to custom prompt 1 through 10 using SK1+keypad number 1 for 1, 0 for 10.
+3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To play what is already stored for a custom prompt, press SK1+the number of the prompt.
 4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
 5. Note the prompt will follow the voice rate of the rest of the prompts.
 6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete.
