@@ -988,7 +988,8 @@ static void handleEvent(uiEvent_t *ev)
 	if (ev->events & KEY_EVENT)
 	{
 		int keyval = 99;
-
+		if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0 && (KEYCHECK_PRESS_NUMBER(ev->keys) || KEYCHECK_LONGDOWN_NUMBER(ev->keys)))
+	return; // let main.c handle this, it is a custom voice prompt command.
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
