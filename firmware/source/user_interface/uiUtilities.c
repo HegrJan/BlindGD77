@@ -3706,7 +3706,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		return true;
 	}
 
-	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_LONGDOWN_NUMBER(ev->keys)) return false;
+	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
 	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return false;
 	
 	int keyval=menuGetKeypadKeyValue(ev, true);
@@ -3718,7 +3718,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		SaveCustomVoicePrompt(customPromptNumber, phrase);
 		keyboardReset();
 	}
-	else
+	else if (KEYCHECK_SHORTUP_NUMBER(ev->keys))
 	{
 		voicePromptsInit();
 		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);

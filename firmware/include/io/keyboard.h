@@ -105,6 +105,7 @@
 
 #define KEYCHECK_SHORTUP_NUMBER(keys)      ((keys.key >='0' && keys.key <='9') && ((keys.event & (KEY_MOD_UP | KEY_MOD_LONG)) == KEY_MOD_UP))
 #define KEYCHECK_PRESS_NUMBER(keys)        ((keys.key >='0' && keys.key <='9') && ((keys.event & KEY_MOD_PRESS) == KEY_MOD_PRESS))
+#define KEYCHECK_DOWN_NUMBER(keys)     ((keys.key >='0' && keys.key <='9') && ((keys.event & KEY_MOD_DOWN ) == KEY_MOD_DOWN ))
 #define KEYCHECK_LONGDOWN_NUMBER(keys)     ((keys.key >='0' && keys.key <='9') && ((keys.event & (KEY_MOD_DOWN | KEY_MOD_LONG)) == (KEY_MOD_DOWN | KEY_MOD_LONG)))
 
 
