@@ -709,7 +709,7 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & BUTTON_EVENT)
 	{
-		if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+		if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0)
 		{
 			if (menuDataGlobal.currentItemIndex == CH_DETAILS_RXCSS)
 			{

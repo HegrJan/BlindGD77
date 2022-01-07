@@ -1082,24 +1082,9 @@ void mainTask(void *data)
 			}
 #if !defined(PLATFORM_GD77S)
 			// Handle custom voice prompts.
-			if ((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-				&& (KEYCHECK_PRESS_NUMBER(keys) || KEYCHECK_LONGDOWN_NUMBER(keys)) 
-				&& (buttons & BUTTON_SK1) && (buttons & BUTTON_SK2)==0 
-			&& ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE)))
+			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE))
 			{
-				int keyval=menuGetKeypadKeyValue(&ev, true);
-				if (keyval < 10)
-				{
-					int customPromptNumber=keyval==0 ? 10: keyval;
-					if (KEYCHECK_LONGDOWN_NUMBER(keys))
-						SaveCustomVoicePrompt(customPromptNumber);
-					else
-					{
-						voicePromptsInit();
-						voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
-						voicePromptsPlay();
-					}
-				}
+				HandleCustomPrompts(&ev, NULL);
 			}
 #endif
 			menuSystemCallCurrentMenuTick(&ev);

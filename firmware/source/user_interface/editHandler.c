@@ -76,8 +76,8 @@ void RequeueEditBufferForAnnouncementOnSK1IfNeeded()
 		voicePromptsAppendLanguageString(&currentLanguage->numeric);
 	}
 }
- 
- static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
+
+static bool InsertChar(char* buffer, char ch, int* cursorPos, int max)
 {
 	if (!buffer || !cursorPos) return false;
 	
@@ -191,6 +191,11 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 {
 	if (!editParams || !editParams->editBuffer || !editParams->cursorPos)
 		return false;
+	if (HandleCustomPrompts(ev, editParams->editBuffer))
+	{
+		editParams->allowedToSpeakUpdate=false;
+		return true;
+	}
 	editParams->allowedToSpeakUpdate=true; // set to false when we speak a newly inserted character to avoid the whole buffer being repeated on a screen update.
 	
 	if ((ev->events & KEY_EVENT)==0)
@@ -202,13 +207,13 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 		return false; // switching fields.
 	if (KEYCHECK_PRESS(ev->keys, KEY_GREEN) || KEYCHECK_PRESS(ev->keys, KEY_RED))
 		return false; // exiting screen.
-	
 	int editBufferLen=strlen(editParams->editBuffer);
 	
 	bool keyPreview=(ev->keys.event == KEY_MOD_PREVIEW);
 	bool keyPressed=(ev->keys.event == KEY_MOD_PRESS);
 	int keyval = menuGetKeypadKeyValue(ev, editParams->editFieldType==EDIT_TYPE_NUMERIC);
-	
+	if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) && (keyPressed || keyPreview || keyval!=99))
+		return false;
 	if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT))
 	{
 		bool deleteToEnd =BUTTONCHECK_DOWN(ev, BUTTON_SK2);

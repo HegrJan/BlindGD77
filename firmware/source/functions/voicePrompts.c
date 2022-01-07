@@ -38,6 +38,7 @@ const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0006; // Version 6 TOC increased t
 													// Version 4 does not have unused items
                                                     // Version 3 does not have the PROMPT_TBD items in it
 #define VOICE_PROMPTS_TOC_SIZE 320
+#define CUSTOM_VOICE_PROMPT_PHRASE_LENGTH 16
 static void getAmbeData(int offset,int length);
 static int GetCustomVoicePromptData(int customPromptNumber);
 
@@ -47,9 +48,11 @@ typedef struct
 	uint32_t version;
 } VoicePromptsDataHeader_t;
 
+
 typedef struct
 {
 	char customVPSignature[2];
+	char  phrase[CUSTOM_VOICE_PROMPT_PHRASE_LENGTH]; // can map a phrase rather than just ##Digit to a custom prompt.
 	uint16_t customVPLength;
 } CustomVoicePromptsHeader_t;
 
@@ -91,6 +94,8 @@ __attribute__((section(".data.$RAM2"))) static VoicePromptsSequence_t voicePromp
 
 __attribute__((section(".data.$RAM2"))) uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
+__attribute__((section(".data.$RAM2"))) char phraseCache[10][CUSTOM_VOICE_PROMPT_PHRASE_LENGTH]; //cache the phrases we have custom prompts for.
+
 const userDictEntry userDictionary[]=
 {
 	{"hotspot", PROMPT_UNUSED_3},
@@ -130,6 +135,7 @@ static void replayAmbeCircularBufferInit(replayAmbeCircularBuffer_t *cb)
 	cb->allowWrap=true;
 	cb->hdr.customVPSignature[0]='v';
 	cb->hdr.customVPSignature[1]='p';
+	memset(cb->hdr.phrase, 0, sizeof(cb->hdr.phrase));
 	cb->hdr.customVPLength=0; // set this once we know the length.
 }
 
@@ -218,6 +224,26 @@ static size_t replayAmbeGetData(replayAmbeCircularBuffer_t* cb, uint8_t* data, s
      return count;
 }
 
+static bool CheckCustomVPSignature(CustomVoicePromptsHeader_t* hdr)
+{
+	return hdr->customVPSignature[0]=='v' && hdr->customVPSignature[1]=='p' && hdr->customVPLength >= CUSTOM_VOICE_PROMPT_MIN_SIZE && hdr->customVPLength < CUSTOM_VOICE_PROMPT_MAX_SIZE;
+}
+
+static void InitPhraseCache()
+{
+	memset(phraseCache,0, sizeof(phraseCache));
+	for (int i=0; i < maxCustomVoicePrompts; ++i)
+	{
+		uint32_t addr=VOICE_PROMPTS_REGION_TOP-((i+1)*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+		CustomVoicePromptsHeader_t hdr;
+		if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr) || !hdr.phrase || !*hdr.phrase)
+			continue;
+		int len=strlen(hdr.phrase);
+		strncpy(phraseCache[i], hdr.phrase, len);
+		phraseCache[i][CUSTOM_VOICE_PROMPT_PHRASE_LENGTH-1]='\0';// in case the prompt was exactly 16 chars.
+	}	
+}
+
 void voicePromptsCacheInit(void)
 {
 	VoicePromptsDataHeader_t header;
@@ -235,7 +261,7 @@ void voicePromptsCacheInit(void)
 			int lastVoicePromptLength=tableOfContents[PROMPT_VOICE_NAME+1] - tableOfContents[PROMPT_VOICE_NAME];
 			uint32_t endOfLoadedVoicePromptsAddress = tableOfContents[PROMPT_VOICE_NAME] + lastVoicePromptLength;
 
-			maxCustomVoicePrompts=(VOICE_PROMPTS_REGION_TOP-endOfLoadedVoicePromptsAddress)/CUSTOM_VOICE_PROMPT_MAX_SIZE;
+			maxCustomVoicePrompts=SAFE_MIN(10, (VOICE_PROMPTS_REGION_TOP-endOfLoadedVoicePromptsAddress)/CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		}
 		else
 			maxCustomVoicePrompts=0;
@@ -263,6 +289,7 @@ void voicePromptsCacheInit(void)
 		settingsSet(nonVolatileSettings.audioPromptMode, AUDIO_PROMPT_MODE_BEEP);
 	}
 	ReplayInit();
+	InitPhraseCache();
 }
 
 bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress)
@@ -452,6 +479,22 @@ void voicePromptsAppendPrompt(uint16_t prompt)
 	}
 }
 
+static uint16_t LookupCustomPrompt(char* ptr, int* advanceBy)
+{
+	for (int i=0; i < maxCustomVoicePrompts; ++i)
+	{
+		if (!phraseCache[i][0])
+			continue;
+		int len=strlen(phraseCache[i]);
+		if (strncasecmp(phraseCache[i], ptr, len)==0)
+		{
+			*advanceBy+=len-1;
+			return i+1; // prompts are numbered from 1.
+		}
+	}	
+	return 0;
+}
+
 static uint16_t Lookup(char* ptr, int* advanceBy)
 {
 	if (!ptr) return 0;
@@ -471,6 +514,10 @@ static uint16_t Lookup(char* ptr, int* advanceBy)
 			*advanceBy=3;
 			return VOICE_PROMPT_CUSTOM+customPromptNumber;
 		}
+		// look it up in the custum prompt's dictionary.
+		int customPromptNumber=LookupCustomPrompt(ptr, advanceBy);
+		if (customPromptNumber > 0)
+			return VOICE_PROMPT_CUSTOM+customPromptNumber;
 	}
 	return 0;
 }
@@ -652,7 +699,7 @@ void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool r
 	replayAmbeCircularBufferPushBack(&replayBuffer, ambeBlockPtr, blockLen, reset, wrapWhenFull);
 }
 
-static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber)
+static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phrase)
 {
 	if (!voicePromptDataIsLoaded) return false;
 	uint16_t length=replayAmbeGetLength(&replayBuffer);
@@ -660,15 +707,22 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber)
 		return false;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of changing.
 	bool deleting=length < CUSTOM_VOICE_PROMPT_MIN_SIZE;
+	if (!deleting && phrase && *phrase)
+	{
+		strncpy(replayBuffer.hdr.phrase, phrase, sizeof(replayBuffer.hdr.phrase));
+		replayBuffer.hdr.phrase[sizeof(replayBuffer.hdr.phrase)-1]='\0';
+	}
+	else if (deleting)
+		memset(replayBuffer.hdr.phrase, 0, sizeof(replayBuffer.hdr.phrase));
+	else // keep whatever is in the cache for this prompt, we're just replacing the recording.
+		memcpy(replayBuffer.hdr.phrase, phraseCache[customPromptNumber-1], CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
+
+	// update the cache.
+	strncpy(phraseCache[customPromptNumber-1], replayBuffer.hdr.phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
 
 	replayBuffer.hdr.customVPLength=deleting ? 0 : SAFE_MIN(length, (CUSTOM_VOICE_PROMPT_MAX_SIZE-sizeof(replayBuffer.hdr)));
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 	return SPI_Flash_write(addr, (uint8_t*)&replayBuffer, CUSTOM_VOICE_PROMPT_MAX_SIZE);
-}
-
-static bool CheckCustomVPSignature(CustomVoicePromptsHeader_t* hdr)
-{
-	return hdr->customVPSignature[0]=='v' && hdr->customVPSignature[1]=='p' && hdr->customVPLength >= CUSTOM_VOICE_PROMPT_MIN_SIZE && hdr->customVPLength < CUSTOM_VOICE_PROMPT_MAX_SIZE;
 }
 
 static int GetCustomVoicePromptData(int customPromptNumber)
@@ -685,10 +739,10 @@ static int GetCustomVoicePromptData(int customPromptNumber)
 	return hdr.customVPLength;
 }
 
-void SaveCustomVoicePrompt(int customPromptNumber)
+void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 {
 	voicePromptsInit();
-	if (SaveAMBEBufferAsCustomVoicePrompt(customPromptNumber))
+	if (SaveAMBEBufferAsCustomVoicePrompt(customPromptNumber, phrase))
 	{
 		voicePromptsAppendInteger(customPromptNumber);
 		// When appending a custom prompt, we need to add the VOICE_PROMPT_CUSTOM to it so the code knows it is a custom prompt.
