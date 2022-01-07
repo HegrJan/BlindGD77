@@ -16,7 +16,7 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-7 January 2022
+8 January 2022
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
 2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
 3. Fixed bug of DMR ID being announced for a station on the wrong timeslot. I.e. if you were on ts1, and a signal came in on ts2, that DMR ID would be announced even though you couldn't hear them.
@@ -42,7 +42,7 @@ Plese note: The license and copyright information are set out in the file called
 9.5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
 9.5.2. Go to any edit field, e.g. channel details name field.
 9.5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
-9.5.4. While that edit has focus, save the custom prompt with long hold SK2+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also still work.
+9.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also still work.
 Please note: When in an edit field, the edit field must be in Numeric rather than Alphanumeric mode for SK1+digit to play the prompt. To ensure the edit is in Numeric mode, pres SK2+Right Arrow until the radio announces "Numeric".
 Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
 9.6. Note the prompt will follow the voice rate of the rest of the prompts.
