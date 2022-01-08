@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-8 January 2022
+9 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -82,11 +82,11 @@ Virtual Keypad mode for GD77S.
 1.1. Once in keypad mode, the rotary knob is no longer used for channel selection but number and letter selection.
 1.2. Read the current buffer with long hold sk1.
 1.3. Add the currently selected digit or letter to the buffer with short press sk1.
-1.4. Backspace the last char with short press sk2.
-1.5. Cycle through banks of symbols using long hold SK2. These banks include:
+1.4. Cycle through banks of symbols using short press SK2. These banks include:
 Bank 0: the original symbols 0 through 9, A-D, * and #,
  Bank 1: A through P,
 Bank 2: Q through Z, +-%*# space.
+1.5. Backspace the last char with long press sk2.
 1.6. Clear the buffer with extra long hold sk2. You'll hear a confirmation beep.
 1.7. If you hit ptt, the buffer is sent as dtmf tones (if the radio is in analog mode).
 1.8. If you press long hold orange, the buffer is interpreted as either a command (see below) or a frequency, or frequency pair (rx tx) and the radio is set to that frequency.
