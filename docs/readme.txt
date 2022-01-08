@@ -45,9 +45,16 @@ Plese note: The license and copyright information are set out in the file called
 9.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also still work.
 Please note: When in an edit field, the edit field must be in Numeric rather than Alphanumeric mode for SK1+digit to play the prompt. To ensure the edit is in Numeric mode, pres SK2+Right Arrow until the radio announces "Numeric".
 Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
+9.5.5. To associate a custom voice prompt to a string on a GD77S, use the command *##1hello for example to associate custom prompt 1 with the string hello. See 11 below.
 9.6. Note the prompt will follow the voice rate of the rest of the prompts.
 9.7. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then long hold SK1+the number you wish to delete. On the GD77S, save an empty prompt and then use *##digits to save it from the virtual keypad.
 10. Fixed announcement of user power level so that when it is selected, the actual level is also spoken. E.g. if the user power level is set to 4100, then the voice will now say "user power level 4100".
+10. The GD77S virtual keypad has been extended to be able to enter all alphabetical characters. Previously long hold SK2 would clear the buffer. This has been moved to extra long hold SK2. Long hold SK2 now cycles between three banks of symbols. These banks include:
+Bank 0: the original symbols 0 through 9, A-D, * and #,
+ Bank 1: A through P,
+Bank 2: Q through Z, +-%*# space.
+I've only included symbols for which there are voice prompts since otherwise it would be impossible to identify the symbols.
+
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).

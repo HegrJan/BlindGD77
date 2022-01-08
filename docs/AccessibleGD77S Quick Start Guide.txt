@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-5 January 2022
+8 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -83,11 +83,15 @@ Virtual Keypad mode for GD77S.
 1.2. Read the current buffer with long hold sk1.
 1.3. Add the currently selected digit or letter to the buffer with short press sk1.
 1.4. Backspace the last char with short press sk2.
-1.5. Clear the buffer with long hold sk2. You'll hear a confirmation beep.
-1.6. If you hit ptt, the buffer is sent as dtmf tones (if the radio is in analog mode).
-1.7. If you press long hold of orange, the buffer is interpreted as either a command (see below) or a frequency, or frequency pair (rx tx) and the radio is set to that frequency.
-1.7.1. The frequency entry is flexible. If it is simplex, you can enter as few digits as you need to get the correct frequency, e.g. 147 for 147 mHz.
-1.7.2. If you wish to enter both rx and tx, so long as the rx starts at position 1 and the tx at position 9, i.e. first 8 for rx and 2nd 8 for tx, it should work. The following will work:
+1.5. Cycle through banks of symbols using long hold SK2. These banks include:
+Bank 0: the original symbols 0 through 9, A-D, * and #,
+ Bank 1: A through P,
+Bank 2: Q through Z, +-%*# space.
+1.6. Clear the buffer with extra long hold sk2. You'll hear a confirmation beep.
+1.7. If you hit ptt, the buffer is sent as dtmf tones (if the radio is in analog mode).
+1.8. If you press long hold orange, the buffer is interpreted as either a command (see below) or a frequency, or frequency pair (rx tx) and the radio is set to that frequency.
+1.8.1. The frequency entry is flexible. If it is simplex, you can enter as few digits as you need to get the correct frequency, e.g. 147 for 147 mHz.
+1.8.2. If you wish to enter both rx and tx, so long as the rx starts at position 1 and the tx at position 9, i.e. first 8 for rx and 2nd 8 for tx, it should work. The following will work:
 14700000146400 
 To set rx to 147 and tx to 146400.
 Or,
@@ -201,8 +205,9 @@ You can create up to 10 custom voice prompts to be spoken for contact or channel
 2. Long hold SK2 from Voice Mode only will repeat the prompt for verification. (Press orange key until you hear voice, then use long hold SK2).
 3. Save the prompt to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
 4. Edit a channel or contact name using the CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
-5. Note the prompt will follow the voice rate of the rest of the prompts.
+5. If you wish to associate a custom voice prompt to a string, use the command *##1hello for example to associate custom voice prompt 1 with the text "hello."
 6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then issue the virtual keypad command *##digits followed by long hold orange. 
+7. Note the prompt will follow the voice rate of the rest of the prompts.
 
 Note for more detailed information about each of the menu options, please consult the manual, OpenGD77_User_Guide.pdf. It is out of date in some areas, so where there is a conflict, this AccessibleGuideGD77.txt file is more up-to-date.
 
