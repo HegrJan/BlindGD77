@@ -54,6 +54,7 @@ Bank 0: the original symbols 0 through 9, A-D, * and #,
  Bank 1: A through P,
 Bank 2: Q through Z, +-%*# space.
 I've only included symbols for which there are voice prompts since otherwise it would be impossible to identify the symbols.
+11. Added ability to edit a channel name on GD77S. Use e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name.
 
 
 17 December 2021
