@@ -2279,7 +2279,7 @@ void announceChar(char ch)
 	char buf[2] = {ch, 0};
 
 	voicePromptsInit();
-	voicePromptsAppendStringWithCaps(buf, true);
+	voicePromptsAppendStringWithCaps(buf, true, false);
 	voicePromptsPlay();
 }
 

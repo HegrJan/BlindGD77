@@ -495,7 +495,7 @@ static uint16_t LookupCustomPrompt(char* ptr, int* advanceBy)
 	return 0;
 }
 
-static uint16_t Lookup(char* ptr, int* advanceBy)
+static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 {
 	if (!ptr) return 0;
 	
@@ -508,6 +508,8 @@ static uint16_t Lookup(char* ptr, int* advanceBy)
 			return userDictionary[index].vp;
 		}
 		// look up ## followed by digit and speak as custom prompt.
+		if (includeCustomPrompts)
+		{
 		if (strncmp(ptr, "##", 2)==0 && ptr[2] >='1' && ptr[2]<='9')
 		{
 			int customPromptNumber=atoi(ptr+2);
@@ -518,11 +520,12 @@ static uint16_t Lookup(char* ptr, int* advanceBy)
 		int customPromptNumber=LookupCustomPrompt(ptr, advanceBy);
 		if (customPromptNumber > 0)
 			return VOICE_PROMPT_CUSTOM+customPromptNumber;
+		}
 	}
 	return 0;
 }
 
-void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps)
+void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, bool includeCustomPrompts)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
@@ -536,7 +539,7 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps)
 	while (*promptString != 0)
 	{
 		int advanceBy=0;
-		uint16_t vp=Lookup(promptString, &advanceBy);
+		uint16_t vp=Lookup(promptString, &advanceBy, includeCustomPrompts);
 		if (vp)
 		{
 			voicePromptsAppendPrompt(vp);
@@ -592,7 +595,7 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps)
 
 void voicePromptsAppendString(char *promptString)
 {
-	voicePromptsAppendStringWithCaps(promptString, false);
+	voicePromptsAppendStringWithCaps(promptString, false, true);
 }
 
 void voicePromptsAppendInteger(int32_t value)

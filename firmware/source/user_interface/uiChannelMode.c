@@ -3408,7 +3408,7 @@ static void 			AnnounceGD77sKeypadChar(bool init)
 static void 			AnnounceGD77sKeypadBuffer(void)
 {
 	voicePromptsInit();
-	voicePromptsAppendString(GD77SKeypadBuffer);
+	voicePromptsAppendStringWithCaps(GD77SKeypadBuffer, false, false);
 	voicePromptsPlay();
 }
 
@@ -3831,6 +3831,18 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		announceItem(PROMPT_SEQUENCE_MODE, PROMPT_THRESHOLD_2);
 		return true;	
 	}
+	if (strncmp(GD77SKeypadBuffer, "*##", 3)==0 && isdigit(GD77SKeypadBuffer[3]))
+	{// save custom voice prompt.
+		int customPromptNumber=atoi(GD77SKeypadBuffer+3);
+		char* phrasePtr=GD77SKeypadBuffer+3;
+		while (phrasePtr && *phrasePtr && isdigit(*phrasePtr))
+		{
+			phrasePtr++;
+		}
+		SaveCustomVoicePrompt(customPromptNumber, phrasePtr);
+		return true;
+	}
+
 	if (strncmp(GD77SKeypadBuffer, "*#", 2)==0 && strlen(GD77SKeypadBuffer) >= 8)
 	{// Add a DTMF contact name is first 6 chars after *#, code is rest of string.
 		char name[7]="\0";
@@ -3874,17 +3886,6 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 				voicePromptsAppendLanguageString(&currentLanguage->error);
 						}
 		voicePromptsPlay();
-		return true;
-	}
-	if (strncmp(GD77SKeypadBuffer, "*##", 3)==0 && isdigit(GD77SKeypadBuffer[3]))
-	{// save custom voice prompt.
-		int customPromptNumber=atoi(GD77SKeypadBuffer+3);
-		char* phrasePtr=GD77SKeypadBuffer+3;
-		while (phrasePtr && *phrasePtr && isdigit(*phrasePtr))
-		{
-			phrasePtr++;
-		}
-		SaveCustomVoicePrompt(customPromptNumber, phrasePtr);
 		return true;
 	}
 	if (strncmp(GD77SKeypadBuffer, "**", 2)==0)
@@ -4068,7 +4069,7 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	{
 		AddGD77sKeypadChar();
 	}
-	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
+	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
 	{
 		if (GD77sKeypadBankIndex==2)
 			GD77sKeypadBankIndex=0;
@@ -4076,14 +4077,14 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 			GD77sKeypadBankIndex++;
 		AnnounceGD77sKeypadChar(true);
 	}
+	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
+	{
+		BackspaceGD77sKeypadChar();
+	}
 	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2))
 	{
 		voicePromptsInit();
 		ClearGD77sKeypadBuffer();
-	}
-	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
-	{
-		BackspaceGD77sKeypadChar();
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_ORANGE))
 	{
