@@ -3865,7 +3865,12 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 	if (strncmp(GD77SKeypadBuffer, "*##", 3)==0 && isdigit(GD77SKeypadBuffer[3]))
 	{// save custom voice prompt.
 		int customPromptNumber=atoi(GD77SKeypadBuffer+3);
-		SaveCustomVoicePrompt(customPromptNumber);
+		char* phrasePtr=GD77SKeypadBuffer+3;
+		while (phrasePtr && *phrasePtr && isdigit(*phrasePtr))
+		{
+			phrasePtr++;
+		}
+		SaveCustomVoicePrompt(customPromptNumber, phrasePtr);
 		return true;
 	}
 	if (strncmp(GD77SKeypadBuffer, "**", 2)==0)
