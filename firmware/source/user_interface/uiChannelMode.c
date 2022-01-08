@@ -3016,8 +3016,12 @@ void uiChannelInitializeCurrentZone(void)
 #if defined(PLATFORM_GD77S)
 #define GD77S_KEYPAD_BUF_MAX 33
 static int GD77sSelectedCharIndex=0;
+static int GD77sKeypadBankIndex=0;
 static char GD77SKeypadBuffer[GD77S_KEYPAD_BUF_MAX]="\0";
 static int GD77SKeypadPos=0;
+// bank 0 is DTMF symbols.
+#define GD77S_KEYPAD_BANK1_CHARS "ABCDEFGHIJKLMNOP"
+#define GD77S_KEYPAD_BANK2_CHARS "QRSTUVWXYZ+-%*# "
 
 static int GetDTMFContactIndexForZoneAndChannelAutoDial()
 {
@@ -3380,10 +3384,25 @@ static void AnnounceGD77SVoiceParams(bool announceVolume, bool announceRate)
 	voicePromptsPlay();
 }
 
+static char GetGD77SKeypadChar()
+{
+	if (GD77sSelectedCharIndex < 0 || GD77sSelectedCharIndex > 15)
+		return 0;
+	
+	switch (GD77sKeypadBankIndex)
+	{
+		case 1:
+			return GD77S_KEYPAD_BANK1_CHARS[GD77sSelectedCharIndex];
+		case 2:
+			return GD77S_KEYPAD_BANK2_CHARS[GD77sSelectedCharIndex];
+		default:
+		return DTMF_AllowedChars[GD77sSelectedCharIndex];
+	}
+}
 static void 			AnnounceGD77sKeypadChar(bool init)
 {
 	char buf[2] = {0,0};
-	buf[0]=DTMF_AllowedChars[GD77sSelectedCharIndex];
+	buf[0]=GetGD77SKeypadChar();
 	if (init)
 		voicePromptsInit();
 
@@ -3403,7 +3422,7 @@ static void AddGD77sKeypadChar(void)
 	if (GD77SKeypadPos >=GD77S_KEYPAD_BUF_MAX-1)
 		return;
 	
-	GD77SKeypadBuffer[GD77SKeypadPos++]= DTMF_AllowedChars[GD77sSelectedCharIndex];
+	GD77SKeypadBuffer[GD77SKeypadPos++]= GetGD77SKeypadChar();
 	AnnounceGD77sKeypadChar(true);
 	GD77SKeypadBuffer[GD77SKeypadPos]='\0';
 }
@@ -4033,6 +4052,14 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		AddGD77sKeypadChar();
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
+	{
+		if (GD77sKeypadBankIndex==2)
+			GD77sKeypadBankIndex=0;
+		else
+			GD77sKeypadBankIndex++;
+		AnnounceGD77sKeypadChar(true);
+	}
+	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2))
 	{
 		voicePromptsInit();
 		ClearGD77sKeypadBuffer();

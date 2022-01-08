@@ -1086,13 +1086,13 @@ void mainTask(void *data)
 			{
 				HandleCustomPrompts(&ev, NULL);
 			}
-#endif
 
 			if (BUTTONCHECK_DOWN(&ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(&ev, BUTTON_SK1))
 			{
 				ReplayDMR();
 				keyboardReset();
 			}
+#endif
 			menuSystemCallCurrentMenuTick(&ev);
 
 			// Restore the beep built when a menu was pushed by the quickkey above.
