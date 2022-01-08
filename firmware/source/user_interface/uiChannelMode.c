@@ -4020,6 +4020,28 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		SaveChannelToCurrentZone(zoneChannelIndex);
 		return true;
 	}
+	if (GD77SKeypadBuffer[0]=='E' && isdigit(GD77SKeypadBuffer[1]) && strlen(GD77SKeypadBuffer) > 2)
+	{// e1 through e16 edit channel name 
+		int zoneChannelIndex = atoi(GD77SKeypadBuffer+1);
+		char* namePtr=GD77SKeypadBuffer+1;
+		while (namePtr && *namePtr && isdigit(*namePtr))
+		{
+			namePtr++;
+		}
+		// copy the name to the specific channel.
+		if (zoneChannelIndex < 1 || zoneChannelIndex > 16)
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}
+		codeplugChannelGetDataForIndex(currentZone.channels[zoneChannelIndex-1], currentChannelData);
+		codeplugUtilConvertStringToBuf(namePtr, currentChannelData->name, 16);
+		codeplugChannelSaveDataForIndex(currentZone.channels[zoneChannelIndex-1], currentChannelData);
+		voicePromptsInit();
+		voicePromptsAppendString(namePtr);
+		voicePromptsPlay();
+		return true;
+	}
 	
 	return false;	
 }
