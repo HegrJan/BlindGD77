@@ -3698,13 +3698,6 @@ bool ScanShouldSkipFrequency(uint32_t freq)
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) return false;
-	if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
-	{
-		ReplayDMR();
-		keyboardReset();
-		
-		return true;
-	}
 
 	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
 	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return false;
