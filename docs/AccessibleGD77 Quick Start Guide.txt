@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-8 January 2022
+9 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -212,7 +212,6 @@ You can create up to 10 custom voice prompts to be spoken for, or as part of, co
 5.2. Go to any edit field, e.g. channel details name field.
 5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
 5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also play the same custom prompt.
-Please note: When in an edit field, the edit field must be in Numeric rather than Alphanumeric mode for SK1+digit to play the prompt. To ensure the edit is in Numeric mode, pres SK2+Right Arrow until the radio announces "Numeric".
 Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
 6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete.
 7. Note the prompt will follow the voice rate of the rest of the prompts.
