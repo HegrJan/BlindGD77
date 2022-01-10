@@ -1693,10 +1693,10 @@ static void handleUpKey(uiEvent_t *ev)
 				vfoSweepUpdateSamples(1, false, 0);
 			}
 			else
-			{
+			{// set mode back to scanning before calling stepFrequency or the new freq will be errantly spoken.
+				uiDataGlobal.Scan.state = SCAN_SCANNING;
 				stepFrequency(VFO_FREQ_STEP_TABLE[(currentChannelData->VFOflag5 >> 4)] * uiDataGlobal.Scan.direction);
 				uiDataGlobal.Scan.timer = 500;
-				uiDataGlobal.Scan.state = SCAN_SCANNING;
 				uiVFOModeUpdateScreen(0);
 			}
 		}
