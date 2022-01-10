@@ -37,8 +37,8 @@ Plese note: The license and copyright information are set out in the file called
 9.1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
 9.2. SK2+SK1 will repeat the prompt for verification. (On GD77S, use long hold SK2 from Voice mode).
 9.3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To hear what is already saved for a given custom prompt, short press SK1+number. On the GD77s, from the virtual keypad mode, use the command *## followed by the digits, e.g. *##1 followed by long hold orange to save custom prompt 1.
-9.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S you will have to edit contact or channel names from the CPS software.
-9.5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save it:
+9.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S see point 11 and 12 below.
+9.5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save the prompt:
 9.5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
 9.5.2. Go to any edit field, e.g. channel details name field.
 9.5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
@@ -53,8 +53,8 @@ Bank 0: the original symbols 0 through 9, A-D, * and #,
  Bank 1: A through P,
 Bank 2: Q through Z, +-%*# space.
 I've only included symbols for which there are voice prompts since otherwise it would be impossible to identify the symbols.
-12. Added ability to edit a channel name on GD77S. Use e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name.
-13. Fixed a bug in VFO scan mode where frequency and scan range would be errantly announced each time the scan resumed.
+12. Added ability to edit a channel name on the GD77S. From the Keypad mode, enter the command e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name followed by long hold Orange button.
+13. Fixed a bug in VFO scan mode on radios with a keypad where frequency and scan range would be errantly announced each time the scan resumed.
 
 
 17 December 2021

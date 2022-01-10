@@ -205,7 +205,7 @@ You can create up to 10 custom voice prompts to be spoken for contact or channel
 1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
 2. Long hold SK2 from Voice Mode only will repeat the prompt for verification. (Press orange key until you hear voice, then use long hold SK2).
 3. Save the prompt to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
-4. Edit a channel or contact name using the CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
+4. Edit a channel or contact name using the virtual keypad mode or CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
 5. If you wish to associate a custom voice prompt to a string, use the command *##1hello for example to associate custom voice prompt 1 with the text "hello."
 6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then issue the virtual keypad command *##digits followed by long hold orange. 
 7. Note the prompt will follow the voice rate of the rest of the prompts.
