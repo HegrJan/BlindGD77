@@ -16,7 +16,7 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-9 January 2022
+10 January 2022
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
 2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
 3. Fixed bug of DMR ID being announced for a station on the wrong timeslot. I.e. if you were on ts1, and a signal came in on ts2, that DMR ID would be announced even though you couldn't hear them.
@@ -48,12 +48,13 @@ Note that if you replace a custom prompt by rerecording it and attempting to sav
 9.6. Note the prompt will follow the voice rate of the rest of the prompts.
 9.7. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then long hold SK1+the number you wish to delete. On the GD77S, save an empty prompt and then use *##digits to save it from the virtual keypad.
 10. Fixed announcement of user power level so that when it is selected, the actual level is also spoken. E.g. if the user power level is set to 4100, then the voice will now say "user power level 4100".
-10. The GD77S virtual keypad has been extended to be able to enter all alphabetical characters. Previously long hold SK2 would clear the buffer. This has been moved to extra long hold SK2. Long hold SK2 now backspaces and a quick press of SK2 cycles between three banks of symbols. These banks include:
+11. The GD77S virtual keypad has been extended to be able to enter all alphabetical characters. Previously long hold SK2 would clear the buffer. This has been moved to extra long hold SK2. Long hold SK2 now backspaces and a quick press of SK2 cycles between three banks of symbols. These banks include:
 Bank 0: the original symbols 0 through 9, A-D, * and #,
  Bank 1: A through P,
 Bank 2: Q through Z, +-%*# space.
 I've only included symbols for which there are voice prompts since otherwise it would be impossible to identify the symbols.
-11. Added ability to edit a channel name on GD77S. Use e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name.
+12. Added ability to edit a channel name on GD77S. Use e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name.
+13. Fixed a bug in VFO scan mode where frequency and scan range would be errantly announced each time the scan resumed.
 
 
 17 December 2021
