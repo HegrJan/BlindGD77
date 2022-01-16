@@ -1407,9 +1407,10 @@ void trxSelectVoiceChannel(uint8_t channel) {
 			trxSaveDeviation = (vall + (valh << 8)) >> 6;
 
 			trxUpdateDeviation(channel);
+			AT1846SWriteReg2byte(0x44, 0x06, 0x00); // reduce  internal volume for DTMF side tones.
 			break;
 		default:
-			AT1846SetClearReg2byteWithMask(0x57, 0xff, 0xfe, 0x00, 0x00); // Audio feedback off
+					AT1846SetClearReg2byteWithMask(0x57, 0xff, 0xfe, 0x00, 0x00); // Audio feedback off
 			if (trxSaveVoiceGainTx != 0xff)
 			{
 				I2C_AT1846_set_register_with_mask(0x41, 0xFF80, trxSaveVoiceGainTx, 0);
@@ -1420,6 +1421,7 @@ void trxSelectVoiceChannel(uint8_t channel) {
 				I2C_AT1846_set_register_with_mask(0x59, 0x003f, trxSaveDeviation, 6);
 				trxSaveDeviation = 0xFF;
 			}
+			AT1846SWriteReg2byte(0x44, 0x06, 0xff); // set internal volume to 100% . Details from Colin G4EML
 			break;
 	}
 	AT1846SetClearReg2byteWithMask(0x3a, 0x8f, 0xff, channel, 0x00);
