@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-9 January 2022
+16 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -155,7 +155,6 @@ An AutoZone is a pseudo zone created on the fly based on channelized frequencies
 4. Press orange to exit Options Mode.
 Once you've enabled all the autozones that you want, you can then choose them from the Zones mode using SK1 and SK2 like any other zone.
 
-If an AutoZone has more than 16 channels, use long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
 If an AutoZone has duplex available for a particular channel, such as a UHF CB channel, an extra long hold of SK1 will toggle between simplex and  duplex mode from Squelch Mode. (You'll hear none for simplex and either plus or minus for a plus or minus repeater offset as defined by the AutoZone). 
 
 The following autoZones are available: 
@@ -177,6 +176,8 @@ If you think you should be able to transmit and can't, check that the GD77S Band
 Please note: To toggle the band limits between on and off on the GD77S, hold down SK1+PTT while powering on the radio.
 
  It goes without saying that you must hold the relevant license for transmission in any of these bands not governed by a class licence.
+
+If a zone has more than 16 channels, use extra long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, extra long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
 
 Resetting the radio's settings to default.
 If you need to reset the radio's settings to their default values, power off the radio, hold sk2, then power on the radio. You'll hear "Update Settings".
