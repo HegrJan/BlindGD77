@@ -3018,7 +3018,7 @@ static int GD77SKeypadPos=0;
 #define GD77S_KEYPAD_BANK1_CHARS "ABCDEFGHIJKLMNOP"
 #define GD77S_KEYPAD_BANK2_CHARS "QRSTUVWXYZ+-%*# "
 
-static int GetDTMFContactIndexForZoneAndChannelAutoDial()
+static int GetDTMFContactIndexForZoneAndChannelAutoDial(bool checkIfAlreadyDialled)
 {
 	if (GD77SParameters.dtmfListCount == 0)
 		return 0;
@@ -3026,7 +3026,7 @@ static int GetDTMFContactIndexForZoneAndChannelAutoDial()
 	if (nonVolatileSettings.currentZone > 15) return 0; // can only handle 16 zones (0 to 15)
 	if (trxGetMode() == RADIO_MODE_DIGITAL) return 0; // DTMF dialing disallowed for digital channels.
 	// See if we've already dialled this combination 	
-	if ((GD77SParameters.dialedZones&(1<<nonVolatileSettings.currentZone)) && (GD77SParameters.dialedChannels&(1<<nonVolatileSettings.currentChannelIndexInZone)))
+	if (checkIfAlreadyDialled && ((GD77SParameters.dialedZones&(1<<nonVolatileSettings.currentZone)) && (GD77SParameters.dialedChannels&(1<<nonVolatileSettings.currentChannelIndexInZone))))
 		return 0;
 	
 	char autoDialContactForZoneAndChannel[7];
@@ -3042,6 +3042,9 @@ static int GetDTMFContactIndexForZoneAndChannelAutoDial()
 
 static void ToggleGD77SDTMFAutoDialer(bool announce)
 {
+	if (GetDTMFContactIndexForZoneAndChannelAutoDial(false)==0)
+		return;
+	
 	bool alreadyDialed = (GD77SParameters.dialedZones&(1<<nonVolatileSettings.currentZone)) && (GD77SParameters.dialedChannels&(1<<nonVolatileSettings.currentChannelIndexInZone));
 	// Only toggle the channel bit as there may be more than one channel in this zone with a dtmf contact associated with it.
 	if (alreadyDialed)
@@ -3091,7 +3094,7 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 
 		return false;	
 	}
-	int onceOffChannelContactIndex = GetDTMFContactIndexForZoneAndChannelAutoDial();
+	int onceOffChannelContactIndex = GetDTMFContactIndexForZoneAndChannelAutoDial(true);
 
 	if ((GD77SParameters.uiMode == GD77S_UIMODE_DTMF_CONTACTS) || (onceOffChannelContactIndex > 0))
 	{
@@ -4873,6 +4876,17 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		{
 			CycleRepeaterOffset(NULL);
 		}
+		else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
+		{
+			if (!GD77SParameters.virtualVFOMode)
+			{
+				if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+					GD77SParameters.channelbankOffset+=16;
+				else
+					GD77SParameters.channelbankOffset=0;
+				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
+			}
+		}
 		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
 			uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
@@ -4916,29 +4930,16 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			}
 			else
 			{
-				if (!GD77SParameters.virtualVFOMode)
+				if (trxGetMode() == RADIO_MODE_DIGITAL)
 				{
-					if (AutoZoneIsCurrentZone(currentZone.NOT_IN_CODEPLUGDATA_indexNumber))
-					{
-						if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
-							GD77SParameters.channelbankOffset+=16;
-						else
-							GD77SParameters.channelbankOffset=0;
-						checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
-					}
-					else
-					{ // for digital, replay.
-						if (trxGetMode() == RADIO_MODE_DIGITAL)
-						{
-							ReplayDMR();
-							return;
-						}
-						else
-						{
-							// toggle  autodialer for this zone and channel combination for analog.
-							ToggleGD77SDTMFAutoDialer(true);
-						}
-					}
+					ReplayDMR();
+					return;
+				}
+				else
+				{
+					// toggle  autodialer for this zone and channel combination for analog.
+					ToggleGD77SDTMFAutoDialer(true);
+					return;
 				}
 			}
 		}
