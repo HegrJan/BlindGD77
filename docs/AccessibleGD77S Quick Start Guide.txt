@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-16 January 2022
+17 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -178,6 +178,7 @@ Please note: To toggle the band limits between on and off on the GD77S, hold dow
  It goes without saying that you must hold the relevant license for transmission in any of these bands not governed by a class licence.
 
 If a zone has more than 16 channels, use extra long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, extra long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
+The radio will remember the last bank when power cycling the radio.
 
 Resetting the radio's settings to default.
 If you need to reset the radio's settings to their default values, power off the radio, hold sk2, then power on the radio. You'll hear "Update Settings".
@@ -185,6 +186,7 @@ You'll then need to reset all of your favorite options.
 Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
 This does not affect your codeplug.
 
+Auto Contact.
 Associating a DTMF contact with a channel (auto dial contact):
 You can associate a DTMF contact with a channel such that the first time you press PTT on that channel during a session, the associated DTMF string will be dialled. It will not be dialled again until you reboot the radio or reset it with long hold SK2.
 TO do this, add a contact to the contacts list and give it the following name format:
