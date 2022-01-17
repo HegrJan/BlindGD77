@@ -362,6 +362,8 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 	{
 #if ! defined(PLATFORM_GD77S) // GD77S speech can be triggered in main(), so let it ends.
 		voicePromptsTerminate();
+#else
+		GD77SParameters.channelbankOffset = (nonVolatileSettings.currentChannelIndexInZone/16)*16;
 #endif
 
 		settingsSet(nonVolatileSettings.initialMenuNumber, (uint8_t) UI_CHANNEL_MODE);// This menu.
@@ -4128,7 +4130,7 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 
 static void SaveGD77SAutoZoneParams()
 {
-	GD77SParameters.channelbankOffset =0; // reset this to avoid a possible channel out of range when switching zones.
+	GD77SParameters.channelbankOffset = 0;
 
 	if (nonVolatileSettings.autoZonesEnabled==0)
 	{
