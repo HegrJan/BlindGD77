@@ -1398,7 +1398,8 @@ void trxSelectVoiceChannel(uint8_t channel) {
 		case AT1846_VOICE_CHANNEL_TONE2:
 		case AT1846_VOICE_CHANNEL_DTMF:
 			AT1846SetClearReg2byteWithMask(0x79, 0xff, 0xff, 0xc0, 0x00); // Select single tone
-			AT1846SetClearReg2byteWithMask(0x57, 0xff, 0xfe, 0x00, 0x01); // Audio feedback on
+			AT1846SetClearReg2byteWithMask(0x57, 0xff, 0xfe, 0x00, nonVolatileSettings.dtmfVol
+			> 0 ?0x01:0x00); // Audio feedback on
 
 			AT1846SReadReg2byte( 0x41, &valh, &trxSaveVoiceGainTx);
 			trxSaveVoiceGainTx &= 0x7f;
@@ -1407,7 +1408,7 @@ void trxSelectVoiceChannel(uint8_t channel) {
 			trxSaveDeviation = (vall + (valh << 8)) >> 6;
 
 			trxUpdateDeviation(channel);
-			AT1846SWriteReg2byte(0x44, 0x06, nonVolatileSettings.dtmfVol*25); // reduce  internal volume for DTMF side tones.
+			AT1846SWriteReg2byte(0x44, 0x06, nonVolatileSettings.dtmfVol*25); // get as close to 255 in 10 even steps.
 			break;
 		default:
 					AT1846SetClearReg2byteWithMask(0x57, 0xff, 0xfe, 0x00, 0x00); // Audio feedback off

@@ -146,7 +146,12 @@ static void updateScreen(bool isFirstRun)
 					break;
 				case OPTIONS_MENU_DTMF_VOL:
 					leftSide = (char * const *)&currentLanguage->dtmf_vol;
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol+1);
+					if (nonVolatileSettings.dtmfVol > 0)
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol);
+					else
+					{
+						rightSideConst = (char * const *)&currentLanguage->off;
+					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
 					leftSide = (char * const *)&currentLanguage->dmr_beep;
@@ -425,7 +430,7 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_DTMF_VOL:
-					if (nonVolatileSettings.dtmfVol < 9)
+					if (nonVolatileSettings.dtmfVol < 10)
 					{
 						settingsIncrement(nonVolatileSettings.dtmfVol, 1);
 					}
