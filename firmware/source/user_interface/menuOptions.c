@@ -667,8 +667,8 @@ static void handleEvent(uiEvent_t *ev)
 			case OPTIONS_MENU_DTMF_LATCH:
 				if (nonVolatileSettings.dtmfLatch < 6)
 				{
-					if (nonVolatileSettings.dtmfLatch == 0) // start at 1 s, not half a second.
-						nonVolatileSettings.dtmfLatch = 2;
+					if (nonVolatileSettings.dtmfLatch == 0) // start at  half a second.
+						nonVolatileSettings.dtmfLatch = 1;
 					else
 						settingsIncrement(nonVolatileSettings.dtmfLatch, 1);
 				}
@@ -855,7 +855,7 @@ static void handleEvent(uiEvent_t *ev)
 					nonVolatileSettings.sk2Latch = 0; // off
 				break;
 			case OPTIONS_MENU_DTMF_LATCH:
-				if (nonVolatileSettings.dtmfLatch > 2)
+				if (nonVolatileSettings.dtmfLatch > 1)
 				{
 					settingsDecrement(nonVolatileSettings.dtmfLatch, 1);
 				}

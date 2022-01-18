@@ -185,8 +185,6 @@ bool settingsLoadSettings(void)
 		// ensure dtmfLatch is set to a sensible value
 	if (nonVolatileSettings.dtmfLatch > 6)
 		nonVolatileSettings.dtmfLatch = 3; // defaults to 1.5 seconds.
-	else if (nonVolatileSettings.dtmfLatch ==1)
-		nonVolatileSettings.dtmfLatch =2; // 1 seconds.
 	uiDataGlobal.priorityChannelIndex=nonVolatileSettings.priorityChannelIndex;
 	if (nonVolatileSettings.vhfOffset==0 || nonVolatileSettings.vhfOffset > 1000)
 		nonVolatileSettings.vhfOffset=600; // repeater offset for 2 m band kHz.
