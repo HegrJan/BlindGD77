@@ -750,6 +750,7 @@ void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 		voicePromptsAppendInteger(customPromptNumber);
 		// When appending a custom prompt, we need to add the VOICE_PROMPT_CUSTOM to it so the code knows it is a custom prompt.
 		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
+		voicePromptsAppendLanguageString(&currentLanguage->vp_saved);
 	}
 	else
 	{

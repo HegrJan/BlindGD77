@@ -145,7 +145,7 @@ static void updateScreen(bool isFirstRun)
 
 					break;
 				case OPTIONS_MENU_DTMF_VOL:
-					strcpy(leftSideVar, "DTMF Vol");
+					leftSide = (char * const *)&currentLanguage->dtmf_vol;
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol+1);
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
@@ -260,10 +260,6 @@ static void updateScreen(bool isFirstRun)
 						// hack for FM Beep.
 						voicePromptsAppendPrompt(PROMPT_FM);
 						voicePromptsAppendLanguageString(&currentLanguage->beep);
-					}
-					else if (mNum==OPTIONS_MENU_DTMF_VOL)
-					{//hack until we get a new voice prompt.
-						voicePromptsAppendString(leftSideVar);
 					}
 					else
 					{
