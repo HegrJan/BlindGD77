@@ -1407,7 +1407,7 @@ void trxSelectVoiceChannel(uint8_t channel) {
 			trxSaveDeviation = (vall + (valh << 8)) >> 6;
 
 			trxUpdateDeviation(channel);
-			AT1846SWriteReg2byte(0x44, 0x06, 0x00); // reduce  internal volume for DTMF side tones.
+			AT1846SWriteReg2byte(0x44, 0x06, nonVolatileSettings.dtmfVol*25); // reduce  internal volume for DTMF side tones.
 			break;
 		default:
 					AT1846SetClearReg2byteWithMask(0x57, 0xff, 0xfe, 0x00, 0x00); // Audio feedback off

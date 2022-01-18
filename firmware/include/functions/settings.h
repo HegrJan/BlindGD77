@@ -132,7 +132,8 @@ typedef struct
 	int16_t			zoneChannelIndices[16]; // currentChannelIndexInZone is current zone's channel index, currentChannelIndexInAllZone is allChannels index, but 16   zone channel indices are in this array.
 	uint8_t voicePromptVolumePercent; // percent of max volume
 	uint8_t voicePromptRate;
-	// currently 132 bytes 3 December 2021 VK7JS. 
+	uint8_t dtmfVol; // 0 to 255.
+	// currently 133 bytes Jan 18  2022 VK7JS. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

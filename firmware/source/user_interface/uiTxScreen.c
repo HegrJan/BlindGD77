@@ -276,6 +276,8 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				else
 				{
 					dtmfLatchState=dtmfNotLatched;
+					trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+
 					handleTxTermination(ev, TXSTOP_DTMF_KEYING_TIMEOUT);
 				}
 			}
@@ -488,7 +490,10 @@ static void handleEvent(uiEvent_t *ev)
 			dtmfLatchState=dtmfPTTLatched;
 			dtmfPTTLatchTimeout=nonVolatileSettings.dtmfLatch * 500; // nonVolatileSettings.dtmfLatch 	is units of 500 ms.	
 		}
-		trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+		if (nonVolatileSettings.dtmfLatch==0)
+			trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+		else
+			trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE); // will be set back to mic when latch times out.
 		disableAudioAmp(AUDIO_AMP_MODE_RF);
 	}
 

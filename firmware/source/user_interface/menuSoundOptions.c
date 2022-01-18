@@ -36,7 +36,7 @@ static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
-enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
+enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DTMF_VOL, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
 	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
 	OPTIONS_AUDIO_PROMPT_RATE,
@@ -143,6 +143,10 @@ static void updateScreen(bool isFirstRun)
 						soundBeepVolumeDivider = nonVolatileSettings.beepVolumeDivider;
 					}
 
+					break;
+				case OPTIONS_MENU_DTMF_VOL:
+					strcpy(leftSideVar, "DTMF Vol");
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol+1);
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
 					leftSide = (char * const *)&currentLanguage->dmr_beep;
@@ -256,6 +260,10 @@ static void updateScreen(bool isFirstRun)
 						// hack for FM Beep.
 						voicePromptsAppendPrompt(PROMPT_FM);
 						voicePromptsAppendLanguageString(&currentLanguage->beep);
+					}
+					else if (mNum==OPTIONS_MENU_DTMF_VOL)
+					{//hack until we get a new voice prompt.
+						voicePromptsAppendString(leftSideVar);
 					}
 					else
 					{
@@ -420,6 +428,12 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_MENU_DTMF_VOL:
+					if (nonVolatileSettings.dtmfVol < 9)
+					{
+						settingsIncrement(nonVolatileSettings.dtmfVol, 1);
+					}
+					break;
 				case OPTIONS_MENU_DMR_BEEP:
 				case OPTIONS_MENU_FM_BEEP:
 					if (nonVolatileSettings.audioPromptMode != AUDIO_PROMPT_MODE_SILENT)
@@ -536,6 +550,12 @@ static void handleEvent(uiEvent_t *ev)
 						{
 							settingsIncrement(nonVolatileSettings.beepVolumeDivider, 1);
 						}
+					}
+					break;
+				case OPTIONS_MENU_DTMF_VOL:
+					if (nonVolatileSettings.dtmfVol > 0)
+					{
+						settingsDecrement(nonVolatileSettings.dtmfVol, 1);
 					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
