@@ -56,13 +56,14 @@ Bank 2: Q through Z, +-%*# space.
 I've only included symbols for which there are voice prompts since otherwise it would be impossible to identify the symbols.
 12. Added ability to edit a channel name on the GD77S. From the Keypad mode, enter the command e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name followed by long hold Orange button.
 13. Fixed a bug in VFO scan mode on radios with a keypad where frequency and scan range would be errantly announced each time the scan resumed.
-14. Added DTMF Volume option to the Sound Options menu. You can now set the volume of the DTMF tones from 1 lowest to 10 highest. The default is 10 so users won't notice a difference.
+14. Added DTMF Volume option to the Sound Options menu. You can now set the volume of the DTMF tones to off, or from 1 lowest to 10 highest. The default is 10 so users won't notice a difference.
 15. Because echo from the surrounding environment can cause issues with manual DTMF dialling, I've now disabled the mic between tones when the DTMF latch is enabled. The mic won't be re-enabled until the latch times out. The mic was already being disabled between tones when autodialling a contact.
 16. other GD77S changes:
 16.1.	Extra long hold sk2 will now allow you to cycle channel banks in non-autozones, so its on extra long hold sk2 and not long hold sk2 for all zones. I had to do it like that otherwise if it was on long hold, by the time you got to the extra long hold you would have already inadvertently changed channel banks. This means you can have more than 16 channels per zone on the gd77S. When power cycling the radio, you’ll also now return to the correct channel bank, and if the dial hasn't been changed, to the same channel. If the dial was changed, you'll go to the appropriate channel in that same bank.
 16.2.	Long hold sk2 will now only toggle auto dialller if there is an associated auto dial dtmf contact for the current analog channel, if I didn’t do this, while waiting for the extra long hold, you’d hear the auto contact toggle msg even when irrelevant. For those who use this, it will toggle on its way to extra long hold but there’s not much I can do about that to keep everyone happy.
 16.3. Long hold sk2 on a dmr channel still replays dmr last 5 seconds. If you want to cycle to the next channel bank, you’ll start to hear the replay but as soon as you hold down extra long, the channel bank will be cycled and the replay cancelled.
-17. New voice prompts have been added for the DTMF Volume and Custom Voice Prompt features. Plese update your voice prompts to ensure you hear the new prompts when changing DTMF Volume or when saving a custom voice prompt.
+17. Reduced minimum DTMF latch to half a second rather than 1, so the range is off, and from half to 3 seconds in steps of half a second.
+18. New voice prompts have been added for the DTMF Volume and Custom Voice Prompt features. Plese update your voice prompts to ensure you hear the new prompts when changing DTMF Volume or when saving a custom voice prompt.
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).
