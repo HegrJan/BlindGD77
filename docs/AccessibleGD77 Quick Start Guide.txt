@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-9 January 2022
+20 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -265,6 +265,7 @@ When transmitting a DTMF string, if not using the contacts list, this radio has 
 2. You can let go of PTT and continue dialing the DTMF digits.
 3. They'll continue to be transmitted until you leave a long enough pause after the last digit. After about 1.5 seconds, the latch will be released and you'll be back in receive mode.
 If you do not like this feature, or wish to change the length of the timeout, you can do so via the DTMF Latch option in the Options Menu.
+When manually dialling DTMF tones, LeftArrow=A, UpArrow=B, DownArrow=C, RightArrow=D, 0-9 and * and # are as labelled.
 
 Note that if you need to dial a 1750 Hz tone, press SK2+ptt.
 
