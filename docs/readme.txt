@@ -16,7 +16,7 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-18 January 2022
+21 January 2022
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
 2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
@@ -29,7 +29,6 @@ Warning! This update requires a new voice prompt file. Please update your voice 
     5 allstar
     6disconnect
     7 parrot
-    8 blind hams
 5. Added support for indicating capital letters when editing text. The word "cap" will be spoken before a capital letter when inserting new text or navigating by character over a capital letter. You won't hear cap when reading back the string.
 6. Added Busy Channel Lockout (BCL) feature to Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
 7. Added support to speak the name of the voice pack being used, as part of the voice level announcement in the sound options menu, or, as part of announcing voice parameters on the GD77S. The voice name of the voice pack is now always encoded as the very last voice prompt as part of the build process. Please update your voice prompts or this won't work!!!
@@ -63,7 +62,9 @@ I've only included symbols for which there are voice prompts since otherwise it 
 16.2.	Long hold sk2 will now only toggle auto dialller if there is an associated auto dial dtmf contact for the current analog channel, if I didn’t do this, while waiting for the extra long hold, you’d hear the auto contact toggle msg even when irrelevant. For those who use this, it will toggle on its way to extra long hold but there’s not much I can do about that to keep everyone happy.
 16.3. Long hold sk2 on a dmr channel still replays dmr last 5 seconds. If you want to cycle to the next channel bank, you’ll start to hear the replay but as soon as you hold down extra long, the channel bank will be cycled and the replay cancelled.
 17. Reduced minimum DTMF latch to half a second rather than 1, so the range is off, and from half to 3 seconds in steps of half a second.
-18. New voice prompts have been added for the DTMF Volume and Custom Voice Prompt features. Plese update your voice prompts to ensure you hear the new prompts when changing DTMF Volume or when saving a custom voice prompt.
+18. We now say space for blanks when editing text, as opposed to nothing at all. It is not announced when reading the entire string, only when navigating by character.
+19. Any unrecognized character for which we do not have a voice prompt, we will now say code and the ascii value of the character, this is better than saying nothing.
+20. New voice prompts have been added for the DTMF Volume and Custom Voice Prompt features. Plese update your voice prompts to ensure you hear the new prompts when changing DTMF Volume or when saving a custom voice prompt.
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).
