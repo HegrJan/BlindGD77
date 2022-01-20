@@ -105,7 +105,6 @@ const userDictEntry userDictionary[]=
 	{"allstar", PROMPT_UNUSED_7},
 	{"disconnect", PROMPT_UNUSED_8},
 	{"parrot", PROMPT_UNUSED_9},
-	{"blind hams", PROMPT_UNUSED_10},
 		{0, 0}
 };
 // replay logic shares ambe buffer so is colocated here also
@@ -525,7 +524,7 @@ static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 	return 0;
 }
 
-void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, bool includeCustomPrompts)
+void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, bool includeCustomPrompts, bool saySpace)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
@@ -583,8 +582,17 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, boo
 		{
 			voicePromptsAppendPrompt(PROMPT_HASH);
 		}
+		else if (saySpace && *promptString==' ')
+						voicePromptsAppendPrompt(PROMPT_SPACE);
 		else
 		{
+			if (*promptString!=32)
+			{
+				int32_t val = *promptString;
+				voicePromptsAppendLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
+				voicePromptsAppendInteger(val);
+			}
+			else
 			// otherwise just add silence
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
@@ -595,7 +603,7 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, boo
 
 void voicePromptsAppendString(char *promptString)
 {
-	voicePromptsAppendStringWithCaps(promptString, false, true);
+	voicePromptsAppendStringWithCaps(promptString, false, true, false);
 }
 
 void voicePromptsAppendInteger(int32_t value)
