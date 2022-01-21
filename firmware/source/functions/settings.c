@@ -37,8 +37,8 @@
 #include "functions/rxPowerSaving.h"
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
-// VK7JS updated on Nov 23 2021 after removing autoZone from settings.
-static const int STORAGE_MAGIC_NUMBER 		= 0x2111; // NOTE: never use 0xDEADBEEF, it's reserved value
+// VK7JS updated on Jan 21 2022 for next release.
+static const int STORAGE_MAGIC_NUMBER 		= 0x2201; // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
