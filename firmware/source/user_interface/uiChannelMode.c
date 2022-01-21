@@ -3413,7 +3413,7 @@ static void 			AnnounceGD77sKeypadChar(bool init)
 static void 			AnnounceGD77sKeypadBuffer(void)
 {
 	voicePromptsInit();
-	voicePromptsAppendStringWithCaps(GD77SKeypadBuffer, false, false);
+	voicePromptsAppendStringWithCaps(GD77SKeypadBuffer, false, false, true);
 	voicePromptsPlay();
 }
 
