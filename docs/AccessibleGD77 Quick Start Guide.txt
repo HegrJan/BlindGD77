@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-20 January 2022
+21 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -199,7 +199,7 @@ j. Simple digit input for numeric fields;
 k. Simple DTMF support for DTMF fields;
 l. SK1 will repeat the content of the edit field. 
 
-When adding a channel name or contact, because the radio uses recorded speech rather than a genuine synthesizer, most words will be spelled. There are however a few common words which have been added to the internal dictionary so that they will be pronounced as words rather than spelled out if present in the channel or contact name. These include: hotspot, clearnode, openspot, microhub, allstar, disconnect, parrot, blind hams
+When adding a channel name or contact, because the radio uses recorded speech rather than a genuine synthesizer, most words will be spelled. There are however a few common words which have been added to the internal dictionary so that they will be pronounced as words rather than spelled out if present in the channel or contact name. These include: hotspot, clearnode, openspot, microhub, allstar, disconnect, parrot.
 
 Custom Voice Prompts:
 You can create up to 10 custom voice prompts to be spoken for, or as part of, contact or channel names.
