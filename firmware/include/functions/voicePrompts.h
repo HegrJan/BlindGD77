@@ -35,7 +35,7 @@ typedef enum
 	PROMPT_0, PROMPT_1,	PROMPT_2, PROMPT_3, PROMPT_4, PROMPT_5, PROMPT_6, PROMPT_7, PROMPT_8, PROMPT_9,
 	PROMPT_A, PROMPT_B, PROMPT_C, PROMPT_D, PROMPT_E, PROMPT_F, PROMPT_G, PROMPT_H, PROMPT_I, PROMPT_J,
 	PROMPT_K, PROMPT_L, PROMPT_M, PROMPT_N, PROMPT_O, PROMPT_P, PROMPT_Q, PROMPT_R, PROMPT_S, PROMPT_T,
-	PROMPT_U, PROMPT_V, PROMPT_W, PROMPT_X, PROMPT_Y, PROMPT_Z, PROMPT_Z2,
+	PROMPT_U, PROMPT_V, PROMPT_W, PROMPT_X, PROMPT_Y, PROMPT_Z, PROMPT_CAP,
 	PROMPT_CHANNEL,
 	PROMPT_CONTACT,
 	PROMPT_MILLISECONDS,
@@ -83,11 +83,17 @@ typedef enum
 	PROMPT_UNUSED_7,
 	PROMPT_UNUSED_8,
 	PROMPT_UNUSED_9,
-	PROMPT_UNUSED_10,
+	PROMPT_SPACE,
 	NUM_VOICE_PROMPTS
 } voicePrompt_t;
 
-
+typedef struct
+{
+	const char* userWord;
+	voicePrompt_t vp;
+} userDictEntry;
+#define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
+#define VOICE_PROMPT_CUSTOM 500
 extern bool voicePromptDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
 extern const uint32_t VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS;
@@ -98,6 +104,7 @@ void voicePromptsTick(void);// Called from HR-C6000.c
 void voicePromptsInit(void);// Call before building the prompt sequence
 void voicePromptsAppendPrompt(uint16_t prompt);// Append an individual prompt item. This can be a single letter number or a phrase
 void voicePromptsAppendString(char *);// Append a text string e.g. "VK3KYY"
+void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, bool includeCustomPrompts, bool saySpace);
 void voicePromptsAppendInteger(int32_t value); // Append a signed integer
 void voicePromptsAppendLanguageString(const char * const *);//Append a text from the current language e.g. &currentLanguage->battery
 void voicePromptsPlay(void);// Starts prompt playback
@@ -105,5 +112,9 @@ extern bool voicePromptsIsPlaying(void);
 bool voicePromptsHasDataToPlay(void);
 void voicePromptsTerminate(void);
 bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress);
+ void ReplayDMR(void);
+void ReplayInit(void);
+void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
+void SaveCustomVoicePrompt(int customPromptNumber, char* phrase); // phrase is an optional string to map to the ambe data. I.e. can map one's name to the recording of their name.
 
 #endif

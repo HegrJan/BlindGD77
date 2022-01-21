@@ -16,10 +16,46 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-19 December 2021
+22 January 2022 Release
+Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
 2. Fixed bug of dual watch or priority scan not returning to expected channel. (This got broken when I introduced the regular scan returning to the original channel).
 3. Fixed bug of DMR ID being announced for a station on the wrong timeslot. I.e. if you were on ts1, and a signal came in on ts2, that DMR ID would be announced even though you couldn't hear them.
+4. Added support for indicating capital letters when editing text. The word "cap" will be spoken before a capital letter when inserting new text or navigating by character over a capital letter. You won't hear cap when reading back the string.
+5. We now say space for blanks when editing text, as opposed to nothing at all. It is not announced when reading an entire prompt, only when navigating by character when editing.
+6. Any unrecognized character for which we do not have a voice prompt, we will now say code and the ascii value of the character, this is better than saying nothing.
+7. Added support to speak the name of the voice pack being used, as part of the voice level announcement in the sound options menu, or, as part of announcing voice parameters on the GD77S. The voice name of the voice pack is now always encoded as the very last voice prompt as part of the build process. Please update your voice prompts or this won't work!!!
+8. Added Busy Channel Lockout (BCL) feature to Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
+9. Added new feature to replay the last several seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio on radios with a keypad, or, on the GD77s, use long hold SK2 on a DMR channel when not receiving a signal. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note, SK2+SK1 both held down still activates the reverse repeater function, however there is no conflict because this is only used while receiving a signal, whereas replay is used when not currently receiving a signal).
+10. You can now create up to 10 custom voice prompts to be spoken as part of, or in place of, contact or channel names. You can associate these prompts with either a word, phrase, or a special embed string ##digits).
+10.1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
+10.2. SK2+SK1 will repeat the prompt for verification. (On GD77S, use long hold SK2 from Voice mode).
+10.3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To hear what is already saved for a given custom prompt, short press SK1+number. On the GD77s, from the virtual keypad mode, use the command *## followed by the digits, e.g. *##1 followed by long hold orange to save custom prompt 1.
+10.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S see point 11 and 12 below.
+10.5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save the prompt:
+10.5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
+10.5.2. Go to any edit field, e.g. channel details name field.
+10.5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
+10.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also still work.
+Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
+10.5.5. To associate a custom voice prompt to a string on a GD77S, use the command *##1hello for example to associate custom prompt 1 with the string hello. See 12 below.
+10.6. Note the prompt will follow the voice rate of the rest of the prompts.
+10.7. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then long hold SK1+the number you wish to delete. On the GD77S, save an empty prompt and then use *##digits to save it from the virtual keypad.
+11. Fixed announcement of user power level so that when it is selected, the actual level is also spoken. E.g. if the user power level is set to 4100, then the voice will now say "user power level 4100".
+12. GD77S changes
+12.1. The GD77S virtual keypad has been extended to be able to enter all alphabetical characters. Previously long hold SK2 would clear the buffer. This has been moved to extra long hold SK2. Long hold SK2 now backspaces and a quick press of SK2 cycles between three banks of symbols. These banks include:
+Bank 0: the original symbols 0 through 9, A-D, * and #,
+ Bank 1: A through P,
+Bank 2: Q through Z, +-%*# space.
+I've only included symbols for which there are voice prompts since otherwise it would be impossible to identify the symbols.
+12.2. Added ability to edit a channel name on the GD77S. From the Keypad mode, enter the command e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name followed by long hold Orange button.
+12.3.	Extra long hold sk2 will now allow you to cycle channel banks in non-autozones, so its on extra long hold sk2 and not long hold sk2 for all zones. I had to do it like that otherwise if it was on long hold, by the time you got to the extra long hold you would have already inadvertently changed channel banks. This means you can have more than 16 channels per zone on the gd77S. When power cycling the radio, you’ll also now return to the correct channel bank, and if the dial hasn't been changed, to the same channel. If the dial was changed, you'll go to the appropriate channel in that same bank.
+12.4.	Long hold sk2 will now only toggle auto dialller if there is an associated auto dial dtmf contact for the current analog channel, if I didn’t do this, while waiting for the extra long hold, you’d hear the auto contact toggle msg even when irrelevant. For those who use this, it will toggle on its way to extra long hold but there’s not much I can do about that to keep everyone happy.
+12.5. Long hold sk2 on a dmr channel still replays dmr last 5 seconds. If you want to cycle to the next channel bank, you’ll start to hear the replay but as soon as you hold down extra long, the channel bank will be cycled and the replay cancelled.
+13. Fixed a bug in VFO scan mode on radios with a keypad where frequency and scan range would be errantly announced each time the scan resumed.
+14. Added DTMF Volume option to the Sound Options menu. You can now set the volume of the DTMF tones to off, or from 1 lowest to 10 highest. The default is 10 so users won't notice a difference.
+15. Because echo from the surrounding environment can cause issues with manual DTMF dialling, I've now disabled the mic between tones when the DTMF latch is enabled. The mic won't be re-enabled until the latch times out. The mic was already being disabled between tones when autodialling a contact.
+16. Reduced minimum DTMF latch to half a second rather than 1, so the range is off, and from half to 3 seconds in steps of half a second.
 
 17 December 2021
 1. Added new feature to manually or automatically announce the DMR ID or callsign of the station just heard (similar to how the Kenwood TH-D74A works).

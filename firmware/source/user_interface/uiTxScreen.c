@@ -81,7 +81,7 @@ static bool ShouldPlayStartStopBeep(bool isTxStop, bool isDMR)
 			return true;
 	}
 	else
-	{	// first check fm tx //joe
+	{	// first check fm tx 
 		if ((nonVolatileSettings.beepOptions&BEEP_FM_TX_START) && !isTxStop)
 			return true;
 		if (!isDMR && (nonVolatileSettings.beepOptions&BEEP_FM_TX_STOP) && isTxStop)
@@ -276,6 +276,8 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				else
 				{
 					dtmfLatchState=dtmfNotLatched;
+					trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+
 					handleTxTermination(ev, TXSTOP_DTMF_KEYING_TIMEOUT);
 				}
 			}
@@ -321,7 +323,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		}
 		//
 
-
+//joe
 		// Got an event, or
 		if (ev->hasEvent || // PTT released, Timeout triggered,
 				( (((ev->buttons & BUTTON_PTT) == 0) || ((timeout != 0) && (timeInSeconds == 0))) ||
@@ -421,6 +423,7 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					soundSetMelody(MELODY_DMR_TX_STOP_BEEP);
 				}
+				HRC6000setEncodingOnly(false); // user has released PTT so if recording a voice prompt, terminate this mode.
 
 				LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, 0);
 
@@ -487,7 +490,10 @@ static void handleEvent(uiEvent_t *ev)
 			dtmfLatchState=dtmfPTTLatched;
 			dtmfPTTLatchTimeout=nonVolatileSettings.dtmfLatch * 500; // nonVolatileSettings.dtmfLatch 	is units of 500 ms.	
 		}
-		trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+		if (nonVolatileSettings.dtmfLatch==0)
+			trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+		else
+			trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE); // will be set back to mic when latch times out.
 		disableAudioAmp(AUDIO_AMP_MODE_RF);
 	}
 

@@ -232,7 +232,6 @@ static void handleEvent(uiEvent_t *ev)
 				uiDataGlobal.userDMRId = trxDMRID;
 >>>>>>> development
 			}
-			//joe
 			codeplugSetRadioName(userInfo[DETAILS_CALLSIGN]);
 			codeplugSetBootScreenData(userInfo[DETAILS_LINE1], userInfo[DETAILS_LINE2]);
 			menuSystemPopAllAndDisplayRootMenu();

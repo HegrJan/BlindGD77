@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-18 December 2021
+22 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -82,12 +82,16 @@ Virtual Keypad mode for GD77S.
 1.1. Once in keypad mode, the rotary knob is no longer used for channel selection but number and letter selection.
 1.2. Read the current buffer with long hold sk1.
 1.3. Add the currently selected digit or letter to the buffer with short press sk1.
-1.4. Backspace the last char with short press sk2.
-1.5. Clear the buffer with long hold sk2. You'll hear a confirmation beep.
-1.6. If you hit ptt, the buffer is sent as dtmf tones (if the radio is in analog mode).
-1.7. If you press long hold of orange, the buffer is interpreted as either a command (see below) or a frequency, or frequency pair (rx tx) and the radio is set to that frequency.
-1.7.1. The frequency entry is flexible. If it is simplex, you can enter as few digits as you need to get the correct frequency, e.g. 147 for 147 mHz.
-1.7.2. If you wish to enter both rx and tx, so long as the rx starts at position 1 and the tx at position 9, i.e. first 8 for rx and 2nd 8 for tx, it should work. The following will work:
+1.4. Cycle through banks of symbols using short press SK2. These banks include:
+Bank 0: the original symbols 0 through 9, A-D, * and #,
+ Bank 1: A through P,
+Bank 2: Q through Z, +-%*# space.
+1.5. Backspace the last char with long press sk2.
+1.6. Clear the buffer with extra long hold sk2. You'll hear a confirmation beep.
+1.7. If you hit ptt, the buffer is sent as dtmf tones (if the radio is in analog mode).
+1.8. If you press long hold orange, the buffer is interpreted as either a command (see below) or a frequency, or frequency pair (rx tx) and the radio is set to that frequency.
+1.8.1. The frequency entry is flexible. If it is simplex, you can enter as few digits as you need to get the correct frequency, e.g. 147 for 147 mHz.
+1.8.2. If you wish to enter both rx and tx, so long as the rx starts at position 1 and the tx at position 9, i.e. first 8 for rx and 2nd 8 for tx, it should work. The following will work:
 14700000146400 
 To set rx to 147 and tx to 146400.
 Or,
@@ -116,6 +120,8 @@ When you go back to keypad mode, as usual, whatever was last active is still act
 If you wish to make the VFO settings more permanent, you can then save these settings to channel 1 through 16 in the current zone using the command a1 through a16 followed by long hold orange. All of the VFO settings are saved to the specified channel in the current zone. The overwritten channel will have its number as its name. e.g. channel 1, channel 16, etc. Of course you cannot save to an AutoZone channel.
 2.11. If you just want to copy a channel to the VFO without issuing any command to change the current channel's settings, after locating the channel you wish to copy, activate Keypad mode, then immediately press long hold orange with an empty keypad buffer. The current channel will be copied to the VFO. If you previously visited keypad mode, remember to clear the keypad buffer with long hold sk2 prior to pressing long hold orange.
 2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
+2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). 
+2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
 
@@ -149,7 +155,6 @@ An AutoZone is a pseudo zone created on the fly based on channelized frequencies
 4. Press orange to exit Options Mode.
 Once you've enabled all the autozones that you want, you can then choose them from the Zones mode using SK1 and SK2 like any other zone.
 
-If an AutoZone has more than 16 channels, use extra long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
 If an AutoZone has duplex available for a particular channel, such as a UHF CB channel, an extra long hold of SK1 will toggle between simplex and  duplex mode from Squelch Mode. (You'll hear none for simplex and either plus or minus for a plus or minus repeater offset as defined by the AutoZone). 
 
 The following autoZones are available: 
@@ -172,12 +177,16 @@ Please note: To toggle the band limits between on and off on the GD77S, hold dow
 
  It goes without saying that you must hold the relevant license for transmission in any of these bands not governed by a class licence.
 
+If a zone has more than 16 channels, use extra long hold SK2 to select the next channel bank. Each time you long hold SK2, you'll move up by 16 channels. (This is because the GD77S has 16 physical channel positions.). Once you've reached the last bank, extra long hold SK2 will return you to bank 0. Note this works in Squelch Mode.
+The radio will remember the last bank when power cycling the radio.
+
 Resetting the radio's settings to default.
 If you need to reset the radio's settings to their default values, power off the radio, hold sk2, then power on the radio. You'll hear "Update Settings".
 You'll then need to reset all of your favorite options.
 Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
 This does not affect your codeplug.
 
+Auto Contact.
 Associating a DTMF contact with a channel (auto dial contact):
 You can associate a DTMF contact with a channel such that the first time you press PTT on that channel during a session, the associated DTMF string will be dialled. It will not be dialled again until you reboot the radio or reset it with long hold SK2.
 TO do this, add a contact to the contacts list and give it the following name format:
@@ -185,6 +194,24 @@ ADXXYY where AD means auto dial, XX is the 1-based  zone number and YY is the 1-
 To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact.
 You can now add contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
 To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command *#AD0102 followed by long hold orange. 
+
+Replay DMR Audio:
+You can now replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. Note long hold SK2 has multiple functions depending on the context:
+* On a DMR channel with no signal: replay last five seconds of audio.
+* On a DMR channel with signal: set TX tg to RX tg.
+* On an analog channel in a non-autozone: toggle DTMF dialer.
+* On an analog channel in an autozone: choose next channel bank.
+* on any channel, from Voice Mode only, replay last recorded voice prompt (see below).
+
+Custom Voice Prompts
+You can create up to 10 custom voice prompts to be spoken for contact or channel names.
+1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
+2. Long hold SK2 from Voice Mode only will repeat the prompt for verification. (Press orange key until you hear voice, then use long hold SK2).
+3. Save the prompt to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
+4. Edit a channel or contact name using the virtual keypad mode or CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
+5. If you wish to associate a custom voice prompt to a string, use the command *##1hello for example to associate custom voice prompt 1 with the text "hello."
+6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then issue the virtual keypad command *##digits followed by long hold orange. 
+7. Note the prompt will follow the voice rate of the rest of the prompts.
 
 Note for more detailed information about each of the menu options, please consult the manual, OpenGD77_User_Guide.pdf. It is out of date in some areas, so where there is a conflict, this AccessibleGuideGD77.txt file is more up-to-date.
 

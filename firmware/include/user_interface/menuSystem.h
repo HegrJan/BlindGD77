@@ -161,7 +161,7 @@ void menuSystemPopAllAndDisplaySpecificRootMenu(int newRootMenu, bool resetKeybo
 
 void menuSystemCallCurrentMenuTick(uiEvent_t *ev);
 int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly);
-
+int menuGetKeypadKeyValueEx(uiEvent_t *ev, bool digitsOnly, bool checkPressOnly);
 void menuRadioInfosInit(void);
 void menuRadioInfosPushBackVoltage(int32_t voltage);
 

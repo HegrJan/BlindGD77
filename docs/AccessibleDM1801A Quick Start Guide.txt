@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-18 December 2021
+22 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -87,6 +87,9 @@ To Open the Squelch temporarily, i.e. turn on monitor mode, press and hold SK2 f
 
 Reverse Function:
 If you wish to exchange RX and TX, i.e. turn on the Reverse function on a repeater, during reception, press and hold both SK1 and SK2. While the buttons are depressed, the RX and TX frequencies will be reversed. When you release the buttons, the RX and TX frequencies will return to normal operation.
+
+Replay DMR Audio:
+You can now replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note there is no conflict between this and the Reverse function above because Reverse is only used while receiving a signal, wheras replay is used when not currently receiving a signal, also, reverse is only active while both SK1 and SK2 are pressed.)
 
 To change between Channel and VFO mode, pres the Red button from the channel or VFO screens.
 To change between VFO A and VFO B, press and hold the Red button for more than half a second when in VFO mode. (You can also press the orange button twice quickly from VFO mode.)
@@ -197,6 +200,21 @@ j. Simple digit input for numeric fields;
 k. Simple DTMF support for DTMF fields;
 l. SK1 will repeat the content of the edit field. 
 
+Custom Voice Prompts:
+You can create up to 10 custom voice prompts to be spoken for, or as part of, contact or channel names.
+1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
+2. SK2+SK1 will repeat the prompt for verification.
+3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To play what is already stored for a custom prompt, press SK1+the number of the prompt.
+4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
+5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save it:
+5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
+5.2. Go to any edit field, e.g. channel details name field.
+5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
+5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also play the same custom prompt.
+Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
+6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete.
+7. Note the prompt will follow the voice rate of the rest of the prompts.
+
 Creating a new channel.
 1. Press MR/VFO from the Channel Screen to go to VFO.
 2. Enter the receive frequency.
@@ -246,11 +264,15 @@ When transmitting a DTMF string, if not using the contacts list, this radio has 
 2. You can let go of PTT and continue dialing the DTMF digits.
 3. They'll continue to be transmitted until you leave a long enough pause after the last digit. After about 1.5 seconds, the latch will be released and you'll be back in receive mode.
 If you do not like this feature, or wish to change the length of the timeout, you can do so via the DTMF Latch option in the Options Menu.
+When manually dialling DTMF tones, LeftArrow=A, UpArrow=B, DownArrow=C, RightArrow=D, 0-9 and * and # are as labelled.
 
 Note that if you need to dial a 1750 Hz tone, press SK2+ptt.
 
 Last Heard screen.
 There is now a new submenu accessible from the  Last Heard screen. If you hit the green key when an item is selected in the Last Heard list, you will be presented with a submenu with two items containing the ID of the individual who last spoke, and the talk group on which they were talking. If you choose the ID of the individual, you will invoke a private call with the selected last heard station. If you choose the talk group, it will be as if you hit SK2 in reception mode, i.e. your TX will be set to the Talk Group of the last heard station.
+
+Busy Channel Lockout (BCL)
+Set BCL in the Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
 
 AutoZones feature.
 An AutoZone is a pseudo zone created on the fly based on channelized frequencies calculated via a formula with heuristics applied. I.e. these zones do not take up any memory for the channel data.

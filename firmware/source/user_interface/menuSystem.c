@@ -477,7 +477,7 @@ int menuGetMenuOffset(int maxMenuEntries, int loopOffset)
 /*
  * Returns 99 if key is unknown, or not numerical when digitsOnly is true
  */
-int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly)
+int menuGetKeypadKeyValueEx(uiEvent_t *ev, bool digitsOnly, bool checkPressOnly)
 {
 #if !defined(PLATFORM_GD77S)
 	uint32_t keypadKeys[] =
@@ -488,7 +488,7 @@ int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly)
 
 	for (int i = 0; i < ((sizeof(keypadKeys) / sizeof(keypadKeys[0])) - (digitsOnly ? 6 : 0 )); i++)
 	{
-		if (KEYCHECK_PRESS(ev->keys, keypadKeys[i]))
+		if (KEYCHECK_PRESS(ev->keys, keypadKeys[i]) || (!checkPressOnly && (KEYCHECK_DOWN(ev->keys, keypadKeys[i]) || KEYCHECK_SHORTUP(ev->keys, keypadKeys[i]))))
 		{
 				return i;
 		}
@@ -496,6 +496,10 @@ int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly)
 #endif
 
 	return 99;
+}
+int menuGetKeypadKeyValue(uiEvent_t *ev, bool digitsOnly)
+{
+	return menuGetKeypadKeyValueEx(ev, digitsOnly, true);
 }
 
 void menuSystemMenuIncrement(int32_t *currentItem, int32_t numItems)

@@ -92,5 +92,6 @@ int HRC6000GetReceivedTgOrPcId(void);
 int HRC6000GetReceivedSrcId(void);
 void HRC6000ClearTimecodeSynchronisation(void);
 void HRC6000SetCCFilterMode(bool enable);
+void HRC6000setEncodingOnly(bool flag);
 
 #endif /* _OPENGD77_HR_C6000_H_ */

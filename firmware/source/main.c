@@ -60,6 +60,7 @@ static bool lowBatteryReached = false;
 #define LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL   6	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
 #define LOW_BATTERY_VOLTAGE_RECOVERY_TIME          10000 // 10 seconds
 static bool updateMessageOnScreen = false;
+static bool hasSignal=false;
 
 void mainTaskInit(void)
 {
@@ -794,9 +795,20 @@ void mainTask(void *data)
 				{
 					displayLightTrigger(true);
 				}
+				if (settingsIsOptionBitSet(BIT_BCL) && (buttons & BUTTON_PTT) && hasSignal)
+				{// in DMR mode, must only do this if signal is on the same timeslot.
+					if ((trxGetMode() ==RADIO_MODE_ANALOG) || ((dmrMonitorCapturedTS != -1) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())))
+					{
+						soundSetMelody(MELODY_ERROR_BEEP);
+						buttons &= !BUTTON_PTT;
+					}
+				}
 
 				if ((buttons & BUTTON_PTT) != 0)
 				{
+					// If SK1 is held down with PTT, record a voice prompt.
+					HRC6000setEncodingOnly(buttons & BUTTON_SK1);
+					
 					int currentMenu = menuSystemGetCurrentMenuNumber();
 
 					/*
@@ -867,7 +879,8 @@ void mainTask(void *data)
 #endif
 
 									rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
-
+									if (trxGetMode()==RADIO_MODE_DIGITAL)
+										ReplayInit();
 									menuSystemPushNewMenu(UI_TX_SCREEN);
 #if defined(PLATFORM_GD77S)
 								}
@@ -1067,7 +1080,19 @@ void mainTask(void *data)
 				ev.events = NO_EVENT;
 				ev.hasEvent = false;
 			}
+#if !defined(PLATFORM_GD77S)
+			// Handle custom voice prompts.
+			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE))
+			{
+				HandleCustomPrompts(&ev, NULL);
+			}
 
+			if (BUTTONCHECK_DOWN(&ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(&ev, BUTTON_SK1))
+			{
+				ReplayDMR();
+				keyboardReset();
+			}
+#endif
 			menuSystemCallCurrentMenuTick(&ev);
 
 			// Restore the beep built when a menu was pushed by the quickkey above.
@@ -1222,7 +1247,7 @@ void mainTask(void *data)
 			}
 			else
 			{
-				bool hasSignal = false;
+				hasSignal = false;
 				if (rxPowerSavingIsRxOn())
 				{
 					switch(trxGetMode())

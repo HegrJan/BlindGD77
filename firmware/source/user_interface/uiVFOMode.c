@@ -846,8 +846,13 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 #endif
+		if ((trxGetMode() == RADIO_MODE_DIGITAL) && BUTTONCHECK_DOWN(ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+		{
+			ReplayDMR();
+			return;
+		}
 		// long hold sk1 now summarizes channel for all models.
-		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
+		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 		{
 			AnnounceChannelSummary(voicePromptsIsPlaying() || (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_2),true);
 			return;
@@ -991,7 +996,8 @@ static void handleEvent(uiEvent_t *ev)
 	if (ev->events & KEY_EVENT)
 	{
 		int keyval = 99;
-
+		if (BUTTONCHECK_DOWN(ev, BUTTON_SK1) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0 && (KEYCHECK_PRESS_NUMBER(ev->keys) || KEYCHECK_LONGDOWN_NUMBER(ev->keys)))
+	return; // let main.c handle this, it is a custom voice prompt command.
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
@@ -1695,10 +1701,10 @@ static void handleUpKey(uiEvent_t *ev)
 				vfoSweepUpdateSamples(1, false, 0);
 			}
 			else
-			{
+			{// set mode back to scanning before calling stepFrequency or the new freq will be errantly spoken.
+				uiDataGlobal.Scan.state = SCAN_SCANNING;
 				stepFrequency(VFO_FREQ_STEP_TABLE[(currentChannelData->VFOflag5 >> 4)] * uiDataGlobal.Scan.direction);
 				uiDataGlobal.Scan.timer = 500;
-				uiDataGlobal.Scan.state = SCAN_SCANNING;
 				uiVFOModeUpdateScreen(0);
 			}
 		}

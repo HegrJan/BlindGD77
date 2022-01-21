@@ -36,7 +36,7 @@ static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
-enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
+enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DTMF_VOL, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
 	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
 	OPTIONS_AUDIO_PROMPT_RATE,
@@ -143,6 +143,15 @@ static void updateScreen(bool isFirstRun)
 						soundBeepVolumeDivider = nonVolatileSettings.beepVolumeDivider;
 					}
 
+					break;
+				case OPTIONS_MENU_DTMF_VOL:
+					leftSide = (char * const *)&currentLanguage->dtmf_vol;
+					if (nonVolatileSettings.dtmfVol > 0)
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol);
+					else
+					{
+						rightSideConst = (char * const *)&currentLanguage->off;
+					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
 					leftSide = (char * const *)&currentLanguage->dmr_beep;
@@ -258,7 +267,12 @@ static void updateScreen(bool isFirstRun)
 						voicePromptsAppendLanguageString(&currentLanguage->beep);
 					}
 					else
+					{
 						voicePromptsAppendLanguageString((const char * const *)leftSide);
+						// hack to speak voice name.
+						if (mNum==OPTIONS_AUDIO_PROMPT_MODE && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+							voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
+					}
 				}
 
 				if ((mNum!=OPTIONS_MENU_FM_BEEP) && ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL))))
@@ -415,6 +429,12 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_MENU_DTMF_VOL:
+					if (nonVolatileSettings.dtmfVol < 10)
+					{
+						settingsIncrement(nonVolatileSettings.dtmfVol, 1);
+					}
+					break;
 				case OPTIONS_MENU_DMR_BEEP:
 				case OPTIONS_MENU_FM_BEEP:
 					if (nonVolatileSettings.audioPromptMode != AUDIO_PROMPT_MODE_SILENT)
@@ -531,6 +551,12 @@ static void handleEvent(uiEvent_t *ev)
 						{
 							settingsIncrement(nonVolatileSettings.beepVolumeDivider, 1);
 						}
+					}
+					break;
+				case OPTIONS_MENU_DTMF_VOL:
+					if (nonVolatileSettings.dtmfVol > 0)
+					{
+						settingsDecrement(nonVolatileSettings.dtmfVol, 1);
 					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:

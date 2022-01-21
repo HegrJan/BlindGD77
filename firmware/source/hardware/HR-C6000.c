@@ -52,6 +52,11 @@ static const int SYS_INT_ABNORMAL_EXIT			= 0x02;
 static const int SYS_INT_PHYSICAL_LAYER			= 0x01;
 
 static const int WAKEUP_RETRY_PERIOD			= 600;// The official firmware seems to use a 600mS retry period.
+static bool encodingOnly=false;
+// When we encode rather than tx, we need to save off prior values.
+static int savedRadioModeBeforeEncode=RADIO_MODE_NONE;
+static bool savedBandwidthIs25BeforeEncode=false;
+static int savedRMOModeBeforeEncode=false;
 
 TaskHandle_t fwhrc6000TaskHandle;
 
@@ -1014,6 +1019,12 @@ static void HRC6000TransitionToTx(void)
 	slot_state = DMR_STATE_TX_START_1;
 }
 
+static void TransmitDuringNextTimeSlot()
+{
+	if (encodingOnly) return;
+	
+	SPI0WritePageRegByte(0x04, 0x41, 0x80);    //Transmit during next Timeslot
+}
 inline static void HRC6000TimeslotInterruptHandler(void)
 {
 	uint8_t reg0x52;
@@ -1113,7 +1124,7 @@ inline static void HRC6000TimeslotInterruptHandler(void)
 		case DMR_STATE_TX_START_1: // Start TX (second step)
 			LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, 1);// for repeater wakeup
 			setupPcOrTGHeader();
-			SPI0WritePageRegByte(0x04, 0x41, 0x80);    //Transmit during next Timeslot
+			TransmitDuringNextTimeSlot();
 			SPI0WritePageRegByte(0x04, 0x50, 0x10);    //Set Data Type to 0001 (Voice LC Header), Data, LCSS=00
 			trxIsTransmitting = true;
 			slot_state = DMR_STATE_TX_START_2;
@@ -1125,7 +1136,7 @@ inline static void HRC6000TimeslotInterruptHandler(void)
 			break;
 
 		case DMR_STATE_TX_START_3: // Start TX (fourth step)
-			SPI0WritePageRegByte(0x04, 0x41, 0x80);     //Transmit during Next Timeslot
+			TransmitDuringNextTimeSlot();
 			SPI0WritePageRegByte(0x04, 0x50, 0x10);     //Set Data Type to 0001 (Voice LC Header), Data, LCSS=00
 			slot_state = DMR_STATE_TX_START_4;
 			break;
@@ -1144,7 +1155,7 @@ inline static void HRC6000TimeslotInterruptHandler(void)
 			break;
 
 		case DMR_STATE_TX_START_5: // Start TX (sixth step)
-			SPI0WritePageRegByte(0x04, 0x41, 0x80);   //Transmit during next Timeslot
+			TransmitDuringNextTimeSlot();
 			SPI0WritePageRegByte(0x04, 0x50, 0x10);   //Set Data Type to 0001 (Voice LC Header), Data, LCSS=00
 			tx_sequence = 0;
 			TAPhase = 0;
@@ -1216,7 +1227,7 @@ inline static void HRC6000TimeslotInterruptHandler(void)
 			}
 
 			//write_SPI_page_reg_bytearray_SPI1(0x03, 0x00, (uint8_t*)(DMR_frame_buffer+0x0C), 27);// send the audio bytes to the hardware
-			SPI0WritePageRegByte(0x04, 0x41, 0x80); // Transmit during next Timeslot
+			TransmitDuringNextTimeSlot();
 			SPI0WritePageRegByte(0x04, 0x50, 0x08 + (tx_sequence << 4)); // Data Type= sequence number 0 - 5 (Voice Frame A) , Voice, LCSS = 0
 
 			tx_sequence++;
@@ -1233,7 +1244,7 @@ inline static void HRC6000TimeslotInterruptHandler(void)
 				setupPcOrTGHeader();
 			}
 			SPI1WritePageRegByteArray(0x03, 0x00, SILENCE_AUDIO, 27);// send silence audio bytes
-			SPI0WritePageRegByte(0x04, 0x41, 0x80);  //Transmit during Next Timeslot
+			TransmitDuringNextTimeSlot();
 			SPI0WritePageRegByte(0x04, 0x50, 0x20);  // Data Type =0010 (Terminator with LC), Data, LCSS=0
 			slot_state = DMR_STATE_TX_END_2;
 			break;
@@ -1655,7 +1666,7 @@ void tick_HR_C6000(void)
 				if (wavbuffer_count >= 2)
 				{
 					codecEncodeBlock((uint8_t *)deferredUpdateBufferInPtr);
-
+					AddAmbeBlocksToReplayBuffer((uint8_t *)deferredUpdateBufferInPtr, 9, false, !encodingOnly);
 					deferredUpdateBufferInPtr += LENGTH_AMBE_BLOCK;
 
 					if (deferredUpdateBufferInPtr > deferredUpdateBufferEnd)
@@ -1719,6 +1730,7 @@ void tick_HR_C6000(void)
 			if (hasEncodedAudio && (voicePromptsIsPlaying() == false) && (soundMelodyIsPlaying() == false))
 			{
 				hasEncodedAudio = false;
+				AddAmbeBlocksToReplayBuffer((uint8_t *)DMR_frame_buffer + 0x0C, 27, false, true);
 				codecDecode((uint8_t *)DMR_frame_buffer + 0x0C, 3);
 				soundTickRXBuffer();
 			}
@@ -1786,4 +1798,36 @@ int HRC6000GetReceivedSrcId(void)
 void HRC6000ClearTimecodeSynchronisation(void)
 {
 	timeCode = -1;
+}
+
+void HRC6000setEncodingOnly(bool flag)
+{
+	if (encodingOnly==flag)
+		return;
+	
+	encodingOnly=flag;
+	if (flag)
+	{// save off the current mode and switch to digital so we can encode a voice prompt.
+		savedRadioModeBeforeEncode=trxGetMode();
+		savedBandwidthIs25BeforeEncode=trxGetBandwidthIs25kHz();
+		savedRMOModeBeforeEncode=trxDMRModeTx==DMR_MODE_RMO;
+		trxDMRModeTx = DMR_MODE_DMO;
+		trxDMRModeRx = DMR_MODE_DMO;
+		trxSetModeAndBandwidth(RADIO_MODE_DIGITAL, false);
+	}
+	else if (savedRadioModeBeforeEncode!=RADIO_MODE_NONE)
+	{
+		if (savedRMOModeBeforeEncode)
+		{
+			trxDMRModeTx = DMR_MODE_RMO;
+			trxDMRModeRx = DMR_MODE_RMO;
+		}
+		else
+		{
+			trxDMRModeTx = DMR_MODE_DMO;
+			trxDMRModeRx = DMR_MODE_DMO;
+		}
+		trxSetModeAndBandwidth(savedRadioModeBeforeEncode, savedBandwidthIs25BeforeEncode);
+		savedRadioModeBeforeEncode=RADIO_MODE_NONE;
+	}
 }

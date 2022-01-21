@@ -241,6 +241,8 @@ typedef struct
    const char* reorder_channels;
    const char* voice_prompt_vol;
    const char* voice_prompt_rate;
+   const char* dtmf_vol;
+   const char* vp_saved;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
