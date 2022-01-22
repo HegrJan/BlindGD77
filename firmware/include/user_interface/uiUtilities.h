@@ -177,7 +177,6 @@ void promptsPlayNotAfterTx(void);
 void playNextSettingSequence(void);
 void uiUtilityBuildTgOrPCDisplayName(char *nameBuf, int bufferLen);
 void acceptPrivateCall(uint32_t id, int timeslot);
-bool rebuildVoicePromptOnExtraLongSK1(uiEvent_t *ev);
 bool repeatVoicePromptOnSK1(uiEvent_t *ev);
 void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName);
 bool handleMonitorMode(uiEvent_t *ev);

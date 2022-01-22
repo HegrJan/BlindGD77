@@ -56,10 +56,7 @@ static uint32_t lastTG = 0;
 volatile uint32_t lastID = 0;// This needs to be volatile as lastHeardClearLastID() is called from an ISR
 LinkItem_t *LinkHead = callsList;
 static uint32_t lastHeardNeedsAnnouncementTimer=-1; //reset is -1.
-<<<<<<< HEAD
-=======
 static uint32_t lastHeardUpdateTime=0;
->>>>>>> development
 // Try and avoid triggering speaking of last heard if reception breaks up, wait 750 ms after end of reception.
 #define LAST_HEARD_TIMER_TIMEOUT 750
 
@@ -603,11 +600,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					memset(bufferTA, 0, 32);// Clear any TA data in TA buffer (used for decode)
 					blocksTA = 0x00;
 					overrideTA = false;
-<<<<<<< HEAD
-					lastHeardNeedsAnnouncementTimer = ((nonVolatileSettings.audioPromptMode > 1) && (nonVolatileSettings.bitfieldOptions&BIT_ANNOUNCE_LASTHEARD)) ? LAST_HEARD_TIMER_TIMEOUT : -1;
-=======
 					lastHeardNeedsAnnouncementTimer = (id !=trxDMRID) ? LAST_HEARD_TIMER_TIMEOUT : -1;
->>>>>>> development
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -623,10 +616,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						}
 
 						item->time = fw_millis();
-<<<<<<< HEAD
-=======
 						lastHeardUpdateTime=item->time;
->>>>>>> development
 						lastTG = talkGroupOrPcId;
 
 						if (item == LinkHead)
@@ -671,36 +661,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						{
 							uiDataGlobal.lastHeardCount++;
 						}
-<<<<<<< HEAD
-
-						// need to use the last item in the list as the new item at the top of the list.
-						// find last item in the list
-						while(item->next != NULL)
-						{
-							item = item->next;
-						}
-						//item is now the last
-
-						(item->prev)->next = NULL;// make the previous item the last
-
-						LinkHead->prev = item;// set the current head item to back reference this item.
-						item->next = LinkHead;// set this items next to the current head
-						LinkHead = item;// Make this item the new head
-
-						item->id = id;
-						item->talkGroupOrPcId = talkGroupOrPcId;
-						item->time = fw_millis();
-						item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
-						lastTG = talkGroupOrPcId;
-
-						memset(item->contact, 0, sizeof(item->contact)); // Clear contact's datas
-						memset(item->talkgroup, 0, sizeof(item->talkgroup));
-						memset(item->talkerAlias, 0, sizeof(item->talkerAlias));
-						memset(item->locator, 0, sizeof(item->locator));
-
-						updateLHItem(item);
-
-=======
 
 						// need to use the last item in the list as the new item at the top of the list.
 						// find last item in the list
@@ -730,7 +690,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 
 						updateLHItem(item);
 
->>>>>>> development
 						if (item->talkGroupOrPcId != 0)
 						{
 							uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;// flag that the display needs to update
@@ -749,10 +708,7 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 							item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
 							updateLHItem(item);
 							item->time = fw_millis();
-<<<<<<< HEAD
-=======
 							lastHeardUpdateTime=item->time;
->>>>>>> development
 						}
 
 						lastTG = talkGroupOrPcId;
@@ -808,15 +764,9 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					{
 						static const uint8_t blockLen = 7;
 						uint32_t blockOffset = blockID * blockLen;
-<<<<<<< HEAD
 
 						blocksTA |= (1 << blockID);
 
-=======
-
-						blocksTA |= (1 << blockID);
-
->>>>>>> development
 						if ((blockOffset + blockLen) < sizeof(bufferTA))
 						{
 							memcpy(bufferTA + blockOffset, (void *)(forceOnHotspot ? &dmrDataBuffer[2] : &DMR_frame_buffer[2]), blockLen);
@@ -2706,68 +2656,6 @@ void acceptPrivateCall(uint32_t id, int timeslot)
 	announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC,PROMPT_THRESHOLD_3);
 }
 
-bool rebuildVoicePromptOnExtraLongSK1(uiEvent_t *ev)
-{
-	if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
-	{
-		// SK2 is still held down, but SK1 just get released.
-		if (uiDataGlobal.reverseRepeater)
-		{
-			return false;
-		}
-
-		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-		{
-			int currentMenu = menuSystemGetCurrentMenuNumber();
-
-			if ((((currentMenu == UI_CHANNEL_MODE) && (uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED))) ||
-					((currentMenu == UI_VFO_MODE) && ((uiDataGlobal.Scan.active && (uiDataGlobal.Scan.state != SCAN_PAUSED)) || uiDataGlobal.Scan.toneActive))) == false)
-			{
-				if (voicePromptsIsPlaying())
-				{
-					voicePromptsTerminate();
-				}
-				else
-				{
-					announceItem(((currentMenu == UI_VFO_MODE) ?
-							PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC : PROMPT_SEQUENCE_ZONE_NAME_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE_AND_TS_AND_CC),
-							PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
-
-					if (trxGetMode() == RADIO_MODE_ANALOG)
-					{
-						CodeplugCSSTypes_t type = codeplugGetCSSType(currentChannelData->rxTone);
-						if ((type & CSS_TYPE_NONE) == 0)
-						{
-							buildCSSCodeVoicePrompts(currentChannelData->rxTone, type, DIRECTION_RECEIVE, true);
-							voicePromptsAppendPrompt(PROMPT_SILENCE);
-						}
-
-						type = codeplugGetCSSType(currentChannelData->txTone);
-						if ((type & CSS_TYPE_NONE) == 0)
-						{
-							buildCSSCodeVoicePrompts(currentChannelData->txTone, type, DIRECTION_TRANSMIT, true);
-							voicePromptsAppendPrompt(PROMPT_SILENCE);
-						}
-					}
-
-					announceItemWithInit(false, PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
-
-					if (currentMenu == UI_VFO_MODE)
-					{
-						announceItemWithInit(false, (uiVFOModeIsTXFocused() ? PROMPT_SEQUENCE_DIRECTION_TX : PROMPT_SEQUENCE_DIRECTION_RX), PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
-					}
-
-					voicePromptsPlay();
-				}
-
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
 bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 {
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
@@ -3605,18 +3493,6 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 	voicePromptsInit();
 	
 	int direction=0;
-<<<<<<< HEAD
-	if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)
-	{
-		direction =(nonVolatileSettings.autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
-	
-		if ((nonVolatileSettings.autoZone.flags&AutoZoneDuplexEnabled)==0)
-			nonVolatileSettings.autoZone.flags|=AutoZoneDuplexEnabled;
-		else
-			nonVolatileSettings.autoZone.flags&=~AutoZoneDuplexEnabled;
-	
-		if (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)
-=======
 	if (autoZone.flags & AutoZoneDuplexAvailable)
 	{
 		direction =(autoZone.flags&AutoZoneOffsetDirectionPlus) ? 1 : -1;
@@ -3627,7 +3503,6 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 			autoZone.flags&=~AutoZoneDuplexEnabled;
 	
 		if (autoZone.flags & AutoZoneDuplexEnabled)
->>>>>>> development
 		{
 			if (direction > 0)
 				voicePromptsAppendPrompt(PROMPT_PLUS);
@@ -3635,11 +3510,7 @@ static bool AutoZoneCycleRepeaterOffset(menuStatus_t* newMenuStatus)
 				voicePromptsAppendPrompt(PROMPT_MINUS);
 		}		
 	}
-<<<<<<< HEAD
-	if ((nonVolatileSettings.autoZone.flags & AutoZoneDuplexAvailable)==0 || (nonVolatileSettings.autoZone.flags & AutoZoneDuplexEnabled)==0)
-=======
 	if ((autoZone.flags & AutoZoneDuplexAvailable)==0 || (autoZone.flags & AutoZoneDuplexEnabled)==0)
->>>>>>> development
 	{
 		direction=0;
 		voicePromptsAppendLanguageString(&currentLanguage->none);
@@ -3715,11 +3586,8 @@ static bool IsLastHeardContactRelevant()
 {
 	if (!LinkHead) return false;
 	if (LinkHead->id==0) return false;
-<<<<<<< HEAD
-=======
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
 	if ((fw_millis() - lastHeardUpdateTime) > 10000) return false; // If it is older than 10 seconds.
->>>>>>> development
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
 	if (dmrMonitorCapturedTS != trxGetDMRTimeSlot())
 		return false;
@@ -3753,15 +3621,12 @@ void AnnounceLastHeardContact()
 		voicePromptsAppendString(buffer);
 	else
 		voicePromptsAppendInteger(LinkHead->id);
-<<<<<<< HEAD
-=======
 	uint32_t tg = (LinkHead->talkGroupOrPcId & 0xFFFFFF);
 	
 	if ((trxTalkGroupOrPcId != tg) && (LinkHead->talkgroup[0]))
 	{
 		voicePromptsAppendString(LinkHead->talkgroup);
 	}
->>>>>>> development
 }
 
 void AnnounceLastHeardContactIfNeeded()
@@ -3777,13 +3642,6 @@ void AnnounceLastHeardContactIfNeeded()
 		lastHeardNeedsAnnouncementTimer = -1;
 		return;
 	}
-<<<<<<< HEAD
-	
-	if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) &&
-				(((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO)))
-	{// wait till reception has finished.
-		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT;
-=======
 // at this point, if we have detected that the DMR ID has changed, queue it for speaking but do not speak it until reception has finished.
 // If we don't queue it, sk1 will still speak the old callsign if pressed.
 	if (lastHeardNeedsAnnouncementTimer==LAST_HEARD_TIMER_TIMEOUT)
@@ -3797,7 +3655,6 @@ void AnnounceLastHeardContactIfNeeded()
 	{// wait till reception has finished.
 		lastHeardNeedsAnnouncementTimer=LAST_HEARD_TIMER_TIMEOUT-1; // avoid requeueing the DMR ID unless it actually changes.
 		lastHeardUpdateTime=fw_millis();
->>>>>>> development
 		return;
 	}
 	
@@ -3806,14 +3663,6 @@ void AnnounceLastHeardContactIfNeeded()
 		lastHeardNeedsAnnouncementTimer--;
 		return; // wait for timer to expire, start counting  after end of transmission.
 	}
-<<<<<<< HEAD
-	
-	lastHeardNeedsAnnouncementTimer=-1; // reset.
-
-	voicePromptsInit();
-	AnnounceLastHeardContact();
-		voicePromptsPlay();
-=======
 
 	lastHeardNeedsAnnouncementTimer=-1; // reset.
 	lastHeardUpdateTime=fw_millis(); // start from now because last TX may have been longer than our timeout!
@@ -3824,7 +3673,6 @@ void AnnounceLastHeardContactIfNeeded()
 	AnnounceLastHeardContact();
 	
 	voicePromptsPlay();
->>>>>>> development
 }
 
 bool ScanShouldSkipFrequency(uint32_t freq)
