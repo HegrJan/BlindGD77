@@ -284,7 +284,7 @@ static void AnnounceDualWatchChannels(bool immediately)
 static void StartDualWatch(uint16_t watchChannelIndex, uint16_t currentChannelIndex, uint16_t startDelay)
 {
 	dualWatchChannelData.dualWatchActive=true;
-	dualWatchChannelData.allowedToAnnounceChannelDetails=true;
+	dualWatchChannelData.allowedToAnnounceChannelDetails=false; // set to true when arrowing to a new channel during a dual watch.
 	//When the user chooses a new current channel, the dual watch will begin automatically.
 	dualWatchChannelData.watchChannelIndex = watchChannelIndex;
 	dualWatchChannelData.currentChannelIndex = currentChannelIndex;
