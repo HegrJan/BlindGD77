@@ -3695,6 +3695,15 @@ bool ScanShouldSkipFrequency(uint32_t freq)
 }
 static void PlayAndResetCustomVoicePromptIndex()
 {
+	if (customVoicePromptIndex==0xff) return;
+	
+	if (customVoicePromptIndex > GetMaxCustomVoicePrompts())
+	{
+		nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+		customVoicePromptIndex=0xff; // reset 
+		return;	
+	}
+
 	voicePromptsInit();
 	voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customVoicePromptIndex);
 	voicePromptsPlay();
@@ -3713,12 +3722,6 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	
 	if ((customVoicePromptIndex < 0xff) && BUTTONCHECK_DOWN(ev, BUTTON_SK1)==0 && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
 	{// SK1 was released and customVoicePromptIndex has been set so play the corresponding custom voice prompt.
-		if (customVoicePromptIndex > GetMaxCustomVoicePrompts())
-		{
-			soundSetMelody (MELODY_ERROR_BEEP);
-			customVoicePromptIndex=0xff; // reset 
-			return true;	
-		}
 		if (customVoicePromptIndex==0)
 			customVoicePromptIndex=10; // shortcut if SK1 plus 0 is quickly pressed and released, play prompt 10.
 		PlayAndResetCustomVoicePromptIndex();
