@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-22 January 2022
+24 January 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -120,7 +120,7 @@ When you go back to keypad mode, as usual, whatever was last active is still act
 If you wish to make the VFO settings more permanent, you can then save these settings to channel 1 through 16 in the current zone using the command a1 through a16 followed by long hold orange. All of the VFO settings are saved to the specified channel in the current zone. The overwritten channel will have its number as its name. e.g. channel 1, channel 16, etc. Of course you cannot save to an AutoZone channel.
 2.11. If you just want to copy a channel to the VFO without issuing any command to change the current channel's settings, after locating the channel you wish to copy, activate Keypad mode, then immediately press long hold orange with an empty keypad buffer. The current channel will be copied to the VFO. If you previously visited keypad mode, remember to clear the keypad buffer with long hold sk2 prior to pressing long hold orange.
 2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
-2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). 
+2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). 
 2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
@@ -204,10 +204,10 @@ You can now replay the last 5 seconds of DMR audio. This works for both TX and R
 * on any channel, from Voice Mode only, replay last recorded voice prompt (see below).
 
 Custom Voice Prompts
-You can create up to 10 custom voice prompts to be spoken for contact or channel names.
+You can create up to 32 custom voice prompts to be spoken for contact or channel names.
 1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
 2. Long hold SK2 from Voice Mode only will repeat the prompt for verification. (Press orange key until you hear voice, then use long hold SK2).
-3. Save the prompt to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
+3. Save the prompt to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
 4. Edit a channel or contact name using the virtual keypad mode or CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
 5. If you wish to associate a custom voice prompt to a string, use the command *##1hello for example to associate custom voice prompt 1 with the text "hello."
 6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then issue the virtual keypad command *##digits followed by long hold orange. 

@@ -16,6 +16,10 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
+24 January 2022
+1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
+2. Increased the number of custom voice prompts to 32. In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
+
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
@@ -31,12 +35,12 @@ Warning! This update requires a new voice prompt file. Please update your voice 
 10.1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
 10.2. SK2+SK1 will repeat the prompt for verification. (On GD77S, use long hold SK2 from Voice mode).
 10.3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To hear what is already saved for a given custom prompt, short press SK1+number. On the GD77s, from the virtual keypad mode, use the command *## followed by the digits, e.g. *##1 followed by long hold orange to save custom prompt 1.
-10.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S see point 11 and 12 below.
+10.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S see point 12 below.
 10.5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save the prompt:
 10.5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
 10.5.2. Go to any edit field, e.g. channel details name field.
 10.5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
-10.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also still work.
+10.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also work.
 Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
 10.5.5. To associate a custom voice prompt to a string on a GD77S, use the command *##1hello for example to associate custom prompt 1 with the string hello. See 12 below.
 10.6. Note the prompt will follow the voice rate of the rest of the prompts.
