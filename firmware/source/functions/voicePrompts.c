@@ -64,7 +64,8 @@ static uint32_t voicePromptsFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADD
 #define CUSTOM_VOICE_PROMPT_MAX_SIZE 1024 // approx 4 seconds of ambe data.
 #define CUSTOM_VOICE_PROMPT_MIN_SIZE 27
 #define VOICE_PROMPTS_REGION_TOP 0xfffff
-static uint8_t maxCustomVoicePrompts=10;
+#define maxCustomVoicePrompts 32
+static uint8_t availableCustomVoicePrompts=maxCustomVoicePrompts;
 
 bool voicePromptDataIsLoaded = false;
 static bool voicePromptIsActive = false;
@@ -94,7 +95,7 @@ __attribute__((section(".data.$RAM2"))) static VoicePromptsSequence_t voicePromp
 
 __attribute__((section(".data.$RAM2"))) uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
-__attribute__((section(".data.$RAM2"))) char phraseCache[10][CUSTOM_VOICE_PROMPT_PHRASE_LENGTH]; //cache the phrases we have custom prompts for.
+__attribute__((section(".data.$RAM2"))) char phraseCache[maxCustomVoicePrompts][CUSTOM_VOICE_PROMPT_PHRASE_LENGTH]; //cache the phrases we have custom prompts for.
 
 const userDictEntry userDictionary[]=
 {
@@ -231,7 +232,7 @@ static bool CheckCustomVPSignature(CustomVoicePromptsHeader_t* hdr)
 static void InitPhraseCache()
 {
 	memset(phraseCache,0, sizeof(phraseCache));
-	for (int i=0; i < maxCustomVoicePrompts; ++i)
+	for (int i=0; i < availableCustomVoicePrompts; ++i)
 	{
 		uint32_t addr=VOICE_PROMPTS_REGION_TOP-((i+1)*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		CustomVoicePromptsHeader_t hdr;
@@ -259,21 +260,10 @@ void voicePromptsCacheInit(void)
 			// the PROMPT_VOICE_NAME is always the last loaded.
 			int lastVoicePromptLength=tableOfContents[PROMPT_VOICE_NAME+1] - tableOfContents[PROMPT_VOICE_NAME];
 			uint32_t endOfLoadedVoicePromptsAddress = tableOfContents[PROMPT_VOICE_NAME] + lastVoicePromptLength;
-
-			maxCustomVoicePrompts=SAFE_MIN(10, (VOICE_PROMPTS_REGION_TOP-endOfLoadedVoicePromptsAddress)/CUSTOM_VOICE_PROMPT_MAX_SIZE);
+			availableCustomVoicePrompts = SAFE_MIN(availableCustomVoicePrompts, (VOICE_PROMPTS_REGION_TOP-endOfLoadedVoicePromptsAddress)/CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		}
 		else
-			maxCustomVoicePrompts=0;
-	}
-
-	if (!voicePromptDataIsLoaded)
-	{
-		SPI_Flash_read(VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS,(uint8_t *)&header,sizeof(VoicePromptsDataHeader_t));
-		if (voicePromptsCheckMagicAndVersion((uint32_t *)&header))
-		{
-			voicePromptDataIsLoaded = SPI_Flash_read(VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS + sizeof(VoicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
-			voicePromptsFlashDataAddress =  VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS + sizeof(VoicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
-		}
+			availableCustomVoicePrompts=0;
 	}
 
 	// DMR (digital) is disabled.
@@ -714,7 +704,7 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 {
 	if (!voicePromptDataIsLoaded) return false;
 	uint16_t length=replayAmbeGetLength(&replayBuffer);
-	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) 
+	if (customPromptNumber < 1 || customPromptNumber > availableCustomVoicePrompts) 
 		return false;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of changing.
 	bool deleting=length < CUSTOM_VOICE_PROMPT_MIN_SIZE;
@@ -739,7 +729,7 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 static int GetCustomVoicePromptData(int customPromptNumber)
 {
 	if (!voicePromptDataIsLoaded) return 0;
-	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) return 0;
+	if (customPromptNumber < 1 || customPromptNumber > availableCustomVoicePrompts) return 0;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of modification.
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		CustomVoicePromptsHeader_t hdr;
@@ -758,6 +748,7 @@ void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 		voicePromptsAppendInteger(customPromptNumber);
 		// When appending a custom prompt, we need to add the VOICE_PROMPT_CUSTOM to it so the code knows it is a custom prompt.
 		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
+		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsAppendLanguageString(&currentLanguage->vp_saved);
 	}
 	else
@@ -765,4 +756,8 @@ void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 		voicePromptsAppendLanguageString(&currentLanguage->list_full);
 	}
 	voicePromptsPlay();
+}
+uint8_t GetMaxCustomVoicePrompts()
+{
+	return availableCustomVoicePrompts;
 }

@@ -41,7 +41,7 @@
 #include "functions/sonic_lite.h"
 #include "functions/rxPowerSaving.h"
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
-
+static uint8_t customVoicePromptIndex=0xff;
 static __attribute__((section(".data.$RAM2"))) LinkItem_t callsList[NUM_LASTHEARD_STORED];
 
 static uint32_t dmrIdDataArea_1_Size;
@@ -2661,7 +2661,7 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
 	{
 		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-		{//joe
+		{
 			if (voicePromptsIsPlaying())
 				voicePromptsTerminate();
 			else
@@ -3693,31 +3693,79 @@ bool ScanShouldSkipFrequency(uint32_t freq)
 	}
 	return false;	
 }
+static void PlayAndResetCustomVoicePromptIndex()
+{
+	voicePromptsInit();
+	voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customVoicePromptIndex);
+	voicePromptsPlay();
+	customVoicePromptIndex=0xff;
+}
 
-// Handle custom voice prompts.
+/*
+Handle custom voice prompts.
+While SK1 is being held down, keep track of, and combine, the digits being pressed (actually released) until SK1 is released
+or the number entered so far is already two digits long, at which time, play the corresponding custom voice prompt.
+If the last digit is held down for a long hold, save the corresponding voice prompt.
+*/
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) return false;
-
-	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
+	
+	if ((customVoicePromptIndex < 0xff) && BUTTONCHECK_DOWN(ev, BUTTON_SK1)==0 && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
+	{// SK1 was released and customVoicePromptIndex has been set so play the corresponding custom voice prompt.
+		if (customVoicePromptIndex > GetMaxCustomVoicePrompts())
+		{
+			soundSetMelody (MELODY_ERROR_BEEP);
+			customVoicePromptIndex=0xff; // reset 
+			return true;	
+		}
+		if (customVoicePromptIndex==0)
+			customVoicePromptIndex=10; // shortcut if SK1 plus 0 is quickly pressed and released, play prompt 10.
+		PlayAndResetCustomVoicePromptIndex();
+		return true;
+	}
+	// SK1 is not being held down on its own.
 	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return false;
+	// No number is going down, coming up or being held.
+	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
 	
 	int keyval=menuGetKeypadKeyValueEx(ev, true, false);
 	if (keyval > 9) return false;
 	
-	int customPromptNumber=keyval==0 ? 10: keyval;
 	if (KEYCHECK_LONGDOWN_NUMBER(ev->keys))
 	{
-		SaveCustomVoicePrompt(customPromptNumber, phrase);
-		keyboardReset();
+		// a digit is being held down, save the appropriate custom voice prompt:
+		// If customVoicePromptIndex is 0, save prompt 10 shortcut,
+		// If it is still reset, set to the current keyval.
+		// Otherwise this is the second digit being held down of a series, combine with the prior value and save.
+		if (customVoicePromptIndex==0 || customVoicePromptIndex==0xff)
+			customVoicePromptIndex=(keyval==0) ? 10 : keyval;
+		else
+			customVoicePromptIndex=(10*customVoicePromptIndex)+keyval;
+
+		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
+		customVoicePromptIndex=0xff; // reset.
+		keyboardReset(); // reset the keyboard also.
 	}
 	else if (KEYCHECK_SHORTUP_NUMBER(ev->keys))
-	{
-		voicePromptsInit();
-		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
-		voicePromptsPlay();
-		keyboardReset();
+	{// digit is being released, either set customVoicePromptIndex or combine with prior value as appropriate.
+		if (customVoicePromptIndex==0xff)
+		{// just set it to the current digit.
+			customVoicePromptIndex=keyval;
+			// Announce the digit rather than allowing the default keypad beep 
+			//as this digit will either result in a prompt being spoken, if SK1 is released, 
+			// or be combined with the prior digit if 2nd in a series with SK1 still held down.
+			voicePromptsInit();
+			voicePromptsAppendInteger(customVoicePromptIndex);
+			voicePromptsPlay();
+		}
+		else
+			customVoicePromptIndex=(10*customVoicePromptIndex)+keyval; // combine.
+		if (customVoicePromptIndex > 9)
+		{// play straight away since we can't add any more digits.
+			PlayAndResetCustomVoicePromptIndex();
+		}
 	}
 		
-	return true;
-} 
+	return true; // We've handled the key combination.
+}
