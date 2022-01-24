@@ -25,6 +25,7 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <ctype.h>
 #include "dmr_codec/codec.h"
 #include "functions/sound.h"
 #include "functions/voicePrompts.h"
