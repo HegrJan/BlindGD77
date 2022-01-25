@@ -117,4 +117,7 @@ void ReplayInit(void);
 void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
 void SaveCustomVoicePrompt(int customPromptNumber, char* phrase); // phrase is an optional string to map to the ambe data. I.e. can map one's name to the recording of their name.
 uint8_t GetMaxCustomVoicePrompts();
+uint8_t GetNextFreeDMRVoiceTagIndex();
+void DeleteDMRVoiceTag(int dmrVoiceTagNumber);
+
 #endif

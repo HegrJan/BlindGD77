@@ -277,6 +277,16 @@ static void handleEvent(uiEvent_t *ev)
 {
 	if (ev->events & BUTTON_EVENT)
 	{
+		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL))
+		{// Play voice tag associated with digital contact.
+			if (contactListContactData.ringStyle)
+			{
+				voicePromptsInit();
+				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+contactListContactData.ringStyle);
+				voicePromptsPlay();
+			}
+			return;
+		}
 		if (repeatVoicePromptOnSK1(ev))
 		{
 			return;
@@ -411,7 +421,9 @@ static void handleEvent(uiEvent_t *ev)
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-				{
+				{// delete voice tag for this contact.
+					if (contact.ringStyle)
+						DeleteDMRVoiceTag(contact.ringStyle);
 					memset(contact.name, 0xff, 16);
 					contact.tgNumber = 0;
 					contact.callType = 0xFF;

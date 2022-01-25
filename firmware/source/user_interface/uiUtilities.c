@@ -984,7 +984,7 @@ static uint8_t dmrDbTextEncode(uint8_t *compressedBufOut, uint8_t compressedBufS
 		if (((outPtr-compressedBufOut)==compressedBufSize) && (compressedCharSequenceIndex!=3)) // let the fourth char be written if possible since we won't overflow the buffer.
 		break;
 	}// for
-	return SAFE_MIN((outPtr-compressedBufOut)+1, compressedBufSize); // number of bytes written to the compressed buffer.//joe
+	return SAFE_MIN((outPtr-compressedBufOut)+1, compressedBufSize); // number of bytes written to the compressed buffer.
 }	
 */
 
@@ -3795,6 +3795,28 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	}
 	// SK1 is not being held down on its own.
 	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return false;
+	
+	if (IsLastHeardContactRelevant() && KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
+	{// associate last recorded DMR with last heard ID.
+		char phrase[16]="\0";
+		snprintf(phrase, 16, "%d", LinkHead->id);
+		memset(&contactListContactData, 0, sizeof(contactListContactData));
+		int contactIndex=codeplugContactIndexByTGorPC((LinkHead->id & 0x00FFFFFF), CONTACT_CALLTYPE_PC, &contactListContactData, 0);
+		uint8_t DMRVTIndex=contactListContactData.ringStyle > 0 ? contactListContactData.ringStyle : GetNextFreeDMRVoiceTagIndex();
+		SaveCustomVoicePrompt(DMRVTIndex, phrase);
+
+		uiDataGlobal.currentSelectedContactIndex=contactIndex==-1? codeplugContactGetFreeIndex() : contactIndex;
+		if (contactIndex ==-1)
+		{
+			memset(&contactListContactData, 0, sizeof(contactListContactData));
+			contactListContactData.NOT_IN_CODEPLUGDATA_indexNumber=uiDataGlobal.currentSelectedContactIndex;
+			contactListContactData.tgNumber=LinkHead->id;
+			contactListContactData.callType=CONTACT_CALLTYPE_PC;
+			contactListContactData.ringStyle=DMRVTIndex;
+		}
+		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
+		return true;
+	}
 	// No number is going down, coming up or being held.
 	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
 	

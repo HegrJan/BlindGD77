@@ -65,8 +65,10 @@ static uint32_t voicePromptsFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADD
 #define CUSTOM_VOICE_PROMPT_MIN_SIZE 27
 #define VOICE_PROMPTS_REGION_TOP 0xfffff
 #define maxCustomVoicePrompts 32
-static uint8_t highestUsedCustomVoicePromptNumberWithPhrase = 0; // 1-based number of highest custom vp to stop searching at.
+#define maxDMRVoiceTags 64
+#define DMR_VOICE_TAG_BASE maxCustomVoicePrompts // DMR voice tags start at 33 and increase.
 
+static uint8_t highestUsedCustomVoicePromptNumberWithPhrase = 0; // 1-based number of highest custom vp to stop searching at.
 bool voicePromptDataIsLoaded = false;
 static bool voicePromptIsActive = false;
 static int promptDataPosition = -1;
@@ -237,7 +239,7 @@ static void InitPhraseCache()
 		uint32_t addr=VOICE_PROMPTS_REGION_TOP-((i+1)*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		CustomVoicePromptsHeader_t hdr;
 		if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr) || !hdr.phrase || !*hdr.phrase)
-			continue;//joe
+			continue;
 		highestUsedCustomVoicePromptNumberWithPhrase = i+1;
 		int len=strlen(hdr.phrase);
 		strncpy(phraseCache[i], hdr.phrase, len);
@@ -695,7 +697,7 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 {
 	if (!voicePromptDataIsLoaded) return false;
 	uint16_t length=replayAmbeGetLength(&replayBuffer);
-	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) 
+	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts+maxDMRVoiceTags) 
 		return false;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of changing.
 	bool deleting=length < CUSTOM_VOICE_PROMPT_MIN_SIZE;
@@ -708,12 +710,15 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 		memset(replayBuffer.hdr.phrase, 0, sizeof(replayBuffer.hdr.phrase));
 	else // keep whatever is in the cache for this prompt, we're just replacing the recording.
 		memcpy(replayBuffer.hdr.phrase, phraseCache[customPromptNumber-1], CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
-	// update the cache.
-	strncpy(phraseCache[customPromptNumber-1], replayBuffer.hdr.phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
-	if (phrase && (customPromptNumber > highestUsedCustomVoicePromptNumberWithPhrase) && !deleting)
-		highestUsedCustomVoicePromptNumberWithPhrase = customPromptNumber;
-	else if (deleting && highestUsedCustomVoicePromptNumberWithPhrase == customPromptNumber)
-		highestUsedCustomVoicePromptNumberWithPhrase--;
+	// update the phrase cache for regular custom voice prompts.
+	if (customPromptNumber <= maxCustomVoicePrompts)
+	{
+		strncpy(phraseCache[customPromptNumber-1], replayBuffer.hdr.phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
+		if (phrase && (customPromptNumber > highestUsedCustomVoicePromptNumberWithPhrase) && !deleting)
+			highestUsedCustomVoicePromptNumberWithPhrase = customPromptNumber;
+		else if (deleting && highestUsedCustomVoicePromptNumberWithPhrase == customPromptNumber)
+			highestUsedCustomVoicePromptNumberWithPhrase--;
+	}
 	replayBuffer.hdr.customVPLength=deleting ? 0 : SAFE_MIN(length, (CUSTOM_VOICE_PROMPT_MAX_SIZE-sizeof(replayBuffer.hdr)));
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 	return SPI_Flash_write(addr, (uint8_t*)&replayBuffer, CUSTOM_VOICE_PROMPT_MAX_SIZE);
@@ -722,7 +727,7 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 static int GetCustomVoicePromptData(int customPromptNumber)
 {
 	if (!voicePromptDataIsLoaded) return 0;
-	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) return 0;
+	if (customPromptNumber < 1 || customPromptNumber > (maxCustomVoicePrompts+maxDMRVoiceTags)) return 0;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of modification.
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		CustomVoicePromptsHeader_t hdr;
@@ -754,4 +759,26 @@ void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 uint8_t GetMaxCustomVoicePrompts()
 {
 	return maxCustomVoicePrompts;
+}
+
+uint8_t GetNextFreeDMRVoiceTagIndex()
+{
+	for (int i=DMR_VOICE_TAG_BASE; i < DMR_VOICE_TAG_BASE+maxDMRVoiceTags; ++i)
+	{
+		uint32_t addr=VOICE_PROMPTS_REGION_TOP-((i+1)*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+		CustomVoicePromptsHeader_t hdr;
+		if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
+			return i+1;
+	}
+	return 0;
+}
+void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
+{
+	if (!voicePromptDataIsLoaded) return;
+	if (dmrVoiceTagNumber <= DMR_VOICE_TAG_BASE || dmrVoiceTagNumber > DMR_VOICE_TAG_BASE+maxDMRVoiceTags)
+		return;
+	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of changing.
+	memset(&replayBuffer.hdr, 0, sizeof(replayBuffer.hdr));
+	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(dmrVoiceTagNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+	SPI_Flash_write(addr, (uint8_t*)&replayBuffer.hdr, sizeof(replayBuffer.hdr));
 }
