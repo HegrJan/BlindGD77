@@ -61,7 +61,7 @@ static uint32_t lastHeardUpdateTime=0;
 #define LAST_HEARD_TIMER_TIMEOUT 750
 
 static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool announceVFOName);
-static void dmrDbTextDecode(uint8_t *compressedBufIn, uint8_t *decompressedBufOut, int compressedSize);
+static void dmrDbTextDecode(uint8_t *decompressedBufOut, uint8_t *compressedBufIn, int compressedSize);
 
 DECLARE_SMETER_ARRAY(rssiMeterHeaderBar, DISPLAY_SIZE_X);
 
@@ -935,6 +935,58 @@ static void dmrDbTextDecode(uint8_t *decompressedBufOut, uint8_t *compressedBufI
 		}
 	}
 }
+
+/********* DMR ID db contact encoder.
+// This should return a value between 0 and 63, 0xff means char not found.
+static uint8_t GetLUTIndexForChar(char ch)
+{
+	for (uint8_t index=0; index < 64; ++index)
+	{
+		if (ch==DECOMPRESS_LUT[index])
+			return index;
+	}
+	return 0xff;
+}
+
+// dmrDbTextEncode does the opposite of dmrDbTextDecode
+// I.e. it encodes each char in the input sequence as 6-bits and compresses 4 chars into 3 byte sequences. 
+static uint8_t dmrDbTextEncode(uint8_t *compressedBufOut, uint8_t compressedBufSize, uint8_t *decompressedBufIn, uint8_t decompressedSize)
+{
+	uint8_t compressedCharSequenceIndex=0;
+	uint8_t* outPtr=compressedBufOut;
+	memset(compressedBufOut, 0, compressedBufSize);
+	
+	for (uint8_t i=0; i < decompressedSize; ++i)
+	{
+		uint8_t lutIndex=GetLUTIndexForChar(decompressedBufIn[i]);
+		if (lutIndex==0xff)
+		continue;
+				
+		compressedCharSequenceIndex++;
+		switch (compressedCharSequenceIndex)
+		{
+			case 1:
+				*outPtr=lutIndex<<2; // move 6 bits to highest pos of first byte of output sequence.
+				break;
+			case 2:
+				*outPtr++|=((lutIndex&0x30)>>4); // move highest 2 bits of next char to lowest pos of first byte to combine with 6 bits which we already have.
+				*outPtr=((lutIndex&0xf)<<4); // move last 4 bits of 2nd char to hiest pos of 2nd byte.
+				break;
+			case 3:
+				*outPtr++|=((lutIndex>>2)); // move first four bits of third char to low nibble of 2nd byte of compressed output.
+				*outPtr=(lutIndex<<6); // move last two bits of third char to highest pos of 3rd byte of output.
+				break;
+			case 4:
+				*outPtr++|=lutIndex; // move 4th char to lowest six bits of third byte of output sequence.
+				compressedCharSequenceIndex=0;// start the next sequence.
+				break;
+		}// switch
+		if (((outPtr-compressedBufOut)==compressedBufSize) && (compressedCharSequenceIndex!=3)) // let the fourth char be written if possible since we won't overflow the buffer.
+		break;
+	}// for
+	return SAFE_MIN((outPtr-compressedBufOut)+1, compressedBufSize); // number of bytes written to the compressed buffer.//joe
+}	
+*/
 
 bool dmrIDLookup(uint32_t targetId, dmrIdDataStruct_t *foundRecord)
 {
@@ -2672,7 +2724,22 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 
 	return false;
 }
+/*
+static void testCompressDecompress()
+{
+	char test[16]="\0";
+strcpy(test,"vk7js Joseph 50");
+	uint8_t compressedBuf[16];
+	uint8_t bytes = dmrDbTextEncode((uint8_t*)&compressedBuf, 16, (uint8_t*)&test, 16);
+voicePromptsInit();
+voicePromptsAppendInteger(bytes);
 
+char output[16]="\0";
+
+dmrDbTextDecode((uint8_t*)&output, (uint8_t*)&compressedBuf, bytes);
+voicePromptsAppendStringWithCaps(output,true, false, true);
+}
+*/
 void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
@@ -2760,7 +2827,6 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	voicePromptsAppendPrompt(PROMPT_S);
 	voicePromptsAppendInteger(sizeof(nonVolatileSettings));
 #endif
-
 	voicePromptsPlay();
 }
 
