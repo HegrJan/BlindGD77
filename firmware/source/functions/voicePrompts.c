@@ -725,10 +725,11 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 	// normalize the buffer in case wrapping is enabled which will be the case when saving a DMR voice tag.
 	if (replayBuffer.allowWrap)
 	{
-		uint8_t data[CUSTOM_VOICE_PROMPT_MAX_SIZE];
-		replayAmbeGetData(&replayBuffer, (uint8_t*)&data, replayBuffer.hdr.customVPLength);
-		SPI_Flash_write(addr, (uint8_t*)&replayBuffer.hdr, sizeof(replayBuffer.hdr));
-		return SPI_Flash_write(addr+sizeof(replayBuffer.hdr), (uint8_t*)&data, replayBuffer.hdr.customVPLength);
+		replayAmbeCircularBuffer_t normalizedData;
+		replayAmbeCircularBufferInit(&normalizedData);
+		memcpy(&normalizedData.hdr, &replayBuffer.hdr, sizeof(CustomVoicePromptsHeader_t));
+		replayAmbeGetData(&replayBuffer, (uint8_t*)&normalizedData.ambeBuffer, normalizedData.hdr.customVPLength);
+		return SPI_Flash_write(addr, (uint8_t*)&normalizedData, CUSTOM_VOICE_PROMPT_MAX_SIZE);
 	}
 	return SPI_Flash_write(addr, (uint8_t*)&replayBuffer, CUSTOM_VOICE_PROMPT_MAX_SIZE);
 }
