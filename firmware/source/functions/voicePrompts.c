@@ -696,6 +696,7 @@ void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool r
 static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phrase)
 {
 	if (!voicePromptDataIsLoaded) return false;
+
 	uint16_t length=replayAmbeGetLength(&replayBuffer);
 	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts+maxDMRVoiceTags) 
 		return false;
@@ -721,6 +722,14 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 	}
 	replayBuffer.hdr.customVPLength=deleting ? 0 : SAFE_MIN(length, (CUSTOM_VOICE_PROMPT_MAX_SIZE-sizeof(replayBuffer.hdr)));
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+	// normalize the buffer in case wrapping is enabled which will be the case when saving a DMR voice tag.
+	if (replayBuffer.allowWrap)
+	{
+		uint8_t data[CUSTOM_VOICE_PROMPT_MAX_SIZE];
+		replayAmbeGetData(&replayBuffer, (uint8_t*)&data, replayBuffer.hdr.customVPLength);
+		SPI_Flash_write(addr, (uint8_t*)&replayBuffer.hdr, sizeof(replayBuffer.hdr));
+		return SPI_Flash_write(addr+sizeof(replayBuffer.hdr), (uint8_t*)&data, replayBuffer.hdr.customVPLength);
+	}
 	return SPI_Flash_write(addr, (uint8_t*)&replayBuffer, CUSTOM_VOICE_PROMPT_MAX_SIZE);
 }
 
