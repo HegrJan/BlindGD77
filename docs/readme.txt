@@ -22,8 +22,8 @@ Please note! You will need to update your voice prompts, and no, this won’t over
 2. Increased the number of custom voice prompts to 32. In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
 3.1. Enter this mode with SK1+green.
-3.2. In this mode, up/down will adjust the start of the current sound clip, e.g. to remove noise at the start of the clip, press up or to restore what was there, press down.
-3.3. in this mode, left/right will adjust the end of the sound clip, e.g. to remove noise at the end, press left or to restore some, press right.
+3.2. In this mode, up/down will adjust the start of the current sound clip, e.g. to remove noise at the start of the clip, press up or to restore what was there, press down. Hold down to adjust by larger increments.
+3.3. in this mode, left/right will adjust the end of the sound clip, e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments.
 3.4. SK1 will replay the adjusted audio.
 3.5. Red will exit edit mode and discard the changes.
 3.6. Green will exit the mode and keep the changes except that you will still need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
