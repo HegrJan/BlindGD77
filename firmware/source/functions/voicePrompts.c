@@ -802,9 +802,11 @@ void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
 	if (dmrVoiceTagNumber <= DMR_VOICE_TAG_BASE || dmrVoiceTagNumber > DMR_VOICE_TAG_BASE+maxDMRVoiceTags)
 		return;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of changing.
-	memset(&replayBuffer.hdr, 0, sizeof(replayBuffer.hdr));
+	CustomVoicePromptsHeader_t hdr;
+	memset(&hdr, 0, sizeof(CustomVoicePromptsHeader_t));
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(dmrVoiceTagNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
-	SPI_Flash_write(addr, (uint8_t*)&replayBuffer.hdr, sizeof(replayBuffer.hdr));
+	
+	SPI_Flash_write(addr, (uint8_t*)&hdr, sizeof(CustomVoicePromptsHeader_t));
 }
 
 void voicePromptsSetEditMode(bool flag)
@@ -817,10 +819,12 @@ void voicePromptsSetEditMode(bool flag)
 	voicePromptsAppendLanguageString(flag ? &currentLanguage->on : &currentLanguage->off);
 	voicePromptsPlay();	
 }
+
 bool voicePromptsGetEditMode()
 {
 	return editingVoicePrompt;
 }
+
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 {
 	if (!editingVoicePrompt) return;
