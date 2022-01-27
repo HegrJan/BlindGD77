@@ -3856,12 +3856,16 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 
 		// up/down adjust start.
 		// left/right adjust end.
-		bool leftRight=KEYCHECK_SHORTUP(ev->keys, KEY_LEFT) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT);
-		bool upDown=KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN);
-		bool reverse=KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN);//right is increasing the clip region from the end, slightly counter intuitive.
+		bool longHoldLeftRight=KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT);
+		bool leftRight=KEYCHECK_SHORTUP(ev->keys, KEY_LEFT) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || longHoldLeftRight;
+		bool longHoldUpDown=KEYCHECK_LONGDOWN(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN);;
+		bool upDown=KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || longHoldUpDown;
+		bool reverse=KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN);//right is increasing the clip region from the end, slightly counter intuitive.
+		bool longHold=longHoldLeftRight || longHoldUpDown;
 		if (leftRight || upDown)
 		{
-			voicePromptsAdjustEnd(upDown, reverse ? -1 : 1, false);
+			int step=longHold ? 3 : 1;
+			voicePromptsAdjustEnd(upDown, reverse ? -step : step, false);
 			return true;
 		}
 	}
