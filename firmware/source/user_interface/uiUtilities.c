@@ -3805,7 +3805,6 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	// SK1+# associate last played DMR with ID and save to contact.
 	if ((ev->buttons & BUTTON_SK1) && IsLastHeardContactRelevant() && KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
 	{// associate last recorded DMR with last heard ID.
-		voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
 		char phrase[16]="\0";
 		snprintf(phrase, 16, "%d", LinkHead->id);
 		memset(&contactListContactData, 0, sizeof(contactListContactData));
@@ -3829,15 +3828,22 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	{
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
-			voicePromptsSetEditMode(false); // so nothing else gets written to circular buffer while we're allowing edits.
+			int currentMenu=menuSystemGetCurrentMenuNumber();
+			if ( (contactListContactData.ringStyle >0) && ((currentMenu==MENU_CONTACT_LIST) || (currentMenu== MENU_CONTACT_DETAILS)))
+				customVoicePromptIndex=contactListContactData.ringStyle;
 			if (customVoicePromptIndex!=0xff)
 				SaveCustomVoicePrompt(customVoicePromptIndex, 0);
 			customVoicePromptIndex=0xff;
+			voicePromptsSetEditMode(false);
+
 			return true;
 		}
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
+			voicePromptsAdjustEnd(false, 0, true);
+			voicePromptsAdjustEnd(true, 0, true);
 			voicePromptsSetEditMode(false);
+
 			customVoicePromptIndex=0xff;
 			return true;
 		}

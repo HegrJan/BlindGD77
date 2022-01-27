@@ -1083,7 +1083,7 @@ void mainTask(void *data)
 #if !defined(PLATFORM_GD77S)
 			// Handle custom voice prompts.
 			bool callMenuHandler=true;
-			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE) || (currentMenu ==MENU_CONTACT_DETAILS))
+			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE) || (currentMenu ==MENU_CONTACT_DETAILS) || (currentMenu ==MENU_CONTACT_LIST))
 			{
 				if (HandleCustomPrompts(&ev, NULL))
 					callMenuHandler=false;

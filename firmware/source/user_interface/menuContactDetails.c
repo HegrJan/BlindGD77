@@ -513,15 +513,12 @@ static void handleEvent(uiEvent_t *ev)
 							voicePromptsPlay();
 						}
 					}
-					voicePromptsSetEditMode(false); // so nothing else gets written to circular buffer while we're allowing edits.
 
 					updateScreen(false, allowedToSpeakUpdate);
 					return;
 				}
 				else if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 				{
-					voicePromptsSetEditMode(false); // so nothing else gets written to circular buffer while we're allowing edits.
-
 					menuSystemPopPreviousMenu();
 					return;
 				}
