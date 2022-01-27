@@ -3793,18 +3793,25 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		PlayAndResetCustomVoicePromptIndex();
 		return true;
 	}
-	// SK1 is not being held down on its own.
-	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return false;
-	
-	if (IsLastHeardContactRelevant() && KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
+	//SK1+* save to next available custom voice prompt slot.
+	if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+	{// save to the next available custom voice prompt slot.
+		customVoicePromptIndex=GetNextFreeVoicePromptIndex(false);
+		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
+		customVoicePromptIndex=0xff; // reset.
+		keyboardReset(); // reset the keyboard also.
+		return true;
+	}
+	// SK1+# associate last played DMR with ID and save to contact.
+	if ((ev->buttons & BUTTON_SK1) && IsLastHeardContactRelevant() && KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
 	{// associate last recorded DMR with last heard ID.
+		voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
 		char phrase[16]="\0";
 		snprintf(phrase, 16, "%d", LinkHead->id);
 		memset(&contactListContactData, 0, sizeof(contactListContactData));
 		int contactIndex=codeplugContactIndexByTGorPC((LinkHead->id & 0x00FFFFFF), CONTACT_CALLTYPE_PC, &contactListContactData, 0);
-		uint8_t DMRVTIndex=contactListContactData.ringStyle > 0 ? contactListContactData.ringStyle : GetNextFreeDMRVoiceTagIndex();
+		uint8_t DMRVTIndex=contactListContactData.ringStyle > 0 ? contactListContactData.ringStyle : GetNextFreeVoicePromptIndex(true);
 		SaveCustomVoicePrompt(DMRVTIndex, phrase);
-
 		uiDataGlobal.currentSelectedContactIndex=contactIndex==-1? codeplugContactGetFreeIndex() : contactIndex;
 		if (contactIndex ==-1)
 		{
@@ -3817,11 +3824,55 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
 		return true;
 	}
+	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
+	if (IsVoicePromptEditMode)
+	{
+			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+		{
+			voicePromptsSetEditMode(false); // so nothing else gets written to circular buffer while we're allowing edits.
+			if (customVoicePromptIndex!=0xff)
+				SaveCustomVoicePrompt(customVoicePromptIndex, 0);
+			customVoicePromptIndex=0xff;
+			return true;
+		}
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+		{
+			voicePromptsSetEditMode(false);
+			customVoicePromptIndex=0xff;
+			return true;
+		}
+		if ((ev->keys.key==0) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+		{
+			ReplayDMR();
+			keyboardReset();
+			return true;
+		}
+
+		// up/down adjust start.
+		// left/right adjust end.
+		bool leftRight=KEYCHECK_SHORTUP(ev->keys, KEY_LEFT) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT);
+		bool upDown=KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN);
+		bool reverse=KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN);//right is increasing the clip region from the end, slightly counter intuitive.
+		if (leftRight || upDown)
+		{
+			voicePromptsAdjustEnd(upDown, reverse ? -1 : 1, false);
+			return true;
+		}
+	}
+	// SK1 is not being held down on its own.
+	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode;
+	// SK1+green enter edit mode.
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) && !IsVoicePromptEditMode)
+	{
+		voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+		return true;
+	}
+	
 	// No number is going down, coming up or being held.
-	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
+	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return IsVoicePromptEditMode;
 	
 	int keyval=menuGetKeypadKeyValueEx(ev, true, false);
-	if (keyval > 9) return false;
+	if (keyval > 9) return IsVoicePromptEditMode;
 	
 	if (KEYCHECK_LONGDOWN_NUMBER(ev->keys))
 	{

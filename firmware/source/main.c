@@ -879,7 +879,7 @@ void mainTask(void *data)
 #endif
 
 									rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
-									if (trxGetMode()==RADIO_MODE_DIGITAL)
+									if ((trxGetMode()==RADIO_MODE_DIGITAL) && !voicePromptsGetEditMode())
 										ReplayInit();
 									menuSystemPushNewMenu(UI_TX_SCREEN);
 #if defined(PLATFORM_GD77S)
@@ -1082,9 +1082,11 @@ void mainTask(void *data)
 			}
 #if !defined(PLATFORM_GD77S)
 			// Handle custom voice prompts.
-			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE))
+			bool callMenuHandler=true;
+			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE) || (currentMenu ==MENU_CONTACT_DETAILS))
 			{
-				HandleCustomPrompts(&ev, NULL);
+				if (HandleCustomPrompts(&ev, NULL))
+					callMenuHandler=false;
 			}
 
 			if (BUTTONCHECK_DOWN(&ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(&ev, BUTTON_SK1))
@@ -1092,6 +1094,7 @@ void mainTask(void *data)
 				ReplayDMR();
 				keyboardReset();
 			}
+			if (callMenuHandler) // condition only for non GD77S.
 #endif
 			menuSystemCallCurrentMenuTick(&ev);
 

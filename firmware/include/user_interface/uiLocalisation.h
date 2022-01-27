@@ -127,7 +127,7 @@ typedef struct
    const char *on;
    const char *timeout_beep;
    const char *list_full;
-   const char *UNUSED_1;
+   const char *end;
    const char *band_limits;
    const char *beep_volume;
    const char *dmr_mic_gain;

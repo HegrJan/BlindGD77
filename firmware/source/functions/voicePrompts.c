@@ -74,7 +74,7 @@ static bool voicePromptIsActive = false;
 static int promptDataPosition = -1;
 static int currentPromptLength = -1;
 static bool replayingDMR=false;
- 
+static bool editingVoicePrompt=false; 
 #define PROMPT_TAIL  30
 static int promptTail = 0;
 
@@ -106,8 +106,7 @@ const userDictEntry userDictionary[]=
 	{"openspot", PROMPT_UNUSED_5},
 	{"microhub", PROMPT_UNUSED_6},
 	{"allstar", PROMPT_UNUSED_7},
-	{"disconnect", PROMPT_UNUSED_8},
-	{"parrot", PROMPT_UNUSED_9},
+	{"parrot", PROMPT_UNUSED_8},
 		{0, 0}
 };
 // replay logic shares ambe buffer so is colocated here also
@@ -124,6 +123,8 @@ typedef struct
 	uint8_t* tail;
 	uint8_t* end;
 	bool allowWrap;
+	int clipStart;
+	int clipEnd;
 } replayAmbeCircularBuffer_t;
 
 static replayAmbeCircularBuffer_t replayBuffer;
@@ -135,6 +136,9 @@ static void replayAmbeCircularBufferInit(replayAmbeCircularBuffer_t *cb)
 	cb->head = cb->ambeBuffer;
 	cb->tail = cb->ambeBuffer;
 	cb->allowWrap=true;
+	cb->clipStart=0;
+	cb->clipEnd=0;
+
 	cb->hdr.customVPSignature[0]='v';
 	cb->hdr.customVPSignature[1]='p';
 	memset(cb->hdr.phrase, 0, sizeof(cb->hdr.phrase));
@@ -143,6 +147,8 @@ static void replayAmbeCircularBufferInit(replayAmbeCircularBuffer_t *cb)
 
 static void replayAmbeCircularBufferPushBack(replayAmbeCircularBuffer_t *cb, uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull)
 {
+	if (editingVoicePrompt) return;
+	
 	if (reset)
 		replayAmbeCircularBufferInit(cb);
 	cb->allowWrap=wrapWhenFull;
@@ -182,10 +188,11 @@ while (((cb->tail-cb->head)%9)!=0)
 	}
 }
 
-static uint16_t replayAmbeGetLength(replayAmbeCircularBuffer_t *cb)
+static uint16_t replayAmbeGetLength(replayAmbeCircularBuffer_t *cb, bool countClippedRegion)
 {
+	int clippedRegion=countClippedRegion? (cb->clipStart+cb->clipEnd) : 0;
 	if (!cb->allowWrap)
-		return cb->head-cb->ambeBuffer;
+		return (cb->head-cb->ambeBuffer)-clippedRegion;
 
 	uint16_t count = 0;
 	uint8_t*p = cb->tail;
@@ -200,30 +207,34 @@ static uint16_t replayAmbeGetLength(replayAmbeCircularBuffer_t *cb)
 			p = cb->ambeBuffer;
 		}
 	}
-	return count;
+	return count-clippedRegion;
 }
 
 static size_t replayAmbeGetData(replayAmbeCircularBuffer_t* cb, uint8_t* data, size_t dataLen)
 {
-     size_t  count = 0;
-     uint8_t*p = cb->tail;
+	size_t  count = 0;
+	size_t clippedCount=0;
+	uint8_t*p = cb->tail;
+	int clipBefore=cb->clipStart;
+	
+	while ((p != cb->head) && (clippedCount < dataLen))
+	{
+		if (count >= clipBefore)
+		{
+			*(data + clippedCount) = *p;
+			clippedCount++;
+		}
+		p++;
+		count++;
+		if (p == cb->end)
+		{
+			if (!cb->allowWrap)
+				return clippedCount;
+			p = cb->ambeBuffer;
+		}
+	}
 
-     while ((p != cb->head) && (count < dataLen))
-     {
-    	 *(data + count) = *p;
-
-    	 p++;
-    	 count++;
-
-    	 if (p == cb->end)
-    	 {
-			 if (!cb->allowWrap)
-				 return count;
-    		 p = cb->ambeBuffer;
-    	 }
-     }
-
-     return count;
+	return clippedCount;
 }
 
 static bool CheckCustomVPSignature(CustomVoicePromptsHeader_t* hdr)
@@ -670,7 +681,8 @@ bool voicePromptsHasDataToPlay(void)
 	{
 		soundStopMelody();
 	}
-	currentPromptLength =replayAmbeGetLength(&replayBuffer);
+	memset(&ambeData, 0, AMBE_DATA_BUFFER_SIZE);
+	currentPromptLength =replayAmbeGetLength(&replayBuffer, true);
 	replayAmbeGetData(&replayBuffer, (uint8_t *)&ambeData, currentPromptLength);
 	promptDataPosition = 0;
 
@@ -697,7 +709,7 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 {
 	if (!voicePromptDataIsLoaded) return false;
 
-	uint16_t length=replayAmbeGetLength(&replayBuffer);
+	uint16_t length=replayAmbeGetLength(&replayBuffer, true);
 	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts+maxDMRVoiceTags) 
 		return false;
 	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of changing.
@@ -723,7 +735,7 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 	replayBuffer.hdr.customVPLength=deleting ? 0 : SAFE_MIN(length, (CUSTOM_VOICE_PROMPT_MAX_SIZE-sizeof(replayBuffer.hdr)));
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 	// normalize the buffer in case wrapping is enabled which will be the case when saving a DMR voice tag.
-	if (replayBuffer.allowWrap)
+	if (replayBuffer.allowWrap || replayBuffer.clipStart)
 	{
 		replayAmbeCircularBuffer_t normalizedData;
 		replayAmbeCircularBufferInit(&normalizedData);
@@ -770,10 +782,11 @@ uint8_t GetMaxCustomVoicePrompts()
 {
 	return maxCustomVoicePrompts;
 }
-
-uint8_t GetNextFreeDMRVoiceTagIndex()
+uint8_t GetNextFreeVoicePromptIndex(bool forDMRVoiceTag)
 {
-	for (int i=DMR_VOICE_TAG_BASE; i < DMR_VOICE_TAG_BASE+maxDMRVoiceTags; ++i)
+	int base=forDMRVoiceTag ? DMR_VOICE_TAG_BASE : 0;
+	int max=forDMRVoiceTag?base+maxDMRVoiceTags:base+maxCustomVoicePrompts;
+	for (int i=base; i < max; ++i)
 	{
 		uint32_t addr=VOICE_PROMPTS_REGION_TOP-((i+1)*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		CustomVoicePromptsHeader_t hdr;
@@ -782,6 +795,7 @@ uint8_t GetNextFreeDMRVoiceTagIndex()
 	}
 	return 0;
 }
+
 void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
 {
 	if (!voicePromptDataIsLoaded) return;
@@ -792,3 +806,52 @@ void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
 	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(dmrVoiceTagNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 	SPI_Flash_write(addr, (uint8_t*)&replayBuffer.hdr, sizeof(replayBuffer.hdr));
 }
+
+void voicePromptsSetEditMode(bool flag)
+{
+	if (!voicePromptDataIsLoaded) return;
+
+	editingVoicePrompt=flag;	
+	voicePromptsInit();
+	voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
+	voicePromptsAppendLanguageString(flag ? &currentLanguage->on : &currentLanguage->off);
+	voicePromptsPlay();	
+}
+bool voicePromptsGetEditMode()
+{
+	return editingVoicePrompt;
+}
+void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
+{
+	if (!editingVoicePrompt) return;
+	// 9 AMBE blocks per sample.
+	int val=9*clipStep;
+	uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
+	if (unclippedLength <= CUSTOM_VOICE_PROMPT_MIN_SIZE)
+		return;
+	voicePromptsInit();
+	if (adjustStart)
+	{
+		if (!voicePromptsIsPlaying())
+			voicePromptsAppendLanguageString(&currentLanguage->start);
+		replayBuffer.clipStart = absolute ? val : replayBuffer.clipStart+val;
+		if (replayBuffer.clipStart < 0)
+			replayBuffer.clipStart=0;
+		if (replayBuffer.clipStart > (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd))
+			replayBuffer.clipStart=unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd;
+		voicePromptsAppendInteger(replayBuffer.clipStart);
+	}
+	else
+	{
+		if (!voicePromptsIsPlaying())
+			voicePromptsAppendLanguageString(&currentLanguage->end);
+		replayBuffer.clipEnd = absolute ? val : replayBuffer.clipEnd + val;
+		if (replayBuffer.clipEnd > (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipStart))
+			replayBuffer.clipEnd = unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipStart;
+		if (replayBuffer.clipEnd < 0)
+			replayBuffer.clipEnd = 0;
+		voicePromptsAppendInteger(unclippedLength-replayBuffer.clipEnd);
+	}
+	voicePromptsPlay();
+}
+

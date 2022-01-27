@@ -82,7 +82,7 @@ typedef enum
 	PROMPT_UNUSED_6,
 	PROMPT_UNUSED_7,
 	PROMPT_UNUSED_8,
-	PROMPT_UNUSED_9,
+	PROMPT_EDIT_VOICETAG,
 	PROMPT_SPACE,
 	NUM_VOICE_PROMPTS
 } voicePrompt_t;
@@ -117,7 +117,9 @@ void ReplayInit(void);
 void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
 void SaveCustomVoicePrompt(int customPromptNumber, char* phrase); // phrase is an optional string to map to the ambe data. I.e. can map one's name to the recording of their name.
 uint8_t GetMaxCustomVoicePrompts();
-uint8_t GetNextFreeDMRVoiceTagIndex();
+uint8_t GetNextFreeVoicePromptIndex(bool forDMRVoiceTag);
 void DeleteDMRVoiceTag(int dmrVoiceTagNumber);
-
+void voicePromptsSetEditMode(bool flag);
+bool voicePromptsGetEditMode();
+void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute);
 #endif
