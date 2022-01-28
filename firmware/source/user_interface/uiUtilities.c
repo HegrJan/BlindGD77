@@ -42,6 +42,8 @@
 #include "functions/rxPowerSaving.h"
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
 static uint8_t customVoicePromptIndex=0xff;
+static uint8_t customVoicePromptIndexToSave=0xff;
+
 static __attribute__((section(".data.$RAM2"))) LinkItem_t callsList[NUM_LASTHEARD_STORED];
 
 static uint32_t dmrIdDataArea_1_Size;
@@ -3830,10 +3832,10 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{
 			int currentMenu=menuSystemGetCurrentMenuNumber();
 			if ( (contactListContactData.ringStyle >0) && ((currentMenu==MENU_CONTACT_LIST) || (currentMenu== MENU_CONTACT_DETAILS)))
-				customVoicePromptIndex=contactListContactData.ringStyle;
-			if (customVoicePromptIndex!=0xff)
-				SaveCustomVoicePrompt(customVoicePromptIndex, 0);
-			customVoicePromptIndex=0xff;
+				customVoicePromptIndexToSave=contactListContactData.ringStyle;
+			if (customVoicePromptIndexToSave!=0xff)
+				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
+			customVoicePromptIndexToSave=0xff;
 			voicePromptsSetEditMode(false);
 
 			return true;
@@ -3866,6 +3868,14 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{
 			int step=longHold ? 3 : 1;
 			voicePromptsAdjustEnd(upDown, reverse ? -step : step, false);
+			return true;
+		}
+		// * from edit mode will copy the last custom voice prompt spoken back to the edit buffer so it can be edited.
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+		{
+			customVoicePromptIndexToSave=voicePromptsGetLastCustomPromptNumberAnnounced();
+			voicePromptsCopyCustomPromptToEditBuffer(customVoicePromptIndexToSave);
+			ReplayDMR();
 			return true;
 		}
 	}

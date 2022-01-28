@@ -122,4 +122,6 @@ void DeleteDMRVoiceTag(int dmrVoiceTagNumber);
 void voicePromptsSetEditMode(bool flag);
 bool voicePromptsGetEditMode();
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute);
+uint8_t voicePromptsGetLastCustomPromptNumberAnnounced();
+bool voicePromptsCopyCustomPromptToEditBuffer(uint8_t customPromptNumber);
 #endif
