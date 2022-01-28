@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 
 Please note! You will need to update your voice prompts, and no, this won’t overwrite your custom voice prompts.
-27 January 2022
+28 January 2022
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32. In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
@@ -25,14 +25,14 @@ Please note! You will need to update your voice prompts, and no, this won’t over
 3.2. In this mode, up/down will adjust the start of the current sound clip, e.g. to remove noise at the start of the clip, press up or to restore what was there, press down. Hold down to adjust by larger increments.
 3.3. in this mode, left/right will adjust the end of the sound clip, e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments.
 3.4. SK1 will replay the adjusted audio.
-3.5. Red will exit edit mode and discard the changes.
-3.6. Green will exit the mode and keep the changes except that you will still need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
-3.7. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which number.
-3.8. Note that the editor always operates on the current audio buffer as just captured by your microphone or from received DMR audio. It does not let you edit what is already saved. TO do that you'd need to rerecord or recapture the audio and edit it before saving it.
+3.5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode and press * to copy the last custom prompt played back to the buffer.
+3.6. Red will exit edit mode and discard the changes.
+3.7. Green will exit the mode and save the changes. If the buffer has not yet been saved, i.e. you've just edited new audio which has not yet been saved to a custom voice prompt, you will need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
+3.8. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which number.
 3.9. Note that while Edit Voice Tag mode is on, no audio from the DMR subsystem will be captured so that you can’t accidentally overwrite what you are currently editing.
 4. New DMR voice tag feature. You can now associate a voice clip with a DMR ID and then play that clip when reviewing your DMR contact list.
-4.1. After the other station has announced their callsign or name, press SK1+hash. The DMR contact details dialog will pop up with their ID already filled in and the last few seconds of DMR associated with that ID. You can fill in their name and exit from the contact details with green, or, if you need to edit the voice tag first, you can turn on the edit mode (see above) and fix the voice tag before exiting this screen. Once you exit this screen you can't re-edit the voice tag as the editor always operates on the current audio buffer as noted above. The voice tag will be associated with this contact so deleting the contact will delete the voice tag. These voice tags are not counted toward your custom voice prompts. Currently you can have 64 DMR ID tags.
-4.2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. Then, use long hold SK1 to play a tag associated with a private contact.
+4.1. After the other station has announced their callsign or name, press SK1+hash. The DMR contact details dialog will pop up with their ID already filled in and the last few seconds of DMR associated with that ID. You can fill in their name and exit from the contact details with green, or, if you need to edit the voice tag first, you can turn on the edit mode (see above) and fix the voice tag before exiting this screen. If you wish to edit the voice tag later, after it has already been saved, see 3.5 above. The voice tag will be associated with this contact so deleting the contact will delete the voice tag. These voice tags are not counted toward your custom voice prompts. Currently you can have 64 DMR ID tags.
+4.2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press long hold SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
 
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
