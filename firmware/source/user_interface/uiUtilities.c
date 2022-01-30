@@ -3783,7 +3783,22 @@ static void PlayAndResetCustomVoicePromptIndex()
 	voicePromptsPlay();
 	customVoicePromptIndex=0xff;
 }
-
+/*
+When Contact Details is invoked from SK1+hash, regardless of the fact that the cursor is in an edit, if the user edits the voice tag, we should save it associated with the DMR voice tag and not the custom voice prompt in the edit.
+*/
+static bool ForceUseOfVoiceTagIndex()
+{
+	if (contactListContactData.ringStyle ==0) return false;
+	
+	int currentMenu = menuSystemGetCurrentMenuNumber();
+	if (currentMenu==MENU_CONTACT_LIST) return true; // called from DMR contact list.
+	
+	if (currentMenu!= MENU_CONTACT_DETAILS) return false;
+	if (GetDMRContinuousSave()) return false;
+	// This is being called from SK1+hash invocation so even though we might be focused on an edit, force the use of the voice tag index rather than any custom prompt.
+	return true;
+}
+			
 /*
 Handle custom voice prompts.
 While SK1 is being held down, keep track of, and combine, the digits being pressed (actually released) until SK1 is released
@@ -3818,7 +3833,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		memset(&contactListContactData, 0, sizeof(contactListContactData));
 		int contactIndex=codeplugContactIndexByTGorPC((LinkHead->id & 0x00FFFFFF), CONTACT_CALLTYPE_PC, &contactListContactData, 0);
 		uint8_t DMRVTIndex=contactListContactData.ringStyle > 0 ? contactListContactData.ringStyle : GetNextFreeVoicePromptIndex(true);
-		SetDMRContinuousSave(false);
+		SetDMRContinuousSave(false); // This stops incoming ambe frames overwriting the voice tag while we give the user an opportunity to edit it.
 		SaveCustomVoicePrompt(DMRVTIndex, phrase);
 		uiDataGlobal.currentSelectedContactIndex=contactIndex==-1? codeplugContactGetFreeIndex() : contactIndex;
 		if (contactIndex ==-1)
@@ -3836,9 +3851,8 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	if (IsVoicePromptEditMode)
 	{
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
-		{
-			int currentMenu=menuSystemGetCurrentMenuNumber();
-			if ( (contactListContactData.ringStyle >0) && ((currentMenu==MENU_CONTACT_LIST) || (currentMenu== MENU_CONTACT_DETAILS)))
+		{// Try and determine where to save the edited audio.
+			if (ForceUseOfVoiceTagIndex())
 				customVoicePromptIndexToSave=contactListContactData.ringStyle;
 			if (customVoicePromptIndexToSave!=0xff)
 				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
@@ -3916,7 +3930,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			customVoicePromptIndex=(keyval==0) ? 10 : keyval;
 		else
 			customVoicePromptIndex=(10*customVoicePromptIndex)+keyval;
-		if (phrase==0 && menuSystemGetCurrentMenuNumber() ==MENU_CONTACT_DETAILS && (menuDataGlobal.currentItemIndex ==0 || menuDataGlobal.currentItemIndex==1))
+		if ((phrase==0) && (menuSystemGetCurrentMenuNumber() ==MENU_CONTACT_DETAILS) && (menuDataGlobal.currentItemIndex ==0 || menuDataGlobal.currentItemIndex==1))
 			phrase=GetCurrentEditBuffer();
 		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
 		customVoicePromptIndex=0xff; // reset.
