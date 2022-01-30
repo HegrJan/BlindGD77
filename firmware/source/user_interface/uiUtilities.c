@@ -30,6 +30,7 @@
 #include "hardware/EEPROM.h"
 #include "user_interface/menuSystem.h"
 #include "user_interface/uiUtilities.h"
+#include "user_interface/editHandler.h"
 #include "user_interface/uiLocalisation.h"
 #include "hardware/HR-C6000.h"
 #include "functions/settings.h"
@@ -2719,7 +2720,12 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 			if (voicePromptsIsPlaying())
 				voicePromptsTerminate();
 			else
-				voicePromptsPlay();
+			{
+				if (voicePromptsGetEditMode())
+					ReplayDMR();
+				else
+					voicePromptsPlay();
+			}
 		}		
 	return true;
 	}
@@ -3824,6 +3830,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			contactListContactData.ringStyle=DMRVTIndex;
 		}
 		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
+		menuDataGlobal.currentItemIndex=1; // place focus on the tg so that saving the prompt wil grab the correct prompt.
 		return true;
 	}
 	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
@@ -3910,7 +3917,8 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			customVoicePromptIndex=(keyval==0) ? 10 : keyval;
 		else
 			customVoicePromptIndex=(10*customVoicePromptIndex)+keyval;
-
+		if (phrase==0 && menuSystemGetCurrentMenuNumber() ==MENU_CONTACT_DETAILS && (menuDataGlobal.currentItemIndex ==0 || menuDataGlobal.currentItemIndex==1))
+			phrase=GetCurrentEditBuffer();
 		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
 		customVoicePromptIndex=0xff; // reset.
 		keyboardReset(); // reset the keyboard also.

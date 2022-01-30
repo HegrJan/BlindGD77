@@ -804,7 +804,7 @@ uint8_t GetNextFreeVoicePromptIndex(bool forDMRVoiceTag)
 	{
 		uint32_t addr=VOICE_PROMPTS_REGION_TOP-((i+1)*CUSTOM_VOICE_PROMPT_MAX_SIZE);
 		CustomVoicePromptsHeader_t hdr;
-		if (SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
+		if (SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) && !CheckCustomVPSignature(&hdr))
 			return i+1;
 	}
 	return 0;

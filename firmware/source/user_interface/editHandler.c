@@ -312,3 +312,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	editParams->allowedToSpeakUpdate = false;
 	return true;
 }
+char* GetCurrentEditBuffer()
+{
+	return editParams.editBuffer;
+}
