@@ -3812,6 +3812,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		memset(&contactListContactData, 0, sizeof(contactListContactData));
 		int contactIndex=codeplugContactIndexByTGorPC((LinkHead->id & 0x00FFFFFF), CONTACT_CALLTYPE_PC, &contactListContactData, 0);
 		uint8_t DMRVTIndex=contactListContactData.ringStyle > 0 ? contactListContactData.ringStyle : GetNextFreeVoicePromptIndex(true);
+		SetDMRContinuousSave(false);
 		SaveCustomVoicePrompt(DMRVTIndex, phrase);
 		uiDataGlobal.currentSelectedContactIndex=contactIndex==-1? codeplugContactGetFreeIndex() : contactIndex;
 		if (contactIndex ==-1)
@@ -3879,6 +3880,11 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			return true;
 		}
 	}
+	// When contact details was invoked using SK1+# we prohibit DMRContinuousSave to give time for the user to choose to listen to and possibly edit the audio without it being overwritten.
+	// As soon as we detect this screen is not the active screen, we re-enable it.
+	// We don't automatically enable sound edit mode as it might be confusing to have to press Green twice.
+	if (!GetDMRContinuousSave() && (menuSystemGetCurrentMenuNumber() != MENU_CONTACT_DETAILS))
+		SetDMRContinuousSave(true);
 	// SK1 is not being held down on its own.
 	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode;
 	// SK1+green enter edit mode.

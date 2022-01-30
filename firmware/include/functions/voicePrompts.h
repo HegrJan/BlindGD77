@@ -124,4 +124,6 @@ bool voicePromptsGetEditMode();
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute);
 uint8_t voicePromptsGetLastCustomPromptNumberAnnounced();
 bool voicePromptsCopyCustomPromptToEditBuffer(uint8_t customPromptNumber);
+void SetDMRContinuousSave(bool flag);
+bool GetDMRContinuousSave();
 #endif

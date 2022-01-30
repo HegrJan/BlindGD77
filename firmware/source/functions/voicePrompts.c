@@ -75,6 +75,7 @@ static int promptDataPosition = -1;
 static int currentPromptLength = -1;
 static bool replayingDMR=false;
 static bool editingVoicePrompt=false; 
+static bool DMRContinuousSave=true;
 static uint8_t lastCustomVoicePromptAnnounced=0xff;
 
 #define PROMPT_TAIL  30
@@ -150,6 +151,7 @@ static void replayAmbeCircularBufferInit(replayAmbeCircularBuffer_t *cb)
 static void replayAmbeCircularBufferPushBack(replayAmbeCircularBuffer_t *cb, uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull)
 {
 	if (editingVoicePrompt) return;
+	if (!DMRContinuousSave) return;
 	
 	if (reset)
 		replayAmbeCircularBufferInit(cb);
@@ -896,5 +898,14 @@ bool voicePromptsCopyCustomPromptToEditBuffer(uint8_t customPromptNumber)
 	replayBuffer.allowWrap=false;
 	
 	return result;
+}
+
+void SetDMRContinuousSave(bool flag)
+{
+	DMRContinuousSave=flag;
+}
+bool GetDMRContinuousSave()
+{
+	return DMRContinuousSave;
 }
 
