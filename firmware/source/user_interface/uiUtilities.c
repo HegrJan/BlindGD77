@@ -3830,7 +3830,6 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			contactListContactData.ringStyle=DMRVTIndex;
 		}
 		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
-		menuDataGlobal.currentItemIndex=1; // place focus on the tg so that saving the prompt wil grab the correct prompt.
 		return true;
 	}
 	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
