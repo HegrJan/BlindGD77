@@ -61,7 +61,7 @@ const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS 		= 0x8F400;
 static uint32_t voicePromptsFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(VoicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
 // 76 x 27 byte ambe frames
 #define AMBE_DATA_BUFFER_SIZE  2052
-#define CUSTOM_VOICE_PROMPT_MAX_SIZE 1024 // approx 4 seconds of ambe data.
+#define CUSTOM_VOICE_PROMPT_MAX_SIZE 1024 // approx 3 seconds of ambe data.
 #define CUSTOM_VOICE_PROMPT_MIN_SIZE 27
 #define VOICE_PROMPTS_REGION_TOP 0xfffff
 #define maxCustomVoicePrompts 32
@@ -115,8 +115,8 @@ const userDictEntry userDictionary[]=
 // replay logic shares ambe buffer so is colocated here also
 
 // Each ambe buffer is 9 bytes, encoding happens in lots of 3 blocks, i.e. 27 bytes at a time.
-// Buffer is 50 lots of 27 bytes.
-#define ambeREPLAY_BUFFER_LEN 1350
+// Buffer is 60 lots of 27 bytes.
+#define ambeREPLAY_BUFFER_LEN 1620
 
 typedef struct
 {
