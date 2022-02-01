@@ -370,7 +370,7 @@ static void updateScreen(bool isFirstRun)
 					if (leftSide)
 						voicePromptsAppendLanguageString((const char * const *)leftSide);
 					else if (leftSideStr[0])
-						voicePromptsAppendString(leftSideStr);
+						voicePromptsAppendStringEx(leftSideStr, vpAnnounceCustomPrompts);
 				}
 
 				if ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL)))

@@ -2360,7 +2360,7 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 
 	if (cssType == CSS_TYPE_NONE)
 	{
-		voicePromptsAppendString("CSS");
+		voicePromptsAppendStringEx("CSS", vpAnnounceCustomPrompts);
 		voicePromptsAppendLanguageString(&currentLanguage->none);
 	}
 	else if (cssType == CSS_TYPE_CTCSS)
@@ -2378,7 +2378,7 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 	{
 		if (announceType)
 		{
-			voicePromptsAppendString("DCS");
+			voicePromptsAppendStringEx("DCS", vpAnnounceCustomPrompts);
 		}
 
 		dcsPrintf(buf, BUFFER_LEN, NULL, tone);
