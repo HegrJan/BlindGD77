@@ -76,24 +76,71 @@ typedef enum
 	PROMPT_VOX,
 	PROMPT_SWEEP_SCAN_MODE,
 	PROMPT_ECO_MODE,
-	PROMPT_UNUSED_3,
-	PROMPT_UNUSED_4,
-	PROMPT_UNUSED_5,
-	PROMPT_UNUSED_6,
-	PROMPT_UNUSED_7,
-	PROMPT_UNUSED_8,
 	PROMPT_EDIT_VOICETAG,
 	PROMPT_SPACE,
-	NUM_VOICE_PROMPTS
+	PROMPT_A_PHONETIC,
+PROMPT_B_PHONETIC,
+PROMPT_C_PHONETIC,
+PROMPT_D_PHONETIC,
+PROMPT_E_PHONETIC,
+PROMPT_F_PHONETIC,
+PROMPT_G_PHONETIC,
+PROMPT_H_PHONETIC,
+PROMPT_I_PHONETIC,
+PROMPT_J_PHONETIC,
+PROMPT_K_PHONETIC,
+PROMPT_L_PHONETIC,
+PROMPT_M_PHONETIC,
+PROMPT_N_PHONETIC,
+PROMPT_O_PHONETIC,
+PROMPT_P_PHONETIC,
+PROMPT_Q_PHONETIC,
+PROMPT_R_PHONETIC,
+PROMPT_S_PHONETIC,
+PROMPT_T_PHONETIC,
+PROMPT_U_PHONETIC,
+PROMPT_V_PHONETIC,
+PROMPT_W_PHONETIC,
+PROMPT_X_PHONETIC,
+PROMPT_Y_PHONETIC,
+PROMPT_Z_PHONETIC,
+PROMPT_EXCLAIM,
+PROMPT_COMMA,
+PROMPT_AT,
+PROMPT_COLON,
+PROMPT_QUESTION,
+PROMPT_LEFT_PAREN,
+PROMPT_RIGHT_PAREN,
+PROMPT_TILDE,
+PROMPT_SLASH,
+PROMPT_LEFT_BRACKET,
+PROMPT_RIGHT_BRACKET,
+PROMPT_LESS,
+PROMPT_GREATER,
+PROMPT_EQUALS,
+PROMPT_DOLLAR,
+PROMPT_APOSTROPHE,
+PROMPT_GRAVE,
+PROMPT_AMPERSAND,
+PROMPT_BAR,
+PROMPT_UNDERLINE,
+PROMPT_CARET,
+PROMPT_LEFT_BRACE,
+PROMPT_RIGHT_BRACE,
+NUM_VOICE_PROMPTS
 } voicePrompt_t;
 
-typedef struct
-{
-	const char* userWord;
-	voicePrompt_t vp;
-} userDictEntry;
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
 #define VOICE_PROMPT_CUSTOM 500
+
+typedef enum
+{
+	vpAnnounceCaps=0x01,
+	vpAnnounceCustomPrompts=0x02,
+	vpAnnounceSpaceAndSymbols=0x04,
+	vpAnnouncePhoneticRendering=0x08,
+} VoicePromptFlags_T;
+
 extern bool voicePromptDataIsLoaded;
 extern const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS;
 extern const uint32_t VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS;
@@ -104,7 +151,7 @@ void voicePromptsTick(void);// Called from HR-C6000.c
 void voicePromptsInit(void);// Call before building the prompt sequence
 void voicePromptsAppendPrompt(uint16_t prompt);// Append an individual prompt item. This can be a single letter number or a phrase
 void voicePromptsAppendString(char *);// Append a text string e.g. "VK3KYY"
-void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, bool includeCustomPrompts, bool saySpaceAndSymbols);
+void voicePromptsAppendStringEx(char *promptString, VoicePromptFlags_T flags);
 void voicePromptsAppendInteger(int32_t value); // Append a signed integer
 void voicePromptsAppendLanguageString(const char * const *);//Append a text from the current language e.g. &currentLanguage->battery
 void voicePromptsPlay(void);// Starts prompt playback

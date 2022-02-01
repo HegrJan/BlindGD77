@@ -40,6 +40,7 @@ enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, 
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
 	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
 	OPTIONS_AUDIO_PROMPT_RATE,
+	OPTIONS_PHONETIC_SPELL,
 	NUM_SOUND_MENU_ITEMS};
 
 menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
@@ -223,28 +224,34 @@ static void updateScreen(bool isFirstRun)
 					}
 					break;
 				case OPTIONS_AUDIO_PROMPT_VOL_PERCENT:
+					leftSide = (char * const *)&currentLanguage->voice_prompt_vol;
 					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 					{
-						leftSide = (char * const *)&currentLanguage->voice_prompt_vol;
 						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", nonVolatileSettings.voicePromptVolumePercent);
 					}
 					else
 					{
-						leftSide = (char * const *)&currentLanguage->n_a;
+						rightSideConst = (char * const *)&currentLanguage->n_a;
 					}
 					break;
 				case OPTIONS_AUDIO_PROMPT_RATE:
+					leftSide = (char * const *)&currentLanguage->voice_prompt_rate;
 					if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 					{
-						leftSide = (char * const *)&currentLanguage->voice_prompt_rate;
 						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d", nonVolatileSettings.voicePromptRate+1);
 					}
 					else
 					{
-						leftSide = (char * const *)&currentLanguage->n_a;
+						rightSideConst = (char * const *)&currentLanguage->n_a;
 					}
 					break;
-				
+				case OPTIONS_PHONETIC_SPELL:
+					leftSide = (char * const *)&currentLanguage->phoneticSpell;
+					if(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+						rightSideConst = (char * const *)&currentLanguage->n_a;
+					else
+						rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_PHONETIC_SPELL) ? &currentLanguage->on : &currentLanguage->off);
+					break;
 			}
 
 			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSide? *leftSide:"", (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
@@ -527,6 +534,15 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_PHONETIC_SPELL:
+					{
+						if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && voicePromptDataIsLoaded)
+						{
+							if ((nonVolatileSettings.bitfieldOptions&BIT_PHONETIC_SPELL)==0)
+								settingsSetOptionBit(BIT_PHONETIC_SPELL, true);
+						}
+					}
+					break;
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -648,6 +664,15 @@ static void handleEvent(uiEvent_t *ev)
 						if (nonVolatileSettings.voicePromptRate > 0)
 						{
 							settingsDecrement(nonVolatileSettings.voicePromptRate, 1);
+						}
+					}
+					break;
+				case OPTIONS_PHONETIC_SPELL:
+					{
+						if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP && voicePromptDataIsLoaded)
+						{
+							if ((nonVolatileSettings.bitfieldOptions&BIT_PHONETIC_SPELL))
+								settingsSetOptionBit(BIT_PHONETIC_SPELL, false);
 						}
 					}
 					break;

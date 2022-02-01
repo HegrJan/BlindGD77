@@ -102,16 +102,6 @@ __attribute__((section(".data.$RAM2"))) uint32_t tableOfContents[VOICE_PROMPTS_T
 
 __attribute__((section(".data.$RAM2"))) char phraseCache[maxCustomVoicePrompts][CUSTOM_VOICE_PROMPT_PHRASE_LENGTH]; //cache the phrases we have custom prompts for.
 
-const userDictEntry userDictionary[]=
-{
-	{"hotspot", PROMPT_UNUSED_3},
-	{"clearnode", PROMPT_UNUSED_4},
-	{"openspot", PROMPT_UNUSED_5},
-	{"microhub", PROMPT_UNUSED_6},
-	{"allstar", PROMPT_UNUSED_7},
-	{"parrot", PROMPT_UNUSED_8},
-		{0, 0}
-};
 // replay logic shares ambe buffer so is colocated here also
 
 // Each ambe buffer is 9 bytes, encoding happens in lots of 3 blocks, i.e. 27 bytes at a time.
@@ -496,17 +486,9 @@ static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 {
 	if (!ptr) return 0;
 	
-	for (int index=0; userDictionary[index].userWord!=0; ++index)
+	// look up ## followed by digit and speak as custom prompt.
+	if (includeCustomPrompts)
 	{
-		int len=strlen(userDictionary[index].userWord);
-		if (strncasecmp(userDictionary[index].userWord, ptr, len)==0)
-		{
-			*advanceBy=len-1;
-			return userDictionary[index].vp;
-		}
-		// look up ## followed by digit and speak as custom prompt.
-		if (includeCustomPrompts)
-		{
 		if (strncmp(ptr, "##", 2)==0 && isdigit(ptr[2]))
 		{
 			int customPromptNumber=atoi(ptr+2);
@@ -517,18 +499,18 @@ static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 		int customPromptNumber=LookupCustomPrompt(ptr, advanceBy);
 		if (customPromptNumber > 0)
 			return VOICE_PROMPT_CUSTOM+customPromptNumber;
-		}
 	}
+	
 	return 0;
 }
 
-void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, bool includeCustomPrompts, bool saySpaceAndSymbols)
+void voicePromptsAppendStringEx(char *promptString, VoicePromptFlags_T flags)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 	{
 		return;
 	}
-
+	const char indexedSymbols[] = "!,@:?()~/[]<>=$'`&|_^{}"; // handles most of them in indexed order, must match order of vps.
 	if (voicePromptIsActive)
 	{
 		voicePromptsInit();
@@ -536,7 +518,7 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, boo
 	while (*promptString != 0)
 	{
 		int advanceBy=0;
-		uint16_t vp=Lookup(promptString, &advanceBy, includeCustomPrompts);
+		uint16_t vp=Lookup(promptString, &advanceBy, (flags&vpAnnounceCustomPrompts));
 		if (vp)
 		{
 			voicePromptsAppendPrompt(vp);
@@ -548,13 +530,19 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, boo
 		}
 		else if ((*promptString >= 'A') && (*promptString <= 'Z'))
 		{
-			if (indicateCaps)
+			if (flags&vpAnnounceCaps)
 				voicePromptsAppendPrompt(PROMPT_CAP);
-			voicePromptsAppendPrompt(*promptString - 'A' + PROMPT_A);
+			if (flags&vpAnnouncePhoneticRendering)
+				voicePromptsAppendPrompt((*promptString - 'A') + PROMPT_A_PHONETIC);
+			else
+				voicePromptsAppendPrompt(*promptString - 'A' + PROMPT_A);
 		}
 		else if ((*promptString >= 'a') && (*promptString <= 'z'))
 		{
-			voicePromptsAppendPrompt(*promptString - 'a' + PROMPT_A);
+			if (flags&vpAnnouncePhoneticRendering)
+				voicePromptsAppendPrompt((*promptString - 'a') + PROMPT_A_PHONETIC);
+			else
+				voicePromptsAppendPrompt(*promptString - 'a' + PROMPT_A);
 		}
 		else if (*promptString == '.')
 		{
@@ -580,15 +568,23 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, boo
 		{
 			voicePromptsAppendPrompt(PROMPT_HASH);
 		}
-		else if (saySpaceAndSymbols)
+		else if (flags&(vpAnnounceSpaceAndSymbols))
 		{
 			if (*promptString==' ')
 				voicePromptsAppendPrompt(PROMPT_SPACE);
 			else
 			{
-				int32_t val = *promptString;
-				voicePromptsAppendLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
-				voicePromptsAppendInteger(val);
+				char* ptr=strchr(indexedSymbols, *promptString);
+				if (ptr)
+				{
+					voicePromptsAppendPrompt(PROMPT_EXCLAIM+(ptr-indexedSymbols));
+				}
+				else
+				{
+					int32_t val = *promptString;
+					voicePromptsAppendLanguageString(&currentLanguage->dtmf_code); // just the word "code" as we don't have character.
+					voicePromptsAppendInteger(val);
+				}
 			}
 		}
 		else
@@ -601,7 +597,9 @@ void voicePromptsAppendStringWithCaps(char *promptString, bool indicateCaps, boo
 
 void voicePromptsAppendString(char *promptString)
 {
-	voicePromptsAppendStringWithCaps(promptString, false, true, false);
+	VoicePromptFlags_T flags =settingsIsOptionBitSet(BIT_PHONETIC_SPELL)?vpAnnouncePhoneticRendering:0;
+	
+	voicePromptsAppendStringEx(promptString, vpAnnounceCustomPrompts|flags);
 }
 
 void voicePromptsAppendInteger(int32_t value)

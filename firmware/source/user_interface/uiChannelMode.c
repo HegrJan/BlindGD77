@@ -3405,14 +3405,14 @@ static void 			AnnounceGD77sKeypadChar(bool init)
 	buf[0]=GetGD77SKeypadChar();
 	if (init)
 		voicePromptsInit();
-	voicePromptsAppendStringWithCaps(buf, false, false, true);
+	voicePromptsAppendStringEx(buf, vpAnnounceSpaceAndSymbols);
 	voicePromptsPlay();
 }
 
 static void 			AnnounceGD77sKeypadBuffer(void)
 {
 	voicePromptsInit();
-	voicePromptsAppendStringWithCaps(GD77SKeypadBuffer, false, false, true);
+	voicePromptsAppendStringEx(GD77SKeypadBuffer, vpAnnounceSpaceAndSymbols);
 	voicePromptsPlay();
 }
 
