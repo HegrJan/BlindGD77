@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 
 Please note! You will need to update your voice prompts, and no, this won’t overwrite your custom voice prompts.
-31 January 2022
+1 February 2022
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32. In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
@@ -33,6 +33,8 @@ Please note! You will need to update your voice prompts, and no, this won’t over
 4. New DMR voice tag feature. You can now associate a voice clip with a DMR ID and then have that voice tag played while reviewing your DMR contact list.
 4.1. After the other station has announced their callsign or name, press SK1+hash. The DMR contact details dialog will pop up with their ID already filled in and the last few seconds of DMR associated with that ID. Further capturing of DMR audio is suspended while this dialog is active, to give you time to decide what you wish to do with the audio, and so your continuing QSO won't overwrite what you are about to save. You can fill in the other station's name and, if you need to edit the voice tag, you can turn on the edit mode (see above) and fix the voice tag before exiting this screen. If you wish to edit the voice tag later, after it has already been saved, see 3.5 above, and note the limitations. The voice tag will be associated with this contact so deleting the contact will delete the voice tag. These voice tags are not counted toward your custom voice prompts. Currently you can have 64 DMR ID tags.
 4.2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press long hold SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
+5. Added new Phonetic Spell option to Sound Options menu. when on, all alphabetic characters will be spoken with their phonetic rendering.
+6. Added voice prompts for the rest of the symbols which may be input from the 1 key when in alphanumeric input mode.
 
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.

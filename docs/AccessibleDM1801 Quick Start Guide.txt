@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-31 January 2022
+1 February 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 
@@ -70,6 +70,9 @@ You may wish to reduce the verbosity once you are used to the various functions.
 7. Press and hold Red (cancel) until you exit the menus.
 You can adjust the relative voice volume in the event that the default volume of the voice is disproportionately louder than your received signal. The volume can be adjusted from the Sound Options menu using the option after Voice Prompts called Voice Volume. You can set the volume from 10%to 100% of the normal volume.
 You can also adjust the voice rate from the "Voice Rate" option in the Sound Options menu. You can choose from ten voice rates starting with the default rate of the installed voice pack file and increasing in rate in increments of 10%.
+
+Phonetic Spell Mode
+If you would like the radio to announce alphabetic characters using their phonetic rendering, enable the Phonetic Spel option from the Sound Options menu. When on, all alphabetic characters will be spoken with their phonetic rendering, making it easier to distinguish certain letters.
 
 Note that whenever you go to the menus, the radio will take you to the last top level menu you selected. If you choose it, you will be taken to the last option in that menu you selected.
 
