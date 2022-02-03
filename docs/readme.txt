@@ -50,7 +50,7 @@ In the Record prompt mode, ptt will not transmit, it will only encode a voice pr
 In edit start and edit end modes, SK1/SK2 will adjust either the start or the end (as appropriate) and long hold SK1 will repeat the edited prompt. Long hold SK2 will undo the edit of the start or end and return it to its original value.
 Note there is more room in this menu for other options since only 7 knob positions are taken.
 7.2. Since DMRID announcement used to be in the main Options menu, I replaced that with DTMF volume since DMRID announcement is now in the voice menu.
-7.3. Previously you could use the virtual keypad command *##1 through *##32 to save a custom voice prompt, now you can also use the string *##* or *##text to save a custom voice prompt to the next available slot.
+7.3. Previously you could use the virtual keypad command *##1 through *##32 to save a custom voice prompt, now you can also use the string *##* or *##*text to save a custom voice prompt to the next available slot.
  
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
