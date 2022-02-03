@@ -4652,6 +4652,8 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		}
 		else
 		{
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
+				return false; // we're cycling in reverse, let the main handler handle this.
 			GD77SParameters.uiMode=GD77S_UIMODE_ZONE;
 			checkAndUpdateSelectedChannelForGD77S(ev->rotary+GD77SParameters.channelbankOffset, false);
 			keyboardReset();
@@ -4667,13 +4669,14 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	{
 		GD77SParameters.option=ev->rotary-1;
 		
-		AnnounceGD77SOption(true, true);
 		// See if we should enable or disable voice tag edit mode.
 		bool voiceTagEditMode = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && ((GD77SParameters.option >=GD77S_VOICE_EDIT_START) && (GD77SParameters.option <=GD77S_VOICE_EDIT_END)));
 		if (voiceTagEditMode != voicePromptsGetEditMode())
 			voicePromptsSetEditMode(voiceTagEditMode);
 		// See if we should turn on decode mode where we record a voice prompt on PTT but do not tx.
 		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT));
+		AnnounceGD77SOption(true, true); // announce after setting edit mode as this prompt should trump the edit mode change prompt.
+
 		return true;
 	}
 	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
@@ -4868,15 +4871,18 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_GLOBAL_OPTIONS:
 					vpString = (char * const *)&currentLanguage->options;
+					GD77SParameters.option=rotarySwitchGetPosition();
 					break;
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
+					GD77sSelectedCharIndex = rotarySwitchGetPosition()-1;
 					break;
 				case GD77S_UIMODE_VOX:
 					vp = PROMPT_VOX;
 					break;
 				case GD77S_UIMODE_VOICE_OPTIONS:
 					vpString = (char * const *)&currentLanguage->audio_prompt;
+					GD77SParameters.option=rotarySwitchGetPosition();
 					break;
 				case GD77S_UIMODE_MAX:
 					break;
