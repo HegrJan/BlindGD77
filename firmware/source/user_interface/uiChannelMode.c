@@ -4644,6 +4644,10 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	{
 		if (GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS)
 		{
+			if (voicePromptsGetEditMode())
+				voicePromptsSetEditMode(false);
+			encodingCustomVoicePrompt = false;
+
 			return false; // let main handler select the next mode.
 		}
 		else
