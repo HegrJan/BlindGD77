@@ -1,7 +1,7 @@
 Creating and Downloading a DMR ID Database
 by Joseph Stephen, VK7JS 
 Email: vk7js@faithfulgenerations.com
-18 December 2021
+3 February 2022
 
 Plese turn on word wrap if reading this in a text editor.
 
@@ -53,7 +53,11 @@ All of the entries starting with the prefix you entered will be imported into th
 
 You can then enter a different prefix and import again, until the table is full.
 
-Unfortunately, you can import more into the table than can be written to the radio. From experience, for a record length of 7 characters, you can import about 70,000 entries. There is about 256 KB (262144 bytes) of memory set aside for the database and the entries are compressed.
+Unfortunately, you can import more into the table than can be written to the radio. From experience, for a record length of 7 characters, you can import about 50,000 entries. 
+
+Memory Considerations.
+There is a dedicated 256 KB of memory set aside for the DMR ID database plus some memory shared with the voice prompts.
+Basically, if the total size of the db is less than 448K you should not clobber DMR voice tags. If you don’t use DMR voice tags  but do use custom voice prompts, then you can use 512k. If you don’t use custom voice prompts, then you can use 544k 544 k is the maximum for the db on the GD77. The DM1801 has an extra 1 MB of flash but I don’t know if it is all useable.
 
 The exact number of entries you may import will depend on the record length you specify. The longer the length, the more info you can store for each ID, but the less overall entries you can store. Remember, the radio will display more information than is spoken. Only the first field (after the ID) will be announced for brevity.
 
