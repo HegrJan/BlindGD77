@@ -805,10 +805,12 @@ void mainTask(void *data)
 				}
 
 				if ((buttons & BUTTON_PTT) != 0)
-				{
+				{// This is handled by GD77S in separate mode to avoid having to use two keys.
+#if ! defined(PLATFORM_GD77S)
 					// If SK1 is held down with PTT, record a voice prompt.
-					HRC6000setEncodingOnly(buttons & BUTTON_SK1);
-					
+					encodingCustomVoicePrompt=(buttons & BUTTON_SK1);
+#endif // ! defined(PLATFORM_GD77S)
+					HRC6000setEncodingOnly(encodingCustomVoicePrompt);
 					int currentMenu = menuSystemGetCurrentMenuNumber();
 
 					/*

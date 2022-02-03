@@ -368,6 +368,6 @@ extern bool 					dtmfPTTLatch;
 extern bool sk2Latch;
 extern uint16_t sk2LatchTimeout;
 #endif // !defined(PLATFORM_GD77S)
-extern bool phoneticSpellMode;
+extern bool encodingCustomVoicePrompt;
 
 #endif
