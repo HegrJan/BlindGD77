@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 
 Please note! You will need to update your voice prompts, and no, this won’t overwrite your custom voice prompts.
-1 February 2022
+3 February 2022
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32. In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
@@ -35,7 +35,23 @@ Please note! You will need to update your voice prompts, and no, this won’t over
 4.2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press long hold SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
 5. Added new Phonetic Spell option to Sound Options menu. when on, all alphabetic characters will be spoken with their phonetic rendering.
 6. Added voice prompts for the rest of the symbols which may be input from the 1 key when in alphanumeric input mode.
-
+7. GD77S changes: 
+7.1. I moved voice params into a new Voice Options menu which behaves like the Options and Keypad menus, i.e. the knob selects the option, SK1 increments the option, SK2 decrements the option, long hold SK1 repeats the option and its value, and long hold SK2 sets the option to its default.
+The options in this menu include:
+volume, 
+rate, 
+phonetic spell, 
+DMR ID announcement, 
+record prompt mode, 
+edit start, and 
+edit end.
+In volume and rate modes, the name of the voice is spoken as part of the prompt name.
+In the Record prompt mode, ptt will not transmit, it will only encode a voice prompt. SK1 will repeat the recorded prompt. This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77.
+In edit start and edit end modes, SK1/SK2 will adjust either the start or the end (as appropriate) and long hold SK1 will repeat the edited prompt. Long hold SK2 will undo the edit of the start or end and return it to its original value.
+Note there is more room in this menu for other options since only 7 knob positions are taken.
+7.2. Since DMRID announcement used to be in the main Options menu, I replaced that with DTMF volume since DMRID announcement is now in the voice menu.
+7.3. Previously you could use the virtual keypad command *##1 through *##32 to save a custom voice prompt, now you can also use the string *##* or *##text to save a custom voice prompt to the next available slot.
+ 
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
