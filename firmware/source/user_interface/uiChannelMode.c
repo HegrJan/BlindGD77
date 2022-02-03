@@ -3502,6 +3502,8 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 	{
 		if (announceVoiceName)
 			voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
+		if (GD77SParameters.option == GD77S_VOICE_EDIT_START || GD77SParameters.option == GD77S_VOICE_EDIT_END)
+			voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
 
 		if (vp != NUM_VOICE_PROMPTS)
 			voicePromptsAppendPrompt(vp);
