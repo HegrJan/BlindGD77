@@ -4729,11 +4729,27 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 			ReplayDMR();
 		else
 			AnnounceGD77SOption(true, true);  // repeat the current option and its value.
+		keyboardReset();
+
+		return true;
+	}
+	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1))
+	{// do nothing.
+		keyboardReset();
+
 		return true;
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
 	{
 		SetGD77S_Option(0); // 0 means default.
+		keyboardReset();
+
+		return true;
+	}
+	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2))
+	{// do nothing.
+		keyboardReset();
+
 		return true;
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
@@ -4749,7 +4765,6 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	
 	return false;
 }
-
 
 static void 						ToggleGD77SVFOMode(uiEvent_t *ev)
 {
