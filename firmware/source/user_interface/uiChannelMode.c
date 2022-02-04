@@ -85,7 +85,8 @@ typedef enum
 	GD77S_VOICE_RATE,
 	GD77S_VOICE_PHONETIC_SPELL,
 	GD77S_VOICE_DMR_ID_ANNOUNCE,
-	GD77S_VOICE_CUSTOM_PROMPT, // for recording a custom prompt.
+	GD77S_VOICE_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
+	GD77S_VOICE_CUSTOM_PROMPT_REVIEW,
 	GD77S_VOICE_EDIT_START,
 	GD77S_VOICE_EDIT_END,
 	GD77S_VOICE_MAX
@@ -106,6 +107,7 @@ typedef struct
 	// the next two fields are used for autodialer feature.
 	uint16_t dialedChannels; // bit 0 ch1, bit 1 ch2, ... bit 15 ch 16.
 	uint16_t dialedZones; // bit 0 zone 1, bit 1 zone 2, ... bit 15 zone 16.
+	uint8_t customPromptIndex;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -121,7 +123,8 @@ static GD77SParameters_t GD77SParameters =
 		.cycleFunctionsInReverse=false,
 		.option=0,
 		.dialedChannels=0,
-		.dialedZones=0
+		.dialedZones=0,
+		.customPromptIndex=1
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -3484,7 +3487,8 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		else
 			vpValueString= (char * const *)&currentLanguage->off;
 		break;
-	case GD77S_VOICE_CUSTOM_PROMPT:
+	case GD77S_VOICE_CUSTOM_PROMPT_REVIEW:
+	case GD77S_VOICE_CUSTOM_PROMPT_RECORD:
 		vpString = (char * const *)&currentLanguage->audio_prompt;
 		break;
 	case GD77S_VOICE_EDIT_START:
@@ -3504,6 +3508,11 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 			voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
 		if (GD77SParameters.option == GD77S_VOICE_EDIT_START || GD77SParameters.option == GD77S_VOICE_EDIT_END)
 			voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
+		// distinguish between ptt prompt record mode and prompt review mode.
+		if (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_RECORD)
+			voicePromptsAppendLanguageString(&currentLanguage->ptt);
+		if (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_REVIEW)
+			voicePromptsAppendLanguageString(&currentLanguage->all);
 
 		if (vp != NUM_VOICE_PROMPTS)
 			voicePromptsAppendPrompt(vp);
@@ -3519,6 +3528,8 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 	{
 		if (buf[0])
 			voicePromptsAppendString(buf);
+		if ((GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
+			voicePromptsAppendPrompt(GD77SParameters.customPromptIndex+VOICE_PROMPT_CUSTOM);
 	}
 	voicePromptsPlay();
 }
@@ -4595,10 +4606,36 @@ static void SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decremen
 				settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
 			break;
 		}
-		case GD77S_VOICE_CUSTOM_PROMPT:
+		case GD77S_VOICE_CUSTOM_PROMPT_RECORD:
 		{
-			ReplayDMR();
+			if (dir !=0)
+				ReplayDMR();
+			else
+			{// save to next available slot.
+				GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
+				SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, NULL);
+			}
 			return; // do not break or the announce at the bottom will kill the replay.	
+		}
+		case GD77S_VOICE_CUSTOM_PROMPT_REVIEW:
+		{
+			if (dir > 0)
+			{
+				if (GD77SParameters.customPromptIndex < GetMaxCustomVoicePrompts())
+					GD77SParameters.customPromptIndex++;
+			}
+			else if (dir < 0)
+			{
+				if (GD77SParameters.customPromptIndex > 1)
+					GD77SParameters.customPromptIndex--;
+			}
+			else
+			{
+				voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
+				ReplayDMR();
+				return; // return so that announce at bottom won't clobber replay.
+			}
+			break;	
 		}
 		case GD77S_VOICE_EDIT_START:
 		case GD77S_VOICE_EDIT_END:
@@ -4676,7 +4713,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		if (voiceTagEditMode != voicePromptsGetEditMode())
 			voicePromptsSetEditMode(voiceTagEditMode);
 		// See if we should turn on decode mode where we record a voice prompt on PTT but do not tx.
-		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT));
+		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_RECORD));
 		AnnounceGD77SOption(true, true); // announce after setting edit mode as this prompt should trump the edit mode change prompt.
 
 		return true;
@@ -4684,7 +4721,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
 	{
 		// special case for editing a voice tag, replayDMR instead.
-		if ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option >=GD77S_VOICE_CUSTOM_PROMPT && GD77SParameters.option <=GD77S_VOICE_EDIT_END))
+		if ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option >=GD77S_VOICE_CUSTOM_PROMPT_RECORD && GD77SParameters.option <=GD77S_VOICE_EDIT_END))
 			ReplayDMR();
 		else
 			AnnounceGD77SOption(true, true);  // repeat the current option and its value.
@@ -4873,7 +4910,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_GLOBAL_OPTIONS:
 					vpString = (char * const *)&currentLanguage->options;
-					GD77SParameters.option=rotarySwitchGetPosition();
+					GD77SParameters.option=rotarySwitchGetPosition()-1;
 					break;
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
@@ -4884,7 +4921,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_VOICE_OPTIONS:
 					vpString = (char * const *)&currentLanguage->audio_prompt;
-					GD77SParameters.option=rotarySwitchGetPosition();
+					GD77SParameters.option=rotarySwitchGetPosition()-1;
 					break;
 				case GD77S_UIMODE_MAX:
 					break;
