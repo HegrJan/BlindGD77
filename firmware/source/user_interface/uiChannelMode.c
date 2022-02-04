@@ -3531,7 +3531,7 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		if ((GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
 		{
 			voicePromptsAppendInteger(GD77SParameters.customPromptIndex);
-			voicePromptsAppendPrompt(GD77SParameters.customPromptIndex+VOICE_PROMPT_CUSTOM);
+			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM + GD77SParameters.customPromptIndex);
 		}
 	}
 	voicePromptsPlay();
@@ -3950,6 +3950,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			phrasePtr++;
 		}
 		SaveCustomVoicePrompt(customPromptNumber, phrasePtr);
+		GD77SParameters.customPromptIndex=customPromptNumber;
 		return true;
 	}
 
