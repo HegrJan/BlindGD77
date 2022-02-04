@@ -3529,7 +3529,10 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		if (buf[0])
 			voicePromptsAppendString(buf);
 		if ((GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
+		{
+			voicePromptsAppendInteger(GD77SParameters.customPromptIndex);
 			voicePromptsAppendPrompt(GD77SParameters.customPromptIndex+VOICE_PROMPT_CUSTOM);
+		}
 	}
 	voicePromptsPlay();
 }
