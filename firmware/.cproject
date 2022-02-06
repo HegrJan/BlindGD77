@@ -8767,6 +8767,7 @@
 			<resource resourceType="PROJECT" workspacePath="/firmware"/>
 		</configuration>
 		<configuration configurationName="GD-77">
+			<resource resourceType="PROJECT" workspacePath="/d"/>
 			<resource resourceType="PROJECT" workspacePath="/firmware"/>
 		</configuration>
 		<configuration configurationName="GD-77S">
