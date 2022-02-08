@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-1 February 2022
+8 February 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -224,10 +224,11 @@ Voice Tag/Prompt Edit Mode
 3. in this mode, left/right will adjust the end of the sound clip (by 9 AMBE frames), e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments (27 AMBE frames).
 4. SK1 will replay the adjusted audio.
 5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode with SK1+Green and press * to copy the last custom prompt played back to the buffer. Note there is always an advantage to editing the audio immediatley after it is received or recorded rather than after it has already been saved because the immediate audio buffer is always larger and captures more audio. Once the voice tag has been saved, recalling it later for editing will only allow you to edit what was saved, which will generally be shorter than what was originally captured. The replay/edit buffer is 60 AMBE frames, about 5 seconds, whereas a saved voice tag or custom voice prompt can only be 1 kb which is about 37 AMBE frames.
-6. Red will exit edit mode and discard the changes.
-7. Green will exit the mode and save the changes. If the buffer has not yet been saved, i.e. you've just edited new audio which has not yet been saved to a custom voice prompt, you will need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
-8. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which number.
-9. Note that while Edit Voice Tag mode is on, no audio from the DMR subsystem will be captured so that you can’t accidentally overwrite what you are currently editing.
+6. # will now autotrim silence/ambient room noise from the start and end of the clip. You can still make further manual adjustments to this autotrim but it gets you reasonably close most of the time.
+7. Red will exit edit mode and discard the changes.
+8. Green will exit the mode and save the changes. If the buffer has not yet been saved, i.e. you've just edited new audio which has not yet been saved to a custom voice prompt, you will need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
+9. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which number.
+10. Note that while Edit Voice Tag mode is on, no audio from the DMR subsystem will be captured so that you can’t accidentally overwrite what you are currently editing.
 
 DMR voice tag feature. 
 You can now associate a voice clip with a DMR ID and then have that voice tag played while reviewing your DMR contact list.
