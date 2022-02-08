@@ -912,11 +912,13 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 
 void voicePromptsEditAutoTrim()
 {
-	if (!editingVoicePrompt) return;
 	uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
 	if (unclippedLength <= CUSTOM_VOICE_PROMPT_MIN_SIZE)
 		return;
 	
+	int savedEditMode=editingVoicePrompt;
+	editingVoicePrompt=true;
+
 	replayBuffer.clipStart=0;
 	replayBuffer.clipEnd=0;
 	while (replayBuffer.clipStart  < (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd) && (GetAMBEFrameAverageSampleAmplitude() <= 6))
@@ -934,6 +936,7 @@ void voicePromptsEditAutoTrim()
 	replayBuffer.clipEnd=unclippedLength-replayBuffer.clipStart;
 	replayBuffer.clipStart=savedStart;
 	ReplayDMR();
+	editingVoicePrompt = savedEditMode;
 }
 		
 uint8_t voicePromptsGetLastCustomPromptNumberAnnounced()

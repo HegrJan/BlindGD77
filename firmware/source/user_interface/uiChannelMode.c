@@ -4612,8 +4612,14 @@ static void SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decremen
 		}
 		case GD77S_VOICE_CUSTOM_PROMPT_RECORD:
 		{
-			if (dir !=0)
+			if (dir > 0)
+			{
 				ReplayDMR();
+			}
+			else if (dir < 0)
+			{
+				voicePromptsEditAutoTrim();
+			}
 			else
 			{// save to next available slot.
 				GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
