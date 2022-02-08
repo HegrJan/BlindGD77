@@ -3900,6 +3900,12 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			ReplayDMR();
 			return true;
 		}
+		// hash autotrim
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
+		{
+			voicePromptsEditAutoTrim();
+			return true;
+		}
 	}
 	// When contact details was invoked using SK1+# we prohibit DMRContinuousSave to give time for the user to choose to listen to and possibly edit the audio without it being overwritten.
 	// As soon as we detect this screen is not the active screen, we re-enable it.

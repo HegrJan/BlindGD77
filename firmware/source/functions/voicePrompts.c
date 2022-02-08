@@ -840,6 +840,42 @@ bool voicePromptsGetEditMode()
 	return editingVoicePrompt;
 }
 
+uint16_t GetAMBEFrameAverageSampleAmplitude()
+{
+	uint8_t ambeFrame[9];
+	memset(ambeFrame,0, 9);
+	size_t blocks=replayAmbeGetData(&replayBuffer, (uint8_t*)&ambeFrame, 9);
+	if (blocks  < 9) return 0;
+
+	union byteSwap16
+	{
+	short byte16;
+	uint8_t bytes8[2];
+	} swapper;
+	
+	codecInit(false);
+	int startDecodeIndex=wavbuffer_write_idx; // save it off as decode will fill 2 buffers.
+	codecDecode((uint8_t*)&ambeFrame,1);
+	if (wavbuffer_count!=2) return 0;
+
+	int readIdx=startDecodeIndex;
+	double runningTotal = 0;
+	
+	for (int bufferCount=0; bufferCount < wavbuffer_count; ++bufferCount)
+	{	
+		for (uint8_t i= 0; i < (WAV_BUFFER_SIZE / 2); ++i)
+		{
+			swapper.bytes8[0]=audioAndHotspotDataBuffer.wavbuffer[readIdx][(2 * i)];
+			swapper.bytes8[1]=audioAndHotspotDataBuffer.wavbuffer[readIdx][(2 * i)+1];
+			runningTotal+=abs(swapper.byte16);
+		}
+		readIdx=(readIdx+1)%WAV_BUFFER_COUNT;
+	}
+	double average=(runningTotal/WAV_BUFFER_SIZE); // two lots of 80 samples.
+	
+	return average;
+}
+
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 {
 	if (!editingVoicePrompt) return;
@@ -874,6 +910,32 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 	voicePromptsPlay();
 }
 
+void voicePromptsEditAutoTrim()
+{
+	if (!editingVoicePrompt) return;
+	uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
+	if (unclippedLength <= CUSTOM_VOICE_PROMPT_MIN_SIZE)
+		return;
+	
+	replayBuffer.clipStart=0;
+	replayBuffer.clipEnd=0;
+	while (replayBuffer.clipStart  < (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd) && (GetAMBEFrameAverageSampleAmplitude() <= 6))
+	{// 9 AMBE blocks per sample.
+		replayBuffer.clipStart+=9;
+	}
+	
+	// found start. save it off as we need to adjust to find end.
+	int savedStart=replayBuffer.clipStart;
+	replayBuffer.clipStart=unclippedLength-replayBuffer.clipEnd-CUSTOM_VOICE_PROMPT_MIN_SIZE;
+	while ((replayBuffer.clipStart  > savedStart) && (GetAMBEFrameAverageSampleAmplitude() <= 3)) // allow lower volume at end.
+	{
+		replayBuffer.clipStart-=9;
+	}
+	replayBuffer.clipEnd=unclippedLength-replayBuffer.clipStart;
+	replayBuffer.clipStart=savedStart;
+	ReplayDMR();
+}
+		
 uint8_t voicePromptsGetLastCustomPromptNumberAnnounced()
 {
 	return lastCustomVoicePromptAnnounced;
