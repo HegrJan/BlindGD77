@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-4 February 2022
+9 February 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -161,7 +161,10 @@ edit start, and
 edit end (see below).
 In volume and rate modes, the name of the voice is spoken as part of the prompt name.
 
-In the Record prompt mode, ptt will not transmit, it will only encode a voice prompt. SK1 will repeat the recorded prompt. This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77. Long hold SK2 will save the current prompt to the next available slot (not associated with any text).
+In the Record prompt mode, ptt will not transmit, it will only encode a voice prompt. This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77. 
+SK1 will repeat the recorded prompt. 
+SK2 will autotrim silence or ambient noise from the start and end of the clip.
+Long hold SK2 will save the current prompt to the next available slot (not associated with any text).
 
 In Review Prompt mode, SK1 and SK2 will select and play the next/prior saved prompts. Long hold SK2 will copy the current prompt back to the edit buffer for further editing.
 

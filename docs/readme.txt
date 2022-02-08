@@ -16,8 +16,8 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
 
-Please note! You will need to update your voice prompts, and no, this won’t overwrite your custom voice prompts.
-8 February 2022
+Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
+9 February 2022
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32. In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
@@ -26,7 +26,7 @@ Please note! You will need to update your voice prompts, and no, this won’t over
 3.3. in this mode, left/right will adjust the end of the sound clip (by 9 AMBE frames), e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments (27 AMBE frames).
 3.4. SK1 will replay the adjusted audio.
 3.5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode with SK1+Green and press * to copy the last custom prompt played back to the buffer. Note there is always an advantage to editing the audio immediatley after it is received or recorded rather than after it has already been saved because the immediate audio buffer is always larger and captures more audio. Once the voice tag has been saved, recalling it later for editing will only allow you to edit what was saved, which will generally be shorter than what was originally captured. The replay/edit buffer is 60 AMBE frames, about 5 seconds, whereas a saved voice tag or custom voice prompt can only be 1 kb which is about 37 AMBE frames.
-3.6. # will now autotrim silence/ambient room noise from the start and end of the clip. You can still make further manual adjustments to this autotrim but it gets you reasonably close most of the time.
+3.6. # will now autotrim silence/ambient room noise from the start and end of the clip. You can still make further manual adjustments to this autotrim but it gets you reasonably close. On the GD77S, use SK2 from PTT Prompt mode.
 3.7. Red will exit edit mode and discard the changes.
 3.8. Green will exit the mode and save the changes. If the buffer has not yet been saved, i.e. you've just edited new audio which has not yet been saved to a custom voice prompt, you will need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
 3.9. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which slot number to save into.
