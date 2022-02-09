@@ -3103,6 +3103,14 @@ static void ToggleGD77SDTMFAutoDialer(bool announce)
 	voicePromptsPlay();
 }
 
+static void DisableAutoDialerForCurrentChannelAndZone()
+{
+	if (nonVolatileSettings.currentZone < 16)
+		GD77SParameters.dialedZones|=(1<<nonVolatileSettings.currentZone);
+	if (nonVolatileSettings.currentChannelIndexInZone < 16)
+		GD77SParameters.dialedChannels|=(1<<nonVolatileSettings.currentChannelIndexInZone);
+}
+
 bool uiChannelModeTransmitDTMFContactForGD77S(void)
 {// if GD77SParameters.virtualVFOMode is true, we're setting frequency not dtmf code.
 	if (GD77SParameters.uiMode==GD77S_UIMODE_KEYPAD && !GD77SParameters.virtualVFOMode)
@@ -3120,6 +3128,8 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, DTMF_CODE_MAX_LEN))
 			{
 				dtmfSequencePrepare(dtmfCodeBuffer, true);
+				// We've dialled something, disable autodial.
+				DisableAutoDialerForCurrentChannelAndZone();
 				return true;
 			}
 		}
@@ -3145,12 +3155,8 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 	uint16_t contactIndex = dialingContactForChannel ? onceOffChannelContactIndex : GD77SParameters.dtmfListSelected + 1;
 				codeplugDTMFContactGetDataForNumber(contactIndex, &dtmfContact);
 				dtmfSequencePrepare(dtmfContact.code, true);
-				// mark this as having been diled so it doesn't happen again this session.
-				if (dialingContactForChannel)
-				{
-					GD77SParameters.dialedZones|=(1<<nonVolatileSettings.currentZone);
-					GD77SParameters.dialedChannels|=(1<<nonVolatileSettings.currentChannelIndexInZone);
-				}
+				// We've dialed something, disable the autodial for this channel and zone.
+				DisableAutoDialerForCurrentChannelAndZone();
 			}
 			else
 			{
@@ -5134,16 +5140,13 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		{
 			CycleRepeaterOffset(NULL);
 		}
-		else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
+		else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.virtualVFOMode && (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16))
 		{
-			if (!GD77SParameters.virtualVFOMode)
-			{
-				if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
-					GD77SParameters.channelbankOffset+=16;
-				else
-					GD77SParameters.channelbankOffset=0;
-				checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
-			}
+			if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+				GD77SParameters.channelbankOffset+=16;
+			else
+				GD77SParameters.channelbankOffset=0;
+			checkAndUpdateSelectedChannelForGD77S(rotarySwitchGetPosition()+GD77SParameters.channelbankOffset, true);
 		}
 		else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false))
 		{
