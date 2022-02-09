@@ -209,12 +209,12 @@ You'll then need to reset all of your favorite options.
 Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
 This does not affect your codeplug.
 
-Auto Contact.
+Auto Dial Contact.
 Associating a DTMF contact with a channel (auto dial contact):
 You can associate a DTMF contact with a channel such that the first time you press PTT on that channel during a session, the associated DTMF string will be dialled. It will not be dialled again until you reboot the radio or reset it with long hold SK2.
 TO do this, add a contact to the contacts list and give it the following name format:
 ADXXYY where AD means auto dial, XX is the 1-based  zone number and YY is the 1-based channel number, (padding with leading 0s so each is two digits.) The letters "AD" must be in uppercase if entered from the CPS software's contact list. SO, if you wish to dial a contact on channel 1 in zone 1, call the contact AD0101. If you wish to dial a contact on channel 1 in any zone, use 00 for the zone number, e.g. AD0001.
-To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact.
+To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact. Also, if you go to a channel with an auto dial contact and you decide you don't want to auto dial it, if you either go to virtual keypad or the DTMF dialer and dial something from either, the auto dial is toggled off since you've dialled something else. You can of course toggle it on again with long hold SK2. 
 You can now add contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
 To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command *#AD0102 followed by long hold orange. 
 

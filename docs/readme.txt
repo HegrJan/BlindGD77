@@ -54,7 +54,9 @@ In edit start and edit end modes, SK1/SK2 will adjust either the start or the en
 Note there is more room in this menu for other options since only 8 knob positions are taken.
 7.2. Since DMRID announcement used to be in the main Options menu, I replaced that with DTMF volume since DMRID announcement is now in the voice menu.
 7.3. Previously you could use the virtual keypad command *##1 through *##32 to save a custom voice prompt, now you can also use the string *##* or *##*text to save a custom voice prompt to the next available slot, or associate it with text.
- 
+ 7.4. If you have an autodial contact set up on a channel but before you press PTT, you go to the DTMF contacts or virtual keypad and dial something from either, the autodial function is toggled off for that channel/zone combination automatically since you just dialled something.
+7.5. Normally, if there are more than 16 channels in a zone, extra long hold SK2 would switch to the next bank of 16 channels. If however there are 16 or less, this function is irrelevant so it will now perform the same function as long hold sk2, which makes it easier for those with dexterity issues who do not have more than 16 channels in a zone but do use the autodial toggle.
+
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
 1. When pressing long hold SK1 during a Dual Watch or Priority channel scan, now announce the current channel first and the watched or priority channel second rather than the other way round.
