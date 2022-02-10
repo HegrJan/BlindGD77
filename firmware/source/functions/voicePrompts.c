@@ -63,9 +63,16 @@ static uint32_t voicePromptsFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADD
 #define AMBE_DATA_BUFFER_SIZE  2052
 #define CUSTOM_VOICE_PROMPT_MAX_SIZE 1024 // approx 3 seconds of ambe data.
 #define CUSTOM_VOICE_PROMPT_MIN_SIZE 27
+// DM1801 has 2mb memory so allow 99 custom prompts and 256 DMR voice tags and place right at top of 2mb flash, below that is used for DMR DB.
+#if defined(PLATFORM_DM1801) || defined(PLATFORM_DM1801A)
+#define VOICE_PROMPTS_REGION_TOP 0x1fffff
+#define maxCustomVoicePrompts 99
+#define maxDMRVoiceTags 256
+#else
 #define VOICE_PROMPTS_REGION_TOP 0xfffff
 #define maxCustomVoicePrompts 32
 #define maxDMRVoiceTags 64
+#endif
 #define DMR_VOICE_TAG_BASE maxCustomVoicePrompts // DMR voice tags start at 33 and increase.
 
 static uint8_t highestUsedCustomVoicePromptNumberWithPhrase = 0; // 1-based number of highest custom vp to stop searching at.
