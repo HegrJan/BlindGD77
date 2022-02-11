@@ -1937,8 +1937,15 @@ void getBatteryVoltage(int *volts, int *mvolts)
 	*volts = (int)(averageBatteryVoltage / 10);
 	*mvolts = (int)(averageBatteryVoltage - (*volts * 10));
 }
+bool AtMaximumPower()
+{
+		if (currentChannelData->libreDMR_Power != 0x00)
+		return currentChannelData->libreDMR_Power == (MAX_POWER_SETTING_NUM - 1 + CODEPLUG_MIN_PER_CHANNEL_POWER);
+	else
+		return nonVolatileSettings.txPowerLevel == (MAX_POWER_SETTING_NUM - 1);
+}
 
-bool increasePowerLevel(bool allowFullPower)
+bool increasePowerLevel(bool allowFullPower, bool goStraightToMaximum)
 {
 	bool powerHasChanged = false;
 
@@ -1946,7 +1953,10 @@ bool increasePowerLevel(bool allowFullPower)
 	{
 		if (currentChannelData->libreDMR_Power < (MAX_POWER_SETTING_NUM - 1 + CODEPLUG_MIN_PER_CHANNEL_POWER) + (allowFullPower?1:0))
 		{
-			currentChannelData->libreDMR_Power++;
+			if (goStraightToMaximum)
+				currentChannelData->libreDMR_Power=(MAX_POWER_SETTING_NUM - 1 + CODEPLUG_MIN_PER_CHANNEL_POWER) + (allowFullPower?1:0);
+			else
+				currentChannelData->libreDMR_Power++;
 			trxSetPowerFromLevel(currentChannelData->libreDMR_Power - 1);
 			powerHasChanged = true;
 		}
@@ -1955,18 +1965,28 @@ bool increasePowerLevel(bool allowFullPower)
 	{
 		if (nonVolatileSettings.txPowerLevel < (MAX_POWER_SETTING_NUM - 1 + (allowFullPower?1:0)))
 		{
-			settingsIncrement(nonVolatileSettings.txPowerLevel, 1);
+			if (goStraightToMaximum)
+				settingsSet(nonVolatileSettings.txPowerLevel, (MAX_POWER_SETTING_NUM - 1 + (allowFullPower?1:0)));
+			else
+				settingsIncrement(nonVolatileSettings.txPowerLevel, 1);
 			trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
 			powerHasChanged = true;
 		}
 	}
-
+	if (goStraightToMaximum || allowFullPower)
+	{
+		keyboardReset();
+#if !defined(PLATFORM_GD77S)
+		sk2Latch =false;
+		sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
+	}
 	announceItem(PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_3);
 
 	return powerHasChanged;
 }
 
-bool decreasePowerLevel(void)
+bool decreasePowerLevel(bool goStraightToMinimum)
 {
 	bool powerHasChanged = false;
 
@@ -1974,7 +1994,10 @@ bool decreasePowerLevel(void)
 	{
 		if (currentChannelData->libreDMR_Power > CODEPLUG_MIN_PER_CHANNEL_POWER)
 		{
-			currentChannelData->libreDMR_Power--;
+			if (goStraightToMinimum)	
+				currentChannelData->libreDMR_Power=CODEPLUG_MIN_PER_CHANNEL_POWER;
+			else
+				currentChannelData->libreDMR_Power--;
 			trxSetPowerFromLevel(currentChannelData->libreDMR_Power - 1);
 			powerHasChanged = true;
 		}
@@ -1983,12 +2006,22 @@ bool decreasePowerLevel(void)
 	{
 		if (nonVolatileSettings.txPowerLevel > 0)
 		{
-			settingsDecrement(nonVolatileSettings.txPowerLevel, 1);
+			if (goStraightToMinimum)
+				settingsSet(nonVolatileSettings.txPowerLevel, 0);
+			else
+				settingsDecrement(nonVolatileSettings.txPowerLevel, 1);
 			trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
 			powerHasChanged = true;
 		}
 	}
-
+	if (goStraightToMinimum)
+	{
+		keyboardReset();
+#if !defined(PLATFORM_GD77S)
+		sk2Latch =false;
+		sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
+	}
 	announceItem(PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_3);
 
 	return powerHasChanged;

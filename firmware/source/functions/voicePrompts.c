@@ -73,7 +73,7 @@ static uint32_t voicePromptsFlashDataAddress;// = VOICE_PROMPTS_FLASH_HEADER_ADD
 #define maxCustomVoicePrompts 32
 #define maxDMRVoiceTags 64
 #endif
-#define DMR_VOICE_TAG_BASE maxCustomVoicePrompts // DMR voice tags start at 33 and increase.
+#define DMR_VOICE_TAG_BASE maxCustomVoicePrompts // DMR voice tags start at 33 (or 100 on DM1801) and increase.
 
 static uint8_t highestUsedCustomVoicePromptNumberWithPhrase = 0; // 1-based number of highest custom vp to stop searching at.
 bool voicePromptDataIsLoaded = false;

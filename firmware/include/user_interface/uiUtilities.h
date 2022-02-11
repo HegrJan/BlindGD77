@@ -162,8 +162,9 @@ void CycleRepeaterOffset();
 
 int getBatteryPercentage(void);
 void getBatteryVoltage(int *volts, int *mvolts);
-bool decreasePowerLevel(void);
-bool increasePowerLevel(bool allowFullPower);
+bool AtMaximumPower();
+bool decreasePowerLevel(bool goStraightToMinimum);
+bool increasePowerLevel(bool allowFullPower, bool goStraightToMaximum);
 bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel);
 
 void announceChar(char ch);

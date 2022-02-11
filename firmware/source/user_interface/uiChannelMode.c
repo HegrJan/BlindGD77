@@ -1664,9 +1664,9 @@ static void handleEvent(uiEvent_t *ev)
 				return;
 			}
 			// Long press allows the 5W+ power setting to be selected immediately
-			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && AtMaximumPower())
 			{
-				if (increasePowerLevel(true))
+				if (increasePowerLevel(true, false))
 				{
 					uiUtilityRedrawHeaderOnly(notScanning);
 				}
@@ -1681,7 +1681,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
-				if (increasePowerLevel(false))
+				if (increasePowerLevel(false, KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT)))
 				{
 					uiUtilityRedrawHeaderOnly(notScanning);
 				}
@@ -1750,7 +1750,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
-				if (decreasePowerLevel())
+				if (decreasePowerLevel(KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT)))
 				{
 					uiUtilityRedrawHeaderOnly(notScanning);
 				}
@@ -4263,9 +4263,9 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 	{
 		case GD77S_OPTION_POWER:
 			if (dir > 0)
-				increasePowerLevel(true);// true = Allow 5W++
+				increasePowerLevel(true, false);// true = Allow 5W++
 			else if (dir < 0)
-				decreasePowerLevel();// true = Allow 5W++
+				decreasePowerLevel(false);
 			else // set default.
 			{
 				currentChannelData->libreDMR_Power=0x00;
