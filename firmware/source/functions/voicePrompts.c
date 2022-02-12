@@ -507,7 +507,11 @@ static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 		if (customPromptNumber > 0)
 			return VOICE_PROMPT_CUSTOM+customPromptNumber;
 	}
-	
+	if (strncasecmp(ptr, "channel", 7)==0)
+	{
+		*advanceBy+=6;
+		return PROMPT_CHANNEL;
+	}
 	return 0;
 }
 
