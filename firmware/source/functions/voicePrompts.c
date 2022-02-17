@@ -923,6 +923,9 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 
 void voicePromptsEditAutoTrim()
 {
+	if (replayingDMR)
+		voicePromptsTerminate();
+	
 	uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
 	if (unclippedLength <= CUSTOM_VOICE_PROMPT_MIN_SIZE)
 		return;
@@ -932,21 +935,32 @@ void voicePromptsEditAutoTrim()
 
 	replayBuffer.clipStart=0;
 	replayBuffer.clipEnd=0;
-	while (replayBuffer.clipStart  < (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd) && (GetAMBEFrameAverageSampleAmplitude() <= 6))
-	{// 9 AMBE blocks per sample.
+	
+	int permittedPeakCount=0;
+	while (replayBuffer.clipStart  < (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE))
+	{
+		if (GetAMBEFrameAverageSampleAmplitude() > 6)
+		{
+			permittedPeakCount++;
+			if (permittedPeakCount > 1)
+				break;
+		}
+		// 9 AMBE blocks per sample.
 		replayBuffer.clipStart+=9;
 	}
 	
 	// found start. save it off as we need to adjust to find end.
 	int savedStart=replayBuffer.clipStart;
-	replayBuffer.clipStart=unclippedLength-replayBuffer.clipEnd-CUSTOM_VOICE_PROMPT_MIN_SIZE;
+	replayBuffer.clipStart=unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE;
 	while ((replayBuffer.clipStart  > savedStart) && (GetAMBEFrameAverageSampleAmplitude() <= 3)) // allow lower volume at end.
 	{
 		replayBuffer.clipStart-=9;
 	}
-	replayBuffer.clipEnd=unclippedLength-replayBuffer.clipStart;
+	replayBuffer.clipEnd=unclippedLength-replayBuffer.clipStart+9;
 	replayBuffer.clipStart=savedStart;
+	
 	ReplayDMR();
+	
 	editingVoicePrompt = savedEditMode;
 }
 		
