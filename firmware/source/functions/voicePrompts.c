@@ -31,6 +31,7 @@
 #include "functions/voicePrompts.h"
 #include "functions/settings.h"
 #include "user_interface/uiLocalisation.h"
+#include "user_interface/uiUtilities.h"
 #include "functions/rxPowerSaving.h"
 #include "functions/sonic_lite.h"
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
@@ -887,15 +888,37 @@ uint16_t GetAMBEFrameAverageSampleAmplitude()
 	return average;
 }
 
+static void 	AnnounceClipPos(uint16_t ms)
+{
+// caller announces start or end as appropriate.
+	if (ms < 1000)
+	{
+		voicePromptsAppendInteger(ms);
+		voicePromptsAppendPrompt(PROMPT_MILLISECONDS);
+	}
+	else
+	{
+		uint16_t s=ms/1000;
+		uint16_t f=ms%1000;
+		char num[6];
+		snprintf(num, 6, "%u.%03u", s, f);
+		removeUnnecessaryZerosFromVoicePrompts((char*)&num);
+		voicePromptsAppendString(num);
+		voicePromptsAppendPrompt(PROMPT_SECONDS);
+	}
+	voicePromptsPlay();
+}
+
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 {
 	if (!editingVoicePrompt) return;
-	// 9 AMBE blocks per sample.
+	// 9 AMBE blocks per step.
 	int val=9*clipStep;
 	uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
 	if (unclippedLength <= CUSTOM_VOICE_PROMPT_MIN_SIZE)
 		return;
 	voicePromptsInit();
+	uint16_t ms;
 	if (adjustStart)
 	{
 		if (!voicePromptsIsPlaying())
@@ -905,7 +928,7 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 			replayBuffer.clipStart=0;
 		if (replayBuffer.clipStart > (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd))
 			replayBuffer.clipStart=unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd;
-		voicePromptsAppendInteger(replayBuffer.clipStart);
+		ms=(replayBuffer.clipStart/9)*20; // 9 ambe blocks = 160 samples, sample rate 8000/s -> 9 ambe blocks= 20 ms. 
 	}
 	else
 	{
@@ -916,9 +939,9 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 			replayBuffer.clipEnd = unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipStart;
 		if (replayBuffer.clipEnd < 0)
 			replayBuffer.clipEnd = 0;
-		voicePromptsAppendInteger(unclippedLength-replayBuffer.clipEnd);
+		ms=((unclippedLength-replayBuffer.clipEnd)/9)*20;
 	}
-	voicePromptsPlay();
+	AnnounceClipPos(ms);
 }
 
 void voicePromptsEditAutoTrim()
@@ -951,7 +974,7 @@ void voicePromptsEditAutoTrim()
 	
 	// found start. save it off as we need to adjust to find end.
 	int savedStart=replayBuffer.clipStart;
-	// In GetAMBEFrameAverageSampleAmplitude We  sample 9 samples at a time
+	// In GetAMBEFrameAverageSampleAmplitude We  sample 9 ambe blocks  at a time
 	replayBuffer.clipStart=unclippedLength-9;
 	while ((replayBuffer.clipStart  > savedStart) && (GetAMBEFrameAverageSampleAmplitude() <= 3)) // allow lower volume at end.
 	{
@@ -964,7 +987,18 @@ void voicePromptsEditAutoTrim()
 	
 	editingVoicePrompt = savedEditMode;
 }
-		
+
+// length in ms.
+void AnnounceEditBufferLength()
+{
+	if (replayingDMR)
+		voicePromptsTerminate();
+	uint16_t clippedLength=replayAmbeGetLength(&replayBuffer, true);
+	uint16_t ms=(clippedLength/9)*20; //ms.
+	voicePromptsInit();
+	AnnounceClipPos(ms);
+}		
+
 uint8_t voicePromptsGetLastCustomPromptNumberAnnounced()
 {
 	return lastCustomVoicePromptAnnounced;
@@ -993,6 +1027,7 @@ void SetDMRContinuousSave(bool flag)
 {
 	DMRContinuousSave=flag;
 }
+
 bool GetDMRContinuousSave()
 {
 	return DMRContinuousSave;

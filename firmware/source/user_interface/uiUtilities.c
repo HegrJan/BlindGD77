@@ -2272,7 +2272,7 @@ ANNOUNCE_STATIC void announceChannelName(bool announceChannelPrompt, bool announ
 	voicePromptsAppendString(voiceBuf);
 }
 
-static void removeUnnecessaryZerosFromVoicePrompts(char *str)
+void removeUnnecessaryZerosFromVoicePrompts(char *str)
 {
 	const int NUM_DECIMAL_PLACES = 1;
 	int len = strlen(str);
@@ -3936,7 +3936,10 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		// hash autotrim
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
 		{
-			voicePromptsEditAutoTrim();
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+				AnnounceEditBufferLength();
+			else
+				voicePromptsEditAutoTrim();
 			return true;
 		}
 	}
