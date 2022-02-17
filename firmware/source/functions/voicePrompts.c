@@ -951,12 +951,13 @@ void voicePromptsEditAutoTrim()
 	
 	// found start. save it off as we need to adjust to find end.
 	int savedStart=replayBuffer.clipStart;
-	replayBuffer.clipStart=unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE;
+	// In GetAMBEFrameAverageSampleAmplitude We  sample 9 samples at a time.
+	replayBuffer.clipStart=unclippedLength-9;
 	while ((replayBuffer.clipStart  > savedStart) && (GetAMBEFrameAverageSampleAmplitude() <= 3)) // allow lower volume at end.
 	{
 		replayBuffer.clipStart-=9;
 	}
-	replayBuffer.clipEnd=unclippedLength-replayBuffer.clipStart+9;
+	replayBuffer.clipEnd=unclippedLength-(replayBuffer.clipStart+9);
 	replayBuffer.clipStart=savedStart;
 	
 	ReplayDMR();
