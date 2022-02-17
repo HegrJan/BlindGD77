@@ -950,7 +950,7 @@ void voicePromptsEditAutoTrim()
 	}
 	
 	// found start. save it off as we need to adjust to find end.
-	int savedStart=replayBuffer.clipStart
+	int savedStart=replayBuffer.clipStart;
 	// In GetAMBEFrameAverageSampleAmplitude We  sample 9 samples at a time
 	replayBuffer.clipStart=unclippedLength-9;
 	while ((replayBuffer.clipStart  > savedStart) && (GetAMBEFrameAverageSampleAmplitude() <= 3)) // allow lower volume at end.
