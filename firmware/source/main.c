@@ -808,7 +808,10 @@ void mainTask(void *data)
 				{// This is handled by GD77S in separate mode to avoid having to use two keys.
 #if ! defined(PLATFORM_GD77S)
 					// If SK1 is held down with PTT, record a voice prompt.
+					bool priorEncodingCustomVoicePrompt=encodingCustomVoicePrompt;
 					encodingCustomVoicePrompt=(buttons & BUTTON_SK1);
+					if (encodingCustomVoicePrompt&&!priorEncodingCustomVoicePrompt)
+						ReplayInit();
 #endif // ! defined(PLATFORM_GD77S)
 					HRC6000setEncodingOnly(encodingCustomVoicePrompt);
 					int currentMenu = menuSystemGetCurrentMenuNumber();
@@ -896,6 +899,13 @@ void mainTask(void *data)
 						}
 					}
 				}
+				#if ! defined(PLATFORM_GD77S)
+				else
+				{
+					// If SK1 is held down with PTT, record a voice prompt.
+					encodingCustomVoicePrompt=false;
+				}
+#endif // ! defined(PLATFORM_GD77S)
 
 #if (! defined(PLATFORM_GD77S)) && (! defined(PLATFORM_RD5R))
 				if ((buttons & (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN)) == (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN))

@@ -4730,6 +4730,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 			voicePromptsSetEditMode(voiceTagEditMode);
 		// See if we should turn on decode mode where we record a voice prompt on PTT but do not tx.
 		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_RECORD));
+
 		AnnounceGD77SOption(true, true); // announce after setting edit mode as this prompt should trump the edit mode change prompt.
 
 		return true;

@@ -891,21 +891,14 @@ uint16_t GetAMBEFrameAverageSampleAmplitude()
 static void 	AnnounceClipPos(uint16_t ms)
 {
 // caller announces start or end as appropriate.
-	if (ms < 1000)
-	{
-		voicePromptsAppendInteger(ms);
-		voicePromptsAppendPrompt(PROMPT_MILLISECONDS);
-	}
-	else
-	{
-		uint16_t s=ms/1000;
-		uint16_t f=ms%1000;
-		char num[6];
-		snprintf(num, 6, "%u.%03u", s, f);
-		removeUnnecessaryZerosFromVoicePrompts((char*)&num);
-		voicePromptsAppendString(num);
-		voicePromptsAppendPrompt(PROMPT_SECONDS);
-	}
+	uint16_t s=ms/1000;
+	uint16_t f=ms%1000;
+	char num[6];
+	snprintf(num, 6, "%u.%03u", s, f);
+	removeUnnecessaryZerosFromVoicePrompts((char*)&num);
+	voicePromptsAppendString(num);
+	voicePromptsAppendPrompt(PROMPT_SECONDS);
+	
 	voicePromptsPlay();
 }
 
@@ -946,7 +939,7 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 
 void voicePromptsEditAutoTrim()
 {
-	if (replayingDMR)
+	if (voicePromptIsActive)
 		voicePromptsTerminate();
 	
 	uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
@@ -991,7 +984,7 @@ void voicePromptsEditAutoTrim()
 // length in ms.
 void AnnounceEditBufferLength()
 {
-	if (replayingDMR)
+	if (voicePromptIsActive)
 		voicePromptsTerminate();
 	uint16_t clippedLength=replayAmbeGetLength(&replayBuffer, true);
 	uint16_t ms=(clippedLength/9)*20; //ms.
