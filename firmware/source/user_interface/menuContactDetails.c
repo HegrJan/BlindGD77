@@ -361,6 +361,15 @@ static void handleEvent(uiEvent_t *ev)
 {
 	dmrIdDataStruct_t foundRecord;
 	char buf[SCREEN_LINE_BUFFER_SIZE];
+	
+	if (ev->events & FUNCTION_EVENT)
+	{
+		if (ev->function == FUNC_REDRAW)
+		{
+			updateScreen(false, true);
+			return;
+		}
+	}
 
 	if (ev->events & BUTTON_EVENT)
 	{

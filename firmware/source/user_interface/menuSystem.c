@@ -530,5 +530,3 @@ void menuDisplaySettingOption(const char *entryText, const char *valueText)
 
 	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, valueText, FONT_SIZE_3, TEXT_ALIGN_CENTER, false);
 }
-
-

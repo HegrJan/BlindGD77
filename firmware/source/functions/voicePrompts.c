@@ -839,7 +839,13 @@ void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
 void voicePromptsSetEditMode(bool flag)
 {
 	if (!voicePromptDataIsLoaded) return;
-
+#if !defined(PLATFORM_GD77S)
+	if (!editingVoicePrompt && flag)
+	{
+		uint16_t unclippedLength=replayAmbeGetLength(&replayBuffer, false);
+		ShowEditAudioClipScreen(((replayBuffer.clipStart/9)*20), (((unclippedLength-replayBuffer.clipEnd)/9)*20));
+	}
+#endif
 	editingVoicePrompt=flag;	
 	voicePromptsInit();
 	voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
@@ -921,7 +927,10 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 			replayBuffer.clipStart=0;
 		if (replayBuffer.clipStart > (unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd))
 			replayBuffer.clipStart=unclippedLength-CUSTOM_VOICE_PROMPT_MIN_SIZE-replayBuffer.clipEnd;
-		ms=(replayBuffer.clipStart/9)*20; // 9 ambe blocks = 160 samples, sample rate 8000/s -> 9 ambe blocks= 20 ms. 
+		ms=(replayBuffer.clipStart/9)*20; // 9 ambe blocks = 160 samples, sample rate 8000/s -> 9 ambe blocks= 20 ms.
+#if !defined(PLATFORM_GD77S)
+		ShowEditAudioClipScreen(ms, ((unclippedLength-replayBuffer.clipEnd)/9)*20);
+#endif
 	}
 	else
 	{
@@ -933,7 +942,11 @@ void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)
 		if (replayBuffer.clipEnd < 0)
 			replayBuffer.clipEnd = 0;
 		ms=((unclippedLength-replayBuffer.clipEnd)/9)*20;
+#if !defined(PLATFORM_GD77S)
+		ShowEditAudioClipScreen(((replayBuffer.clipStart/9)*20), ms);
+#endif
 	}
+	
 	AnnounceClipPos(ms);
 }
 
@@ -975,7 +988,10 @@ void voicePromptsEditAutoTrim()
 	}
 	replayBuffer.clipEnd=unclippedLength-(replayBuffer.clipStart+9);
 	replayBuffer.clipStart=savedStart;
-	
+#if !defined(PLATFORM_GD77S)
+	ShowEditAudioClipScreen(((replayBuffer.clipStart/9)*20), (((unclippedLength-replayBuffer.clipEnd)/9)*20));
+#endif
+
 	ReplayDMR();
 	
 	editingVoicePrompt = savedEditMode;

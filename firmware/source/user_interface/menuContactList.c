@@ -288,6 +288,15 @@ static void updateScreen(bool isFirstRun)
 
 static void handleEvent(uiEvent_t *ev)
 {
+	if (ev->events & FUNCTION_EVENT)
+	{
+		if (ev->function == FUNC_REDRAW)
+		{
+			updateScreen(false);
+			return;
+		}
+	}
+
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))

@@ -3892,8 +3892,13 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
 			customVoicePromptIndexToSave=0xff;
 			voicePromptsSetEditMode(false);
-
-			return true;
+			keyboardReset();
+			ev->keys.key=0;
+			ev->buttons=0;
+			ev->events |=FUNCTION_EVENT;
+			ev->function = FUNC_REDRAW;
+			
+			return false; // so next menu handler gets called and screen gets updated.
 		}
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
@@ -3902,7 +3907,13 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			voicePromptsSetEditMode(false);
 
 			customVoicePromptIndex=0xff;
-			return true;
+			keyboardReset();
+			ev->keys.key=0;
+			ev->buttons=0;
+			ev->events |=FUNCTION_EVENT;
+			ev->function = FUNC_REDRAW;
+			
+			return false; // so next menu handler gets called and screen is updated.
 		}
 		if ((ev->keys.key==0) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
 		{
@@ -4000,4 +4011,17 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	}
 		
 	return true; // We've handled the key combination.
+}
+
+void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
+{
+	ucClearBuf();
+	menuDisplayTitle("Edit Audio Clip");
+	
+	char buffer[SCREEN_LINE_BUFFER_SIZE];
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "S %d.%02d - E %d.%02d", start/1000, start%1000, end/1000, end%1000);
+
+	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, buffer, FONT_SIZE_3, TEXT_ALIGN_LEFT, false);
+	
+	ucRender();
 }

@@ -697,6 +697,12 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & FUNCTION_EVENT)
 	{
+		if (ev->function == FUNC_REDRAW)
+		{
+			updateScreen(false, true);
+			return;
+		}
+
 		if ((QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) && (QUICKKEY_ENTRYID(ev->function) < NUM_CH_DETAILS_ITEMS))
 		{
 			menuDataGlobal.currentItemIndex = QUICKKEY_ENTRYID(ev->function);

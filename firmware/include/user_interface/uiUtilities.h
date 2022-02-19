@@ -213,4 +213,5 @@ void AnnounceLastHeardContactIfNeeded();
 bool ScanShouldSkipFrequency(uint32_t freq);
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase);
 void removeUnnecessaryZerosFromVoicePrompts(char *str);
+void ShowEditAudioClipScreen(uint16_t start, uint16_t end);
 #endif

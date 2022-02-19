@@ -803,7 +803,12 @@ void mainTask(void *data)
 						buttons &= !BUTTON_PTT;
 					}
 				}
-
+				if ((buttons & BUTTON_PTT) && voicePromptsGetEditMode())
+				{				// PTT disallowed when in audio edit mode.
+					soundSetMelody(MELODY_ERROR_BEEP);
+					buttons &= !BUTTON_PTT;
+				}
+					
 				if ((buttons & BUTTON_PTT) != 0)
 				{// This is handled by GD77S in separate mode to avoid having to use two keys.
 #if ! defined(PLATFORM_GD77S)
