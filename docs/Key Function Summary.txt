@@ -1,6 +1,12 @@
 AccessibleGD77 Key Function Chart
 by Joseph Stephen VK7JS
 20 February 2022
+To contact Joseph Stephen, email vk7js@faithfulgenerations.com
+
+Please note. Turn on word wrap to read this document in a text editor.
+This Guide assumes you are running the forked version of OpenGD77 produced by Joseph Stephen VK7JS and Jan Hegr OK1TE now called AccessibleGD77.
+Please consult the quick start guides for more detailed information about the operation of this firmware.
+This ddocument is a quick key function summary.
 
 SK1 is the top small button (below PTT) on the left edge of the radio and SK2 is the small button beneath it.
 The orange button is the small button on the top of the radio near the antenna.
