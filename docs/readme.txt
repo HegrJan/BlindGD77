@@ -15,6 +15,7 @@ If you would like to read the quickstart guide for the AccessibleGD77 firmware, 
 The docs folder also contains help files produced by Ian Spencer, DJ0HF, which may assist you in getting started with the CPS software, the software used to communicate with your radio from your computer in order to upload firmware, voice prompts and your channel data (known as a CodePlug).
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
+A key function summary is included in the docs folder called "Key Function Summary.txt"
 
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 20 February 2022
