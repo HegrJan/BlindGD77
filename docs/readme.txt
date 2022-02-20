@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
-18 February 2022
+20 February 2022
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32 for the GD77, GD77S and RD5R, and 99 for the DM1801 and DM1801A (as the DM1801 radios have 2MB flash). In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
@@ -25,7 +25,7 @@ Please note! You will need to update your voice prompts. This will not overwrite
 3.2. In this mode, up/down will adjust the start of the current sound clip by 20 ms (9 AMBE frames), e.g. to remove noise at the start of the clip, press up or to restore what was there, press down. Hold down to adjust by larger increments (60 ms, 27 AMBE frames).
 3.3. in this mode, left/right will adjust the end of the sound clip by 20 ms, (9 AMBE frames), e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments (60 ms, 27 AMBE frames).
 3.4. SK1 will replay the adjusted audio.
-3.5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode with SK1+Green and press * to copy the last custom prompt played back to the buffer. Note there is always an advantage to editing the audio immediatley after it is received or recorded rather than after it has already been saved because the immediate audio buffer is always larger and captures more audio. Once the voice tag has been saved, recalling it later for editing will only allow you to edit what was saved, which will generally be shorter than what was originally captured. The replay/edit buffer is 60 DMR frames, about 3.6 seconds, whereas a saved voice tag or custom voice prompt can only be 1 kb which is about 37 DMR frames, about 2 seconds.
+3.5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode with SK1+Green and press * to copy the last custom prompt played back to the buffer. Note there is always an advantage to editing the audio immediatley after it is received or recorded rather than after it has already been saved because the immediate audio buffer is always larger and captures more audio. Once the voice tag has been saved, recalling it later for editing will only allow you to edit what was saved, which will generally be shorter than what was originally captured. The replay/edit buffer is 60 DMR frames, about 3.6 seconds, whereas a saved voice tag or custom voice prompt can only be 1 kb which is about 37 DMR frames, about 2.2 seconds.
 3.6. # will now autotrim silence/ambient room noise from the start and end of the clip. You can still make further manual adjustments to this autotrim but it gets you reasonably close. On the GD77S, use SK2 from PTT Prompt mode.
 3.7. SK2+# will announce the current length of the edited clip.
 3.8. Red will exit edit mode and discard the changes.
@@ -48,10 +48,24 @@ record prompt mode (ptt prompt),
 Review Prompt (all prompt),
 edit start, and 
 edit end.
+
 In volume and rate modes, the name of the voice is spoken as part of the prompt name.
-In the Record prompt mode, ptt will not transmit, it will only encode a voice prompt. SK1 will repeat the recorded prompt. This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77. Long hold SK2 will copy the current prompt to the next available slot (not associated with any text).
-In Review mode, SK1 and SK2 will move through the custom prompts and play them. Long hold SK2 will copy the current prompt back to the edit buffer.
-In edit start and edit end modes, SK1/SK2 will adjust either the start or the end (as appropriate) and long hold SK1 will repeat the edited prompt. Long hold SK2 will undo the edit of the start or end and return it to its original value.
+
+In the Record prompt mode:
+* ptt will not transmit, it will only encode a voice prompt. (This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77.)
+* SK1 will repeat the recorded prompt. 
+* SK2 will autotrim the recorded prompt. 
+* Long hold SK2 will copy the current prompt to the next available slot (not associated with any text).
+
+In Review mode:
+* SK1 and SK2 will move through the custom prompts and play them. 
+* Long hold SK2 will copy the current prompt back to the edit buffer.
+
+In edit start and edit end modes:
+* SK1/SK2 will adjust either the start or the end of the recorded prompt (according to whether you are in Edit Start or Edit End mode.)
+* long hold SK1 will repeat the edited prompt.
+* Long hold SK2 will undo the edit of the start or end and return it to its original value.
+
 Note there is more room in this menu for other options since only 8 knob positions are taken.
 7.2. Since DMRID announcement used to be in the main Options menu, I replaced that with DTMF volume since DMRID announcement is now in the voice menu.
 7.3. Previously you could use the virtual keypad command *##1 through *##32 to save a custom voice prompt, now you can also use the string *##* or *##*text to save a custom voice prompt to the next available slot, or associate it with text.
