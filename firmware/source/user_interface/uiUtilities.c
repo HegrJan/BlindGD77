@@ -1404,7 +1404,7 @@ void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int
 		if (HRC6000getEncodingOnly())
 		{
 			char recBuf[SCREEN_LINE_BUFFER_SIZE];
-			snprintf(recBuf, SCREEN_LINE_BUFFER_SIZE, "Rvp %s", str);
+			snprintf(recBuf, SCREEN_LINE_BUFFER_SIZE, "RVP %s", str);
 			ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, recBuf, FONT_SIZE_4);
 		}
 		else
