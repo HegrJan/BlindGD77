@@ -1401,7 +1401,7 @@ void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int
 
 	case DISPLAY_INFO_TX_TIMER:
 	{
-		if (HRC6000getEncodingOnly())
+		if (encodingCustomVoicePrompt)
 		{
 			char recBuf[SCREEN_LINE_BUFFER_SIZE];
 			snprintf(recBuf, SCREEN_LINE_BUFFER_SIZE, "RVP %s", str);

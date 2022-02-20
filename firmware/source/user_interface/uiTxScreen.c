@@ -125,15 +125,15 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 			updateScreen();
 		}
 
-		if ((((currentChannelData->flag4 & 0x04) == 0x00) && ((nonVolatileSettings.txFreqLimited == BAND_LIMITS_NONE) || trxCheckFrequencyInAmateurBand(currentChannelData->txFreq))) || HRC6000getEncodingOnly())
+		if ((((currentChannelData->flag4 & 0x04) == 0x00) && ((nonVolatileSettings.txFreqLimited == BAND_LIMITS_NONE) || trxCheckFrequencyInAmateurBand(currentChannelData->txFreq))) || encodingCustomVoicePrompt)
 		{
 			nextSecondPIT = PITCounter + PIT_COUNTS_PER_SECOND;
-			timeInSeconds =HRC6000getEncodingOnly() ? 4 : currentChannelData->tot * 15;
+			timeInSeconds =encodingCustomVoicePrompt ? 4 : currentChannelData->tot * 15;
 			if (timeInSeconds==0)
 				timeInSeconds=nonVolatileSettings.totMaster*15;
 			timeout=timeInSeconds;
 			LEDs_PinWrite(GPIO_LEDgreen, Pin_LEDgreen, 0);
-			LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, HRC6000getEncodingOnly() ? 0:1);
+			LEDs_PinWrite(GPIO_LEDred, Pin_LEDred, encodingCustomVoicePrompt ? 0:1);
 
 			txstopdelay = 0;
 			clearIsWakingState();
@@ -525,7 +525,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 {
 	PTTToggledDown = false;
 	voxReset();
-		if (HRC6000getEncodingOnly())
+		if (encodingCustomVoicePrompt)
 	{
 		reason=TXSTOP_TIMEOUT;
 		keyboardReset();
@@ -584,7 +584,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 	displayLightOverrideTimeout(-1);
 #endif
 
-	if ((nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) || HRC6000getEncodingOnly())
+	if ((nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) || encodingCustomVoicePrompt)
 	{
 		soundSetMelody((reason == TXSTOP_TIMEOUT) ? MELODY_TX_TIMEOUT_BEEP : MELODY_ERROR_BEEP);
 	}
