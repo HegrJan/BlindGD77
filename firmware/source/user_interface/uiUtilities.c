@@ -1400,9 +1400,17 @@ void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int
 		break;
 
 	case DISPLAY_INFO_TX_TIMER:
-		ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, str, FONT_SIZE_4);
+	{
+		if (HRC6000getEncodingOnly())
+		{
+			char recBuf[SCREEN_LINE_BUFFER_SIZE];
+			snprintf(recBuf, SCREEN_LINE_BUFFER_SIZE, "Rvp %s", str);
+			ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, recBuf, FONT_SIZE_4);
+		}
+		else
+			ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, str, FONT_SIZE_4);
 		break;
-
+	}
 	case DISPLAY_INFO_ZONE:
 		ucPrintCentered(DISPLAY_Y_POS_ZONE, str, FONT_SIZE_1);
 		break;

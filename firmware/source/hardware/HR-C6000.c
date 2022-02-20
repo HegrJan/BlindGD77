@@ -1831,3 +1831,7 @@ void HRC6000setEncodingOnly(bool flag)
 		savedRadioModeBeforeEncode=RADIO_MODE_NONE;
 	}
 }
+bool HRC6000getEncodingOnly()
+{
+	return encodingOnly;
+}
