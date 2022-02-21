@@ -74,6 +74,7 @@ Note there is more room in this menu for other options since only 8 knob positio
 7.5. Normally, if there are more than 16 channels in a zone, extra long hold SK2 would switch to the next bank of 16 channels. If however there are 16 or less, this function is irrelevant so it will now perform the same function as long hold sk2, which makes it easier for those with dexterity issues who do not have more than 16 channels in a zone but do use the autodial toggle.
 8. There are times when you need to rapidly switch to the highest power level. You can now switch to the lowest or highest power without waiting by using SK2+long hold left/right. At 5 watts, long hold SK2+right will still switch to the user power level. Previously you'd have to hold down SK2+left/right and wait for each level to be announced.
 9. All radios will now properly announce the word channel. It was announced correctly in the channel summary but the word would always be spelled if the word appeared in an actual channel name (which is the default when using the CPS if you don't explicitly name a channel).
+10. Added Key Function Summary text file to docs folder.
 
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
