@@ -137,3 +137,17 @@ Green: Invoke menu to select, edit, delete or create new contacts
 Power-on shortcuts:
 SK2+Power On: Reset all settings to factory default (will not reset your codeplug).
 #+Power On: If voice prompts were off, turn them on and set to level 3 (If they were already on, do not change them).
+
+
+CPS Software:
+Ctrl+F4 closes screens (rather than Alt+F4).
+
+Channel Grid:
+Ctrl+i: Insert a new channel.
+Ctrl+del: Delete a channel.
+Shift+up/down: Select a channel.
+Ctrl+a: Select all, required for export to CSV).
+ 
+Zone List and Talkgroup List screens (when focused on the Name edit field of the zone or tg list)
+Ctrl+i - will create a new zone or tg list and move focus to that zone
+Ctrl+ left or right arrow will move to the previous or next zone or tg 
