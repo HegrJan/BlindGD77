@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-9 February 2022
+22 February 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -133,7 +133,6 @@ This Mode contains the following options:
 * DMR Mic Gain,
 * FM Beep,
 * DMR Beep,
-* Band Limits,
 * DTMF Volume,
 * Band Limits,
 * VHF master Squelch,
