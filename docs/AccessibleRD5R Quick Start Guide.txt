@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-22 January 2022
+18 February 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -72,6 +72,9 @@ You may wish to reduce the verbosity once you are used to the various functions.
 You can adjust the relative voice volume in the event that the default volume of the voice is disproportionately louder than your received signal. The volume can be adjusted from the Sound Options menu using the option after Voice Prompts called Voice Volume. You can set the volume from 10%to 100% of the normal volume.
 You can also adjust the voice rate from the "Voice Rate" option in the Sound Options menu. You can choose from ten voice rates starting with the default rate of the installed voice pack file and increasing in rate in increments of 10%.
 
+Phonetic Spell Mode
+If you would like the radio to announce alphabetic characters using their phonetic rendering, enable the Phonetic Spel option from the Sound Options menu. When on, all alphabetic characters will be spoken with their phonetic rendering, making it easier to distinguish certain letters.
+
 Note that whenever you go to the menus, the radio will take you to the last top level menu you selected. If you choose it, you will be taken to the last option in that menu you selected.
 
 In general, you select a menu item with Up and Down Arrow, and change its values with Left and Right Arrow.
@@ -91,7 +94,7 @@ Reverse Function:
 If you wish to exchange RX and TX, i.e. turn on the Reverse function on a repeater, during reception, press and hold both SK1 and SK2. While the buttons are depressed, the RX and TX frequencies will be reversed. When you release the buttons, the RX and TX frequencies will return to normal operation.
 
 Replay DMR Audio:
-You can now replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note there is no conflict between this and the Reverse function above because Reverse is only used while receiving a signal, wheras replay is used when not currently receiving a signal, also, reverse is only active while both SK1 and SK2 are pressed.)
+You can now replay the last few seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 3.6 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note there is no conflict between this and the Reverse function above because Reverse is only used while receiving a signal, wheras replay is used when not currently receiving a signal, also, reverse is only active while both SK1 and SK2 are pressed.)
 
 Note MR/VFO switches between channel and VFO modes. 
 Pres and hold the red/cancel key to toggle between VFO A and B in VFO mode.
@@ -202,19 +205,38 @@ k. Simple DTMF support for DTMF fields;
 l. SK1 will repeat the content of the edit field. 
 
 Custom Voice Prompts:
-You can create up to 10 custom voice prompts to be spoken for, or as part of, contact or channel names.
-1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
+You can create up to 32 custom voice prompts to be spoken for, or as part of, contact or channel names.
+1. SK1+PTT allows you to record a prompt (up to about 2 seconds).
 2. SK2+SK1 will repeat the prompt for verification.
-3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To play what is already stored for a custom prompt, press SK1+the number of the prompt.
-4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
-5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save it:
-5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
-5.2. Go to any edit field, e.g. channel details name field.
-5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
-5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also play the same custom prompt.
+3. To save prompt 1, after recording it with SK1+PTT, hold SK1, and then long hold digit 1. To save prompt 32, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
+4. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. 
+5. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
+6. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##32, do the following at the point when you are about to save it:
+6.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
+6.2. Go to any edit field, e.g. channel details name field.
+6.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
+6.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also play the same custom prompt.
 Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
-6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete.
-7. Note the prompt will follow the voice rate of the rest of the prompts.
+7. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then SK1+the number you wish to delete.
+8. Note the prompt will follow the voice rate of the rest of the prompts.
+
+Voice Tag/Prompt Edit Mode
+1. Enter Edit Mode with SK1+green.
+2. In this mode, up/down will adjust the start of the current sound clip by 20 ms (9 AMBE frames), e.g. to remove noise at the start of the clip, press up or to restore what was there, press down. Hold down to adjust by larger increments (60 ms or 27 AMBE frames).
+3. in this mode, left/right will adjust the end of the sound clip by 20 ms, (9 AMBE frames), e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments (60 ms, or 27 AMBE frames).
+4. SK1 will replay the adjusted audio.
+5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode with SK1+Green and press * to copy the last custom prompt played back to the buffer. Note there is always an advantage to editing the audio immediatley after it is received or recorded rather than after it has already been saved because the immediate audio buffer is always larger and captures more audio. Once the voice tag has been saved, recalling it later for editing will only allow you to edit what was saved, which will generally be shorter than what was originally captured. The replay/edit buffer is 60 DMR frames, about 3.6 seconds, whereas a saved voice tag or custom voice prompt can only be 1 kb which is about 37 DMR frames or 2.2 seconds.
+6. # will now autotrim silence/ambient room noise from the start and end of the clip. You can still make further manual adjustments to this autotrim but it gets you reasonably close most of the time.
+7. SK2+# will announce the current length of the edited clip.
+8. Red will exit edit mode and discard the changes.
+9. Green will exit the mode and save the changes. If the buffer has not yet been saved, i.e. you've just edited new audio which has not yet been saved to a custom voice prompt, you will need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
+10. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which number.
+11. Note that while Edit Voice Tag mode is on, no audio from the DMR subsystem will be captured so that you can’t accidentally overwrite what you are currently editing.
+
+DMR voice tag feature. 
+You can now associate a voice clip with a DMR ID and then have that voice tag played while reviewing your DMR contact list.
+1. After the other station has announced their callsign or name, press SK1+hash. The DMR contact details dialog will pop up with their ID already filled in and the last few seconds of DMR associated with that ID. Further capturing of DMR audio is suspended while this dialog is active, to give you time to decide what you wish to do with the audio, and so your continuing QSO won't overwrite what you are about to save. You can fill in the other station's name and, if you need to edit the voice tag, you can turn on the edit mode (see above) and fix the voice tag before exiting this screen. If you wish to edit the voice tag later, after it has already been saved, see 5 above, and note the limitations. The voice tag will be associated with this contact so deleting the contact will delete the voice tag. These voice tags are not counted toward your custom voice prompts. Currently you can have 64 DMR ID tags.
+2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press long hold SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
 
 Creating a new channel.
 1. Press MR/VFO from the Channel Screen to go to VFO.

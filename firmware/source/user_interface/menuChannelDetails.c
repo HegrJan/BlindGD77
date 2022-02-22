@@ -612,7 +612,10 @@ static void updateScreen(bool isFirstRun, bool allowedToSpeakUpdate)
 
 						if ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL)))
 						{
-							voicePromptsAppendString(rightSideVar);
+							VoicePromptFlags_T flags=vpAnnounceCustomPrompts;
+							if (settingsIsOptionBitSet(BIT_PHONETIC_SPELL) && (mNum == CH_DETAILS_NAME))
+								flags|=vpAnnouncePhoneticRendering;
+							voicePromptsAppendStringEx(rightSideVar,flags);
 						}
 						else
 						{
@@ -694,6 +697,12 @@ static void handleEvent(uiEvent_t *ev)
 
 	if (ev->events & FUNCTION_EVENT)
 	{
+		if (ev->function == FUNC_REDRAW)
+		{
+			updateScreen(false, true);
+			return;
+		}
+
 		if ((QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) && (QUICKKEY_ENTRYID(ev->function) < NUM_CH_DETAILS_ITEMS))
 		{
 			menuDataGlobal.currentItemIndex = QUICKKEY_ENTRYID(ev->function);

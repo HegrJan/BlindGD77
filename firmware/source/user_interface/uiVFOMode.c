@@ -1326,9 +1326,9 @@ static void handleEvent(uiEvent_t *ev)
 			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT))
 			{
 				// Long press allows the 5W+ power setting to be selected immediately
-				if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+				if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && AtMaximumPower())
 				{
-					if (increasePowerLevel(true))
+					if (increasePowerLevel(true, false))
 					{
 						headerRowIsDirty = true;
 					}
@@ -1355,7 +1355,7 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 					{
-						if (increasePowerLevel(false))
+						if (increasePowerLevel(false, KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT)))
 						{
 							headerRowIsDirty = true;
 						}
@@ -1435,7 +1435,7 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 					{
-						if (decreasePowerLevel())
+						if (decreasePowerLevel(KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT)))
 						{
 							headerRowIsDirty = true;
 						}

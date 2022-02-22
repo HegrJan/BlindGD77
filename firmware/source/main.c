@@ -803,12 +803,22 @@ void mainTask(void *data)
 						buttons &= !BUTTON_PTT;
 					}
 				}
-
-				if ((buttons & BUTTON_PTT) != 0)
-				{
-					// If SK1 is held down with PTT, record a voice prompt.
-					HRC6000setEncodingOnly(buttons & BUTTON_SK1);
+				if ((buttons & BUTTON_PTT) && voicePromptsGetEditMode())
+				{				// PTT disallowed when in audio edit mode.
+					soundSetMelody(MELODY_ERROR_BEEP);
+					buttons &= !BUTTON_PTT;
+				}
 					
+				if ((buttons & BUTTON_PTT) != 0)
+				{// This is handled by GD77S in separate mode to avoid having to use two keys.
+#if ! defined(PLATFORM_GD77S)
+					// If SK1 is held down with PTT, record a voice prompt.
+					bool priorEncodingCustomVoicePrompt=encodingCustomVoicePrompt;
+					encodingCustomVoicePrompt=(buttons & BUTTON_SK1);
+					if (encodingCustomVoicePrompt&&!priorEncodingCustomVoicePrompt)
+						ReplayInit();
+#endif // ! defined(PLATFORM_GD77S)
+					HRC6000setEncodingOnly(encodingCustomVoicePrompt);
 					int currentMenu = menuSystemGetCurrentMenuNumber();
 
 					/*
@@ -879,7 +889,7 @@ void mainTask(void *data)
 #endif
 
 									rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
-									if (trxGetMode()==RADIO_MODE_DIGITAL)
+									if ((trxGetMode()==RADIO_MODE_DIGITAL) && !voicePromptsGetEditMode())
 										ReplayInit();
 									menuSystemPushNewMenu(UI_TX_SCREEN);
 #if defined(PLATFORM_GD77S)
@@ -894,6 +904,13 @@ void mainTask(void *data)
 						}
 					}
 				}
+				#if ! defined(PLATFORM_GD77S)
+				else
+				{
+					// If SK1 is held down with PTT, record a voice prompt.
+					encodingCustomVoicePrompt=false;
+				}
+#endif // ! defined(PLATFORM_GD77S)
 
 #if (! defined(PLATFORM_GD77S)) && (! defined(PLATFORM_RD5R))
 				if ((buttons & (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN)) == (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN))
@@ -1082,9 +1099,11 @@ void mainTask(void *data)
 			}
 #if !defined(PLATFORM_GD77S)
 			// Handle custom voice prompts.
-			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE))
+			bool callMenuHandler=true;
+			if ((currentMenu == UI_VFO_MODE) || (currentMenu == UI_CHANNEL_MODE) || (currentMenu ==MENU_CONTACT_DETAILS) || (currentMenu ==MENU_CONTACT_LIST))
 			{
-				HandleCustomPrompts(&ev, NULL);
+				if (HandleCustomPrompts(&ev, NULL))
+					callMenuHandler=false;
 			}
 
 			if (BUTTONCHECK_DOWN(&ev, BUTTON_SK2) && BUTTONCHECK_SHORTUP(&ev, BUTTON_SK1))
@@ -1092,6 +1111,7 @@ void mainTask(void *data)
 				ReplayDMR();
 				keyboardReset();
 			}
+			if (callMenuHandler) // condition only for non GD77S.
 #endif
 			menuSystemCallCurrentMenuTick(&ev);
 

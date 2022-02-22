@@ -188,6 +188,18 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 	return menuContactListExitCode;
 }
 
+static void PlayDMRVoiceTag(bool init)
+{
+	if (contactListType != MENU_CONTACT_LIST_CONTACT_DIGITAL) return;
+	if (contactListContactData.ringStyle==0) return;
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2) return;
+	if (init)
+		voicePromptsInit();
+	voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+contactListContactData.ringStyle);
+	if (init)
+		voicePromptsPlay();
+}
+
 static void updateScreen(bool isFirstRun)
 {
 	contactListEntryCount=menuDataGlobal.endIndex;// store this off as it will be used in the submenu because the above changes to reflect that menu.
@@ -241,6 +253,7 @@ static void updateScreen(bool isFirstRun)
 							voicePromptsAppendPrompt(PROMPT_SILENCE);
 							voicePromptsAppendLanguageString(&currentLanguage->none);
 						}
+						PlayDMRVoiceTag(false);
 					}
 				}
 
@@ -275,8 +288,22 @@ static void updateScreen(bool isFirstRun)
 
 static void handleEvent(uiEvent_t *ev)
 {
+	if (ev->events & FUNCTION_EVENT)
+	{
+		if (ev->function == FUNC_REDRAW)
+		{
+			updateScreen(false);
+			return;
+		}
+	}
+
 	if (ev->events & BUTTON_EVENT)
 	{
+		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
+		{// Play voice tag associated with digital contact.
+			PlayDMRVoiceTag(true);
+			return;
+		}
 		if (repeatVoicePromptOnSK1(ev))
 		{
 			return;
@@ -411,7 +438,12 @@ static void handleEvent(uiEvent_t *ev)
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-				{
+				{// delete voice tag for this contact.
+					if (contact.ringStyle)
+					{
+						DeleteDMRVoiceTag(contact.ringStyle);
+						contact.ringStyle=0;
+					}
 					memset(contact.name, 0xff, 16);
 					contact.tgNumber = 0;
 					contact.callType = 0xFF;
@@ -427,6 +459,7 @@ static void handleEvent(uiEvent_t *ev)
 				contactListDisplayState = MENU_CONTACT_LIST_DELETED;
 				reloadContactList(contactListType);
 				updateScreen(false);
+				voicePromptsInit();
 				voicePromptsAppendLanguageString(&currentLanguage->contact_deleted);
 				voicePromptsPlay();
 			}
@@ -446,6 +479,8 @@ static void handleEvent(uiEvent_t *ev)
 				menuContactListTimeout = 0;
 				contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
 				reloadContactList(contactListType);
+				voicePromptsInit();
+
 				updateScreen(false);
 			}
 			break;

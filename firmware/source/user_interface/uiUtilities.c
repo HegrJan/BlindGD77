@@ -30,6 +30,7 @@
 #include "hardware/EEPROM.h"
 #include "user_interface/menuSystem.h"
 #include "user_interface/uiUtilities.h"
+#include "user_interface/editHandler.h"
 #include "user_interface/uiLocalisation.h"
 #include "hardware/HR-C6000.h"
 #include "functions/settings.h"
@@ -41,6 +42,8 @@
 #include "functions/sonic_lite.h"
 #include "functions/rxPowerSaving.h"
 static const uint8_t DECOMPRESS_LUT[64] = { ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.' };
+static uint8_t customVoicePromptIndex=0xff;
+static uint8_t customVoicePromptIndexToSave=0xff;
 
 static __attribute__((section(".data.$RAM2"))) LinkItem_t callsList[NUM_LASTHEARD_STORED];
 
@@ -61,7 +64,7 @@ static uint32_t lastHeardUpdateTime=0;
 #define LAST_HEARD_TIMER_TIMEOUT 750
 
 static void announceChannelNameOrVFOFrequency(bool voicePromptWasPlaying, bool announceVFOName);
-static void dmrDbTextDecode(uint8_t *compressedBufIn, uint8_t *decompressedBufOut, int compressedSize);
+static void dmrDbTextDecode(uint8_t *decompressedBufOut, uint8_t *compressedBufIn, int compressedSize);
 
 DECLARE_SMETER_ARRAY(rssiMeterHeaderBar, DISPLAY_SIZE_X);
 
@@ -936,6 +939,58 @@ static void dmrDbTextDecode(uint8_t *decompressedBufOut, uint8_t *compressedBufI
 	}
 }
 
+/********* DMR ID db contact encoder.
+// This should return a value between 0 and 63, 0xff means char not found.
+static uint8_t GetLUTIndexForChar(char ch)
+{
+	for (uint8_t index=0; index < 64; ++index)
+	{
+		if (ch==DECOMPRESS_LUT[index])
+			return index;
+	}
+	return 0xff;
+}
+
+// dmrDbTextEncode does the opposite of dmrDbTextDecode
+// I.e. it encodes each char in the input sequence as 6-bits and compresses 4 chars into 3 byte sequences. 
+static uint8_t dmrDbTextEncode(uint8_t *compressedBufOut, uint8_t compressedBufSize, uint8_t *decompressedBufIn, uint8_t decompressedSize)
+{
+	uint8_t compressedCharSequenceIndex=0;
+	uint8_t* outPtr=compressedBufOut;
+	memset(compressedBufOut, 0, compressedBufSize);
+	
+	for (uint8_t i=0; i < decompressedSize; ++i)
+	{
+		uint8_t lutIndex=GetLUTIndexForChar(decompressedBufIn[i]);
+		if (lutIndex==0xff)
+		continue;
+				
+		compressedCharSequenceIndex++;
+		switch (compressedCharSequenceIndex)
+		{
+			case 1:
+				*outPtr=lutIndex<<2; // move 6 bits to highest pos of first byte of output sequence.
+				break;
+			case 2:
+				*outPtr++|=((lutIndex&0x30)>>4); // move highest 2 bits of next char to lowest pos of first byte to combine with 6 bits which we already have.
+				*outPtr=((lutIndex&0xf)<<4); // move last 4 bits of 2nd char to hiest pos of 2nd byte.
+				break;
+			case 3:
+				*outPtr++|=((lutIndex>>2)); // move first four bits of third char to low nibble of 2nd byte of compressed output.
+				*outPtr=(lutIndex<<6); // move last two bits of third char to highest pos of 3rd byte of output.
+				break;
+			case 4:
+				*outPtr++|=lutIndex; // move 4th char to lowest six bits of third byte of output sequence.
+				compressedCharSequenceIndex=0;// start the next sequence.
+				break;
+		}// switch
+		if (((outPtr-compressedBufOut)==compressedBufSize) && (compressedCharSequenceIndex!=3)) // let the fourth char be written if possible since we won't overflow the buffer.
+		break;
+	}// for
+	return SAFE_MIN((outPtr-compressedBufOut)+1, compressedBufSize); // number of bytes written to the compressed buffer.
+}	
+*/
+
 bool dmrIDLookup(uint32_t targetId, dmrIdDataStruct_t *foundRecord)
 {
 	uint32_t targetIdBCD;
@@ -1345,9 +1400,17 @@ void uiUtilityDisplayInformation(const char *str, displayInformation_t line, int
 		break;
 
 	case DISPLAY_INFO_TX_TIMER:
-		ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, str, FONT_SIZE_4);
+	{
+		if (encodingCustomVoicePrompt)
+		{
+			char recBuf[SCREEN_LINE_BUFFER_SIZE];
+			snprintf(recBuf, SCREEN_LINE_BUFFER_SIZE, "RVP %s", str);
+			ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, recBuf, FONT_SIZE_4);
+		}
+		else
+			ucPrintCentered(DISPLAY_Y_POS_TX_TIMER, str, FONT_SIZE_4);
 		break;
-
+	}
 	case DISPLAY_INFO_ZONE:
 		ucPrintCentered(DISPLAY_Y_POS_ZONE, str, FONT_SIZE_1);
 		break;
@@ -1882,8 +1945,15 @@ void getBatteryVoltage(int *volts, int *mvolts)
 	*volts = (int)(averageBatteryVoltage / 10);
 	*mvolts = (int)(averageBatteryVoltage - (*volts * 10));
 }
+bool AtMaximumPower()
+{
+		if (currentChannelData->libreDMR_Power != 0x00)
+		return currentChannelData->libreDMR_Power == (MAX_POWER_SETTING_NUM - 1 + CODEPLUG_MIN_PER_CHANNEL_POWER);
+	else
+		return nonVolatileSettings.txPowerLevel == (MAX_POWER_SETTING_NUM - 1);
+}
 
-bool increasePowerLevel(bool allowFullPower)
+bool increasePowerLevel(bool allowFullPower, bool goStraightToMaximum)
 {
 	bool powerHasChanged = false;
 
@@ -1891,7 +1961,10 @@ bool increasePowerLevel(bool allowFullPower)
 	{
 		if (currentChannelData->libreDMR_Power < (MAX_POWER_SETTING_NUM - 1 + CODEPLUG_MIN_PER_CHANNEL_POWER) + (allowFullPower?1:0))
 		{
-			currentChannelData->libreDMR_Power++;
+			if (goStraightToMaximum)
+				currentChannelData->libreDMR_Power=(MAX_POWER_SETTING_NUM - 1 + CODEPLUG_MIN_PER_CHANNEL_POWER) + (allowFullPower?1:0);
+			else
+				currentChannelData->libreDMR_Power++;
 			trxSetPowerFromLevel(currentChannelData->libreDMR_Power - 1);
 			powerHasChanged = true;
 		}
@@ -1900,18 +1973,28 @@ bool increasePowerLevel(bool allowFullPower)
 	{
 		if (nonVolatileSettings.txPowerLevel < (MAX_POWER_SETTING_NUM - 1 + (allowFullPower?1:0)))
 		{
-			settingsIncrement(nonVolatileSettings.txPowerLevel, 1);
+			if (goStraightToMaximum)
+				settingsSet(nonVolatileSettings.txPowerLevel, (MAX_POWER_SETTING_NUM - 1 + (allowFullPower?1:0)));
+			else
+				settingsIncrement(nonVolatileSettings.txPowerLevel, 1);
 			trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
 			powerHasChanged = true;
 		}
 	}
-
+	if (goStraightToMaximum || allowFullPower)
+	{
+		keyboardReset();
+#if !defined(PLATFORM_GD77S)
+		sk2Latch =false;
+		sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
+	}
 	announceItem(PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_3);
 
 	return powerHasChanged;
 }
 
-bool decreasePowerLevel(void)
+bool decreasePowerLevel(bool goStraightToMinimum)
 {
 	bool powerHasChanged = false;
 
@@ -1919,7 +2002,10 @@ bool decreasePowerLevel(void)
 	{
 		if (currentChannelData->libreDMR_Power > CODEPLUG_MIN_PER_CHANNEL_POWER)
 		{
-			currentChannelData->libreDMR_Power--;
+			if (goStraightToMinimum)	
+				currentChannelData->libreDMR_Power=CODEPLUG_MIN_PER_CHANNEL_POWER;
+			else
+				currentChannelData->libreDMR_Power--;
 			trxSetPowerFromLevel(currentChannelData->libreDMR_Power - 1);
 			powerHasChanged = true;
 		}
@@ -1928,12 +2014,22 @@ bool decreasePowerLevel(void)
 	{
 		if (nonVolatileSettings.txPowerLevel > 0)
 		{
-			settingsDecrement(nonVolatileSettings.txPowerLevel, 1);
+			if (goStraightToMinimum)
+				settingsSet(nonVolatileSettings.txPowerLevel, 0);
+			else
+				settingsDecrement(nonVolatileSettings.txPowerLevel, 1);
 			trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
 			powerHasChanged = true;
 		}
 	}
-
+	if (goStraightToMinimum)
+	{
+		keyboardReset();
+#if !defined(PLATFORM_GD77S)
+		sk2Latch =false;
+		sk2LatchTimeout=0;
+#endif // !defined(PLATFORM_GD77S)
+	}
 	announceItem(PROMPT_SEQUENCE_POWER, PROMPT_THRESHOLD_3);
 
 	return powerHasChanged;
@@ -2184,7 +2280,7 @@ ANNOUNCE_STATIC void announceChannelName(bool announceChannelPrompt, bool announ
 	voicePromptsAppendString(voiceBuf);
 }
 
-static void removeUnnecessaryZerosFromVoicePrompts(char *str)
+void removeUnnecessaryZerosFromVoicePrompts(char *str)
 {
 	const int NUM_DECIMAL_PLACES = 1;
 	int len = strlen(str);
@@ -2277,9 +2373,10 @@ void announceChar(char ch)
 	}
 
 	char buf[2] = {ch, 0};
+	VoicePromptFlags_T flags =settingsIsOptionBitSet(BIT_PHONETIC_SPELL)?vpAnnouncePhoneticRendering:0;
 
 	voicePromptsInit();
-	voicePromptsAppendStringWithCaps(buf, true, false, true);
+	voicePromptsAppendStringEx(buf, vpAnnounceCaps|vpAnnounceSpaceAndSymbols|flags);
 	voicePromptsPlay();
 }
 
@@ -2304,7 +2401,7 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 
 	if (cssType == CSS_TYPE_NONE)
 	{
-		voicePromptsAppendString("CSS");
+		voicePromptsAppendStringEx("CSS", vpAnnounceCustomPrompts);
 		voicePromptsAppendLanguageString(&currentLanguage->none);
 	}
 	else if (cssType == CSS_TYPE_CTCSS)
@@ -2322,7 +2419,7 @@ void buildCSSCodeVoicePrompts(uint16_t tone, CodeplugCSSTypes_t cssType, Directi
 	{
 		if (announceType)
 		{
-			voicePromptsAppendString("DCS");
+			voicePromptsAppendStringEx("DCS", vpAnnounceCustomPrompts);
 		}
 
 		dcsPrintf(buf, BUFFER_LEN, NULL, tone);
@@ -2661,18 +2758,38 @@ bool repeatVoicePromptOnSK1(uiEvent_t *ev)
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0) && (ev->keys.key == 0))
 	{
 		if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-		{//joe
+		{
 			if (voicePromptsIsPlaying())
 				voicePromptsTerminate();
 			else
-				voicePromptsPlay();
+			{
+				if (voicePromptsGetEditMode())
+					ReplayDMR();
+				else
+					voicePromptsPlay();
+			}
 		}		
 	return true;
 	}
 
 	return false;
 }
+/*
+static void testCompressDecompress()
+{
+	char test[16]="\0";
+strcpy(test,"vk7js Joseph 50");
+	uint8_t compressedBuf[16];
+	uint8_t bytes = dmrDbTextEncode((uint8_t*)&compressedBuf, 16, (uint8_t*)&test, 16);
+voicePromptsInit();
+voicePromptsAppendInteger(bytes);
 
+char output[16]="\0";
+
+dmrDbTextDecode((uint8_t*)&output, (uint8_t*)&compressedBuf, bytes);
+voicePromptsAppendStringEx(output,vpAnnounceCustomPrompts);
+}
+*/
 void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
@@ -2760,7 +2877,6 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	voicePromptsAppendPrompt(PROMPT_S);
 	voicePromptsAppendInteger(sizeof(nonVolatileSettings));
 #endif
-
 	voicePromptsPlay();
 }
 
@@ -3693,31 +3809,227 @@ bool ScanShouldSkipFrequency(uint32_t freq)
 	}
 	return false;	
 }
+static void PlayAndResetCustomVoicePromptIndex()
+{
+	if (customVoicePromptIndex==0xff) return;
+	
+	if (customVoicePromptIndex > GetMaxCustomVoicePrompts())
+	{
+		nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+		customVoicePromptIndex=0xff; // reset 
+		return;	
+	}
 
-// Handle custom voice prompts.
+	voicePromptsInit();
+	voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customVoicePromptIndex);
+	voicePromptsPlay();
+	customVoicePromptIndex=0xff;
+}
+/*
+When Contact Details is invoked from SK1+hash, regardless of the fact that the cursor is in an edit, if the user edits the voice tag, we should save it associated with the DMR voice tag and not the custom voice prompt in the edit.
+*/
+static bool ForceUseOfVoiceTagIndex()
+{
+	if (contactListContactData.ringStyle ==0) return false;
+	
+	int currentMenu = menuSystemGetCurrentMenuNumber();
+	if (currentMenu==MENU_CONTACT_LIST) return true; // called from DMR contact list.
+	
+	if (currentMenu!= MENU_CONTACT_DETAILS) return false;
+	if (GetDMRContinuousSave()) return false;
+	// This is being called from SK1+hash invocation so even though we might be focused on an edit, force the use of the voice tag index rather than any custom prompt.
+	return true;
+}
+			
+/*
+Handle custom voice prompts.
+While SK1 is being held down, keep track of, and combine, the digits being pressed (actually released) until SK1 is released
+or the number entered so far is already two digits long, at which time, play the corresponding custom voice prompt.
+If the last digit is held down for a long hold, save the corresponding voice prompt.
+*/
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) return false;
+	
+	if ((customVoicePromptIndex < 0xff) && BUTTONCHECK_DOWN(ev, BUTTON_SK1)==0 && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
+	{// SK1 was released and customVoicePromptIndex has been set so play the corresponding custom voice prompt.
+		if (customVoicePromptIndex==0)
+			customVoicePromptIndex=10; // shortcut if SK1 plus 0 is quickly pressed and released, play prompt 10.
+		PlayAndResetCustomVoicePromptIndex();
+		return true;
+	}
+	//SK1+* save to next available custom voice prompt slot.
+	if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+	{// save to the next available custom voice prompt slot.
+		customVoicePromptIndex=GetNextFreeVoicePromptIndex(false);
+		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
+		customVoicePromptIndex=0xff; // reset.
+		keyboardReset(); // reset the keyboard also.
+		return true;
+	}
+	// SK1+# associate last played DMR with ID and save to contact.
+	if ((ev->buttons & BUTTON_SK1) && IsLastHeardContactRelevant() && KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
+	{// associate last recorded DMR with last heard ID.
+		char phrase[16]="\0";
+		snprintf(phrase, 16, "%d", LinkHead->id);
+		memset(&contactListContactData, 0, sizeof(contactListContactData));
+		int contactIndex=codeplugContactIndexByTGorPC((LinkHead->id & 0x00FFFFFF), CONTACT_CALLTYPE_PC, &contactListContactData, 0);
+		uint8_t DMRVTIndex=contactListContactData.ringStyle > 0 ? contactListContactData.ringStyle : GetNextFreeVoicePromptIndex(true);
+		SetDMRContinuousSave(false); // This stops incoming ambe frames overwriting the voice tag while we give the user an opportunity to edit it.
+		SaveCustomVoicePrompt(DMRVTIndex, phrase);
+		uiDataGlobal.currentSelectedContactIndex=contactIndex==-1? codeplugContactGetFreeIndex() : contactIndex;
+		if (contactIndex ==-1)
+		{
+			memset(&contactListContactData, 0, sizeof(contactListContactData));
+			contactListContactData.NOT_IN_CODEPLUGDATA_indexNumber=uiDataGlobal.currentSelectedContactIndex;
+			contactListContactData.tgNumber=LinkHead->id;
+			contactListContactData.callType=CONTACT_CALLTYPE_PC;
+			contactListContactData.ringStyle=DMRVTIndex;
+		}
+		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
+		return true;
+	}
+	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
+	if (IsVoicePromptEditMode)
+	{
+			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+		{// Try and determine where to save the edited audio.
+			if (ForceUseOfVoiceTagIndex())
+				customVoicePromptIndexToSave=contactListContactData.ringStyle;
+			if (customVoicePromptIndexToSave!=0xff)
+				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
+			customVoicePromptIndexToSave=0xff;
+			voicePromptsSetEditMode(false);
+			keyboardReset();
+			ev->keys.key=0;
+			ev->buttons=0;
+			ev->events |=FUNCTION_EVENT;
+			ev->function = FUNC_REDRAW;
+			
+			return false; // so next menu handler gets called and screen gets updated.
+		}
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+		{
+			voicePromptsAdjustEnd(false, 0, true);
+			voicePromptsAdjustEnd(true, 0, true);
+			voicePromptsSetEditMode(false);
 
-	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return false;
-	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return false;
+			customVoicePromptIndex=0xff;
+			keyboardReset();
+			ev->keys.key=0;
+			ev->buttons=0;
+			ev->events |=FUNCTION_EVENT;
+			ev->function = FUNC_REDRAW;
+			
+			return false; // so next menu handler gets called and screen is updated.
+		}
+		if ((ev->keys.key==0) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
+		{
+			ReplayDMR();
+			keyboardReset();
+			return true;
+		}
+
+		// up/down adjust start.
+		// left/right adjust end.
+		bool longHoldLeftRight=KEYCHECK_LONGDOWN(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT);
+		bool leftRight=KEYCHECK_SHORTUP(ev->keys, KEY_LEFT) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || longHoldLeftRight;
+		bool longHoldUpDown=KEYCHECK_LONGDOWN(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN);;
+		bool upDown=KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || longHoldUpDown;
+		bool reverse=KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN(ev->keys, KEY_RIGHT) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT) || KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN);//right is increasing the clip region from the end, slightly counter intuitive.
+		bool longHold=longHoldLeftRight || longHoldUpDown;
+		if (leftRight || upDown)
+		{
+			int step=longHold ? 3 : 1;
+			voicePromptsAdjustEnd(upDown, reverse ? -step : step, false);
+			return true;
+		}
+		// * from edit mode will copy the last custom voice prompt spoken back to the edit buffer so it can be edited.
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+		{
+			customVoicePromptIndexToSave=voicePromptsGetLastCustomPromptNumberAnnounced();
+			voicePromptsCopyCustomPromptToEditBuffer(customVoicePromptIndexToSave);
+			ReplayDMR();
+			return true;
+		}
+		// hash autotrim
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
+		{
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+				AnnounceEditBufferLength();
+			else
+				voicePromptsEditAutoTrim();
+			return true;
+		}
+	}
+	// When contact details was invoked using SK1+# we prohibit DMRContinuousSave to give time for the user to choose to listen to and possibly edit the audio without it being overwritten.
+	// As soon as we detect this screen is not the active screen, we re-enable it.
+	// We don't automatically enable sound edit mode as it might be confusing to have to press Green twice.
+	if (!GetDMRContinuousSave() && (menuSystemGetCurrentMenuNumber() != MENU_CONTACT_DETAILS))
+		SetDMRContinuousSave(true);
+	// SK1 is not being held down on its own.
+	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode;
+	// SK1+green enter edit mode.
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) && !IsVoicePromptEditMode)
+	{
+		voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+		return true;
+	}
+	
+	// No number is going down, coming up or being held.
+	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return IsVoicePromptEditMode;
 	
 	int keyval=menuGetKeypadKeyValueEx(ev, true, false);
-	if (keyval > 9) return false;
+	if (keyval > 9) return IsVoicePromptEditMode;
 	
-	int customPromptNumber=keyval==0 ? 10: keyval;
 	if (KEYCHECK_LONGDOWN_NUMBER(ev->keys))
 	{
-		SaveCustomVoicePrompt(customPromptNumber, phrase);
-		keyboardReset();
+		// a digit is being held down, save the appropriate custom voice prompt:
+		// If customVoicePromptIndex is 0, save prompt 10 shortcut,
+		// If it is still reset, set to the current keyval.
+		// Otherwise this is the second digit being held down of a series, combine with the prior value and save.
+		if (customVoicePromptIndex==0 || customVoicePromptIndex==0xff)
+			customVoicePromptIndex=(keyval==0) ? 10 : keyval;
+		else
+			customVoicePromptIndex=(10*customVoicePromptIndex)+keyval;
+		if ((phrase==0) && (menuSystemGetCurrentMenuNumber() ==MENU_CONTACT_DETAILS) && (menuDataGlobal.currentItemIndex ==0 || menuDataGlobal.currentItemIndex==1))
+			phrase=GetCurrentEditBuffer();
+		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
+		customVoicePromptIndex=0xff; // reset.
+		keyboardReset(); // reset the keyboard also.
 	}
 	else if (KEYCHECK_SHORTUP_NUMBER(ev->keys))
-	{
-		voicePromptsInit();
-		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
-		voicePromptsPlay();
-		keyboardReset();
+	{// digit is being released, either set customVoicePromptIndex or combine with prior value as appropriate.
+		if (customVoicePromptIndex==0xff)
+		{// just set it to the current digit.
+			customVoicePromptIndex=keyval;
+			// Announce the digit rather than allowing the default keypad beep 
+			//as this digit will either result in a prompt being spoken, if SK1 is released, 
+			// or be combined with the prior digit if 2nd in a series with SK1 still held down.
+			voicePromptsInit();
+			voicePromptsAppendInteger(customVoicePromptIndex);
+			voicePromptsPlay();
+		}
+		else
+			customVoicePromptIndex=(10*customVoicePromptIndex)+keyval; // combine.
+		if (customVoicePromptIndex > 9)
+		{// play straight away since we can't add any more digits.
+			PlayAndResetCustomVoicePromptIndex();
+		}
 	}
 		
-	return true;
-} 
+	return true; // We've handled the key combination.
+}
+
+void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
+{
+	ucClearBuf();
+	menuDisplayTitle("Edit Audio Clip");
+	
+	char buffer[SCREEN_LINE_BUFFER_SIZE];
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "S %d.%02d - E %d.%02d", start/1000, start%1000, end/1000, end%1000);
+
+	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, buffer, FONT_SIZE_3, TEXT_ALIGN_LEFT, false);
+	
+	ucRender();
+}

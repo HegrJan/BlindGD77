@@ -8,13 +8,74 @@ There are versions of firmware in this archive for the following radio models:
 Radioddity GD77, GD77S, Baofeng DM1801, DM1801A and RD5R.
 If you would like to read the quickstart guide for the AccessibleGD77 firmware, open the docs folder in this archive and locate the file relevant for your radio model:
 "AccessibleGD77 Quick Start Guide.txt" for the Radioddity GD77,
-"AccessibleGD77S Quick Start Guide.txt" for the Radioddity GD77S,
+"AccessibleGD77S Quick Start Guide.txt" for the Radioddity GD77S, the model without a screen or numeric keypad,
 "AccessibleDM1801 Quick Start Guide.txt" for the Baofeng DM1801,
 "AccessibleDM1801A Quick Start Guide.txt" for the Baofeng DM1801A (which has two less keys than the DM1801),
 "AccessibleRD5R Quick Start Guide.txt" for the Baofeng RD5R.
 The docs folder also contains help files produced by Ian Spencer, DJ0HF, which may assist you in getting started with the CPS software, the software used to communicate with your radio from your computer in order to upload firmware, voice prompts and your channel data (known as a CodePlug).
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.txt.
+A key function summary is included in the docs folder called "Key Function Summary.txt"
+
+Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
+22 February 2022
+1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
+2. Increased the number of custom voice prompts to 32 for the GD77, GD77S and RD5R, and 99 for the DM1801 and DM1801A (as the DM1801 radios have 2MB flash). In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
+3. Added new voice prompt/tag edit mode.
+3.1. Enter Edit Mode with SK1+green.
+3.2. In this mode, up/down will adjust the start of the current sound clip by 20 ms (9 AMBE frames), e.g. to remove noise at the start of the clip, press up or to restore what was there, press down. Hold down to adjust by larger increments (60 ms, 27 AMBE frames).
+3.3. in this mode, left/right will adjust the end of the sound clip by 20 ms, (9 AMBE frames), e.g. to remove noise at the end, press left or to restore some, press right. Hold down to adjust the end by larger increments (60 ms, 27 AMBE frames).
+3.4. SK1 will replay the adjusted audio.
+3.5. Normally editing is always performed on the current audio buffer, either the sound just received from a DMR station, or just recorded as a custom voice prompt using SK1+PTT. If however you wish to edit a custom voice prompt after it has already been saved, and the audio buffer already overwritten, you can copy it back to the edit buffer using * from edit mode. To do this, first, cause the custom prompt to be played, then go into Edit Mode with SK1+Green and press * to copy the last custom prompt played back to the buffer. Note there is always an advantage to editing the audio immediatley after it is received or recorded rather than after it has already been saved because the immediate audio buffer is always larger and captures more audio. Once the voice tag has been saved, recalling it later for editing will only allow you to edit what was saved, which will generally be shorter than what was originally captured. The replay/edit buffer is 60 DMR frames, about 3.6 seconds, whereas a saved voice tag or custom voice prompt can only be 1 kb which is about 37 DMR frames, about 2.2 seconds.
+3.6. # will now autotrim silence/ambient room noise from the start and end of the clip. You can still make further manual adjustments to this autotrim but it gets you reasonably close. On the GD77S, use SK2 from PTT Prompt mode.
+3.7. SK2+# will announce the current length of the edited clip.
+3.8. Red will exit edit mode and discard the changes.
+3.9. Green will exit the mode and keep the changes. If the buffer has not yet been saved, i.e. you've just edited new audio which has not yet been saved to a custom voice prompt, you will need to decide where to save the audio clip to, e.g. long hold SK1 plus a number, or see below.
+3.10. SK1+* will now save the current clip to the next available slot rather than you having to explicitly tell it which slot number to save into.
+3.11. Note that while Edit Voice Tag mode is on, no audio from the DMR subsystem will be captured so that you can’t accidentally overwrite what you are currently editing.
+4. New DMR voice tag feature. You can now associate a voice clip with a DMR ID and then have that voice tag played while reviewing your DMR contact list.
+4.1. After the other station has announced their callsign or name, press SK1+hash. The DMR contact details dialog will pop up with their ID already filled in and the last few seconds of DMR associated with that ID. Further capturing of DMR audio is suspended while this dialog is active, to give you time to decide what you wish to do with the audio, and so your continuing QSO won't overwrite what you are about to save. You can fill in the other station's name and, if you need to edit the voice tag, you can turn on the edit mode (see above) and fix the voice tag before exiting this screen. If you wish to edit the voice tag later, after it has already been saved, see 3.5 above, and note the limitations. The voice tag will be associated with this contact so deleting the contact will delete the voice tag. These voice tags are not counted toward your custom voice prompts. Currently you can have 64 DMR ID tags on the GD77 and RD5R and 256 on the DM1801/DM1801A (as the DM1801 radios  have 2MB flash). (Currently DMR voice tags are not supported on the GD77S.)
+4.2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press long hold SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
+5. Added new Phonetic Spell option to Sound Options menu. when on, all alphabetic characters will be spoken with their phonetic rendering.
+6. Added voice prompts for the rest of the symbols which may be input from the 1 key when in alphanumeric input mode.
+7. GD77S changes: 
+7.1. I moved voice params into a new Voice Options menu which behaves like the Options and Keypad menus, i.e. the knob selects the option, SK1 increments the option, SK2 decrements the option, long hold SK1 repeats the option and its value, and long hold SK2 sets the option to its default.
+The options in this menu include:
+volume, 
+rate, 
+phonetic spell, 
+DMR ID announcement, 
+record prompt mode (ptt prompt), 
+Review Prompt (all prompt),
+edit start, and 
+edit end.
+
+In volume and rate modes, the name of the voice is spoken as part of the prompt name.
+
+In the Record prompt mode:
+* ptt will not transmit, it will only encode a voice prompt. (This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77.)
+* SK1 will repeat the recorded prompt. 
+* SK2 will autotrim the recorded prompt. 
+* Long hold SK2 will copy the current prompt to the next available slot (not associated with any text).
+
+In Review mode:
+* SK1 and SK2 will move through the custom prompts and play them. 
+* Long hold SK2 will copy the current prompt back to the edit buffer.
+
+In edit start and edit end modes:
+* SK1/SK2 will adjust either the start or the end of the recorded prompt (according to whether you are in Edit Start or Edit End mode.)
+* long hold SK1 will repeat the edited prompt.
+* Long hold SK2 will undo the edit of the start or end and return it to its original value.
+
+Note there is more room in this menu for other options since only 8 knob positions are taken.
+7.2. Since DMRID announcement used to be in the main Options menu, I replaced that with DTMF volume since DMRID announcement is now in the voice menu.
+7.3. Previously you could use the virtual keypad command *##1 through *##32 to save a custom voice prompt, now you can also use the string *##* or *##*text to save a custom voice prompt to the next available slot, or associate it with text.
+ 7.4. If you have an autodial contact set up on a channel but before you press PTT, you go to the DTMF contacts or virtual keypad and dial something from either, the autodial function is toggled off for that channel/zone combination automatically since you just dialled something.
+7.5. Normally, if there are more than 16 channels in a zone, extra long hold SK2 would switch to the next bank of 16 channels. If however there are 16 or less, this function is irrelevant so it will now perform the same function as long hold sk2, which makes it easier for those with dexterity issues who do not have more than 16 channels in a zone but do use the autodial toggle.
+8. There are times when you need to rapidly switch to the highest power level. You can now switch to the lowest or highest power without waiting by using SK2+long hold left/right. At 5 watts, long hold SK2+right will still switch to the user power level. Previously you'd have to hold down SK2+left/right and wait for each level to be announced.
+9. All radios will now properly announce the word channel. It was announced correctly in the channel summary but the word would always be spelled if the word appeared in an actual channel name (which is the default when using the CPS if you don't explicitly name a channel).
+10. Radio Information screen now also speaks battery percentage (as apparently it is displayed). This was a contribution from a first time contributor, thanks Arron, N9LID.
+11. Added Key Function Summary text file to docs folder.
 
 22 January 2022 Release
 Warning! This update requires a new voice prompt file. Please update your voice prompt file from this archive.
@@ -26,17 +87,17 @@ Warning! This update requires a new voice prompt file. Please update your voice 
 6. Any unrecognized character for which we do not have a voice prompt, we will now say code and the ascii value of the character, this is better than saying nothing.
 7. Added support to speak the name of the voice pack being used, as part of the voice level announcement in the sound options menu, or, as part of announcing voice parameters on the GD77S. The voice name of the voice pack is now always encoded as the very last voice prompt as part of the build process. Please update your voice prompts or this won't work!!!
 8. Added Busy Channel Lockout (BCL) feature to Options menu. When on, you will get an error tone if you try and transmit when there is a signal on the current frequency. This should help with doubling for those hams who don't follow the rules.
-9. Added new feature to replay the last several seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio on radios with a keypad, or, on the GD77s, use long hold SK2 on a DMR channel when not receiving a signal. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note, SK2+SK1 both held down still activates the reverse repeater function, however there is no conflict because this is only used while receiving a signal, whereas replay is used when not currently receiving a signal).
+9. Added new feature to replay the last several seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 and press and release SK1 to replay the DMR audio on radios with a keypad, or, on the GD77s, use long hold SK2 on a DMR channel when not receiving a signal. This feature uses a circular buffer so it always remembers the last approximately 3.6 seconds of audio regardless of whether it is from a received station or your own last transmission. (Note, SK2+SK1 both held down still activates the reverse repeater function, however there is no conflict because this is only used while receiving a signal, whereas replay is used when not currently receiving a signal).
 10. You can now create up to 10 custom voice prompts to be spoken as part of, or in place of, contact or channel names. You can associate these prompts with either a word, phrase, or a special embed string ##digits).
-10.1. SK1+PTT allows you to record a prompt (up to about 4 seconds).
+10.1. SK1+PTT allows you to record a prompt (up to about 2 seconds).
 10.2. SK2+SK1 will repeat the prompt for verification. (On GD77S, use long hold SK2 from Voice mode).
 10.3. Save the prompt to custom prompt 1 through 10 using long hold SK1+keypad number 1 for 1, 0 for 10. To hear what is already saved for a given custom prompt, short press SK1+number. On the GD77s, from the virtual keypad mode, use the command *## followed by the digits, e.g. *##1 followed by long hold orange to save custom prompt 1.
-10.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S see point 11 and 12 below.
+10.4. Edit a channel or contact name and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name. On the GD77S see point 12 below.
 10.5. If you wish to associate the prompt with a given string, rather than embedding a ##1 through ##10, do the following at the point when you are about to save the prompt:
 10.5.1. Ensure you have already recorded the voice prompt first (from the channel or VFO screen) as PTT cancels other screens. Verify it is correct with SK2+SK1.
 10.5.2. Go to any edit field, e.g. channel details name field.
 10.5.3. Enter the exact text you wish to map to the custom prompt. It can be a word or phrase. Given that the prompt will be associated anywhere this occurs, be careful.
-10.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also still work.
+10.5.4. While that edit has focus, save the custom prompt with long hold SK1+the number. Now, wherever that string appears in the UI, be it in a channel name, contact name, even credits or any other screen, the custom prompt will be spoken in place of that string. Note that the embedding of ##digit will also work.
 Note that if you replace a custom prompt by rerecording it and attempting to save it from the Channel or VFO screens, if it was associated with a string, the string association will remain unless you actually delete the prompt. This makes it easy to associate a string with a prompt and then improve the prompt by rerecording and resaving it if it doesn't quite sound right.
 10.5.5. To associate a custom voice prompt to a string on a GD77S, use the command *##1hello for example to associate custom prompt 1 with the string hello. See 12 below.
 10.6. Note the prompt will follow the voice rate of the rest of the prompts.
@@ -51,7 +112,7 @@ I've only included symbols for which there are voice prompts since otherwise it 
 12.2. Added ability to edit a channel name on the GD77S. From the Keypad mode, enter the command e1hello to name channel 1 in the current zone hello. i.e. e  followed by channel number followed by name followed by long hold Orange button.
 12.3.	Extra long hold sk2 will now allow you to cycle channel banks in non-autozones, so its on extra long hold sk2 and not long hold sk2 for all zones. I had to do it like that otherwise if it was on long hold, by the time you got to the extra long hold you would have already inadvertently changed channel banks. This means you can have more than 16 channels per zone on the gd77S. When power cycling the radio, you’ll also now return to the correct channel bank, and if the dial hasn't been changed, to the same channel. If the dial was changed, you'll go to the appropriate channel in that same bank.
 12.4.	Long hold sk2 will now only toggle auto dialller if there is an associated auto dial dtmf contact for the current analog channel, if I didn’t do this, while waiting for the extra long hold, you’d hear the auto contact toggle msg even when irrelevant. For those who use this, it will toggle on its way to extra long hold but there’s not much I can do about that to keep everyone happy.
-12.5. Long hold sk2 on a dmr channel still replays dmr last 5 seconds. If you want to cycle to the next channel bank, you’ll start to hear the replay but as soon as you hold down extra long, the channel bank will be cycled and the replay cancelled.
+12.5. Long hold sk2 on a dmr channel still replays dmr last 3.6 seconds. If you want to cycle to the next channel bank, you’ll start to hear the replay but as soon as you hold down extra long, the channel bank will be cycled and the replay cancelled.
 13. Fixed a bug in VFO scan mode on radios with a keypad where frequency and scan range would be errantly announced each time the scan resumed.
 14. Added DTMF Volume option to the Sound Options menu. You can now set the volume of the DTMF tones to off, or from 1 lowest to 10 highest. The default is 10 so users won't notice a difference.
 15. Because echo from the surrounding environment can cause issues with manual DTMF dialling, I've now disabled the mic between tones when the DTMF latch is enabled. The mic won't be re-enabled until the latch times out. The mic was already being disabled between tones when autodialling a contact.

@@ -1,0 +1,153 @@
+AccessibleGD77 Key Function Chart
+by Joseph Stephen VK7JS
+21 February 2022
+To contact Joseph Stephen, email vk7js@faithfulgenerations.com
+
+Please note. Turn on word wrap to read this document in a text editor.
+This Guide assumes you are running the forked version of OpenGD77 produced by Joseph Stephen VK7JS and Jan Hegr OK1TE now called AccessibleGD77.
+Please consult the quick start guides for more detailed information about the operation of this firmware.
+This ddocument is a quick key function summary.
+
+SK1 is the top small button (below PTT) on the left edge of the radio and SK2 is the small button beneath it.
+The orange button is the small button on the top of the radio near the antenna.
+Green is the top left button on the keypad.
+Red is the top right button on the keypad.
+Between Green and Red is Up.
+Below are Left, Down and Right respectively.
+
+The numeric pad is set out as follows:
+1 2 3 *
+4 5 6 0
+7 8 9 #
+
+The RD5R and DM1801/DM1801A have slightly different layouts so please refer to their quick start guides for their slight differences.
+
+Typically keys have several functions:
+A quick press, a long press, an extra long press and held with either SK1 or SK2.
+
+Channel Screen:
+Green: Main menu.
+Red: Toggle between Channel Mode and VFO Mode, or, cancel function.
+Long hold Red: Switch between priority channel and current channel.
+Up/Down: change channels.
+Left/Right: Adjust squelch. (If in reorder channel mode, moves current channel lower or higher in the list, and if held down, swaps with first or last in zone).
+Orange: Channel Screen Quick Menu. (From this menu you can copy channel to VFO, reorder, delete, adjust filters, etc).
+Long hold Up: Start channel scan. (Cancel scan with long hold Down or Red. When scanning, Right adds channel to nuisance list just for that scan. Red cancels scan and returns to starting channel, Green cancels scan at current channel being scanned. Up/Down switches scan direction).
+
+Numbers: Direct channel number input (complete entry with Green if insufficient digits).
+PTT+digits* or #: dial DTMF code (analog FM only.) There is a DTMF latch function so you don't need to hold down PTT after the first digit has been dialed.
+
+SK1 Everything to do with voice prompts.
+SK1: Repeat last voice prompt, or cancel voice prompt in progress.
+Long hold SK1: Speak channel summary.
+SK1+PTT: Record a custom voice prompt to associate with text.
+SK1+*: Save last recorded audio to next available slot.
+SK1+digits: Play custom prompt in the numeric slot (1 to 32).
+Long hold SK1+digits: save last recorded audio to a custom prompt slot (1 to 32, only long hold last digit).
+SK1+Green: Edit last recorded audio (from DMR or custom voice prompt recording).
+SK1+#: after receiving DMR, bring up contact details and associate last few seconds of DMR audio with the contact.
+
+SK2 is usually used as a function (or shift) key. Remember, you can turn on SK2 latch from the Options Menu so you don't have to hold two keys at the same time. 
+SK2: During DMR audio from a different talkgroup, switch TX to the talk group just received (a double beep indicates you're not on the same talk group).
+SK2+SK1: Replay last few seconds of DMR reception, or the last recorded custom voice prompt.
+SK2+SK1: (During reception), reverse RX and TX frequencies until you release the buttons.
+Extra long Hold SK2: monitor mode (temporarily open squelch) until you release SK2.
+SK2+PTT: emit 1750 tone burst (needed for certain kinds of analog repeaters).
+SK2+Green: Go to Channel Details screen. Remember, to make any changes permanent on the channel details screen, you must exit with SK2+Green, not just Green by itself!
+SK2+Up/Down: Cycle through zones. (Remember to include auto zones in this cycle, enable them from the Options Menu.)
+SK2+Left/Right: Cycle through power settings.
+SK2+long hold Left/Right jump to lowest or highest power setting immediately.
+SK2+Long hold right when set to 5 watts will choose Custom power level (0 to 4100, see Options Menu).
+SK2+orange: Read battery status.
+
+*: Toggle bandwidth between 25 and 12.5 KHz in FM mode or Time slot 1 or 2 in DMR mode.
+SK2+*: Switch between FM and DMR mode.
+Long hold *: Set default bandwidth (FM) or timeslot (DMR) for the current channel (after you've changed it and forgotten what the channel was originally set to).
+
+#: IN FM mode: cycle between simplex and duplex (plus or minus offset, if the VHF/UHF repeater offsets are set in Options Menu). In DMR mode:  Cycle between Talkgroup entry, Private call entry and contacts list.
+SK2+#: DTMF or DMR contact quick list (depending on whether the channel is analog or DMR). From this list, Green will dial/call the selected contact. This is a cut down version of the full contacts function available from the Main Menu, where Green brings up a submenu for editing, deleting and creating new contacts.
+SK2+digit from a menu option saves that menu option in that quick key function location. (0 through 9).
+SK2+digit (0 through 9): From Channel or VFO screen, access a quick key function (previously set with SK2 and the same number on a menu option or contact.) Note that after you press SK2+the digit, you need to hit Green to activate the function.
+Long hold SK2+digit: Clear quick key function stored for that number. Note you can't store a new quick key for the same number without first clearing it.
+
+Menus:
+Enter menu system with Green.
+Exit one level with Red.
+Long hold Red will return immediately to channel or VFO screens.
+Green enters a submenu or selects the current item.
+Up/Down chooses a menu item.
+Left/Right selects values for a menu item.
+SK1: Repeats current menu item and its value.
+SK2+digit: Save current menu item to a quick key function 0 to 9.
+*: From main menu locks keypad.
+#: From main menu locks PTT.
+SK2+*: Unlock keypad or PTT from Channel or VFO screens.
+
+VFO Screen:
+Mostly the same as channel screen but with the following exceptions:
+
+Long hold Red: Toggle between VFO A and VFO B.
+Numbers used for direct frequency entry if not in scan mode (see below).
+Green completes a frequency entry if insufficient digits.
+SK2+Up/Down changes between RX and TX frequency entry fields.
+
+Long hold Up does not start a scan but enters scan mode where you then can enter the start and end frequencies. 
+A second long hold of Up will start the scan. Note that cancelling the scan with Red does not exit scan, it merely stops it. To exit Scan mode and return the keypad to normal frequency input, you must press long hold Down.
+  To enter a scan range, enter 7 digits of the first frequency and 7 for the second. Complete withGreen if insufficient digits. 
+
+Any Edit Field (e.g. Channel Details screen)
+When editing most fields, the following keys/functions are available:
+a. Arrowing left and right in the field will move to and speak the character;
+b. SK2+Left will backspace and speak the backspaced character;
+c. SK2+Right toggles between numeric and alphanumeric text entry in fields which may accept both numbers and letters. This means that when you are editing a DTMF contact, and you start off in numeric mode, where the majority of your entry is numbers, but then you wish to add a letter, you can press SK2+Right to switch to the keypad preview mode for entering alphanumerics. This works like the normal telephone alphanumeric keypad where multiple presses of a key cycles between letters and number and then after a delay inserts the last anounced character into the field. You can then toggle back to numeric mode using the same key combination, SK2+Right. This works in DTMF fields and normal alphanumeric fields. It does not work in purely numeric fields by design.
+Note that when a field gains focus, it always starts off in the most appropriate mode. E.g. the DTMF code field always starts off in DTMF mode where numbers, * and # insert their number or symbol. Name fields always start off in alphanumeric mode where multiple presses of the keys cycle between letters and numbers. Frequency and DMR ID fields are always in numeric mode, where only numbers are valid and you can't toggle the input mode.
+d. Long hold Left, home (speak first character in field);
+e. SK2+Long hold Left delete to start of field;
+f. Long hold Right, end (moves to last character and speaks it if it is not blank);
+g. SK2+Long hold Right delete to end of field;
+h. Proper character insertion until the field is full at which point characters will be overwritten;
+i. Proper alphanumeric preview and speaking for alphanumeric fields;
+j. Simple digit input for numeric fields;
+k. Simple DTMF support for DTMF fields;
+l. SK1 will repeat the content of the edit field. 
+
+Voice Prompt Edit Mode (SK1+Green):
+SK1: replay.
+Up/Down: Adjust start of clip by 20 ms.
+Long hold Up/Down: Adjust start by 60 ms.
+Left/Right: Adjust end by 20 ms.
+Long hold Left/Right: Adjust end by 60 ms.
+#: Autotrim audio (note you can adjust manually if results are inadequate).
+SK2+#: Announce length of audio.
+*: Copy last voice prompt spoken to edit buffer (overwriting what is in the edit buffer).
+SK1+digits: Play custom prompt for that slot number.
+SK1+digits with long hold of last digit: Save what is in edit buffer to custom voice prompt slot.
+SK1+*: Save edit buffer to next available custom voice prompt slot.
+Remember, to associate a custom voice prompt with text, save the prompt while the edit containing the text you wish to associate with the prompt has focus.
+Red: Cancel and exit edit mode.
+Green: Save the edit. Note that it will be saved only if you copied it using * from an existing custom voice prompt, or if you entered the edit mode from the DMR voice tag screen in which case it will be saved back to the DMR contact to which it was associated. Other than that, you will need to save the audio using SK1+long hold digits or SK1+* since if it is a new audio clip, the radio won't know where to save it.
+
+Last Heard Screen:
+Green: Invoke menu to select last heard private call or switch to last heard talk group.
+
+Contact List (DTMF/DMR) (From main menu):
+Green: Invoke menu to select, edit, delete or create new contacts
+#: From DMR contact list, cycle between group call, private call and all call contacts.
+ 
+Power-on shortcuts:
+SK2+Power On: Reset all settings to factory default (will not reset your codeplug).
+#+Power On: If voice prompts were off, turn them on and set to level 3 (If they were already on, do not change them).
+
+
+CPS Software:
+Ctrl+F4 closes screens (rather than Alt+F4).
+
+Channel Grid:
+Ctrl+i: Insert a new channel.
+Ctrl+del: Delete a channel.
+Shift+up/down: Select a channel.
+Ctrl+a: Select all, required for export to CSV).
+ 
+Zone List and Talkgroup List screens (when focused on the Name edit field of the zone or tg list)
+Ctrl+i - will create a new zone or tg list and move focus to that zone
+Ctrl+ left or right arrow will move to the previous or next zone or tg 

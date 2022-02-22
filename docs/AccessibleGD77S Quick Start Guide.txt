@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-22 January 2022
+9 February 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -62,7 +62,7 @@ Currently, the orange button will cycle you through the following options:
 * Timeslot mode: (Digital channels only), SK1 and SK2 choose between timeslot 1 and timeslot 2.
 * Color code mode: (Digital channels only), SK1 and SK2 choose color codes.
 * Vox mode: SK1 and SK2 enable or disable the mode. To set the vox parameters, see the Options menu below.
-* Voice mode: SK1 chooses relative volume, SK2 chooses voice rate. These values wrap around. The volume can be set from 10 to 100%, the rate from the default rate of the voice pack to twice the rate in increments of 10%. This is one mode where SK1 and SK2 do not choose next and prior values for a single option. This was done so that we did not have to have two separate voice modes.
+* Voice mode: See below.
 * Options Mode: See below.
 
 If you wish to hear a summary of the current channel, press and hold SK1 for more than half a second.
@@ -120,7 +120,7 @@ When you go back to keypad mode, as usual, whatever was last active is still act
 If you wish to make the VFO settings more permanent, you can then save these settings to channel 1 through 16 in the current zone using the command a1 through a16 followed by long hold orange. All of the VFO settings are saved to the specified channel in the current zone. The overwritten channel will have its number as its name. e.g. channel 1, channel 16, etc. Of course you cannot save to an AutoZone channel.
 2.11. If you just want to copy a channel to the VFO without issuing any command to change the current channel's settings, after locating the channel you wish to copy, activate Keypad mode, then immediately press long hold orange with an empty keypad buffer. The current channel will be copied to the VFO. If you previously visited keypad mode, remember to clear the keypad buffer with long hold sk2 prior to pressing long hold orange.
 2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
-2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). 
+2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). You can also use *##* or *##*text to save to the next available slot.
 2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
@@ -134,8 +134,9 @@ This Mode contains the following options:
 * FM Beep,
 * DMR Beep,
 * Band Limits,
+* DTMF Volume,
+* Band Limits,
 * VHF master Squelch,
-* 220 MHz master Squelch,
 * UHF master Squelch,
 * TOT master (needed for PTT latch),
 * PTT Latch,
@@ -147,6 +148,28 @@ This Mode contains the following options:
 
 PTT Latch support has been added to the GD77S. Enable TOT (timeout timer) and PTT Latch from the Options mode. Note that PTT Latch will not work without a Timeout defined. This is by design. Also, when PTT Latch is enabled, like on the GD77, beeps are automatically enabled when you press and release PTT so you know when transmission has started and stopped.
 
+Voice Options Mode:
+Similar to the Options mode, a new Voice Options mode has been added to the radio, i.e. the knob selects the option, SK1 increments the option, SK2 decrements the option, long hold SK1 repeats the option and its value, and long hold SK2 sets the option to its default.
+The options in this menu include:
+volume (10 to 100), 
+rate (1 to 10), 
+phonetic spell (on/off), 
+DMR ID announcement (on/off), 
+record prompt mode (PTT Prompt), (see below), 
+Review Prompt (All Prompt) (see below),
+edit start, and 
+edit end (see below).
+In volume and rate modes, the name of the voice is spoken as part of the prompt name.
+
+In the Record prompt mode, ptt will not transmit, it will only encode a voice prompt. This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77. 
+SK1 will repeat the recorded prompt. 
+SK2 will autotrim silence or ambient noise from the start and end of the clip.
+Long hold SK2 will save the current prompt to the next available slot (not associated with any text).
+
+In Review Prompt mode, SK1 and SK2 will select and play the next/prior saved prompts. Long hold SK2 will copy the current prompt back to the edit buffer for further editing.
+
+In edit start and edit end modes, SK1/SK2 will adjust either the start or the end (as appropriate) and long hold SK1 will repeat the edited prompt. Long hold SK2 will undo the edit of the start or end and return it to its original value.
+ 
 AutoZones feature.
 An AutoZone is a pseudo zone created on the fly based on channelized frequencies calculated via a formula with heuristics applied. I.e. these zones do not take up any memory for the channel data.
 1. Cycle to the Options menu with the Orange button.
@@ -186,12 +209,12 @@ You'll then need to reset all of your favorite options.
 Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
 This does not affect your codeplug.
 
-Auto Contact.
+Auto Dial Contact.
 Associating a DTMF contact with a channel (auto dial contact):
 You can associate a DTMF contact with a channel such that the first time you press PTT on that channel during a session, the associated DTMF string will be dialled. It will not be dialled again until you reboot the radio or reset it with long hold SK2.
 TO do this, add a contact to the contacts list and give it the following name format:
 ADXXYY where AD means auto dial, XX is the 1-based  zone number and YY is the 1-based channel number, (padding with leading 0s so each is two digits.) The letters "AD" must be in uppercase if entered from the CPS software's contact list. SO, if you wish to dial a contact on channel 1 in zone 1, call the contact AD0101. If you wish to dial a contact on channel 1 in any zone, use 00 for the zone number, e.g. AD0001.
-To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact.
+To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact. Also, if you go to a channel with an auto dial contact and you decide you don't want to auto dial it, if you either go to virtual keypad or the DTMF dialer and dial something from either, the auto dial is toggled off since you've dialled something else. You can of course toggle it on again with long hold SK2. 
 You can now add contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
 To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command *#AD0102 followed by long hold orange. 
 
@@ -204,10 +227,10 @@ You can now replay the last 5 seconds of DMR audio. This works for both TX and R
 * on any channel, from Voice Mode only, replay last recorded voice prompt (see below).
 
 Custom Voice Prompts
-You can create up to 10 custom voice prompts to be spoken for contact or channel names.
+You can create up to 32 custom voice prompts to be spoken for contact or channel names.
 1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
 2. Long hold SK2 from Voice Mode only will repeat the prompt for verification. (Press orange key until you hear voice, then use long hold SK2).
-3. Save the prompt to custom prompt 1 through 10 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
+3. Save the prompt to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
 4. Edit a channel or contact name using the virtual keypad mode or CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
 5. If you wish to associate a custom voice prompt to a string, use the command *##1hello for example to associate custom voice prompt 1 with the text "hello."
 6. To delete a custom prompt, save an empty prompt to the prompt position, e.g. press and release SK1+ptt, then issue the virtual keypad command *##digits followed by long hold orange. 

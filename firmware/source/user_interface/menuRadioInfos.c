@@ -524,6 +524,8 @@ static void updateVoicePrompts(bool spellIt, bool firstRun)
 				int volts, mvolts;
 
 				voicePromptsAppendLanguageString(&currentLanguage->battery);
+				voicePromptsAppendInteger(getBatteryPercentage());
+				voicePromptsAppendPrompt(PROMPT_PERCENT);
 				getBatteryVoltage(&volts,  &mvolts);
 				snprintf(buffer, 17, " %1d.%1d", volts, mvolts);
 				voicePromptsAppendString(buffer);

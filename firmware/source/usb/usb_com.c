@@ -213,7 +213,7 @@ static void cpsHandleWriteCommand(void)
 #if !defined(PLATFORM_GD77S)
 				// Temporary hack to automatically set Prompt to Level 1
 				// A better solution will be added to the CPS and firmware at a later date.
-				if (address == VOICE_PROMPTS_FLASH_HEADER_ADDRESS || address == VOICE_PROMPTS_FLASH_OLD_HEADER_ADDRESS)
+				if (address == VOICE_PROMPTS_FLASH_HEADER_ADDRESS)
 				{
 					if (voicePromptsCheckMagicAndVersion((uint32_t *)&com_requestbuffer[8]))
 					{

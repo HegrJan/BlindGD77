@@ -154,4 +154,4 @@ bool 					dtmfPTTLatch;
 bool sk2Latch =false;
 uint16_t sk2LatchTimeout=0;
 #endif // !defined(PLATFORM_GD77S)
-
+bool encodingCustomVoicePrompt=false;
