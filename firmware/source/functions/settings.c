@@ -262,9 +262,9 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.userPower = 4100U;// Max DAC value is 4095. 4100 is a hack to make the numbers more palatable.
 	nonVolatileSettings.bitfieldOptions =
 #if defined(PLATFORM_GD77S)
-			0U;
+			BIT_INDICATE_DMR_RXTXTG_MISMATCH;
 #else
-			BIT_SETTINGS_UPDATED; // we need to keep track if the user has been notified about settings update.
+			BIT_SETTINGS_UPDATED|BIT_INDICATE_DMR_RXTXTG_MISMATCH; // we need to keep track if the user has been notified about settings update.
 #endif
 	nonVolatileSettings.overrideTG = 0U;// 0 = No override
 	nonVolatileSettings.txTimeoutBeepX5Secs = 2U;
@@ -287,7 +287,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.analogFilterLevel = ANALOG_FILTER_CSS;
 	trxSetAnalogFilterLevel(nonVolatileSettings.analogFilterLevel);
 	nonVolatileSettings.languageIndex = 0U;
-	nonVolatileSettings.scanDelay = 5U;// 5 seconds
+	nonVolatileSettings.scanDelay = 10U;// 10 seconds
 	nonVolatileSettings.scanStepTime = 0;// 30ms
 	nonVolatileSettings.scanModePause = SCAN_MODE_HOLD;
 	nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]		= 10U;// 1 - 21 = 0 - 100% , same as from the CPS variable squelch

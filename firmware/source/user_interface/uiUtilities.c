@@ -1469,7 +1469,7 @@ void uiUtilityRenderQSOData(void)
 			uiUtilityDisplayInformation(LinkHead->talkgroup, different ? DISPLAY_INFO_CONTACT_INVERTED : DISPLAY_INFO_CONTACT, -1);
 
 			// If voice prompt feedback is enabled. Play a short beep to indicate the inverse video display showing the TG / TS / CC does not match the current Tx config
-			if (different && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+			if (different && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && settingsIsOptionBitSet(BIT_INDICATE_DMR_RXTXTG_MISMATCH))
 			{
 				soundSetMelody(MELODY_RX_TGTSCC_WARNING_BEEP);
 			}

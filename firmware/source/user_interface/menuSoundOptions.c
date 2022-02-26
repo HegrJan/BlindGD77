@@ -36,7 +36,7 @@ static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
-enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DTMF_VOL, OPTIONS_MENU_DMR_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
+enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DTMF_VOL, OPTIONS_MENU_DMR_BEEP, OPTIONS_DMR_RXTX_MISMATCH_TX_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
 	OPTIONS_AUDIO_PROMPT_VOL_PERCENT,
 	OPTIONS_AUDIO_PROMPT_RATE,
@@ -252,7 +252,14 @@ static void updateScreen(bool isFirstRun)
 					else
 						rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_PHONETIC_SPELL) ? &currentLanguage->on : &currentLanguage->off);
 					break;
-			}
+				case OPTIONS_DMR_RXTX_MISMATCH_TX_BEEP:
+					snprintf(leftSideVar, SCREEN_LINE_BUFFER_SIZE, "DMR TG %s", currentLanguage->beep);
+					if(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+						rightSideConst = (char * const *)&currentLanguage->n_a;
+					else
+						rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_INDICATE_DMR_RXTXTG_MISMATCH) ? &currentLanguage->on : &currentLanguage->off);
+					break;
+				}
 
 			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSide? *leftSide:"", (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 
@@ -271,6 +278,13 @@ static void updateScreen(bool isFirstRun)
 					{
 						// hack for FM Beep.
 						voicePromptsAppendPrompt(PROMPT_FM);
+						voicePromptsAppendLanguageString(&currentLanguage->beep);
+					}
+					else if (mNum==OPTIONS_DMR_RXTX_MISMATCH_TX_BEEP)
+					{
+						// similar hack
+						voicePromptsAppendPrompt(PROMPT_DMR);
+						voicePromptsAppendPrompt(PROMPT_TALKGROUP);
 						voicePromptsAppendLanguageString(&currentLanguage->beep);
 					}
 					else
@@ -543,6 +557,12 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_DMR_RXTX_MISMATCH_TX_BEEP:
+				{
+					if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && !(nonVolatileSettings.bitfieldOptions&BIT_INDICATE_DMR_RXTXTG_MISMATCH))
+						settingsSetOptionBit(BIT_INDICATE_DMR_RXTXTG_MISMATCH, true);
+					break;
+				}
 			}
 		}
 		else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT) || (QUICKKEY_FUNCTIONID(ev->function) == FUNC_LEFT))
@@ -676,6 +696,12 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_DMR_RXTX_MISMATCH_TX_BEEP:
+				{
+					if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && (nonVolatileSettings.bitfieldOptions&BIT_INDICATE_DMR_RXTXTG_MISMATCH))
+						settingsSetOptionBit(BIT_INDICATE_DMR_RXTXTG_MISMATCH, false);
+					break;
+				}
 			}
 		}
 		else if ((ev->keys.event & KEY_MOD_PRESS) && (menuDataGlobal.menuOptionsTimeout > 0))
