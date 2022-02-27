@@ -71,7 +71,7 @@ static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
 		dtmfPTTLatchTimeout=CTCSSDCS_TAIL;
 		// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
 		// If using DCS, however, send a 136.5 tone instead.
-		trxSetTxCSS(isDCS ? 1365 : 0xffff); 
+		trxSetTxCSS(isDCS ? 1365 : 0xffff); 		
 		return true;
 	}
 	return false;
