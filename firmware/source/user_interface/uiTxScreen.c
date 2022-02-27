@@ -52,7 +52,9 @@ typedef enum
 // We use this both for the DTMF latch as well as the CTCSS/DCS tail latch to eliminate squelch tail.
 static dtmfLatchState_t dtmfLatchState=dtmfNotLatched;
 static bool inCTCSSDCSSquelchTail=false;
+
 #define CTCSSDCS_TAIL 250
+
 static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
 {//joe
 	if (trxGetMode() != RADIO_MODE_ANALOG) return false;
@@ -61,12 +63,15 @@ static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
 	if (ev->buttons &BUTTON_PTT) return false;
 	if (!inCTCSSDCSSquelchTail)
 	{
+		bool isDCS = (codeplugGetCSSType(currentChannelData->txTone)& CSS_TYPE_DCS) ? true : false;
+
 		PTTToggledDown = true;
 		inCTCSSDCSSquelchTail=true;
 		dtmfLatchState=dtmfPTTLatched;
 		dtmfPTTLatchTimeout=CTCSSDCS_TAIL;
 		// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
-		trxSetTxCSS(0xffff); 
+		// If using DCS, however, send a 136.5 tone instead.
+		trxSetTxCSS(isDCS ? 1365 : 0xffff); 
 		return true;
 	}
 	return false;
