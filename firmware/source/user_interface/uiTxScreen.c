@@ -49,8 +49,28 @@ typedef enum
 	dtmfTransmittingCode,
 	dtmfPTTLatched
 } dtmfLatchState_t;
-
+// We use this both for the DTMF latch as well as the CTCSS/DCS tail latch to eliminate squelch tail.
 static dtmfLatchState_t dtmfLatchState=dtmfNotLatched;
+static bool inCTCSSDCSSquelchTail=false;
+#define CTCSSDCS_TAIL 250
+static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
+{//joe
+	if (trxGetMode() != RADIO_MODE_ANALOG) return false;
+	if (currentChannelData->txTone == 0xffff) return false;
+	if (!trxTransmissionEnabled) return false;
+	if (ev->buttons &BUTTON_PTT) return false;
+	if (!inCTCSSDCSSquelchTail)
+	{
+		PTTToggledDown = true;
+		inCTCSSDCSSquelchTail=true;
+		dtmfLatchState=dtmfPTTLatched;
+		dtmfPTTLatchTimeout=CTCSSDCS_TAIL;
+		// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
+		trxSetTxCSS(0xffff); 
+		return true;
+	}
+	return false;
+}
 
 static void updateScreen(void);
 static void handleEvent(uiEvent_t *ev);
@@ -108,7 +128,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		keepScreenShownOnError = false;
 		timeInSeconds = 0;
 		pttWasReleased = false;
-
+		inCTCSSDCSSquelchTail=false;
 		if (trxGetMode() == RADIO_MODE_DIGITAL)
 		{
 			clockManagerSetRunMode(kAPP_PowerModeHsrun);
@@ -268,6 +288,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				}
 #endif
 			}
+			HandleCTCSSDCSSquelchTailAtEndOfTX(ev);
 			//DTMF latch
 			if (dtmfLatchState==dtmfPTTLatched)
 			{
@@ -276,6 +297,8 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				else
 				{
 					dtmfLatchState=dtmfNotLatched;
+					if (inCTCSSDCSSquelchTail)
+						inCTCSSDCSSquelchTail=false;
 					trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
 
 					handleTxTermination(ev, TXSTOP_DTMF_KEYING_TIMEOUT);
@@ -323,7 +346,6 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		}
 		//
 
-//joe
 		// Got an event, or
 		if (ev->hasEvent || // PTT released, Timeout triggered,
 				( (((ev->buttons & BUTTON_PTT) == 0) || ((timeout != 0) && (timeInSeconds == 0))) ||
