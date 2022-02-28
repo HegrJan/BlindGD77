@@ -71,7 +71,8 @@ typedef enum
 	BIT_ANNOUNCE_LASTHEARD = (1 << 9),
 	BIT_BCL = (1 <<10),
 	BIT_PHONETIC_SPELL = (1 << 11),
-	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12)
+	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12),
+	BIT_INDICATE_RX_ENDING = (1 << 13)
 } bitfieldOptions_t;
 
 typedef struct

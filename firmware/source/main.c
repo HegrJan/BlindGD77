@@ -61,6 +61,20 @@ static bool lowBatteryReached = false;
 #define LOW_BATTERY_VOLTAGE_RECOVERY_TIME          10000 // 10 seconds
 static bool updateMessageOnScreen = false;
 static bool hasSignal=false;
+static bool priorLEDGreen=false;
+
+static void HandleRXEnding()
+{
+	if (nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) return;
+	if (settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING)==false) return;
+	// Check end of rx.
+	bool LEDGreen= LEDs_PinRead(GPIO_LEDgreen, Pin_LEDgreen);
+	bool rxEnding=!LEDGreen && priorLEDGreen;
+	priorLEDGreen=LEDGreen;
+	if (!rxEnding) return;
+//nextKeyBeepMelody
+	soundSetMelody(melody_rx_stop_beep);
+}
 
 void mainTaskInit(void)
 {
@@ -904,13 +918,13 @@ void mainTask(void *data)
 						}
 					}
 				}
-				#if ! defined(PLATFORM_GD77S)
 				else
 				{
+#if ! defined(PLATFORM_GD77S)
 					// If SK1 is held down with PTT, record a voice prompt.
 					encodingCustomVoicePrompt=false;
-				}
 #endif // ! defined(PLATFORM_GD77S)
+				}
 
 #if (! defined(PLATFORM_GD77S)) && (! defined(PLATFORM_RD5R))
 				if ((buttons & (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN)) == (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN))
@@ -1246,10 +1260,12 @@ void mainTask(void *data)
 				}
 			}
 			voicePromptsTick();
+			HandleRXEnding();
 			soundTickMelody();
 			voxTick();
 			RequeueEditBufferForAnnouncementOnSK1IfNeeded();
 			AnnounceLastHeardContactIfNeeded();
+
 #if defined(PLATFORM_RD5R) // Needed for platforms which can't control the poweroff
 			settingsSaveIfNeeded(false);
 #endif
