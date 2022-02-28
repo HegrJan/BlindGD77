@@ -3423,6 +3423,32 @@ void dtmfSequenceStop(void)
 	uiDataGlobal.DTMFContactList.poLen = 0U;
 }
 
+static uint16_t dtmfCTCSSDCSSquelchTail=0;
+#ifndef CTCSSDCS_TAIL
+#define CTCSSDCS_TAIL 250
+#endif
+
+static bool HandleDTMFCTCSSDCSSquelchTail()
+{
+	if (currentChannelData->txTone == 0xffff) return false;
+
+	if (dtmfCTCSSDCSSquelchTail)
+	{
+		dtmfCTCSSDCSSquelchTail--;
+		if (dtmfCTCSSDCSSquelchTail==0)
+			return false; // so the dtmf tx will be reset.
+		return true;
+	}
+	
+	bool isDCS = (codeplugGetCSSType(currentChannelData->txTone)& CSS_TYPE_DCS) ? true : false;
+
+	dtmfCTCSSDCSSquelchTail = CTCSSDCS_TAIL;
+	// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
+	// If using DCS, however, send a 136.5 tone instead.
+	trxSetTxCSS(isDCS ? 1365 : 0xffff); 		
+	return true;
+}
+
 void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 {
 	if (uiDataGlobal.DTMFContactList.isKeying)
@@ -3446,6 +3472,9 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 		// DTMF has been TXed, restore DIGITAL/ANALOG
 		if (uiDataGlobal.DTMFContactList.poLen == 0U)
 		{
+			if (HandleDTMFCTCSSDCSSquelchTail())
+				return;
+			
 			trxDisableTransmission();
 
 			if (trxTransmissionEnabled)
