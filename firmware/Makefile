@@ -91,12 +91,12 @@ DRIVERS_SRC := $(wildcard ../drivers/*.c)              \
 ##
 ## List here additional static libraries with relative path
 ##
-LIBS :=
+LIBS +=
 
 ##
 ## List here additional include directories (in the form -Iinclude_dir)
 ##
-INCLUDE_DIRS := -I../source     \
+INCLUDE_DIRS += -I../source     \
 	-I../include            \
 	-I../include/hardware   \
 	-I../include/codec      \
