@@ -512,7 +512,7 @@ void mainTask(void *data)
 #endif
 
 			// VOX Checking
-			if (voxIsEnabled())
+			if (voxIsEnabled() && !PTTToggledDown && !dtmfPTTLatch)
 			{
 				// if a key/button event happen, reset the VOX.
 				if ((key_event == EVENT_KEY_CHANGE) || (button_event == EVENT_BUTTON_CHANGE) || (keys.key != 0) || (buttons != BUTTON_NONE))
@@ -767,7 +767,7 @@ void mainTask(void *data)
 				{
 					if (buttons & BUTTON_PTT)
 					{
-						if (PTTToggledDown == false)
+						if ((PTTToggledDown == false) && !voxIsTriggered())
 						{
 							// PTT toggle works only if a TOT value is defined.
 							if (currentChannelData->tot != 0 || nonVolatileSettings.totMaster !=0)
