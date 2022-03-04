@@ -815,6 +815,7 @@ void mainTask(void *data)
 					{
 						soundSetMelody(MELODY_ERROR_BEEP);
 						buttons &= !BUTTON_PTT;
+						PTTToggledDown = false; // released after a timeout when the dtmf key is released.
 					}
 				}
 				if ((buttons & BUTTON_PTT) && voicePromptsGetEditMode())
