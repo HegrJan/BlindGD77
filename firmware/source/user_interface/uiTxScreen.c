@@ -65,7 +65,6 @@ static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
 	{
 		bool isDCS = (codeplugGetCSSType(currentChannelData->txTone)& CSS_TYPE_DCS) ? true : false;
 
-		PTTToggledDown = true;
 		inCTCSSDCSSquelchTail=true;
 		dtmfLatchState=dtmfPTTLatched;
 		dtmfPTTLatchTimeout=CTCSSDCS_TAIL;
