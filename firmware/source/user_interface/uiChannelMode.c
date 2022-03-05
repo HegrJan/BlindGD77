@@ -65,8 +65,8 @@ typedef enum
 	GD77S_OPTION_DMR_MIC_GAIN,
 	GD77S_OPTION_FM_BEEP,
 	GD77S_OPTION_DMR_BEEP,
+	GD77S_OPTION_RX_END_BEEP,
 	GD77S_OPTION_DTMF_VOL,
-	GD77S_OPTION_BAND_LIMITS,
 	GD77S_OPTION_VHF_SQUELCH,
 	GD77S_OPTION_UHF_SQUELCH,
 	GD77S_OPTION_TOT_MASTER,
@@ -3606,23 +3606,15 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 			else
 				voicePromptsAppendLanguageString(&currentLanguage->off);
 			break;
-		case GD77S_OPTION_BAND_LIMITS:
+		case GD77S_OPTION_RX_END_BEEP:
 		{
 			if (!voicePromptWasPlaying)
-				voicePromptsAppendLanguageString(&currentLanguage->band_limits);
-			switch(nonVolatileSettings.txFreqLimited)
 			{
-				case BAND_LIMITS_NONE:
-					voicePromptsAppendLanguageString(&currentLanguage->off);
-					break;
-				case BAND_LIMITS_ON_LEGACY_DEFAULT:
-					voicePromptsAppendLanguageString(&currentLanguage->on);
-					break;
-				case BAND_LIMITS_FROM_CPS:
-					strcpy(rightSideVar,"CPS");
-					voicePromptsAppendString(rightSideVar);
-					break;
+				voicePromptsAppendLanguageString(&currentLanguage->end);
+				voicePromptsAppendPrompt(PROMPT_RECEIVE);
+				voicePromptsAppendLanguageString(&currentLanguage->beep);
 			}
+			voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING) ? &currentLanguage->on : &currentLanguage->off);
 			break;
 		}
 		case GD77S_OPTION_FM_BEEP:
@@ -4405,25 +4397,8 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 				settingsSetOptionBit(BIT_PTT_LATCH, false);
 			}
 			break;
-		case GD77S_OPTION_BAND_LIMITS:
-			if (dir > 0)
-			{
-				if (nonVolatileSettings.txFreqLimited < BAND_LIMITS_FROM_CPS)
-				{
-					settingsIncrement(nonVolatileSettings.txFreqLimited, 1);
-				}
-			}
-			else if (dir < 0)
-			{
-				if (nonVolatileSettings.txFreqLimited > BAND_LIMITS_NONE)
-				{
-					settingsDecrement(nonVolatileSettings.txFreqLimited, 1);
-				}
-			}
-			else
-			{
-				nonVolatileSettings.txFreqLimited =BAND_LIMITS_NONE;
-			}
+		case GD77S_OPTION_RX_END_BEEP:
+			settingsSetOptionBit(BIT_INDICATE_RX_ENDING, (dir > 0));
 			break;
 		case GD77S_OPTION_FM_BEEP:
 		case GD77S_OPTION_DMR_BEEP:
