@@ -61,16 +61,16 @@ static bool lowBatteryReached = false;
 #define LOW_BATTERY_VOLTAGE_RECOVERY_TIME          10000 // 10 seconds
 static bool updateMessageOnScreen = false;
 static bool hasSignal=false;
-static bool priorLEDGreen=false;
-
+static bool priorHasSignal=false;
+static bool priorTXEnabled=false;
 static void HandleRXEnding()
 {
 	if (nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) return;
 	if (settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING)==false) return;
 	// Check end of rx.
-	bool LEDGreen= LEDs_PinRead(GPIO_LEDgreen, Pin_LEDgreen);
-	bool rxEnding=!LEDGreen && priorLEDGreen;
-	priorLEDGreen=LEDGreen;
+	bool rxEnding=!hasSignal && priorHasSignal && !trxTransmissionEnabled && !priorTXEnabled;
+	priorHasSignal = hasSignal;
+	priorTXEnabled=trxTransmissionEnabled;
 	if (!rxEnding) return;
 //nextKeyBeepMelody
 	soundSetMelody(melody_rx_stop_beep);
