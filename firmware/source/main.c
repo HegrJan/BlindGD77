@@ -62,18 +62,23 @@ static bool lowBatteryReached = false;
 static bool updateMessageOnScreen = false;
 static bool hasSignal=false;
 static bool priorHasSignal=false;
-static bool priorTXEnabled=false;
+static uint16_t rxEndTimeOut=0;
 static void HandleRXEnding()
 {
 	if (nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) return;
 	if (settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING)==false) return;
+	if (rxEndTimeOut)
+	{
+		rxEndTimeOut--;
+		return;
+	}
 	// Check end of rx.
-	bool rxEnding=!hasSignal && priorHasSignal && !trxTransmissionEnabled && !priorTXEnabled;
+	bool rxEnding=!hasSignal && priorHasSignal && !trxTransmissionEnabled;
 	priorHasSignal = hasSignal;
-	priorTXEnabled=trxTransmissionEnabled;
 	if (!rxEnding) return;
 //nextKeyBeepMelody
 	soundSetMelody(melody_rx_stop_beep);
+	rxEndTimeOut=500;
 }
 
 void mainTaskInit(void)
