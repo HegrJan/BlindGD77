@@ -78,7 +78,7 @@ static void HandleRXEnding()
 	if (!rxEnding) return;
 //nextKeyBeepMelody
 	soundSetMelody(melody_rx_stop_beep);
-	rxEndTimeOut=500;
+	rxEndTimeOut=300;
 }
 
 void mainTaskInit(void)
