@@ -109,7 +109,8 @@ static void updateScreen(bool isFirstRun)
 			rightSideVar[0] = 0;
 			rightSideUnitsPrompt = PROMPT_SILENCE;// use PROMPT_SILENCE as flag that the unit has not been set
 			rightSideUnitsStr = NULL;
-
+			leftSideVar[0]=0;
+			
 			switch(mNum)
 			{
 				case OPTIONS_MENU_TIMEOUT_BEEP:
