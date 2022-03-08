@@ -88,7 +88,7 @@ static void updateScreen(bool isFirstRun)
 	char * const *leftSide = NULL;// initialise to please the compiler
 	char * const *rightSideConst = NULL;// initialise to please the compiler
 	char rightSideVar[SCREEN_LINE_BUFFER_SIZE];
-	char leftSideVar[SCREEN_LINE_BUFFER_SIZE];
+	char leftSideVar[SCREEN_LINE_BUFFER_SIZE]="\0";
 
 	voicePrompt_t rightSideUnitsPrompt;
 	const char * rightSideUnitsStr;
@@ -268,7 +268,7 @@ static void updateScreen(bool isFirstRun)
 					break;
 			}
 
-			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSide? *leftSide:"", (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+			snprintf(buf, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSideVar[0] ? leftSideVar: (leftSide? *leftSide:""), (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 
 			if (i == 0)
 			{
