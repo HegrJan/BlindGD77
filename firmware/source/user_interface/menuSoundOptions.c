@@ -176,7 +176,6 @@ static void updateScreen(bool isFirstRun)
 					{
 						rightSideConst = (char * const *)beepTX[nonVolatileSettings.beepOptions>>2];
 					}
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%s:%s", leftSideVar, *rightSideConst);
 					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
 					leftSide = (char * const *)&currentLanguage->dmr_mic_gain;
