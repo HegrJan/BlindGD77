@@ -604,6 +604,8 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					blocksTA = 0x00;
 					overrideTA = false;
 					lastHeardNeedsAnnouncementTimer = (id !=trxDMRID) ? LAST_HEARD_TIMER_TIMEOUT : -1;
+					lastHeardUpdateTime=fw_millis();
+
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -619,7 +621,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						}
 
 						item->time = fw_millis();
-						lastHeardUpdateTime=item->time;
 						lastTG = talkGroupOrPcId;
 
 						if (item == LinkHead)
@@ -682,7 +683,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						item->id = id;
 						item->talkGroupOrPcId = talkGroupOrPcId;
 						item->time = fw_millis();
-						lastHeardUpdateTime=item->time;
 						item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
 						lastTG = talkGroupOrPcId;
 
@@ -711,7 +711,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 							item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
 							updateLHItem(item);
 							item->time = fw_millis();
-							lastHeardUpdateTime=item->time;
 						}
 
 						lastTG = talkGroupOrPcId;
@@ -3734,7 +3733,7 @@ static bool IsLastHeardContactRelevant()
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
 	if ((fw_millis() - lastHeardUpdateTime) > 10000) return false; // If it is older than 10 seconds.
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
-	if (dmrMonitorCapturedTS != trxGetDMRTimeSlot())
+	if ((trxDMRModeRx == DMR_MODE_DMO) && ((dmrMonitorCapturedTS !=-1) && (dmrMonitorCapturedTS != trxGetDMRTimeSlot())))
 		return false;
 
 	return true;
@@ -3794,6 +3793,7 @@ void AnnounceLastHeardContactIfNeeded()
 		voicePromptsInit();
 		AnnounceLastHeardContact(); // just queue, do not play.
 		lastHeardNeedsAnnouncementTimer--; // so we do  not do it again until it changes.
+		return;
 	}
 	
 	if (getAudioAmpStatus() & (AUDIO_AMP_MODE_RF | AUDIO_AMP_MODE_BEEP | AUDIO_AMP_MODE_PROMPT))
@@ -4026,6 +4026,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
 		customVoicePromptIndex=0xff; // reset.
 		keyboardReset(); // reset the keyboard also.
+		return true;
 	}
 	else if (KEYCHECK_SHORTUP_NUMBER(ev->keys))
 	{// digit is being released, either set customVoicePromptIndex or combine with prior value as appropriate.
@@ -4045,9 +4046,10 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{// play straight away since we can't add any more digits.
 			PlayAndResetCustomVoicePromptIndex();
 		}
+		return true;
 	}
 		
-	return true; // We've handled the key combination.
+	return false;
 }
 
 void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
