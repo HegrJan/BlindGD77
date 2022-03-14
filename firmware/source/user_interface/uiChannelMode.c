@@ -3823,7 +3823,7 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 
 static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 {
-	bool addToZone= zoneChannelIndex >= currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone;
+	bool addToZone= zoneChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone;
 	uint16_t physicalChannelIndex;
 	if (addToZone)
 	{
@@ -5118,7 +5118,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		}
 		else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK2) && (monitorModeData.isEnabled == false) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.virtualVFOMode && (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16))
 		{
-			if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset < (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
+			if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 16 && rotarySwitchGetPosition()+GD77SParameters.channelbankOffset <= (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone-16))
 				GD77SParameters.channelbankOffset+=16;
 			else
 				GD77SParameters.channelbankOffset=0;
