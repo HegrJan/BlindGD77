@@ -3842,14 +3842,14 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 		soundSetMelody(MELODY_ERROR_BEEP);
 		return false;
 	}
-	// just name the channel by its number.
-	char channelName[16]="\0";
-	snprintf(channelName, 16, "%d", zoneChannelIndex);
-	codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
-	codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
 
 	if (addToZone)
 	{
+	// just name the channel by its number.
+		char channelName[16]="\0";
+		snprintf(channelName, 16, "%d", zoneChannelIndex);
+		codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
+		codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
 		codeplugAllChannelsIndexSetUsed(physicalChannelIndex, true); //Set channel index as valid
 		if (currentZone.NOT_IN_CODEPLUGDATA_indexNumber == 0xDEADBEEF)
 		{
@@ -3861,6 +3861,9 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 			settingsSet(nonVolatileSettings.currentChannelIndexInZone , currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1);
 		}
 	}
+	else
+		codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
+
 	voicePromptsInit();
 	voicePromptsAppendLanguageString(&currentLanguage->vfoToChannel);
 	voicePromptsAppendInteger(zoneChannelIndex);
@@ -4139,7 +4142,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			namePtr++;
 		}
 		// copy the name to the specific channel.
-		if (zoneChannelIndex < 1 || zoneChannelIndex > 16)
+		if (zoneChannelIndex < 1 || zoneChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
 		{
 			soundSetMelody(MELODY_ERROR_BEEP);
 			return true;	
