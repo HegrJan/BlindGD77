@@ -3313,8 +3313,16 @@ static void dtmfProcess(void)
 	if (PITCounter > uiDataGlobal.DTMFContactList.nextPeriod)
 	{
 		uint32_t duration = (1000 / (uiDataGlobal.DTMFContactList.durations.rate * 2));
-
-		if (uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] != 0xFFU)
+		bool pause=uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] == 0x20;
+		if (pause)
+		{
+			uiDataGlobal.DTMFContactList.inTone=false;
+			trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
+			uiDataGlobal.DTMFContactList.nextPeriod = PITCounter + 5000;
+			uiDataGlobal.DTMFContactList.poPtr++;
+			return;
+		}
+		else if (uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] != 0xFFU)
 		{
 			// Set voice channel (and tone), accordingly to the next inTone state
 			if (uiDataGlobal.DTMFContactList.inTone == false)
@@ -3326,7 +3334,7 @@ static void dtmfProcess(void)
 			{
 				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
 			}
-
+			
 			uiDataGlobal.DTMFContactList.inTone = !uiDataGlobal.DTMFContactList.inTone;
 		}
 		else
@@ -3526,6 +3534,8 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 	{
 		if (code[i] < 16)
 			text[j++] = DTMF_AllowedChars[code[i]];
+		else if (code[i]==0x20)
+			text[j++]='P'; // pause.
 	}
 	text[j] = 0;
 
@@ -3544,12 +3554,13 @@ extern int toupper(int __c);
 	memset(code, 0xFFU, DTMF_CODE_MAX_LEN);
 	for (int i = 0; (i < maxSize) && text[i]; i++)
 	{
+		bool pause=toupper(text[i])=='P';
 		char *symbol = strchr(DTMF_AllowedChars, toupper(text[i]));
-		if (!symbol)
+		if (!symbol && !pause)
 		{
 			return false;
 		}
-		code[i] = (symbol - DTMF_AllowedChars);
+		code[i] =pause ? 0x20 : (symbol - DTMF_AllowedChars);
 	}
 
 	return true;
