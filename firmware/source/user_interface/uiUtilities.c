@@ -3317,9 +3317,21 @@ static void dtmfProcess(void)
 		if (pause)
 		{
 			uiDataGlobal.DTMFContactList.inTone=false;
-			trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
-			uiDataGlobal.DTMFContactList.nextPeriod = PITCounter + 5000;
-			uiDataGlobal.DTMFContactList.poPtr++;
+			if (trxTransmissionEnabled)
+			{
+				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
+				trxDisableTransmission();
+
+				trxTransmissionEnabled = false;
+				trxSetRX();
+				LEDs_PinWrite(GPIO_LEDgreen, Pin_LEDgreen, 0);
+			}
+
+			uiDataGlobal.DTMFContactList.nextPeriod = PITCounter + 10000;
+			// Keep pausing while carrier is detected, e.g. response from hotspot 
+			if (!trxCarrierDetected())
+				uiDataGlobal.DTMFContactList.poPtr++;
+
 			return;
 		}
 		else if (uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] != 0xFFU)
@@ -3460,7 +3472,9 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 {
 	if (uiDataGlobal.DTMFContactList.isKeying)
 	{
-		if (!trxTransmissionEnabled)
+		bool pause=uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] == 0x20;
+
+		if (!trxTransmissionEnabled && !pause)
 		{
 			rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
 			// Start TX DTMF, prepare for ANALOG
