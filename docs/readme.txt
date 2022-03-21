@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-15 March 2022:
+21 March 2022:
 1. Changed default scan hold time to 10 seconds (by popular demand).
 2. Also by request, I have added a new option to disable the beep indicating mismatched rx and tx talkgroup/TS/CC. Note, only disable this if you know what you are doing because if you disable this without understanding what it does, and you don't get the audio indication, you may try replying to a DMR signal being received on a different talkgroup. It is advisable to keep this on unless the beep indicating the mismatched talkgroup is really not important to you because you are just listening. The option is called DMR Talkgroup Beep, and it is in the Sound Options menu. It defaults to on. Remember, this beep indicates that the rx signal you just heard is not on the same tg/ts/cc that you have set for tx.
 3. When the radio is set to transmit a CTCSS or DCS tone, the other station would always hear a squelch tail when you release PTT. I've now eliminated this. When you release PTT, if a tone is being transmitted, we stop transmitting the tone or code and keep transmitting the carrier for 250 ms. This gives the receiver time to detect the absence of the tone or code and shut off its amplifier. If using DCS, we send a 136.5 tone for 250 ms.
@@ -30,6 +30,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 10. On the GD77S, you could not modify the very last channel in the zone, if you attempted to, a new channel would be added instead of modifying the last one.  
 11. When modifying a channel on the GD77S, we now maintain the name rather than overwriting it. We only overwrite if adding a new channel.
 12. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
+13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a  half second pause. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.)
 
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 22 February 2022
