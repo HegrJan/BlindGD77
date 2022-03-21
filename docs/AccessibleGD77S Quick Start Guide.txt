@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-21 March 2022
+22 March 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -119,7 +119,7 @@ Whenever you go to keypad mode, whatever channel was last active is still active
 When you go back to keypad mode, as usual, whatever was last active is still active, however, you can recall the prior saved VFO settings using the command a followed by long hold orange. This makes the saved VFO settings active again. Note that this is the same VFO as reached by pressing SK2 from Channel Mode. 
 If you wish to make the VFO settings more permanent, you can then save these settings to channel 1 through 16 in the current zone using the command a1 through a16 followed by long hold orange. All of the VFO settings are saved to the specified channel in the current zone. The overwritten channel will have its number as its name. e.g. channel 1, channel 16, etc. Of course you cannot save to an AutoZone channel.
 2.11. If you just want to copy a channel to the VFO without issuing any command to change the current channel's settings, after locating the channel you wish to copy, activate Keypad mode, then immediately press long hold orange with an empty keypad buffer. The current channel will be copied to the VFO. If you previously visited keypad mode, remember to clear the keypad buffer with long hold sk2 prior to pressing long hold orange.
-2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange. When editing a DTMF code, you can add a P where you want a pause of half a second.
+2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange. When editing a DTMF code, you can add a P where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones.
 2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). You can also use *##* or *##*text to save to the next available slot.
 2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 
