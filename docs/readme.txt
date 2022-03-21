@@ -30,7 +30,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 10. On the GD77S, you could not modify the very last channel in the zone, if you attempted to, a new channel would be added instead of modifying the last one.  
 11. When modifying a channel on the GD77S, we now maintain the name rather than overwriting it. We only overwrite if adding a new channel.
 12. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
-13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio wil wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.)
+13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.)
 
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 22 February 2022
