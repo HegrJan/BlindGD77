@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-18 February 2022
+21 March 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -161,6 +161,7 @@ SK2+# goes to the Quick contacts list relevant for the current radio mode. Note 
 From this quick Contacts menu, Up and Down arrow will select a contact and Green will either dial the DTMF code (for an analog contact), or select the contact if it is a digital contact.
 
 If you choose DTMF or DMR Contact List from the Contacts submenu of the main menu, (rather than from the sk2+# quick menu), the Green button will bring up a submenu for creating, editing, deleting or selecting (dialing) the contact. You can also choose a dialer screen which allows you to enter digits to be dialled and then press Green to dial the entered digits. (This is the DTMF Entry screen).
+When editing a DTMF code, you can add a P where you want a pause of half a second.
 
 From the main Contacts menu, for DMR contacts, # will cycle the list between showing group call contacts, private call contacts and all call contacts.
  
