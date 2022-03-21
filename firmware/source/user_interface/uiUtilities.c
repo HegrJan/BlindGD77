@@ -3302,6 +3302,7 @@ static uint32_t dtmfGetToneDuration(uint32_t duration)
 	return ((starOrHash ? (uiDataGlobal.DTMFContactList.durations.otherDur * 100) : 0) + duration);
 }
 
+static bool inDTMFPause=false;
 
 static void dtmfProcess(void)
 {
@@ -3317,6 +3318,8 @@ static void dtmfProcess(void)
 		if (pause)
 		{
 			uiDataGlobal.DTMFContactList.inTone=false;
+			uiDataGlobal.DTMFContactList.nextPeriod = PITCounter + 10000;
+			inDTMFPause=true;
 			if (trxTransmissionEnabled)
 			{
 				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
@@ -3324,13 +3327,17 @@ static void dtmfProcess(void)
 
 				trxTransmissionEnabled = false;
 				trxSetRX();
-				LEDs_PinWrite(GPIO_LEDgreen, Pin_LEDgreen, 0);
+				return;
 			}
 
-			uiDataGlobal.DTMFContactList.nextPeriod = PITCounter + 10000;
 			// Keep pausing while carrier is detected, e.g. response from hotspot 
-			if (!trxCarrierDetected())
+			if (trxCarrierDetected())
+				return;
+			if (inDTMFPause)
+			{
 				uiDataGlobal.DTMFContactList.poPtr++;
+				inDTMFPause=false;
+			}
 
 			return;
 		}
@@ -3395,6 +3402,7 @@ void dtmfSequenceReset(void)
 	uiDataGlobal.DTMFContactList.poLen = 0U;
 	uiDataGlobal.DTMFContactList.poPtr = 0U;
 	uiDataGlobal.DTMFContactList.isKeying = false;
+	inDTMFPause=false;
 }
 
 bool dtmfSequenceIsKeying(void)
