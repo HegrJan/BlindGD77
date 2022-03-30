@@ -43,6 +43,7 @@ enum SPLIT_CONTACT { SPLIT_CONTACT_SINGLE_LINE_ONLY = 0, SPLIT_CONTACT_ON_TWO_LI
 enum ALLOW_PRIVATE_CALLS_MODE { ALLOW_PRIVATE_CALLS_OFF = 0, ALLOW_PRIVATE_CALLS_ON, ALLOW_PRIVATE_CALLS_PTT };//, ALLOW_PRIVATE_CALLS_AUTO };
 enum BAND_LIMITS_ENUM { BAND_LIMITS_NONE = 0 , BAND_LIMITS_ON_LEGACY_DEFAULT, BAND_LIMITS_FROM_CPS };
 enum INFO_ON_SCREEN { INFO_ON_SCREEN_OFF = 0x00, INFO_ON_SCREEN_TS = 0x01, INFO_ON_SCREEN_PWR = 0x02, INFO_ON_SCREEN_BOTH = 0x03 };
+enum END_RX_BEEP {END_RX_BEEP_OFF=0x0, END_RX_BEEP_DMR, END_RX_BEEP_FM, END_RX_BEEP_BOTH};;
 
 extern const int ECO_LEVEL_MAX;
 extern const uint8_t BEEP_TX_NONE;
@@ -71,8 +72,7 @@ typedef enum
 	BIT_ANNOUNCE_LASTHEARD = (1 << 9),
 	BIT_BCL = (1 <<10),
 	BIT_PHONETIC_SPELL = (1 << 11),
-	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12),
-	BIT_INDICATE_RX_ENDING = (1 << 13)
+	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12)
 } bitfieldOptions_t;
 
 typedef struct
@@ -136,6 +136,7 @@ typedef struct
 	uint8_t voicePromptVolumePercent; // percent of max volume
 	uint8_t voicePromptRate;
 	uint8_t dtmfVol; // 0 to 255.
+	uint8_t endRXBeep; // see END_RX_BEEP enum.
 	// currently 133 bytes Jan 18  2022 VK7JS. 
 } settingsStruct_t;
 

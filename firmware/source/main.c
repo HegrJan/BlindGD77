@@ -66,18 +66,30 @@ static uint16_t rxEndTimeOut=0;
 static void HandleRXEnding()
 {
 	if (nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) return;
-	if (settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING)==false) return;
-	if (rxEndTimeOut)
+	if (trxTransmissionEnabled) return;
+
+	int trxMode=trxGetMode();
+	
+	if (((trxMode == RADIO_MODE_DIGITAL) && (nonVolatileSettings.endRXBeep&END_RX_BEEP_DMR)==0) ||
+		((trxMode == RADIO_MODE_ANALOG) && (nonVolatileSettings.endRXBeep&END_RX_BEEP_FM)==0))
+		return;
+	
+	if (rxEndTimeOut > 0)
 	{
 		rxEndTimeOut--;
+		if (rxEndTimeOut==0)
+			soundSetMelody(melody_rx_stop_beep);
+
 		return;
 	}
-	// Check end of rx.
-	bool rxEnding=!hasSignal && priorHasSignal && !trxTransmissionEnabled;
-	priorHasSignal = hasSignal;
-	if (!rxEnding) return;
 	
-	soundSetMelody(melody_rx_stop_beep);
+	bool rxEnding=priorHasSignal && !hasSignal;
+	
+	priorHasSignal = hasSignal;
+	
+	if (!rxEnding)
+		return;
+
 	rxEndTimeOut=300;
 }
 

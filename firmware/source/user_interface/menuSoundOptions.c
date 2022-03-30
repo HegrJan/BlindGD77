@@ -91,6 +91,7 @@ static void updateScreen(bool isFirstRun)
 	char leftSideVar[SCREEN_LINE_BUFFER_SIZE]="\0";
 
 	voicePrompt_t rightSideUnitsPrompt;
+	voicePrompt_t rightsidePromptOverride;
 	const char * rightSideUnitsStr;
 	const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
 
@@ -108,6 +109,7 @@ static void updateScreen(bool isFirstRun)
 			rightSideConst = NULL;
 			rightSideVar[0] = 0;
 			rightSideUnitsPrompt = PROMPT_SILENCE;// use PROMPT_SILENCE as flag that the unit has not been set
+			rightsidePromptOverride= PROMPT_SILENCE;
 			rightSideUnitsStr = NULL;
 			leftSideVar[0]=0;
 			
@@ -264,7 +266,22 @@ static void updateScreen(bool isFirstRun)
 					if(nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
 						rightSideConst = (char * const *)&currentLanguage->n_a;
 					else
-						rightSideConst = (char * const *)(settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING) ? &currentLanguage->on : &currentLanguage->off);
+					{// This is a bit of a hack as we don't have language strings for DMR and FM.
+						if (nonVolatileSettings.endRXBeep==END_RX_BEEP_OFF)
+							rightSideConst = (char * const *)&currentLanguage->off;
+						if (nonVolatileSettings.endRXBeep==END_RX_BEEP_DMR)
+						{
+							strcpy(rightSideVar,"DMR");
+							rightsidePromptOverride=PROMPT_DMR;
+						}
+						if (nonVolatileSettings.endRXBeep==END_RX_BEEP_FM)
+						{
+							strcpy(rightSideVar,"FM");
+							rightsidePromptOverride=PROMPT_FM;
+						}
+						if (nonVolatileSettings.endRXBeep==END_RX_BEEP_BOTH)
+							rightSideConst = (char * const *)&currentLanguage->both;
+					}
 					break;
 			}
 
@@ -309,8 +326,9 @@ static void updateScreen(bool isFirstRun)
 							voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
 					}
 				}
-
-				if ((mNum!=OPTIONS_MENU_FM_BEEP) && ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL))))
+				if (rightsidePromptOverride!=PROMPT_SILENCE)
+					voicePromptsAppendPrompt(rightsidePromptOverride);
+				else if ((mNum!=OPTIONS_MENU_FM_BEEP) && ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL))))
 				{
 					voicePromptsAppendString(rightSideVar);
 				}
@@ -579,8 +597,8 @@ static void handleEvent(uiEvent_t *ev)
 				}
 				case OPTIONS_END_RX_BEEP:
 				{
-					if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && !(nonVolatileSettings.bitfieldOptions&BIT_INDICATE_RX_ENDING))
-						settingsSetOptionBit(BIT_INDICATE_RX_ENDING, true);
+					if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && (nonVolatileSettings.endRXBeep < END_RX_BEEP_BOTH))
+						settingsIncrement(nonVolatileSettings.endRXBeep,1);
 					break;
 				}
 			}
@@ -724,8 +742,8 @@ static void handleEvent(uiEvent_t *ev)
 				}
 				case OPTIONS_END_RX_BEEP:
 				{
-					if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && (nonVolatileSettings.bitfieldOptions&BIT_INDICATE_RX_ENDING))
-						settingsSetOptionBit(BIT_INDICATE_RX_ENDING, false);
+					if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && (nonVolatileSettings.endRXBeep > END_RX_BEEP_OFF))
+						settingsDecrement(nonVolatileSettings.endRXBeep,1);
 					break;
 				}
 			}

@@ -351,6 +351,8 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
 	nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 	nonVolatileSettings.dtmfVol=10;
+	nonVolatileSettings.endRXBeep=0;
+	
 	settingsDirty = true;
 
 	settingsSaveSettings(false);

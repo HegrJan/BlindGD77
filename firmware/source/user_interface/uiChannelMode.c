@@ -3614,7 +3614,14 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 				voicePromptsAppendPrompt(PROMPT_RECEIVE);
 				voicePromptsAppendLanguageString(&currentLanguage->beep);
 			}
-			voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_INDICATE_RX_ENDING) ? &currentLanguage->on : &currentLanguage->off);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_OFF)
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_DMR)
+				voicePromptsAppendPrompt(PROMPT_DMR);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_FM)
+				voicePromptsAppendPrompt(PROMPT_FM);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_BOTH)
+				voicePromptsAppendLanguageString(&currentLanguage->both);
 			break;
 		}
 		case GD77S_OPTION_FM_BEEP:
@@ -4401,7 +4408,18 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			}
 			break;
 		case GD77S_OPTION_RX_END_BEEP:
-			settingsSetOptionBit(BIT_INDICATE_RX_ENDING, (dir > 0));
+			if ((dir > 0) && (nonVolatileSettings.endRXBeep < END_RX_BEEP_BOTH))
+			{
+				settingsIncrement(nonVolatileSettings.endRXBeep, 1);
+			}
+			else if ((dir < 0) && (nonVolatileSettings.endRXBeep > END_RX_BEEP_OFF))
+			{
+				settingsDecrement(nonVolatileSettings.endRXBeep, 1);
+			}
+			else if (dir ==0)
+			{
+				settingsSet(nonVolatileSettings.endRXBeep, 0);
+			}
 			break;
 		case GD77S_OPTION_FM_BEEP:
 		case GD77S_OPTION_DMR_BEEP:
