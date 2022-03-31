@@ -32,6 +32,14 @@ A key function summary is included in the docs folder called "Key Function Summa
 12. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
 13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.) Please note, you must enter the P via the Edit contact submenu from the DTMF Contacts menu, you can't currently do it from the CPS. I will fix that before release. 
 14. There is now a new version of the CPS installer called AccessibleGD77CPSInstaller.exe. this must be installed prior to attempting to use the new pause feature in DTMF contacts as the old CPS did not support the P for pause and would crash. (Thanks to OK1TE for fixing this and preparing the installer).
+15. Fixed issue on GD77S with color codes when using the VFO. Steps to repro:
+    a. Use virtual keypad to enter a frequency.
+    b. Use virtual keypad to set mode to DMR.
+    c. Because no cc had been set, it would default to 0 rather than the radio's default.
+    d. If you tried changing it with cc menu, it would change the rx color but not the tx color so as soon as you pressed ptt, it would be reset to 0.
+    We now properly set both rx and tx color when setting up the vfo from the virtual keypad.
+    Also, when you use the cc menu to change the color code, it changes both the rx and tx color code.
+
 
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 22 February 2022
