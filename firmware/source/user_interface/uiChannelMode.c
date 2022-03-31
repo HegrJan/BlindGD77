@@ -3936,6 +3936,9 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		if (trxGetMode() == RADIO_MODE_ANALOG)
 		{
 			currentChannelData->chMode = RADIO_MODE_DIGITAL;
+			// in case it is not set:
+			currentChannelData->rxColor=trxGetDMRColourCode();
+			currentChannelData->txColor=currentChannelData->rxColor;
 			uiDataGlobal.VoicePrompts.inhibitInitial = true;// Stop VP playing in loadChannelData
 			loadChannelData(true, false);
 			uiDataGlobal.VoicePrompts.inhibitInitial = false;
@@ -5057,6 +5060,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 						if (currentChannelData->rxColor < 15)
 						{
 							currentChannelData->rxColor++;
+							currentChannelData->txColor=currentChannelData->rxColor;
 							trxSetDMRColourCode(currentChannelData->rxColor);
 						}
 
@@ -5279,6 +5283,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 						if (currentChannelData->rxColor > 0)
 						{
 							currentChannelData->rxColor--;
+							currentChannelData->txColor=currentChannelData->rxColor;
 							trxSetDMRColourCode(currentChannelData->rxColor);
 						}
 
