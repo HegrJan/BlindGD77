@@ -228,7 +228,7 @@ static void updateScreen(bool isFirstRun)
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] - 1) * 5);// 5% steps
 					break;
 				case OPTIONS_MENU_CSS_TAIL:
-					strcpy(leftSideStr, "CSS Tail");
+					leftSide = (char * const *)&currentLanguage->css_tail;
 					if (nonVolatileSettings.ctcssSqlTail > 0)
 					{
 						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", nonVolatileSettings.ctcssSqlTail*10);

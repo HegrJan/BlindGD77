@@ -39,7 +39,7 @@ const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0006; // Version 6 TOC increased t
 													// Version 5 TOC increased to 300
 													// Version 4 does not have unused items
                                                     // Version 3 does not have the PROMPT_TBD items in it
-#define VOICE_PROMPTS_TOC_SIZE 320
+#define VOICE_PROMPTS_TOC_SIZE 350
 #define CUSTOM_VOICE_PROMPT_PHRASE_LENGTH 16
 static void getAmbeData(int offset,int length);
 static int GetCustomVoicePromptData(int customPromptNumber);

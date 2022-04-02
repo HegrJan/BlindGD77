@@ -243,6 +243,7 @@ typedef struct
    const char* voice_prompt_rate;
    const char* dtmf_vol;
    const char* vp_saved;
+   const char* css_tail;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
