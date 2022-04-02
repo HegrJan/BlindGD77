@@ -31,7 +31,7 @@ Please note! You will need to update your voice prompts. This will not overwrite
 10. On the GD77S, you could not modify the very last channel in the zone, if you attempted to, a new channel would be added instead of modifying the last one.  
 11. When modifying a channel on the GD77S, we now maintain the name rather than overwriting it. We only overwrite if adding a new channel.
 12. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
-13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.) Please note, you must enter the P via the Edit contact submenu from the DTMF Contacts menu, you can't currently do it from the CPS. I will fix that before release. 
+13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.) Please note, you must update your CPS to the one in this archive otherwise if you try import from your radio and there is a contact with a P in their DTMF code, the old CPS would crash.
 14. There is now a new version of the CPS installer called AccessibleGD77CPSInstaller.exe. this must be installed prior to attempting to use the new pause feature in DTMF contacts as the old CPS did not support the P for pause and would crash. (Thanks to OK1TE for fixing this and preparing the installer).
 15. Fixed issue on GD77S with color codes when using the VFO. Steps to repro:
     a. Use virtual keypad to enter a frequency.
@@ -43,8 +43,8 @@ Please note! You will need to update your voice prompts. This will not overwrite
 16. Increased the maximum number of voice prompts from 320 to 350. Please update your voice prompts!
   
 
-Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 22 February 2022
+Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32 for the GD77, GD77S and RD5R, and 99 for the DM1801 and DM1801A (as the DM1801 radios have 2MB flash). In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.
