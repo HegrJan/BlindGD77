@@ -53,10 +53,10 @@ typedef enum
 static dtmfLatchState_t dtmfLatchState=dtmfNotLatched;
 static bool inCTCSSDCSSquelchTail=false;
 
-#define CTCSSDCS_TAIL 250
 
 static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
-{//joe
+{
+	if (nonVolatileSettings.ctcssSqlTail==0) return false;
 	if (trxGetMode() != RADIO_MODE_ANALOG) return false;
 	if (currentChannelData->txTone == 0xffff) return false;
 	if (!trxTransmissionEnabled) return false;
@@ -67,7 +67,7 @@ static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
 
 		inCTCSSDCSSquelchTail=true;
 		dtmfLatchState=dtmfPTTLatched;
-		dtmfPTTLatchTimeout=CTCSSDCS_TAIL;
+		dtmfPTTLatchTimeout=nonVolatileSettings.ctcssSqlTail*10;
 		// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
 		// If using DCS, however, send a 136.5 tone instead.
 		trxSetTxCSS(isDCS ? 1365 : 0xffff); 		

@@ -137,7 +137,8 @@ typedef struct
 	uint8_t voicePromptRate;
 	uint8_t dtmfVol; // 0 to 255.
 	uint8_t endRXBeep; // see END_RX_BEEP enum.
-	// currently 133 bytes Jan 18  2022 VK7JS. 
+	uint8_t ctcssSqlTail; // for eliminating squelch tail.
+	// currently 135 bytes Apr 2  2022 VK7JS. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
