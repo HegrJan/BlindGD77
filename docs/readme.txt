@@ -17,10 +17,11 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-31 March 2022:
+2 April 2022:
+Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Changed default scan hold time to 10 seconds (by popular demand).
 2. Also by request, I have added a new option to disable the beep indicating mismatched rx and tx talkgroup/TS/CC. Note, only disable this if you know what you are doing because if you disable this without understanding what it does, and you don't get the audio indication, you may try replying to a DMR signal being received on a different talkgroup. It is advisable to keep this on unless the beep indicating the mismatched talkgroup is really not important to you because you are just listening. The option is called DMR Talkgroup Beep, and it is in the Sound Options menu. It defaults to on. Remember, this beep indicates that the rx signal you just heard is not on the same tg/ts/cc that you have set for tx.
-3. When the radio is set to transmit a CTCSS or DCS tone, the other station would always hear a squelch tail when you release PTT. I've now eliminated this. When you release PTT, if a tone is being transmitted, we stop transmitting the tone or code and keep transmitting the carrier for 250 ms. This gives the receiver time to detect the absence of the tone or code and shut off its amplifier. If using DCS, we send a 136.5 tone for 250 ms.
+3. When the radio is set to transmit a CTCSS or DCS tone, the other station would always hear a squelch tail when you release PTT. I've now eliminated this via a new option. When you release PTT, if a tone is being transmitted, we stop transmitting the tone or code and keep transmitting the carrier for a specified tail time. This gives the receiver time to detect the absence of the tone or code and shut off its amplifier. If using DCS, we send a 136.5 tone. This is an option called CSS Tail in the Options menu. You can set it to off, or in increments of 50 ms up to 500 ms. It defaults to 350 ms which is the time it takes for the MD9600 to respond without a squelch crash. A new voice prompt was added for this option so please update your voice prompts.
 4. Added new End RX Beep option to Sound options menu by request. This will play a beep when the radio stops receiving a signal. This is most useful in DMR mode when it is not obvious when the channel becomes free. The option has 4 values: off, DMR, FM and Both. 
 5. Fixed PTT latch so that if Busy Channel Lockout (BCL) is enabled, pressing PTT while a signal is being received won't latch the PTT.
  6. Since the GD77S already has the ability to toggle band limits on power on (see AccessibleGD77S quick start guide), I took that option out of the Options menu and added the RX End Beep (by request).
@@ -39,7 +40,8 @@ A key function summary is included in the docs folder called "Key Function Summa
     d. If you tried changing it with cc menu, it would change the rx color but not the tx color so as soon as you pressed ptt, it would be reset to 0.
     We now properly set both rx and tx color when setting up the vfo from the virtual keypad.
     Also, when you use the cc menu to change the color code, it changes both the rx and tx color code.
-
+16. Increased the maximum number of voice prompts from 320 to 350. Please update your voice prompts!
+  
 
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 22 February 2022
