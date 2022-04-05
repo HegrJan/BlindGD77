@@ -17,7 +17,8 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-2 April 2022:
+5 April 2022:
+Warning, warning, warning!
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Changed default scan hold time to 10 seconds (by popular demand).
 2. Also by request, I have added a new option to disable the beep indicating mismatched rx and tx talkgroup/TS/CC. Note, only disable this if you know what you are doing because if you disable this without understanding what it does, and you don't get the audio indication, you may try replying to a DMR signal being received on a different talkgroup. It is advisable to keep this on unless the beep indicating the mismatched talkgroup is really not important to you because you are just listening. The option is called DMR Talkgroup Beep, and it is in the Sound Options menu. It defaults to on. Remember, this beep indicates that the rx signal you just heard is not on the same tg/ts/cc that you have set for tx.
@@ -41,7 +42,17 @@ Please note! You will need to update your voice prompts. This will not overwrite
     We now properly set both rx and tx color when setting up the vfo from the virtual keypad.
     Also, when you use the cc menu to change the color code, it changes both the rx and tx color code.
 16. Increased the maximum number of voice prompts from 320 to 350. Please update your voice prompts!
-  
+  17. Added back in user dictionary words (will match case insensitive) including:
+  17.1 hotspot
+17.2 clearnode
+17.3 sharinode
+17.4 microHub
+17.5 openspot
+17.6 repeater
+17.7 blindhams
+17.8 allstar
+17.9 parrot
+
 
 22 February 2022
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
