@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-22 March 2022
+6 April 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -62,9 +62,8 @@ Currently, the orange button will cycle you through the following options:
 * Timeslot mode: (Digital channels only), SK1 and SK2 choose between timeslot 1 and timeslot 2.
 * Color code mode: (Digital channels only), SK1 and SK2 choose color codes.
 * Vox mode: SK1 and SK2 enable or disable the mode. To set the vox parameters, see the Options menu below.
-* Voice mode: See below.
-* Options Mode: See below.
-
+* Options1 Mode: See below.
+* Options2 Mode:
 If you wish to hear a summary of the current channel, press and hold SK1 for more than half a second.
 
 Long hold Orange announces the current battery level.
@@ -126,9 +125,13 @@ If you wish to make the VFO settings more permanent, you can then save these set
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
 
 Options Mode:
-There is now a new Options mode on the GD77S. Cycle to it using the Orange button like all other modes. All global modes have been moved from the Orange function cycle to this new mode. In this new mode, similar to the Keypad mode, the channel knob is used to select the option and SK1 and SK2 are used to change the option's values. Long hold SK1 repeats the current option and its value, and long hold SK2 resets the option to its factory default.
-This Mode contains the following options:
+Since there are only 16 physical knob positions on the GD77S, the options have been divided into Options 1 and Options 2 menus.
+Cycle to one of these modes using the Orange button like all other modes. In this new mode, similar to the Keypad mode, the channel knob is used to select the option and SK1 and SK2 are used to change the option's values. Long hold SK1 repeats the current option and its value, and long hold SK2 resets the option to its factory default.
+These Modes contain the following options:
+
+Options1:
 * Master Power,
+* Band Limits,
 * FM Mic Gain,
 * DMR Mic Gain,
 * FM Beep,
@@ -137,27 +140,25 @@ This Mode contains the following options:
 * DTMF Volume,
 * VHF master Squelch,
 * UHF master Squelch,
+* CSS Tail Elimination,
 * TOT master (needed for PTT latch),
-* PTT Latch,
+* PTT Latch, (Enable TOT (timeout timer. Note that PTT Latch will not work without a Timeout defined. This is by design. Also, when PTT Latch is enabled, like on the GD77, beeps are automatically enabled when you press and release PTT so you know when transmission has started and stopped)
 * Eco Level (5 levels of battery save mode),
-* Vox Threshold,
-* Vox Tail,
 * AutoZone,
 * Firmware Info.
 
-PTT Latch support has been added to the GD77S. Enable TOT (timeout timer) and PTT Latch from the Options mode. Note that PTT Latch will not work without a Timeout defined. This is by design. Also, when PTT Latch is enabled, like on the GD77, beeps are automatically enabled when you press and release PTT so you know when transmission has started and stopped.
+Options 2 contains:
+* Vox Threshold,
+* Vox Tail,
+* Volume (10 to 100), 
+* Rate (1 to 10), 
+* Phonetic spell (on/off), 
+* DMR ID announcement (on/off), 
+* Record prompt mode (PTT Prompt), (see below), 
+* Review Prompt (All Prompt) (see below),
+* Edit start, and 
+* Edit end (see below).
 
-Voice Options Mode:
-Similar to the Options mode, a new Voice Options mode has been added to the radio, i.e. the knob selects the option, SK1 increments the option, SK2 decrements the option, long hold SK1 repeats the option and its value, and long hold SK2 sets the option to its default.
-The options in this menu include:
-volume (10 to 100), 
-rate (1 to 10), 
-phonetic spell (on/off), 
-DMR ID announcement (on/off), 
-record prompt mode (PTT Prompt), (see below), 
-Review Prompt (All Prompt) (see below),
-edit start, and 
-edit end (see below).
 In volume and rate modes, the name of the voice is spoken as part of the prompt name.
 
 In the Record prompt mode, ptt will not transmit, it will only encode a voice prompt. This makes it easier to record voice prompts since you do not need to hold down two keys like on the GD77. 
