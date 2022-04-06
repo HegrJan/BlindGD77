@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-5 April 2022:
+6 April 2022:
 Warning, warning, warning!
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Changed default scan hold time to 10 seconds (by popular demand).
@@ -25,24 +25,24 @@ Please note! You will need to update your voice prompts. This will not overwrite
 3. When the radio is set to transmit a CTCSS or DCS tone, the other station would always hear a squelch tail when you release PTT. I've now eliminated this via a new option. When you release PTT, if a tone is being transmitted, we stop transmitting the tone or code and keep transmitting the carrier for a specified tail time. This gives the receiver time to detect the absence of the tone or code and shut off its amplifier. If using DCS, we send a 136.5 tone. This is an option called CSS Tail in the Options menu. You can set it to off, or in increments of 50 ms up to 500 ms. It defaults to 350 ms which is the time it takes for the MD9600 to respond without a squelch crash. A new voice prompt was added for this option so please update your voice prompts.
 4. Added new End RX Beep option to Sound options menu by request. This will play a beep when the radio stops receiving a signal. This is most useful in DMR mode when it is not obvious when the channel becomes free. The option has 4 values: off, DMR, FM and Both. 
 5. Fixed PTT latch so that if Busy Channel Lockout (BCL) is enabled, pressing PTT while a signal is being received won't latch the PTT.
- 6. Since the GD77S already has the ability to toggle band limits on power on (see AccessibleGD77S quick start guide), I took that option out of the Options menu and added the RX End Beep (by request).
-7. Fixed some display corruption in the Sound Options Menu.
-8. Hopefully fixed the DMR ID announcement feature which was fixed in the last release to not speak signals on the wrong timeslot when using a repeater, but it broke the feature on simplex.
-9. On the GD77S, Extra long hold SK2 would not go to the next channel bank channel if the current channel+16 was the very last channel in the zone.
-10. On the GD77S, you could not modify the very last channel in the zone, if you attempted to, a new channel would be added instead of modifying the last one.  
-11. When modifying a channel on the GD77S, we now maintain the name rather than overwriting it. We only overwrite if adding a new channel.
-12. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
-13. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.) Please note, you must update your CPS to the one in this archive otherwise if you try import from your radio and there is a contact with a P in their DTMF code, the old CPS would crash.
-14. There is now a new version of the CPS installer called AccessibleGD77CPSInstaller.exe. this must be installed prior to attempting to use the new pause feature in DTMF contacts as the old CPS did not support the P for pause and would crash. (Thanks to OK1TE for fixing this and preparing the installer).
-15. Fixed issue on GD77S with color codes when using the VFO. Steps to repro:
+6. . Fixed some display corruption in the Sound Options Menu.
+7. Hopefully fixed the DMR ID announcement feature which was fixed in the last release to not speak signals on the wrong timeslot when using a repeater, but it broke the feature on simplex.
+8. On the GD77S, Extra long hold SK2 would not go to the next channel bank channel if the current channel+16 was the very last channel in the zone.
+9. On the GD77S, you could not modify the very last channel in the zone, if you attempted to, a new channel would be added instead of modifying the last one.  
+10. When modifying a channel on the GD77S, we now maintain the name rather than overwriting it. We only overwrite if adding a new channel.
+11. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
+12. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.) Please note, you must update your CPS to the one in this archive otherwise if you try import from your radio and there is a contact with a P in their DTMF code, the old CPS would crash.
+13. There is now a new version of the CPS installer called AccessibleGD77CPSInstaller.exe. this must be installed prior to attempting to use the new pause feature in DTMF contacts as the old CPS did not support the P for pause and would crash. (Thanks to OK1TE for fixing this and preparing the installer).
+14. Fixed issue on GD77S with color codes when using the VFO. Steps to repro:
     a. Use virtual keypad to enter a frequency.
     b. Use virtual keypad to set mode to DMR.
     c. Because no cc had been set, it would default to 0 rather than the radio's default.
     d. If you tried changing it with cc menu, it would change the rx color but not the tx color so as soon as you pressed ptt, it would be reset to 0.
     We now properly set both rx and tx color when setting up the vfo from the virtual keypad.
     Also, when you use the cc menu to change the color code, it changes both the rx and tx color code.
-16. Increased the maximum number of voice prompts from 320 to 350. Please update your voice prompts!
-  17. Added back in user dictionary words (will match case insensitive) including:
+15. Increased the maximum number of builtin voice prompts from 320 to 350. Please update your voice prompts!
+16. Reorganized the GD77S options into Options1 and Options2, to allow easier addition of future options. I also added the CSS Tail Elimination option and put back band limits which were removed earlier in the beta cycle.
+17. Added back in user dictionary words (will match case insensitive) including:
   17.1 hotspot
 17.2 clearnode
 17.3 sharinode
@@ -52,7 +52,6 @@ Please note! You will need to update your voice prompts. This will not overwrite
 17.7 blindhams
 17.8 allstar
 17.9 parrot
-
 
 22 February 2022
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
