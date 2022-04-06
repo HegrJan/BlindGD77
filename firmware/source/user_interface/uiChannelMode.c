@@ -53,44 +53,41 @@ typedef enum
 	GD77S_UIMODE_CC,
 	GD77S_UIMODE_FILTER,
 	GD77S_UIMODE_VOX,
-	GD77S_UIMODE_VOICE_OPTIONS,
-	GD77S_UIMODE_GLOBAL_OPTIONS,
+	GD77S_UIMODE_OPTIONS1,
+	GD77S_UIMODE_OPTIONS2,
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
 
 typedef enum
 {
 	GD77S_OPTION_POWER,
+	GD77S_OPTION_BAND_LIMITS,
 	GD77S_OPTION_FM_MIC_GAIN,
 	GD77S_OPTION_DMR_MIC_GAIN,
+	GD77S_OPTION_VHF_SQUELCH,
+	GD77S_OPTION_UHF_SQUELCH,
+	GD77S_OPTION_CSS_TAIL_ELIM,
 	GD77S_OPTION_FM_BEEP,
 	GD77S_OPTION_DMR_BEEP,
 	GD77S_OPTION_RX_END_BEEP,
 	GD77S_OPTION_DTMF_VOL,
-	GD77S_OPTION_VHF_SQUELCH,
-	GD77S_OPTION_UHF_SQUELCH,
 	GD77S_OPTION_TOT_MASTER,
 	GD77S_OPTION_PTT_LATCH,
 	GD77S_OPTION_ECO,
-	GD77S_OPTION_VOX_THRESHOLD,
-	GD77S_OPTION_VOX_TAIL,
 	GD77S_OPTION_AUTOZONE,
 	GD77S_OPTION_FIRMWARE_INFO,
+	GD77S_OPTION_VOX_THRESHOLD,
+	GD77S_OPTION_VOX_TAIL,
+	GD77S_OPTION_VOLUME,
+	GD77S_OPTION_RATE,
+	GD77S_OPTION_PHONETIC_SPELL,
+	GD77S_OPTION_DMR_ID_ANNOUNCE,
+	GD77S_OPTION_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
+	GD77S_OPTION_CUSTOM_PROMPT_REVIEW,
+	GD77S_OPTION_EDIT_START,
+	GD77S_OPTION_EDIT_END,
 	GD77S_OPTION_MAX
-} GD77S_OPTIONS_t;
-
-typedef enum
-{
-	GD77S_VOICE_VOLUME,
-	GD77S_VOICE_RATE,
-	GD77S_VOICE_PHONETIC_SPELL,
-	GD77S_VOICE_DMR_ID_ANNOUNCE,
-	GD77S_VOICE_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
-	GD77S_VOICE_CUSTOM_PROMPT_REVIEW,
-	GD77S_VOICE_EDIT_START,
-	GD77S_VOICE_EDIT_END,
-	GD77S_VOICE_MAX
-} GD77S_VOICE_OPTIONS_t;
+} 	GD77S_OPTIONS_t;
 
 typedef struct
 {
@@ -103,7 +100,7 @@ typedef struct
 	uint8_t autoZoneTypeIndex;// when setting up autozones
 	uint8_t channelbankOffset; // GD77S only has 16 physical channels thus this is useed to access banks of   16 channels in an autozone with more than 16.
 	bool cycleFunctionsInReverse;
-	uint8_t option; // used in Options  and voiceOptions modes.
+	uint8_t option; // used in Options modes.
 	// the next two fields are used for autodialer feature.
 	uint16_t dialedChannels; // bit 0 ch1, bit 1 ch2, ... bit 15 ch 16.
 	uint16_t dialedZones; // bit 0 zone 1, bit 1 zone 2, ... bit 15 zone 16.
@@ -359,8 +356,8 @@ static bool ModeUsesChannelKnob()
 	switch (GD77SParameters.uiMode)
 	{
 	case GD77S_UIMODE_KEYPAD:
-	case GD77S_UIMODE_VOICE_OPTIONS:
-	case GD77S_UIMODE_GLOBAL_OPTIONS:
+	case GD77S_UIMODE_OPTIONS1:
+	case GD77S_UIMODE_OPTIONS2:
 	return true;
 	default:
 	break;
@@ -3458,7 +3455,7 @@ static void ClearGD77sKeypadBuffer(void)
 	soundSetMelody(MELODY_KEY_LONG_BEEP);
 }
 
-static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPriorPromptInProgress)
+static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPriorPromptInProgress)
 {
 	bool voicePromptWasPlaying = alwaysAnnounceOptionName ? false : voicePromptsIsPlaying();
 
@@ -3469,42 +3466,42 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 	bool announceVoiceName=false;
 	switch (GD77SParameters.option)
 	{
-	case 	GD77S_VOICE_VOLUME:
+	case 		GD77S_OPTION_VOLUME:
 		vpString = (char * const *)&currentLanguage->voice_prompt_vol;
 		snprintf(buf, 5, "%d%%", nonVolatileSettings.voicePromptVolumePercent);
 		announceVoiceName=true;
 		break;
-	case GD77S_VOICE_RATE:
+	case 	GD77S_OPTION_RATE:
 		vpString = (char * const *)&currentLanguage->voice_prompt_rate;
 		snprintf(buf, 5, "%d", nonVolatileSettings.voicePromptRate+1);
 		announceVoiceName=true;
 		break;
-	case GD77S_VOICE_PHONETIC_SPELL:
+	case 	GD77S_OPTION_PHONETIC_SPELL:
 		vpString = (char * const *)&currentLanguage->phoneticSpell;
 		if (settingsIsOptionBitSet(BIT_PHONETIC_SPELL))
 			vpValueString= (char * const *)&currentLanguage->on;
 		else
 			vpValueString= (char * const *)&currentLanguage->off;
 		break;
-	case GD77S_VOICE_DMR_ID_ANNOUNCE:
+	case 	GD77S_OPTION_DMR_ID_ANNOUNCE:
 		vpString = (char * const *)&currentLanguage->dmr_id;
 		if (settingsIsOptionBitSet(BIT_ANNOUNCE_LASTHEARD))
 			vpValueString= (char * const *)&currentLanguage->on;
 		else
 			vpValueString= (char * const *)&currentLanguage->off;
 		break;
-	case GD77S_VOICE_CUSTOM_PROMPT_REVIEW:
-	case GD77S_VOICE_CUSTOM_PROMPT_RECORD:
+	case 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW:
+	case 	GD77S_OPTION_CUSTOM_PROMPT_RECORD:
 		vpString = (char * const *)&currentLanguage->audio_prompt;
 		break;
-	case GD77S_VOICE_EDIT_START:
+	case 	GD77S_OPTION_EDIT_START:
 		vpString = (char * const *)&currentLanguage->start;
 		break;
-	case GD77S_VOICE_EDIT_END:
+	case 	GD77S_OPTION_EDIT_END:
 		vpString = (char * const *)&currentLanguage->end;
 		break;
 	default:
-		break;
+		return false;
 	}
 	if (clearPriorPromptInProgress)
 	voicePromptsInit();
@@ -3512,12 +3509,12 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 	{
 		if (announceVoiceName)
 			voicePromptsAppendPrompt(PROMPT_VOICE_NAME);
-		if (GD77SParameters.option == GD77S_VOICE_EDIT_START || GD77SParameters.option == GD77S_VOICE_EDIT_END)
+		if (GD77SParameters.option == 	GD77S_OPTION_EDIT_START || GD77SParameters.option == 	GD77S_OPTION_EDIT_END)
 			voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
 		// distinguish between ptt prompt record mode and prompt review mode.
-		if (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_RECORD)
+		if (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_RECORD)
 			voicePromptsAppendLanguageString(&currentLanguage->ptt);
-		if (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_REVIEW)
+		if (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW)
 			voicePromptsAppendLanguageString(&currentLanguage->all);
 
 		if (vp != NUM_VOICE_PROMPTS)
@@ -3534,17 +3531,20 @@ static void AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 	{
 		if (buf[0])
 			voicePromptsAppendString(buf);
-		if ((GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
+		if ((GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
 		{
 			voicePromptsAppendInteger(GD77SParameters.customPromptIndex);
 			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM + GD77SParameters.customPromptIndex);
 		}
 	}
 	voicePromptsPlay();
+	return true;
 }
 
-static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearPriorPromptInProgress)
+static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPromptInProgress)
 {
+	if (AnnounceGD77sVoiceOption( alwaysAnnounceOptionName,  clearPriorPromptInProgress))
+		return;
 	bool voicePromptWasPlaying = alwaysAnnounceOptionName ? false : voicePromptsIsPlaying();
 	if (clearPriorPromptInProgress)
 		voicePromptsInit();
@@ -3556,9 +3556,25 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 		case GD77S_OPTION_POWER:
 			announcePowerLevel(voicePromptWasPlaying);
 			break;
-		case GD77S_OPTION_ECO:
-			announceEcoLevel(voicePromptWasPlaying);
+		case GD77S_OPTION_BAND_LIMITS:
+		{
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->band_limits);
+			switch(nonVolatileSettings.txFreqLimited)
+			{
+				case BAND_LIMITS_NONE:
+					voicePromptsAppendLanguageString(&currentLanguage->off);
+					break;
+				case BAND_LIMITS_ON_LEGACY_DEFAULT:
+					voicePromptsAppendLanguageString(&currentLanguage->on);
+					break;
+				case BAND_LIMITS_FROM_CPS:
+					strcpy(rightSideVar,"CPS");
+					voicePromptsAppendString(rightSideVar);
+					break;
+			}
 			break;
+		}
 		case GD77S_OPTION_FM_MIC_GAIN:
 			announceMicGain(voicePromptWasPlaying==false, true, false);
 			break;
@@ -3576,6 +3592,65 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 				voicePromptsAppendLanguageString(&currentLanguage->squelch_UHF);
 			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] - 1) * 5);// 5% steps
 			voicePromptsAppendString(rightSideVar);
+			break;
+		case GD77S_OPTION_CSS_TAIL_ELIM:
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->css_tail);
+			if (nonVolatileSettings.ctcssSqlTail > 0)
+			{
+				voicePromptsAppendInteger(nonVolatileSettings.ctcssSqlTail*10);
+				voicePromptsAppendPrompt(PROMPT_MILLISECONDS);
+			}
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			break;
+		case GD77S_OPTION_FM_BEEP:
+		case GD77S_OPTION_DMR_BEEP:
+		{
+			const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
+			bool dmrBeep=GD77SParameters.option==GD77S_OPTION_DMR_BEEP;
+			
+			if (dmrBeep)
+				strcpy(rightSideVar, "DMR");
+			else
+				strcpy(rightSideVar, "FM");
+			voicePromptsAppendString(rightSideVar);
+			voicePromptsAppendLanguageString(&currentLanguage->beep);
+			if (dmrBeep)
+				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions&(BEEP_TX_START+BEEP_TX_STOP)]);
+			else
+				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions>>2]);
+			break;
+		}
+		case GD77S_OPTION_RX_END_BEEP:
+		{
+			if (!voicePromptWasPlaying)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->end);
+				voicePromptsAppendPrompt(PROMPT_RECEIVE);
+				voicePromptsAppendLanguageString(&currentLanguage->beep);
+			}
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_OFF)
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_DMR)
+				voicePromptsAppendPrompt(PROMPT_DMR);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_FM)
+				voicePromptsAppendPrompt(PROMPT_FM);
+			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_BOTH)
+				voicePromptsAppendLanguageString(&currentLanguage->both);
+			break;
+		}
+		case GD77S_OPTION_DTMF_VOL:
+			voicePromptsAppendLanguageString(&currentLanguage->dtmf_vol);
+			if (nonVolatileSettings.dtmfVol > 0)
+			{
+				snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol);
+				voicePromptsAppendString(rightSideVar);
+			}
+			else
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->off);
+			}
 			break;
 		case GD77S_OPTION_TOT_MASTER:
 			if (!voicePromptWasPlaying)
@@ -3596,6 +3671,9 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 			else
 				voicePromptsAppendLanguageString(&currentLanguage->off);
 			break;
+		case GD77S_OPTION_ECO:
+			announceEcoLevel(voicePromptWasPlaying);
+			break;
 		case GD77S_OPTION_AUTOZONE:
 			if (!voicePromptWasPlaying)
 				voicePromptsAppendLanguageString(&currentLanguage->autoZone);
@@ -3606,55 +3684,25 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 			else
 				voicePromptsAppendLanguageString(&currentLanguage->off);
 			break;
-		case GD77S_OPTION_RX_END_BEEP:
-		{
-			if (!voicePromptWasPlaying)
-			{
-				voicePromptsAppendLanguageString(&currentLanguage->end);
-				voicePromptsAppendPrompt(PROMPT_RECEIVE);
-				voicePromptsAppendLanguageString(&currentLanguage->beep);
-			}
-			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_OFF)
-				voicePromptsAppendLanguageString(&currentLanguage->off);
-			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_DMR)
-				voicePromptsAppendPrompt(PROMPT_DMR);
-			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_FM)
-				voicePromptsAppendPrompt(PROMPT_FM);
-			if (nonVolatileSettings.endRXBeep==END_RX_BEEP_BOTH)
-				voicePromptsAppendLanguageString(&currentLanguage->both);
-			break;
-		}
-		case GD77S_OPTION_FM_BEEP:
-		case GD77S_OPTION_DMR_BEEP:
-		{
-			const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
-			bool dmrBeep=GD77SParameters.option==GD77S_OPTION_DMR_BEEP;
-			
-			if (dmrBeep)
-				strcpy(rightSideVar, "DMR");
-			else
-				strcpy(rightSideVar, "FM");
+		case GD77S_OPTION_FIRMWARE_INFO:
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "[ %s", GITVERSION);
+			rightSideVar[9] = 0; // git hash id 7 char long;
+			strcat(rightSideVar, (uiDataGlobal.dmrDisabled ? " F ]" : " D ]"));
+			voicePromptsAppendLanguageString(&currentLanguage->firmware_info);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendLanguageString(&currentLanguage->openGD77S);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendLanguageString(&currentLanguage->built);
+			voicePromptsAppendString(__TIME__);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendString(__DATE__);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendPrompt(PROMPT_SILENCE);
+			voicePromptsAppendLanguageString(&currentLanguage->gitCommit);
 			voicePromptsAppendString(rightSideVar);
-			voicePromptsAppendLanguageString(&currentLanguage->beep);
-			if (dmrBeep)
-				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions&(BEEP_TX_START+BEEP_TX_STOP)]);
-			else
-				voicePromptsAppendLanguageString( (const char * const *)beepTX[nonVolatileSettings.beepOptions>>2]);
 			break;
-		}
-		case GD77S_OPTION_DTMF_VOL:
-			voicePromptsAppendLanguageString(&currentLanguage->dtmf_vol);
-			if (nonVolatileSettings.dtmfVol > 0)
-			{
-				snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfVol);
-				voicePromptsAppendString(rightSideVar);
-			}
-			else
-			{
-				voicePromptsAppendLanguageString(&currentLanguage->off);
-			}
-			break;
-		case 	GD77S_OPTION_VOX_THRESHOLD:
+					case 	GD77S_OPTION_VOX_THRESHOLD:
 			voicePromptsAppendLanguageString(&currentLanguage->vox_threshold);
 			if (nonVolatileSettings.voxThreshold > 0)
 			{
@@ -3681,42 +3729,10 @@ static void AnnounceGD77SGlobalOption(bool alwaysAnnounceOptionName, bool clearP
 				voicePromptsAppendLanguageString(&currentLanguage->n_a);
 			}
 			break;
-		case GD77S_OPTION_FIRMWARE_INFO:
-			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "[ %s", GITVERSION);
-			rightSideVar[9] = 0; // git hash id 7 char long;
-			strcat(rightSideVar, (uiDataGlobal.dmrDisabled ? " F ]" : " D ]"));
-			voicePromptsAppendLanguageString(&currentLanguage->firmware_info);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendLanguageString(&currentLanguage->openGD77S);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendLanguageString(&currentLanguage->built);
-			voicePromptsAppendString(__TIME__);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendString(__DATE__);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendPrompt(PROMPT_SILENCE);
-			voicePromptsAppendLanguageString(&currentLanguage->gitCommit);
-			voicePromptsAppendString(rightSideVar);
-			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
 	voicePromptsPlay();
-}
-
-static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPromptInProgress)
-{
-	if (GD77SParameters.uiMode == GD77S_UIMODE_GLOBAL_OPTIONS)
-	{
-		AnnounceGD77SGlobalOption( alwaysAnnounceOptionName,  clearPriorPromptInProgress);
-		return;
-	}
-	if (GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS)
-	{
-		AnnounceGD77sVoiceOption(alwaysAnnounceOptionName, clearPriorPromptInProgress);
-		return;
-	}
 }
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
@@ -3817,10 +3833,8 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 			else
 				voicePromptsAppendLanguageString(&currentLanguage->off);
 			break;
-		case GD77S_UIMODE_VOICE_OPTIONS:
-			AnnounceGD77sVoiceOption(true, false);
-			break;
-		case GD77S_UIMODE_GLOBAL_OPTIONS:
+		case GD77S_UIMODE_OPTIONS1:
+		case GD77S_UIMODE_OPTIONS2:
 			AnnounceGD77SOption(true, false);
 			break;
 		case GD77S_UIMODE_MAX:
@@ -4262,8 +4276,123 @@ static void SaveGD77SAutoZoneParams()
 	settingsSetDirty();
 }
 
+static bool SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decrement
+{
+	switch (GD77SParameters.option)
+	{
+		case 		GD77S_OPTION_VOLUME:
+		{
+			if ((dir > 0) && (nonVolatileSettings.voicePromptVolumePercent < 100))
+			{
+				settingsIncrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+			}
+			else if ((dir < 0) && (nonVolatileSettings.voicePromptVolumePercent > 15))
+			{
+				settingsDecrement(nonVolatileSettings.voicePromptVolumePercent, 5);
+			}
+			else if (dir==0)
+			{
+				settingsSet(nonVolatileSettings.voicePromptVolumePercent, 100);
+			}	
+			break;
+		}
+		case 	GD77S_OPTION_RATE:
+		{
+			if ((dir > 0) && (nonVolatileSettings.voicePromptRate < 9))
+			{
+				settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
+			}
+			else if ((dir < 0) && (nonVolatileSettings.voicePromptRate > 0))
+			{
+				settingsDecrement(nonVolatileSettings.voicePromptRate, 1);
+			}
+			else if (dir == 0)
+			{
+				settingsSet(nonVolatileSettings.voicePromptRate, 0);
+			}	
+			break;
+		}
+		case 	GD77S_OPTION_PHONETIC_SPELL:
+		{
+			if (dir > 0)
+				settingsSetOptionBit(BIT_PHONETIC_SPELL, true);
+			else
+				settingsSetOptionBit(BIT_PHONETIC_SPELL, false);
+			break;
+		}
+		case 	GD77S_OPTION_DMR_ID_ANNOUNCE:
+		{
+			if (dir > 0)
+				settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, true);
+			else
+				settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
+			break;
+		}
+		case 	GD77S_OPTION_CUSTOM_PROMPT_RECORD:
+		{
+			if (dir > 0)
+			{
+				ReplayDMR();
+			}
+			else if (dir < 0)
+			{
+				voicePromptsEditAutoTrim();
+			}
+			else
+			{// save to next available slot.
+				GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
+				SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, NULL);
+			}
+			return true; // do not break or the announce at the bottom will kill the replay.	
+		}
+		case 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW:
+		{
+			if (dir > 0)
+			{
+				if (GD77SParameters.customPromptIndex < GetMaxCustomVoicePrompts())
+					GD77SParameters.customPromptIndex++;
+			}
+			else if (dir < 0)
+			{
+				if (GD77SParameters.customPromptIndex > 1)
+					GD77SParameters.customPromptIndex--;
+			}
+			else
+			{
+				voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
+				ReplayDMR();
+				return true; // return so that announce at bottom won't clobber replay.
+			}
+			break;	
+		}
+		case 	GD77S_OPTION_EDIT_START:
+		case 	GD77S_OPTION_EDIT_END:
+		{
+			bool editingStart=GD77SParameters.option==	GD77S_OPTION_EDIT_START;
+			if (dir != 0)
+			{
+				if (!editingStart)
+					dir=-dir; // need to switch the direction if editing the end.
+				voicePromptsAdjustEnd(editingStart, dir < 0 ? -1 : 1, false);
+			}
+			else
+			{
+				voicePromptsAdjustEnd(editingStart, 0, true);
+			}
+			return true; // do not break or the announce at the bottom will interrupt the announcement of the edit.
+		}
+		default:
+			return false;
+	}
+	AnnounceGD77sVoiceOption(false, true);
+	return true;
+}
+
 static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decrement
 {
+	if (SetGD77S_VoiceOption(dir))
+		return;
+	
 	switch (GD77SParameters.option)
 	{
 		case GD77S_OPTION_POWER:
@@ -4278,27 +4407,24 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 				trxSetPowerFromLevel(nonVolatileSettings.txPowerLevel);
 			}
 			break;
-		case GD77S_OPTION_ECO:
+		case GD77S_OPTION_BAND_LIMITS:
 			if (dir > 0)
 			{
-				if (nonVolatileSettings.ecoLevel < ECO_LEVEL_MAX)
+				if (nonVolatileSettings.txFreqLimited < BAND_LIMITS_FROM_CPS)
 				{
-					settingsIncrement(nonVolatileSettings.ecoLevel, 1);
-					rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+					settingsIncrement(nonVolatileSettings.txFreqLimited, 1);
 				}
 			}
 			else if (dir < 0)
 			{
-				if (nonVolatileSettings.ecoLevel > 0)
+				if (nonVolatileSettings.txFreqLimited > BAND_LIMITS_NONE)
 				{
-					settingsDecrement(nonVolatileSettings.ecoLevel, 1);
-					rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+					settingsDecrement(nonVolatileSettings.txFreqLimited, 1);
 				}
 			}
 			else
 			{
-				nonVolatileSettings.ecoLevel = 1;
-				rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+				nonVolatileSettings.txFreqLimited =BAND_LIMITS_NONE;
 			}
 			break;
 		case GD77S_OPTION_FM_MIC_GAIN:
@@ -4369,61 +4495,26 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			{
 				nonVolatileSettings.squelchDefaults[band]=10u;
 			}
+			break;
 		}
-		case GD77S_OPTION_TOT_MASTER:
+		case GD77S_OPTION_CSS_TAIL_ELIM:
+		{
 			if (dir > 0)
 			{
-				if (nonVolatileSettings.totMaster < 255)
-				{
-					settingsIncrement(nonVolatileSettings.totMaster,1);
-				}
+				if (nonVolatileSettings.ctcssSqlTail < 50)
+					settingsIncrement(nonVolatileSettings.ctcssSqlTail, 5);
 			}
 			else if (dir < 0)
 			{
-				if (nonVolatileSettings.totMaster > 0)
-				{
-					settingsDecrement(nonVolatileSettings.totMaster,1);
-				}
+				if (nonVolatileSettings.ctcssSqlTail > 0)
+					settingsDecrement(nonVolatileSettings.ctcssSqlTail, 5);
 			}
 			else
 			{
-				nonVolatileSettings.totMaster=0;
+				settingsSet(nonVolatileSettings.ctcssSqlTail,35);
 			}
 			break;
-		case GD77S_OPTION_PTT_LATCH:
-			if (dir > 0)
-			{
-				if (settingsIsOptionBitSet(BIT_PTT_LATCH) == false)
-				{
-					settingsSetOptionBit(BIT_PTT_LATCH, true);
-				}
-			}
-			else if (dir < 0)
-			{
-				if (settingsIsOptionBitSet(BIT_PTT_LATCH))
-				{
-					settingsSetOptionBit(BIT_PTT_LATCH, false);
-				}
-			}
-			else
-			{
-				settingsSetOptionBit(BIT_PTT_LATCH, false);
-			}
-			break;
-		case GD77S_OPTION_RX_END_BEEP:
-			if ((dir > 0) && (nonVolatileSettings.endRXBeep < END_RX_BEEP_BOTH))
-			{
-				settingsIncrement(nonVolatileSettings.endRXBeep, 1);
-			}
-			else if ((dir < 0) && (nonVolatileSettings.endRXBeep > END_RX_BEEP_OFF))
-			{
-				settingsDecrement(nonVolatileSettings.endRXBeep, 1);
-			}
-			else if (dir ==0)
-			{
-				settingsSet(nonVolatileSettings.endRXBeep, 0);
-			}
-			break;
+		}
 		case GD77S_OPTION_FM_BEEP:
 		case GD77S_OPTION_DMR_BEEP:
 		{
@@ -4472,6 +4563,20 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			settingsSet(nonVolatileSettings.beepOptions, ((fmBeepOptions<<2)|dmrBeepOptions));
 			break;
 		}
+		case GD77S_OPTION_RX_END_BEEP:
+			if ((dir > 0) && (nonVolatileSettings.endRXBeep < END_RX_BEEP_BOTH))
+			{
+				settingsIncrement(nonVolatileSettings.endRXBeep, 1);
+			}
+			else if ((dir < 0) && (nonVolatileSettings.endRXBeep > END_RX_BEEP_OFF))
+			{
+				settingsDecrement(nonVolatileSettings.endRXBeep, 1);
+			}
+			else if (dir ==0)
+			{
+				settingsSet(nonVolatileSettings.endRXBeep, 0);
+			}
+			break;
 		case GD77S_OPTION_DTMF_VOL:
 		{
 			if (dir > 0)
@@ -4490,6 +4595,90 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			}
 			break;
 		}
+		case GD77S_OPTION_TOT_MASTER:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.totMaster < 255)
+				{
+					settingsIncrement(nonVolatileSettings.totMaster,1);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.totMaster > 0)
+				{
+					settingsDecrement(nonVolatileSettings.totMaster,1);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.totMaster=0;
+			}
+			break;
+		case GD77S_OPTION_PTT_LATCH:
+			if (dir > 0)
+			{
+				if (settingsIsOptionBitSet(BIT_PTT_LATCH) == false)
+				{
+					settingsSetOptionBit(BIT_PTT_LATCH, true);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (settingsIsOptionBitSet(BIT_PTT_LATCH))
+				{
+					settingsSetOptionBit(BIT_PTT_LATCH, false);
+				}
+			}
+			else
+			{
+				settingsSetOptionBit(BIT_PTT_LATCH, false);
+			}
+			break;
+		case GD77S_OPTION_ECO:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.ecoLevel < ECO_LEVEL_MAX)
+				{
+					settingsIncrement(nonVolatileSettings.ecoLevel, 1);
+					rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.ecoLevel > 0)
+				{
+					settingsDecrement(nonVolatileSettings.ecoLevel, 1);
+					rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+				}
+			}
+			else
+			{
+				nonVolatileSettings.ecoLevel = 1;
+				rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
+			}
+			break;
+		case GD77S_OPTION_FIRMWARE_INFO:
+			break;
+		case GD77S_OPTION_AUTOZONE:
+			if (dir > 0)
+			{
+				if (GD77SParameters.autoZoneTypeIndex < AutoZone_TYPE_MAX-1)
+					GD77SParameters.autoZoneTypeIndex++;
+				else
+					GD77SParameters.autoZoneTypeIndex=1;
+			}
+			else if (dir < 0)
+			{
+				bool isBitSet=IsBitSet(nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex);
+				SetBit(&nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex, !isBitSet);
+			}
+			else
+			{
+				nonVolatileSettings.autoZonesEnabled=0;
+			}
+			SaveGD77SAutoZoneParams();
+			break;
 		case 	GD77S_OPTION_VOX_THRESHOLD:
 			if (dir > 0)
 			{
@@ -4536,176 +4725,26 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 				voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
 			}
 			break;
-		case GD77S_OPTION_FIRMWARE_INFO:
-			break;
-		case GD77S_OPTION_AUTOZONE:
-			if (dir > 0)
-			{
-				if (GD77SParameters.autoZoneTypeIndex < AutoZone_TYPE_MAX-1)
-					GD77SParameters.autoZoneTypeIndex++;
-				else
-					GD77SParameters.autoZoneTypeIndex=1;
-			}
-			else if (dir < 0)
-			{
-				bool isBitSet=IsBitSet(nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex);
-				SetBit(&nonVolatileSettings.autoZonesEnabled, GD77SParameters.autoZoneTypeIndex, !isBitSet);
-			}
-			else
-			{
-				nonVolatileSettings.autoZonesEnabled=0;
-			}
-			SaveGD77SAutoZoneParams();
-			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
 	AnnounceGD77SOption(false, true);
 }
 
-static void SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decrement
-{
-	switch (GD77SParameters.option)
-	{
-		case 	GD77S_VOICE_VOLUME:
-		{
-			if ((dir > 0) && (nonVolatileSettings.voicePromptVolumePercent < 100))
-			{
-				settingsIncrement(nonVolatileSettings.voicePromptVolumePercent, 5);
-			}
-			else if ((dir < 0) && (nonVolatileSettings.voicePromptVolumePercent > 15))
-			{
-				settingsDecrement(nonVolatileSettings.voicePromptVolumePercent, 5);
-			}
-			else if (dir==0)
-			{
-				settingsSet(nonVolatileSettings.voicePromptVolumePercent, 100);
-			}	
-			break;
-		}
-		case GD77S_VOICE_RATE:
-		{
-			if ((dir > 0) && (nonVolatileSettings.voicePromptRate < 9))
-			{
-				settingsIncrement(nonVolatileSettings.voicePromptRate, 1);
-			}
-			else if ((dir < 0) && (nonVolatileSettings.voicePromptRate > 0))
-			{
-				settingsDecrement(nonVolatileSettings.voicePromptRate, 1);
-			}
-			else if (dir == 0)
-			{
-				settingsSet(nonVolatileSettings.voicePromptRate, 0);
-			}	
-			break;
-		}
-		case GD77S_VOICE_PHONETIC_SPELL:
-		{
-			if (dir > 0)
-				settingsSetOptionBit(BIT_PHONETIC_SPELL, true);
-			else
-				settingsSetOptionBit(BIT_PHONETIC_SPELL, false);
-			break;
-		}
-		case GD77S_VOICE_DMR_ID_ANNOUNCE:
-		{
-			if (dir > 0)
-				settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, true);
-			else
-				settingsSetOptionBit(BIT_ANNOUNCE_LASTHEARD, false);
-			break;
-		}
-		case GD77S_VOICE_CUSTOM_PROMPT_RECORD:
-		{
-			if (dir > 0)
-			{
-				ReplayDMR();
-			}
-			else if (dir < 0)
-			{
-				voicePromptsEditAutoTrim();
-			}
-			else
-			{// save to next available slot.
-				GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
-				SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, NULL);
-			}
-			return; // do not break or the announce at the bottom will kill the replay.	
-		}
-		case GD77S_VOICE_CUSTOM_PROMPT_REVIEW:
-		{
-			if (dir > 0)
-			{
-				if (GD77SParameters.customPromptIndex < GetMaxCustomVoicePrompts())
-					GD77SParameters.customPromptIndex++;
-			}
-			else if (dir < 0)
-			{
-				if (GD77SParameters.customPromptIndex > 1)
-					GD77SParameters.customPromptIndex--;
-			}
-			else
-			{
-				voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
-				ReplayDMR();
-				return; // return so that announce at bottom won't clobber replay.
-			}
-			break;	
-		}
-		case GD77S_VOICE_EDIT_START:
-		case GD77S_VOICE_EDIT_END:
-		{
-			bool editingStart=GD77SParameters.option==GD77S_VOICE_EDIT_START;
-			if (dir != 0)
-			{
-				if (!editingStart)
-					dir=-dir; // need to switch the direction if editing the end.
-				voicePromptsAdjustEnd(editingStart, dir < 0 ? -1 : 1, false);
-			}
-			else
-			{
-				voicePromptsAdjustEnd(editingStart, 0, true);
-			}
-			return; // do not break or the announce at the bottom will interrupt the announcement of the edit.
-		}
-		default:
-			break;
-	}
-	AnnounceGD77sVoiceOption(false, true);
-}
-
-static void SetGD77S_Option(int dir)
-{ // 0 default, 1 increment, -1 decrement
-	if (GD77SParameters.uiMode==GD77S_UIMODE_GLOBAL_OPTIONS)
-	{
-		SetGD77S_GlobalOption(dir);
-		return;
-	}
-	if (GD77SParameters.uiMode== GD77S_UIMODE_VOICE_OPTIONS)
-	{
-		SetGD77S_VoiceOption(dir);
-		return;
-	}
-}
-
 static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 {
-	if ((GD77SParameters.uiMode!=GD77S_UIMODE_GLOBAL_OPTIONS) && (GD77SParameters.uiMode!=GD77S_UIMODE_VOICE_OPTIONS))
+	if ((GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS1) && (GD77SParameters.uiMode!=GD77S_UIMODE_OPTIONS2))
 		return false;
 	if (GD77SParameters.cycleFunctionsInReverse)
 		return false;
 	if (BUTTONCHECK_SHORTUP(ev, BUTTON_ORANGE))
 	{
-		if (GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS)
+		if (GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2)
 		{
 			if (voicePromptsGetEditMode())
 				voicePromptsSetEditMode(false);
 			encodingCustomVoicePrompt = false;
 
-			return false; // let main handler select the next mode.
-		}
-		else
-		{
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 				return false; // we're cycling in reverse, let the main handler handle this.
 			GD77SParameters.uiMode=GD77S_UIMODE_ZONE;
@@ -4718,17 +4757,19 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 			voicePromptsPlay();
 			return true;
 		}
+		return false; // let main handler increment.
 	}
 	if (ev->events & ROTARY_EVENT && ev->rotary > 0)
 	{
 		GD77SParameters.option=ev->rotary-1;
-		
+		if (GD77SParameters.uiMode==GD77S_UIMODE_OPTIONS2)
+			GD77SParameters.option+=16;
 		// See if we should enable or disable voice tag edit mode.
-		bool voiceTagEditMode = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && ((GD77SParameters.option >=GD77S_VOICE_EDIT_START) && (GD77SParameters.option <=GD77S_VOICE_EDIT_END)));
+		bool voiceTagEditMode = ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && ((GD77SParameters.option >=	GD77S_OPTION_EDIT_START) && (GD77SParameters.option <=	GD77S_OPTION_EDIT_END)));
 		if (voiceTagEditMode != voicePromptsGetEditMode())
 			voicePromptsSetEditMode(voiceTagEditMode);
 		// See if we should turn on decode mode where we record a voice prompt on PTT but do not tx.
-		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option == GD77S_VOICE_CUSTOM_PROMPT_RECORD));
+		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_RECORD));
 
 		AnnounceGD77SOption(true, true); // announce after setting edit mode as this prompt should trump the edit mode change prompt.
 
@@ -4737,7 +4778,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
 	{
 		// special case for editing a voice tag, replayDMR instead.
-		if ((GD77SParameters.uiMode == GD77S_UIMODE_VOICE_OPTIONS) && (GD77SParameters.option >=GD77S_VOICE_CUSTOM_PROMPT_RECORD && GD77SParameters.option <=GD77S_VOICE_EDIT_END))
+		if ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && (GD77SParameters.option >=	GD77S_OPTION_CUSTOM_PROMPT_RECORD && GD77SParameters.option <=	GD77S_OPTION_EDIT_END))
 			ReplayDMR();
 		else
 			AnnounceGD77SOption(true, true);  // repeat the current option and its value.
@@ -4753,7 +4794,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
 	{
-		SetGD77S_Option(0); // 0 means default.
+		SetGD77S_GlobalOption(0); // 0 means default.
 		keyboardReset();
 
 		return true;
@@ -4766,12 +4807,12 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
 	{
-		SetGD77S_Option(1); // 1 means increment if possible.
+		SetGD77S_GlobalOption(1); // 1 means increment if possible.
 		return true;
 	}
 	else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK2))
 	{
-		SetGD77S_Option(-1); // -1 means decrement if possible.
+		SetGD77S_GlobalOption(-1); // -1 means decrement if possible.
 		return true;
 	}
 	
@@ -4939,9 +4980,13 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_ZONE: // Zone Mode
 					vp = PROMPT_ZONE_MODE;
 					break;
-				case GD77S_UIMODE_GLOBAL_OPTIONS:
+				case GD77S_UIMODE_OPTIONS1:
 					vpString = (char * const *)&currentLanguage->options;
 					GD77SParameters.option=rotarySwitchGetPosition()-1;
+					break;
+				case GD77S_UIMODE_OPTIONS2:
+					vpString = (char * const *)&currentLanguage->options;
+					GD77SParameters.option=(rotarySwitchGetPosition()-1)+16;
 					break;
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
@@ -4949,10 +4994,6 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					break;
 				case GD77S_UIMODE_VOX:
 					vp = PROMPT_VOX;
-					break;
-				case GD77S_UIMODE_VOICE_OPTIONS:
-					vpString = (char * const *)&currentLanguage->audio_prompt;
-					GD77SParameters.option=rotarySwitchGetPosition()-1;
 					break;
 				case GD77S_UIMODE_MAX:
 					break;
@@ -4964,6 +5005,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				if (vpString)
 				{
 					voicePromptsAppendLanguageString((const char * const *)vpString);
+					if ((GD77SParameters.uiMode==GD77S_UIMODE_OPTIONS1) || (GD77SParameters.uiMode==GD77S_UIMODE_OPTIONS2))
+						voicePromptsAppendInteger(GD77SParameters.uiMode-GD77S_UIMODE_OPTIONS1+1);
 					voicePromptsAppendPrompt(PROMPT_MODE);
 				}
 				else
@@ -5130,8 +5173,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
 					voicePromptsPlay();
 					break;
-				case GD77S_UIMODE_VOICE_OPTIONS:
-				case GD77S_UIMODE_GLOBAL_OPTIONS:
+				case GD77S_UIMODE_OPTIONS1:
+				case GD77S_UIMODE_OPTIONS2:
 					break; // handled by its own handler. 
 				case GD77S_UIMODE_MAX:
 					break;
@@ -5353,8 +5396,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					buildSpeechUiModeForGD77S(GD77SParameters.uiMode);
 					voicePromptsPlay();
 					break;
-				case GD77S_UIMODE_VOICE_OPTIONS:
-				case GD77S_UIMODE_GLOBAL_OPTIONS:
+				case GD77S_UIMODE_OPTIONS1:
+				case GD77S_UIMODE_OPTIONS2:
 					break; // handled by its own handler. 
 				case GD77S_UIMODE_MAX:
 					break;
