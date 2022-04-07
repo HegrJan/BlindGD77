@@ -60,6 +60,7 @@ struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
 struct_codeplugContact_t contactListContactData;
 struct_codeplugDTMFContact_t contactListDTMFContactData;
+struct_codeplugDTMFContact_t lastDialledDTMFContact={0};
 struct_codeplugChannel_t settingsVFOChannel[2];// VFO A and VFO B from the codeplug.
 int settingsUsbMode = USB_MODE_CPS;
 

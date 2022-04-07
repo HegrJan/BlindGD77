@@ -922,6 +922,8 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 
 	if (!useChannelDataInMemory)
 	{
+		memset(&lastDialledDTMFContact, 0xffu, sizeof(lastDialledDTMFContact)); // loading a new channel, clear this out.
+
 		if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 		{
 			// All Channels virtual zone
@@ -3124,7 +3126,10 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 			uint8_t dtmfCodeBuffer[DTMF_CODE_MAX_LEN+1];
 			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, DTMF_CODE_MAX_LEN))
 			{
+				memset(&lastDialledDTMFContact, 0xffu, sizeof(lastDialledDTMFContact));
 				dtmfSequencePrepare(dtmfCodeBuffer, true);
+				memcpy(&lastDialledDTMFContact.code,&dtmfCodeBuffer, sizeof(lastDialledDTMFContact.code));
+
 				// We've dialled something, disable autodial.
 				DisableAutoDialerForCurrentChannelAndZone();
 				return true;
@@ -3151,6 +3156,8 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 				bool dialingContactForChannel = (GD77SParameters.uiMode != GD77S_UIMODE_DTMF_CONTACTS) && (onceOffChannelContactIndex > 0);
 	uint16_t contactIndex = dialingContactForChannel ? onceOffChannelContactIndex : GD77SParameters.dtmfListSelected + 1;
 				codeplugDTMFContactGetDataForNumber(contactIndex, &dtmfContact);
+				memcpy(&lastDialledDTMFContact, &dtmfContact, sizeof(lastDialledDTMFContact));
+
 				dtmfSequencePrepare(dtmfContact.code, true);
 				// We've dialed something, disable the autodial for this channel and zone.
 				DisableAutoDialerForCurrentChannelAndZone();

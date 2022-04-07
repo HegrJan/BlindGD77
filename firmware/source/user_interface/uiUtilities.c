@@ -2789,6 +2789,30 @@ dmrDbTextDecode((uint8_t*)&output, (uint8_t*)&compressedBuf, bytes);
 voicePromptsAppendStringEx(output,vpAnnounceCustomPrompts);
 }
 */
+
+static void announceLastDTMFContact(bool anouncePrompt)
+{
+	if (lastDialledDTMFContact.code[0]==0xff)
+		return; // no contact dialled recently.
+	
+	if (anouncePrompt)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->contact);
+	}
+	char buff[DTMF_CODE_MAX_LEN+1]; // DTMF may have 16 chars plus a null.
+
+	if (lastDialledDTMFContact.name[0]!=0 && lastDialledDTMFContact.name[0]!=0xff)
+	{
+		codeplugUtilConvertBufToString(lastDialledDTMFContact.name, buff, DTMF_CODE_MAX_LEN);
+	}
+	else
+	{
+		dtmfConvertCodeToChars(lastDialledDTMFContact.code, buff, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
+	}
+	voicePromptsAppendString(buff);	
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+}
+
 void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 {
 	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
@@ -2833,6 +2857,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	}
 	else
 	{
+		announceLastDTMFContact(!voicePromptWasPlaying);
 		bool rxAndTxTonesAreTheSame = (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
 		&& (currentChannelData->rxTone ==currentChannelData->txTone);
 		if (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
