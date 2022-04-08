@@ -56,12 +56,11 @@ Please note! You will need to update your voice prompts. This will not overwrite
 18.1. When you dial a contact from the DTMF contact list, the name of the contact is added to the summary on long hold SK1.
 18.2. When you manually dial a DTMF string (PTT plus keypad keys or virtual keypad on GD77S), the numbers and letters of the code are added to the summary on long hold SK1.
 18.3. If you change channels, the last contact is cleared .
-19. Enhanced the GD77S keypad mode to allow immediate access to VFO A, B or to temporarily odify the current channel.
 19.1. In the options 2 menu, there is now a Keypad Mode option. You can set this to VFO A, VFO B or Channel.
 19.2.	When you cycle the radio to Keypad mode with orange, it will now say keypad mode VFO A, or VFO B or the channel name, followed by the character you would be selecting.
 19.3.	If you set keypad mode to VFO A for instance, as soon as you cycle to keypad mode, VFO A is now active immediately. Similarly, if you had set keypad mode to VFO B, VFO B would be active. If set to channel, then whatever channel was active before is still active.
 19.4.	Extra long hold of sk1 in Keypad mode will now speak the summary of the active VFO or channel so you can figure out what is set without having to exit keypad mode to find out.
-19.5.	Long hold orange will save whatever you change back to either VFO a or VFO b as appropriate but saving to the current channel will only be temporal until you change the knob. If you wish to save to a channel permanently, you must use A1 through a16 command explicitly. The a0 or a command on its own has been removed as it is no longer necessary because it previously copied vfo A to channel but since you can now  explicitly make vfo A or B active, it isn’t needed.
+19.5.	Long hold orange will save whatever you change back to either VFO A or VFO B as appropriate but saving to the current channel will only be temporal until you change the knob. If you wish to save to a channel permanently, you must use A1 through a16 command explicitly. The a0 or a command on its own has been removed as it is no longer necessary because it previously recalled vfo A. Since you can now  explicitly make vfo A or B active, it isn’t needed.
 
 
 22 February 2022
