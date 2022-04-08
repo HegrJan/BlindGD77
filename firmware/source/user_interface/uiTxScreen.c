@@ -562,7 +562,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 		reason=TXSTOP_TIMEOUT;
 		keyboardReset();
 	}
-
+	manualDTMFCodeIndex=0; // reset for next time.
 	dtmfPTTLatch=false;
 	voicePromptsTerminate();
 	voicePromptsInit();
