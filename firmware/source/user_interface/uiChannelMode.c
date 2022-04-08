@@ -78,6 +78,7 @@ typedef enum
 	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_VOX_THRESHOLD,
 	GD77S_OPTION_VOX_TAIL,
+	GD77S_OPTION_KEYPAD_SOURCE, //  VFO_A, VFO_B, cur_channel
 	GD77S_OPTION_VOLUME,
 	GD77S_OPTION_RATE,
 	GD77S_OPTION_PHONETIC_SPELL,
@@ -750,11 +751,14 @@ return false;
 		else
 			freq = nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A];
 	}
-	settingsVFOChannel[CHANNEL_VFO_A].txFreq=settingsVFOChannel[CHANNEL_VFO_A].rxFreq=freq;
+	uint8_t vfo=nonVolatileSettings.currentVFONumber;
+	if (vfo > 1)
+		vfo=1;
+	settingsVFOChannel[vfo].txFreq=settingsVFOChannel[vfo].rxFreq=freq;
 	//check all nuisance delete entries and skip channel if there is a match
 	if (ScanShouldSkipFrequency(freq))
 		return true;
-	memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
+	memcpy(&channelScreenChannelData, &settingsVFOChannel[vfo], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE);
 	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 	nextChannelReady =true;
 	
@@ -1319,7 +1323,7 @@ static void handleEvent(uiEvent_t *ev)
 			if (uiDataGlobal.Scan.active && dualWatchChannelData.dualWatchActive)
 				AnnounceDualWatchChannels(nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1);
 			else
-				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
+				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true, false);
 			return;
 		}
 
@@ -3736,6 +3740,13 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 				voicePromptsAppendLanguageString(&currentLanguage->n_a);
 			}
 			break;
+		case GD77S_OPTION_KEYPAD_SOURCE:
+			voicePromptsAppendLanguageString(&currentLanguage->keypad);
+			if (nonVolatileSettings.currentVFONumber==0 || nonVolatileSettings.currentVFONumber==1)
+				announceVFOChannelName();
+			else
+				voicePromptsAppendPrompt(PROMPT_CHANNEL);
+			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
@@ -3832,6 +3843,10 @@ static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode)
 			announceZoneName(voicePromptsIsPlaying());
 			break;
 		case GD77S_UIMODE_KEYPAD:
+			if (nonVolatileSettings.currentVFONumber==0 || nonVolatileSettings.currentVFONumber==1)
+				announceVFOChannelName();
+			else
+				announceChannelName(true, false);
 			AnnounceGD77sKeypadChar(false);
 			break;
 		case GD77S_UIMODE_VOX:
@@ -4149,18 +4164,11 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			return true;
 		}
 	}
-	if (GD77SKeypadBuffer[0]=='A' && strlen(GD77SKeypadBuffer) <=3)
-	{// a0 copy from VFO to temporary channel for immediate action.
+	if (GD77SKeypadBuffer[0]=='A' && isdigit(GD77SKeypadBuffer[1]) && strlen(GD77SKeypadBuffer) <=3)
+	{
 		// a1 through a16 copy vfo back to permanent channel 1 to 16 in real zone (won't work in autozone), note name is left unchanged.
-		memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[CHANNEL_VFO_A].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
 		int zoneChannelIndex=0;
-		if (isdigit(GD77SKeypadBuffer[1]))
-			zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
-		if (zoneChannelIndex==0)
-		{
-			AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), false);
-			return true; // just temporary.
-		}
+		zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
 		SaveChannelToCurrentZone(zoneChannelIndex);
 		return true;
 	}
@@ -4204,6 +4212,10 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		GD77sSelectedCharIndex=ev->rotary-1;
 		AnnounceGD77sKeypadChar(true);
 	}
+	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1))
+	{
+		AnnounceChannelSummary(false, nonVolatileSettings.currentVFONumber==2);
+	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
 	{
 		AnnounceGD77sKeypadBuffer();
@@ -4233,7 +4245,8 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	{
 		if (ProcessGD77SKeypadCmd(ev))
 		{
-			memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);// copy all channel details except name.
+			if (nonVolatileSettings.currentVFONumber < 2)
+				memcpy(&settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);// copy all channel details except name.
 			GD77SParameters.virtualVFOMode=true;
 			return true;
 		}
@@ -4256,7 +4269,8 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		currentChannelData->rxFreq=atol(rxBuf);
 		currentChannelData->txFreq=copyRxToTx ? currentChannelData->rxFreq : atol(txBuf);
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-		memcpy(&settingsVFOChannel[CHANNEL_VFO_A].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // copy all channel details except name.
+		if (nonVolatileSettings.currentVFONumber < 2)
+			memcpy(&settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // copy all channel details except name.
 		GD77SParameters.virtualVFOMode=true;
 		voicePromptsInit();
 		announceFrequency();
@@ -4732,6 +4746,20 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 				voxSetParameters(nonVolatileSettings.voxThreshold, nonVolatileSettings.voxTailUnits);
 			}
 			break;
+		case GD77S_OPTION_KEYPAD_SOURCE:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.currentVFONumber < 2)
+					settingsIncrement(nonVolatileSettings.currentVFONumber, 1);
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.currentVFONumber > 0)
+					settingsDecrement(nonVolatileSettings.currentVFONumber, 1);
+			}
+			else
+				settingsSet(nonVolatileSettings.currentVFONumber, 2); // current channel.
+			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
@@ -4998,6 +5026,11 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 				case GD77S_UIMODE_KEYPAD:
 					vpString = (char * const *)&currentLanguage->keypad;
 					GD77sSelectedCharIndex = rotarySwitchGetPosition()-1;
+					if (nonVolatileSettings.currentVFONumber < 2)
+					{
+						memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
+						trxSetFrequency(channelScreenChannelData.rxFreq, channelScreenChannelData.txFreq, DMR_MODE_AUTO);
+					}
 					break;
 				case GD77S_UIMODE_VOX:
 					vp = PROMPT_VOX;
