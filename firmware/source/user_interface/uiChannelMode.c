@@ -4164,11 +4164,14 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 			return true;
 		}
 	}
-	if (GD77SKeypadBuffer[0]=='A' && isdigit(GD77SKeypadBuffer[1]) && strlen(GD77SKeypadBuffer) <=3)
+	if (GD77SKeypadBuffer[0]=='A' && strlen(GD77SKeypadBuffer) <=3)
 	{
 		// a1 through a16 copy vfo back to permanent channel 1 to 16 in real zone (won't work in autozone), note name is left unchanged.
 		int zoneChannelIndex=0;
-		zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
+		if (isdigit(GD77SKeypadBuffer[1])) 
+			zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
+		else
+			zoneChannelIndex=currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone+1; // create one.
 		SaveChannelToCurrentZone(zoneChannelIndex);
 		return true;
 	}
