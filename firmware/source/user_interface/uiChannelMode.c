@@ -4070,7 +4070,23 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		voicePromptsPlay();
 		return true;
 	}
+	if (strncmp(GD77SKeypadBuffer,"DEL", 3)==0 && isdigit(GD77SKeypadBuffer[3]))
+	{// DEL1 through DEL16 delete  channel name 
+		int zoneChannelIndex = atoi(GD77SKeypadBuffer+3);
+		if (zoneChannelIndex < 1 || zoneChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->delete_from_all_zones);
+		voicePromptsPlay();
+		codeplugDeleteChannelWithIndex(currentZone.channels[zoneChannelIndex-1]);
+		codeplugZoneDeleteChannelFromZone(currentZone.channels[zoneChannelIndex-1], &currentZone);
 
+		return true;
+	}
+	
 	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
 	{// talkgroup # followed by digits. 
 		int len=strlen(GD77SKeypadBuffer);
