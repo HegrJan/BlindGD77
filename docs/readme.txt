@@ -62,7 +62,7 @@ Please note! You will need to update your voice prompts. This will not overwrite
 19.4.	Extra long hold of sk1 in Keypad mode will now speak the summary of the active VFO or channel so you can figure out what is set without having to exit keypad mode to find out.
 19.5.	Long hold orange will save whatever you change back to either VFO A or VFO B as appropriate but saving to the current channel will only be temporal until you change the knob. 
 19.6. If you wish to save to a channel permanently, you must use A1 through a16 command explicitly to overwrite  an existing channel 1 through 16, or use the command  A with no digits to create  a new channel and append that channel to the current zone.
-
+20. Added del command to GD77S virtual keypad to delete a channel. E.g. Use del16 to delete channel 16 from the radio.
 
 22 February 2022
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
