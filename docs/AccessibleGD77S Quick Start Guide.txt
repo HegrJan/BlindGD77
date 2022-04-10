@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-8 April 2022
+10 April 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -113,7 +113,7 @@ Note, even if you exit the mode with short ppress orange, then go back in, the b
 2.9. D followed by digits followed by long hold orange to enter a DCS code, e.g. D31 would enter the DCS code 031  tx DCS code. Likewise adding a * after the digits will set rx dcs also.
 Note to clear a CTCSS or DCS code, enter c followed by long hold orange.
 Remember, if you wish to enter a new command, don't forget to clear the buffer first with long hold sk2.
-2.10. Command A1 through A16 followed by long hold orange, copy current VFO to channels 1 through 16 in the current zone.
+2.10. Command A1 through A16 followed by long hold orange, copy current channel settings or VFO (depending on Keypad mode setting in Options 2 menu) to channel 1 through 16 in the current zone, overwriting its prior contents. Use the command  A with no digits to create  a new channel and append that channel to the current zone.
 2.11. Extra long hold SK1 will speak the current VFO or channel summary depending on whether the Keypad is in VFO A, VFO B or channel mode.
 2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange. When editing a DTMF code, you can add a P where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones.
 2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). You can also use *##* or *##*text to save to the next available slot.
