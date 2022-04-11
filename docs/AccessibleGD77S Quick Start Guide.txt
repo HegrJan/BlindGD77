@@ -120,6 +120,7 @@ Remember, if you wish to enter a new command, don't forget to clear the buffer f
 2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 2.15. To delete a channel, use delN where n is a channel number, e.g. DEL16 to delete channel 16. This will delete the channel 16 from the radio.
 2.16. Recall channel to VFO, use R command. For example, if your Keypad mode is set to VFO A, then R5 long hold orange will recall channel 5 to VFO A.
+2.17. S swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10.
 
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
 

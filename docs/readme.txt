@@ -64,6 +64,7 @@ Please note! You will need to update your voice prompts. This will not overwrite
 19.6. If you wish to save to a channel permanently, you must use A1 through a16 command explicitly to overwrite  an existing channel 1 through 16, or use the command  A with no digits to create  a new channel and append that channel to the current zone.
 20. Added del command to GD77S virtual keypad to delete a channel. E.g. Use del16 to delete channel 16 from the radio.
 21. Added R command to GD77S to recall a channel to VFO. For example, if your Keypad mode is set to VFO A, then R5 will recall channel 5 to VFO A.
+22. Added S command to GD77S to swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10.
 
 22 February 2022
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
