@@ -346,8 +346,7 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	dualWatchChannelData.currentChannelIndex=currentChannelIndex;
 		
 	GetChannelName(currentChannelIndex, CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone), dualWatchChannelData.currentChannelName, 17);
-	uiDataGlobal.priorityChannelActive=false; // in case it was set by memcpy
-	press red.
+	uiDataGlobal.priorityChannelActive=false; // in case it was set by long press red.
 	
 	uiDataGlobal.Scan.timer =500; // force scan to continue;
 	uiDataGlobal.repeaterOffsetDirection=0; // reset this as the current channel just changed.
