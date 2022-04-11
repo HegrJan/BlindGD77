@@ -346,7 +346,8 @@ static void SetDualWatchCurrentChannelIndex(uint16_t currentChannelIndex)
 	dualWatchChannelData.currentChannelIndex=currentChannelIndex;
 		
 	GetChannelName(currentChannelIndex, CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone), dualWatchChannelData.currentChannelName, 17);
-	uiDataGlobal.priorityChannelActive=false; // in case it was set by long press red.
+	uiDataGlobal.priorityChannelActive=false; // in case it was set by memcpy
+	press red.
 	
 	uiDataGlobal.Scan.timer =500; // force scan to continue;
 	uiDataGlobal.repeaterOffsetDirection=0; // reset this as the current channel just changed.
@@ -2313,10 +2314,7 @@ static bool validateDeleteChannel(void)
 		{
 			codeplugDeleteChannelWithIndex(index);
 		}
-		else
-		{
-			codeplugZoneDeleteChannelFromZone(index, &currentZone);
-		}
+		codeplugZoneDeleteChannelFromZone(index, &currentZone);
 		currentChannelData->rxFreq = 0x00; // Flag to the Channel screen that the channel data is now invalid and needs to be reloaded
 		if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 			nonVolatileSettings.currentChannelIndexInAllZone=SAFE_MIN(1,nonVolatileSettings.currentChannelIndexInAllZone-1);
@@ -3885,14 +3883,20 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 		soundSetMelody(MELODY_ERROR_BEEP);
 		return false;
 	}
-
-	if (addToZone)
+	
+	if (!addToZone) // grab the existing name if there is one so it isn't overwritten.
+		GetChannelName(zoneChannelIndex-1, false, currentChannelData->name, 16);
+	
+	if (addToZone || !currentChannelData->name[0])
 	{
-	// just name the channel by its number.
 		char channelName[16]="\0";
 		snprintf(channelName, 16, "%d", zoneChannelIndex);
 		codeplugUtilConvertStringToBuf(channelName, currentChannelData->name, 16);
-		codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
+	}
+	codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
+
+	if (addToZone)
+	{
 		codeplugAllChannelsIndexSetUsed(physicalChannelIndex, true); //Set channel index as valid
 		if (currentZone.NOT_IN_CODEPLUGDATA_indexNumber == 0xDEADBEEF)
 		{
@@ -3904,8 +3908,6 @@ static bool SaveChannelToCurrentZone(uint16_t zoneChannelIndex)
 			settingsSet(nonVolatileSettings.currentChannelIndexInZone , currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone - 1);
 		}
 	}
-	else
-		codeplugChannelSaveDataForIndex(physicalChannelIndex, currentChannelData);
 
 	voicePromptsInit();
 	voicePromptsAppendLanguageString(&currentLanguage->vfoToChannel);
@@ -4191,6 +4193,32 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		SaveChannelToCurrentZone(zoneChannelIndex);
 		return true;
 	}
+	if (GD77SKeypadBuffer[0]=='R' && strlen(GD77SKeypadBuffer) <=3)
+	{
+		// R1 through R16 copy channel to current vfo
+		int zoneChannelIndex=0;
+		if (!isdigit(GD77SKeypadBuffer[1]) || nonVolatileSettings.currentVFONumber > 1)
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}			
+		zoneChannelIndex=atoi(GD77SKeypadBuffer+1);
+		if (zoneChannelIndex < 1 || zoneChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone)
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}
+		codeplugChannelGetDataForIndex(currentZone.channels[zoneChannelIndex-1], currentChannelData);
+		memcpy(&settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);// copy all channel details except name.
+		codeplugSetVFO_ChannelData(&settingsVFOChannel[nonVolatileSettings.currentVFONumber], nonVolatileSettings.currentVFONumber);
+		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+		trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->channelToVfo);
+		voicePromptsPlay();
+		return true;
+	}
+
 	if (GD77SKeypadBuffer[0]=='E' && isdigit(GD77SKeypadBuffer[1]) && strlen(GD77SKeypadBuffer) > 2)
 	{// e1 through e16 edit channel name 
 		int zoneChannelIndex = atoi(GD77SKeypadBuffer+1);
@@ -4265,21 +4293,25 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		if (ProcessGD77SKeypadCmd(ev))
 		{
 			if (nonVolatileSettings.currentVFONumber < 2)
+			{
 				memcpy(&settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16);// copy all channel details except name.
+				codeplugSetVFO_ChannelData(&settingsVFOChannel[nonVolatileSettings.currentVFONumber], nonVolatileSettings.currentVFONumber);
+			}
 			GD77SParameters.virtualVFOMode=true;
 			return true;
 		}
 		// copy first 8 digits to receive and second 8 digits to transmit.
 		char rxBuf[9]="\0";
 		char txBuf[9]="\0";
-		bool copyRxToTx=strlen(GD77SKeypadBuffer) < 9;
+		int len=strlen(GD77SKeypadBuffer);
+		bool copyRxToTx=len < 9;
 		for (int i=0; i < 8; ++i)
 		{
 			if (isdigit(GD77SKeypadBuffer[i]))
 				rxBuf[i]=GD77SKeypadBuffer[i];
 			else
 				rxBuf[i]='0';
-			if (isdigit(GD77SKeypadBuffer[i+8]))
+			if (i+8 <len && isdigit(GD77SKeypadBuffer[i+8]))
 				txBuf[i]=GD77SKeypadBuffer[i+8];
 			else
 				txBuf[i]='0';
@@ -4289,7 +4321,10 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 		currentChannelData->txFreq=copyRxToTx ? currentChannelData->rxFreq : atol(txBuf);
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 		if (nonVolatileSettings.currentVFONumber < 2)
+		{
 			memcpy(&settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, &channelScreenChannelData.rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // copy all channel details except name.
+			codeplugSetVFO_ChannelData(&settingsVFOChannel[nonVolatileSettings.currentVFONumber], nonVolatileSettings.currentVFONumber);
+		}
 		GD77SParameters.virtualVFOMode=true;
 		voicePromptsInit();
 		announceFrequency();
@@ -4877,10 +4912,12 @@ static void 						ToggleGD77SVFOMode(uiEvent_t *ev)
 {
 			GD77SParameters.virtualVFOMode=!GD77SParameters.virtualVFOMode;
 	voicePromptsTerminate();
-	if (GD77SParameters.virtualVFOMode)
+	if (GD77SParameters.virtualVFOMode && nonVolatileSettings.currentVFONumber < 2)
 	{
-				memcpy(&channelScreenChannelData, &settingsVFOChannel[CHANNEL_VFO_A], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE );
+				memcpy(&channelScreenChannelData, &settingsVFOChannel[nonVolatileSettings.currentVFONumber < 2], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE );
 		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+		trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
+
 		voicePromptsInit();
 		voicePromptsAppendString("vfo");
 		announceFrequency();
@@ -5049,6 +5086,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					{
 						memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
 						trxSetFrequency(channelScreenChannelData.rxFreq, channelScreenChannelData.txFreq, DMR_MODE_AUTO);
+						trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
 					}
 					break;
 				case GD77S_UIMODE_VOX:
