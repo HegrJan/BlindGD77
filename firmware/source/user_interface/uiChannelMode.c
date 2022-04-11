@@ -4089,6 +4089,36 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		return true;
 	}
 	
+	if (GD77SKeypadBuffer[0]=='S' && isdigit(GD77SKeypadBuffer[1]))
+	{// S1 3 swap  ch 1 with 3.
+		char temp[GD77S_KEYPAD_BUF_MAX];
+		strncpy(temp, GD77SKeypadBuffer, GD77S_KEYPAD_BUF_MAX);
+		char* srcStr=strtok(temp+1, ", ");
+		char* destStr=strtok(NULL, ", ");
+		if (!srcStr || !destStr || !isdigit(*srcStr) || !isdigit(*destStr))
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}
+		int srcChannelIndex = atoi(srcStr);
+		int destIndex = atoi(destStr);
+		if (srcChannelIndex < 1 || srcChannelIndex > currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone || destIndex < 1 || destIndex > currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone || srcChannelIndex==destIndex)
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}
+		if (!codeplugZoneReorderChannels(srcChannelIndex-1, destIndex-1, &currentZone))
+		{
+			soundSetMelody(MELODY_ERROR_BEEP);
+			return true;	
+		}
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->reorder_channels);
+		voicePromptsPlay();
+
+		return true;
+	}
+
 	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
 	{// talkgroup # followed by digits. 
 		int len=strlen(GD77SKeypadBuffer);
