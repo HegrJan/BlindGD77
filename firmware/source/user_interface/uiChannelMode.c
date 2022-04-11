@@ -1323,7 +1323,7 @@ static void handleEvent(uiEvent_t *ev)
 			if (uiDataGlobal.Scan.active && dualWatchChannelData.dualWatchActive)
 				AnnounceDualWatchChannels(nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1);
 			else
-				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true, false);
+				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
 			return;
 		}
 
