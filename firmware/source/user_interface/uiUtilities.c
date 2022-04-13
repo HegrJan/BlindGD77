@@ -2813,20 +2813,16 @@ static void announceLastDTMFContact(bool anouncePrompt)
 	voicePromptsAppendPrompt(PROMPT_SILENCE);
 }
 
-void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
+void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 {
-	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
-	
 	voicePromptsInit();
 	announceItemWithInit(false, PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY); // since this function calling does the init and play.
 	AnnounceLastHeardContact();
-	if (announceName)
-	{
-		if (isChannelScreen)
-			announceChannelName(true, true);
-		else
-			announceVFOChannelName();
-	}
+	if (isChannelScreen)
+		announceChannelName(true, true);
+	else
+		announceVFOChannelName();
+	
 
 	announceFrequency();
 	

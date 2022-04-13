@@ -4290,7 +4290,7 @@ static bool HandleGD77sKbdEvent(uiEvent_t *ev)
 	}
 	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1))
 	{
-		AnnounceChannelSummary(false, nonVolatileSettings.currentVFONumber==2);
+		AnnounceChannelSummary(false, nonVolatileSettings.currentVFONumber > 1);
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1))
 	{
@@ -4912,8 +4912,9 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		return true;
 	}
 	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1))
-	{// do nothing.
-		AnnounceChannelSummary(false, nonVolatileSettings.currentVFONumber==2);
+	{
+		bool keypadIsInChannelMode=((GD77SParameters.option!=GD77S_OPTION_KEYPAD_SOURCE) || (nonVolatileSettings.currentVFONumber > 1));
+		AnnounceChannelSummary(false, keypadIsInChannelMode);
 		return true;
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
@@ -5151,7 +5152,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 		{
 			if (GD77SParameters.channelOutOfBounds == false)
 			{
-				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), GD77SParameters.virtualVFOMode==false);
+				AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), true);
 			}
 		}
 		else if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (uiDataGlobal.DTMFContactList.isKeying == false) && !GD77SParameters.cycleFunctionsInReverse)
