@@ -4842,6 +4842,15 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			}
 			else
 				settingsSet(nonVolatileSettings.currentVFONumber, 2); // current channel.
+			if (nonVolatileSettings.currentVFONumber < 2)
+			{
+				memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
+			}
+			else
+			{// recall the last known channel prior to going into Options
+				codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.currentChannelIndexInZone], &channelScreenChannelData);
+			}
+			loadChannelData(true, false);
 			break;
 		case GD77S_OPTION_MAX:
 			return;
@@ -4900,14 +4909,11 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 			ReplayDMR();
 		else
 			AnnounceGD77SOption(true, true);  // repeat the current option and its value.
-		keyboardReset();
-
 		return true;
 	}
 	else if (BUTTONCHECK_EXTRALONGDOWN(ev, BUTTON_SK1))
 	{// do nothing.
-		keyboardReset();
-
+		AnnounceChannelSummary(false, nonVolatileSettings.currentVFONumber==2);
 		return true;
 	}
 	else if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK2))
@@ -4943,10 +4949,8 @@ static void 						ToggleGD77SVFOMode(uiEvent_t *ev)
 	voicePromptsTerminate();
 	if (GD77SParameters.virtualVFOMode && nonVolatileSettings.currentVFONumber < 2)
 	{
-				memcpy(&channelScreenChannelData, &settingsVFOChannel[nonVolatileSettings.currentVFONumber < 2], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE );
-		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-		trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
-
+		memcpy(&channelScreenChannelData, &settingsVFOChannel[nonVolatileSettings.currentVFONumber < 2], CODEPLUG_CHANNEL_DATA_STRUCT_SIZE );
+		loadChannelData(true, false);
 		voicePromptsInit();
 		voicePromptsAppendString("vfo");
 		announceFrequency();
@@ -5114,8 +5118,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					if (nonVolatileSettings.currentVFONumber < 2)
 					{
 						memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
-						trxSetFrequency(channelScreenChannelData.rxFreq, channelScreenChannelData.txFreq, DMR_MODE_AUTO);
-						trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
+						loadChannelData(true, false);
 					}
 					break;
 				case GD77S_UIMODE_VOX:
