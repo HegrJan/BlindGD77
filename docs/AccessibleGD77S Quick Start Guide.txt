@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-10 April 2022
+13 April 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -120,7 +120,7 @@ Remember, if you wish to enter a new command, don't forget to clear the buffer f
 2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 2.15. To delete a channel, use delN where n is a channel number, e.g. DEL16 to delete channel 16. This will delete the channel 16 from the radio.
 2.16. Recall channel to VFO, use R command. For example, if your Keypad mode is set to VFO A, then R5 long hold orange will recall channel 5 to VFO A.
-2.17. S swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10.
+2.17. S swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10. Note there is only a space between the channel designators. There is no space between the S and first channel designator.
 
 There is also now a shortcut to return to Channel Mode from any mode on the GD77S. If you rotate the channel knob from any mode (other than Keypad mode), the GD77S will immediately return to Channel Mode. For example, if you hit the orange key to change to say Power Mode, a quick flick of the rotary knob up and back will return the radio to Channel Mode without having to press the Orange key multiple times to get back to Channel Mode.
 
@@ -178,6 +178,8 @@ In Review Prompt mode, SK1 and SK2 will select and play the next/prior saved pro
 
 In edit start and edit end modes, SK1/SK2 will adjust either the start or the end (as appropriate) and long hold SK1 will repeat the edited prompt. Long hold SK2 will undo the edit of the start or end and return it to its original value.
  
+ In any of the Options modes, extra long hold SK1 will speak the current VFO or channel summary depending on whether the Keypad is in VFO A, VFO B or channel mode. This way you can go to Options 2, choose Keypad mode and cycle between VFO A, B and the last known channel, and verify what is in the VFO or channel using extra long hold SK1. 
+
 AutoZones feature.
 An AutoZone is a pseudo zone created on the fly based on channelized frequencies calculated via a formula with heuristics applied. I.e. these zones do not take up any memory for the channel data.
 1. Cycle to the Options menu with the Orange button.

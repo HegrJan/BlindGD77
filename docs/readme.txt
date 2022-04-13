@@ -17,7 +17,7 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-12 April 2022:
+13 April 2022:
 Warning, warning, warning!
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Changed default scan hold time to 10 seconds (by popular demand).
@@ -57,15 +57,15 @@ Please note! You will need to update your voice prompts. This will not overwrite
 18.2. When you manually dial a DTMF string (PTT plus keypad keys or virtual keypad on GD77S), the numbers and letters of the code are added to the summary on long hold SK1.
 18.3. If you change channels, the last contact is cleared .
 19. Enhanced GD77S keypad mode to directly access VFO A, VFO B or current channel.
-19.1. In the options 2 menu, there is now a Keypad Mode option. You can set this to VFO A, VFO B or Channel.
+19.1. In the options 2 menu, there is now a Keypad Mode option. You can set this to VFO A, VFO B or Channel. The VFO or last known channel (prior to entering Options mode) will be loaded immediately.
 19.2.	When you cycle the radio to Keypad mode with orange, it will now say keypad mode VFO A, or VFO B or the channel name, followed by the character you would be selecting.
 19.3.	If you set keypad mode to VFO A for instance, as soon as you cycle to keypad mode, VFO A is now active immediately. Similarly, if you had set keypad mode to VFO B, VFO B would be active. If set to channel, then whatever channel was active before is still active.
-19.4.	Extra long hold of sk1 in Keypad mode will now speak the summary of the active VFO or channel so you can figure out what is set without having to exit keypad mode to find out.
+19.4.	Extra long hold of sk1 in Keypad mode, or any of the Options modes, will now speak the summary of the active VFO or channel so you can figure out what is set without having to exit keypad mode or Options mode to find out.
 19.5.	Long hold orange will save whatever you change back to either VFO A or VFO B as appropriate but saving to the current channel will only be temporal until you change the knob. 
 19.6. If you wish to save to a channel permanently, you must use A1 through a16 command explicitly to overwrite  an existing channel 1 through 16, or use the command  A with no digits to create  a new channel and append that channel to the current zone.
 20. Added del command to GD77S virtual keypad to delete a channel. E.g. Use del16 to delete channel 16 from the radio.
 21. Added R command to GD77S to recall a channel to VFO. For example, if your Keypad mode is set to VFO A, then R5 will recall channel 5 to VFO A.
-22. Added S command to GD77S to swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10.
+22. Added S command to GD77S to swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10. Note there is only a space between the channel designators, there is no space between the command and first channel designator.
 
 
 22 February 2022
