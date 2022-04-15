@@ -234,12 +234,12 @@ You can now replay the last 5 seconds of DMR audio. This works for both TX and R
 * On a DMR channel with signal: set TX tg to RX tg.
 * On an analog channel in a non-autozone: toggle DTMF dialer.
 * On an analog channel in an autozone: choose next channel bank.
-* on any channel, from Voice Mode only, replay last recorded voice prompt (see below).
+* on any channel, from Options 2  Mode only, replay last recorded voice prompt (see below).
 
 Custom Voice Prompts
 You can create up to 32 custom voice prompts to be spoken for contact or channel names.
 1. SK1+PTT allows you to record a prompt (up to about 3 seconds).
-2. Long hold SK2 from Voice Mode only will repeat the prompt for verification. (Press orange key until you hear voice, then use long hold SK2).
+2. Long hold SK2 from Options 2 Mode only will repeat the prompt for verification. (Press orange key until you hear Options 2, then use long hold SK2).
 3. Save the prompt to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1.
 4. Edit a channel or contact name using the virtual keypad mode or CPS software and place a ##digit where you want the prompt to be spoken. E.g. if you want custom prompt 1 to be spoken after the letters of your callsign, then add ##1 after your callsign in the name.
 5. If you wish to associate a custom voice prompt to a string, use the command *##1hello for example to associate custom voice prompt 1 with the text "hello."
