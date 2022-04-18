@@ -60,6 +60,7 @@ struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
 struct_codeplugContact_t contactListContactData;
 struct_codeplugDTMFContact_t contactListDTMFContactData;
+struct_codeplugDTMFContact_t lastDialledDTMFContact={0};
 struct_codeplugChannel_t settingsVFOChannel[2];// VFO A and VFO B from the codeplug.
 int settingsUsbMode = USB_MODE_CPS;
 
@@ -194,7 +195,8 @@ bool settingsLoadSettings(void)
 		nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
 	if (nonVolatileSettings.voicePromptRate > 9)
 		nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
-
+	if (nonVolatileSettings.ctcssSqlTail > 50)
+		nonVolatileSettings.ctcssSqlTail=35;
 	return hasRestoredDefaultsettings;
 }
 
@@ -262,9 +264,9 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.userPower = 4100U;// Max DAC value is 4095. 4100 is a hack to make the numbers more palatable.
 	nonVolatileSettings.bitfieldOptions =
 #if defined(PLATFORM_GD77S)
-			0U;
+			BIT_INDICATE_DMR_RXTXTG_MISMATCH;
 #else
-			BIT_SETTINGS_UPDATED; // we need to keep track if the user has been notified about settings update.
+			BIT_SETTINGS_UPDATED|BIT_INDICATE_DMR_RXTXTG_MISMATCH; // we need to keep track if the user has been notified about settings update.
 #endif
 	nonVolatileSettings.overrideTG = 0U;// 0 = No override
 	nonVolatileSettings.txTimeoutBeepX5Secs = 2U;
@@ -287,7 +289,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.analogFilterLevel = ANALOG_FILTER_CSS;
 	trxSetAnalogFilterLevel(nonVolatileSettings.analogFilterLevel);
 	nonVolatileSettings.languageIndex = 0U;
-	nonVolatileSettings.scanDelay = 5U;// 5 seconds
+	nonVolatileSettings.scanDelay = 10U;// 10 seconds
 	nonVolatileSettings.scanStepTime = 0;// 30ms
 	nonVolatileSettings.scanModePause = SCAN_MODE_HOLD;
 	nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]		= 10U;// 1 - 21 = 0 - 100% , same as from the CPS variable squelch
@@ -351,6 +353,8 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
 	nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 	nonVolatileSettings.dtmfVol=10;
+	nonVolatileSettings.endRXBeep=0;
+	nonVolatileSettings.ctcssSqlTail=35; // tenths of a second.
 	settingsDirty = true;
 
 	settingsSaveSettings(false);

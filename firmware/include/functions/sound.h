@@ -51,6 +51,7 @@ extern const int MELODY_QUICKKEYS_CLEAR_ACK_BEEP[];
 extern const int MELODY_RX_TGTSCC_WARNING_BEEP[];
 extern const int melody_sk1_beep[];
 extern const int melody_sk2_beep[];
+extern const int melody_rx_stop_beep[];
 
 extern volatile int *melody_play;
 extern volatile int melody_idx;

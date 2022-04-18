@@ -61,6 +61,37 @@ static bool lowBatteryReached = false;
 #define LOW_BATTERY_VOLTAGE_RECOVERY_TIME          10000 // 10 seconds
 static bool updateMessageOnScreen = false;
 static bool hasSignal=false;
+static bool priorHasSignal=false;
+static uint16_t rxEndTimeOut=0;
+static void HandleRXEnding()
+{
+	if (nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) return;
+	if (trxTransmissionEnabled) return;
+
+	int trxMode=trxGetMode();
+	
+	if (((trxMode == RADIO_MODE_DIGITAL) && (nonVolatileSettings.endRXBeep&END_RX_BEEP_DMR)==0) ||
+		((trxMode == RADIO_MODE_ANALOG) && (nonVolatileSettings.endRXBeep&END_RX_BEEP_FM)==0))
+		return;
+	
+	if (rxEndTimeOut > 0)
+	{
+		rxEndTimeOut--;
+		if (rxEndTimeOut==0)
+			soundSetMelody(melody_rx_stop_beep);
+
+		return;
+	}
+	
+	bool rxEnding=priorHasSignal && !hasSignal;
+	
+	priorHasSignal = hasSignal;
+	
+	if (!rxEnding)
+		return;
+
+	rxEndTimeOut=300;
+}
 
 void mainTaskInit(void)
 {
@@ -498,7 +529,7 @@ void mainTask(void *data)
 #endif
 
 			// VOX Checking
-			if (voxIsEnabled())
+			if (voxIsEnabled() && !PTTToggledDown && !dtmfPTTLatch)
 			{
 				// if a key/button event happen, reset the VOX.
 				if ((key_event == EVENT_KEY_CHANGE) || (button_event == EVENT_BUTTON_CHANGE) || (keys.key != 0) || (buttons != BUTTON_NONE))
@@ -753,7 +784,7 @@ void mainTask(void *data)
 				{
 					if (buttons & BUTTON_PTT)
 					{
-						if (PTTToggledDown == false)
+						if ((PTTToggledDown == false) && !voxIsTriggered())
 						{
 							// PTT toggle works only if a TOT value is defined.
 							if (currentChannelData->tot != 0 || nonVolatileSettings.totMaster !=0)
@@ -801,6 +832,7 @@ void mainTask(void *data)
 					{
 						soundSetMelody(MELODY_ERROR_BEEP);
 						buttons &= !BUTTON_PTT;
+						PTTToggledDown = false; // released after a timeout when the dtmf key is released.
 					}
 				}
 				if ((buttons & BUTTON_PTT) && voicePromptsGetEditMode())
@@ -904,13 +936,13 @@ void mainTask(void *data)
 						}
 					}
 				}
-				#if ! defined(PLATFORM_GD77S)
 				else
 				{
+#if ! defined(PLATFORM_GD77S)
 					// If SK1 is held down with PTT, record a voice prompt.
 					encodingCustomVoicePrompt=false;
-				}
 #endif // ! defined(PLATFORM_GD77S)
+				}
 
 #if (! defined(PLATFORM_GD77S)) && (! defined(PLATFORM_RD5R))
 				if ((buttons & (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN)) == (BUTTON_SK1 | BUTTON_ORANGE | BUTTON_ORANGE_EXTRA_LONG_DOWN))
@@ -1246,10 +1278,12 @@ void mainTask(void *data)
 				}
 			}
 			voicePromptsTick();
+			HandleRXEnding();
 			soundTickMelody();
 			voxTick();
 			RequeueEditBufferForAnnouncementOnSK1IfNeeded();
 			AnnounceLastHeardContactIfNeeded();
+
 #if defined(PLATFORM_RD5R) // Needed for platforms which can't control the poweroff
 			settingsSaveIfNeeded(false);
 #endif

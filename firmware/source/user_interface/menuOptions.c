@@ -41,7 +41,7 @@ static struct_codeplugChannel_t priorityChannelData = { .rxFreq = 0 };
 enum OPTIONS_MENU_LIST { OPTIONS_MENU_TX_FREQ_LIMITS = 0U,
 							OPTIONS_MENU_KEYPAD_TIMER_LONG, OPTIONS_MENU_KEYPAD_TIMER_REPEAT, OPTIONS_MENU_DMR_MONITOR_CAPTURE_TIMEOUT,
 							OPTIONS_MENU_SCAN_DELAY, OPTIONS_MENU_SCAN_STEP_TIME, OPTIONS_MENU_SCAN_MODE, OPTIONS_MENU_SCAN_ON_BOOT,
-							OPTIONS_MENU_SQUELCH_DEFAULT_VHF, OPTIONS_MENU_SQUELCH_DEFAULT_220MHz, OPTIONS_MENU_SQUELCH_DEFAULT_UHF,
+							OPTIONS_MENU_SQUELCH_DEFAULT_VHF, OPTIONS_MENU_SQUELCH_DEFAULT_220MHz, OPTIONS_MENU_SQUELCH_DEFAULT_UHF, OPTIONS_MENU_CSS_TAIL,
 							OPTIONS_MENU_TOT_MASTER,
 							OPTIONS_MENU_PTT_TOGGLE,
 							#if !defined(PLATFORM_GD77S)
@@ -226,6 +226,17 @@ static void updateScreen(bool isFirstRun)
 				case OPTIONS_MENU_SQUELCH_DEFAULT_UHF:
 					leftSide = (char * const *)&currentLanguage->squelch_UHF;
 					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d%%", (nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] - 1) * 5);// 5% steps
+					break;
+				case OPTIONS_MENU_CSS_TAIL:
+					leftSide = (char * const *)&currentLanguage->css_tail;
+					if (nonVolatileSettings.ctcssSqlTail > 0)
+					{
+						snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%u", nonVolatileSettings.ctcssSqlTail*10);
+						rightSideUnitsStr = "ms";
+						rightSideUnitsPrompt = PROMPT_MILLISECONDS;
+					}
+					else
+					rightSideConst = (char * const *)&currentLanguage->off;
 					break;
 				case OPTIONS_MENU_TOT_MASTER:
 					leftSide = (char * const *)&currentLanguage->tot;
@@ -591,6 +602,10 @@ static void handleEvent(uiEvent_t *ev)
 					settingsIncrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
 				}
 				break;
+			case OPTIONS_MENU_CSS_TAIL:
+				if (nonVolatileSettings.ctcssSqlTail < 50)
+					settingsIncrement(nonVolatileSettings.ctcssSqlTail, 5);
+				break;
 			case OPTIONS_MENU_TOT_MASTER:
 				if (nonVolatileSettings.totMaster < 255)
 				{
@@ -782,6 +797,10 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					settingsDecrement(nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF], 1);
 				}
+				break;
+			case OPTIONS_MENU_CSS_TAIL:
+				if (nonVolatileSettings.ctcssSqlTail > 0)
+					settingsDecrement(nonVolatileSettings.ctcssSqlTail, 5);
 				break;
 			case OPTIONS_MENU_TOT_MASTER:
 				if (nonVolatileSettings.totMaster > 0)

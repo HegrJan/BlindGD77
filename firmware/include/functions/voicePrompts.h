@@ -127,8 +127,25 @@ PROMPT_UNDERLINE,
 PROMPT_CARET,
 PROMPT_LEFT_BRACE,
 PROMPT_RIGHT_BRACE,
-NUM_VOICE_PROMPTS
+PROMPT_CUSTOM1, // Hotspot
+PROMPT_CUSTOM2, // ClearNode
+PROMPT_CUSTOM3, // ShariNode
+PROMPT_CUSTOM4, // MicroHub
+PROMPT_CUSTOM5, // Openspot
+PROMPT_CUSTOM6, // repeater
+PROMPT_CUSTOM7, // BlindHams
+PROMPT_CUSTOM8, // Allstar
+PROMPT_CUSTOM9, // parrot
+PROMPT_CUSTOM10, // unused
+NUM_VOICE_PROMPTS,
+	__MAKE_ENUM_16BITS = INT16_MAX
 } voicePrompt_t;
+
+typedef struct
+{
+	const char* userWord;
+	const voicePrompt_t vp;
+} userDictEntry;
 
 #define PROMPT_VOICE_NAME (NUM_VOICE_PROMPTS + (sizeof(stringsTable_t)/sizeof(char*)))
 #define VOICE_PROMPT_CUSTOM 500

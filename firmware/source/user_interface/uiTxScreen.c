@@ -43,14 +43,40 @@ typedef enum
 } txTerminationReason_t;
 
 static uint16_t dtmfPTTLatchTimeout=0;
+static uint8_t manualDTMFCodeIndex=0;
+
 typedef enum
 {
 	dtmfNotLatched=0,
 	dtmfTransmittingCode,
 	dtmfPTTLatched
 } dtmfLatchState_t;
-
+// We use this both for the DTMF latch as well as the CTCSS/DCS tail latch to eliminate squelch tail.
 static dtmfLatchState_t dtmfLatchState=dtmfNotLatched;
+static bool inCTCSSDCSSquelchTail=false;
+
+
+static bool HandleCTCSSDCSSquelchTailAtEndOfTX(uiEvent_t *ev)
+{
+	if (nonVolatileSettings.ctcssSqlTail==0) return false;
+	if (trxGetMode() != RADIO_MODE_ANALOG) return false;
+	if (currentChannelData->txTone == 0xffff) return false;
+	if (!trxTransmissionEnabled) return false;
+	if (ev->buttons &BUTTON_PTT) return false;
+	if (!inCTCSSDCSSquelchTail)
+	{
+		bool isDCS = (codeplugGetCSSType(currentChannelData->txTone)& CSS_TYPE_DCS) ? true : false;
+
+		inCTCSSDCSSquelchTail=true;
+		dtmfLatchState=dtmfPTTLatched;
+		dtmfPTTLatchTimeout=nonVolatileSettings.ctcssSqlTail*10;
+		// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
+		// If using DCS, however, send a 136.5 tone instead.
+		trxSetTxCSS(isDCS ? 1365 : 0xffff); 		
+		return true;
+	}
+	return false;
+}
 
 static void updateScreen(void);
 static void handleEvent(uiEvent_t *ev);
@@ -108,7 +134,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		keepScreenShownOnError = false;
 		timeInSeconds = 0;
 		pttWasReleased = false;
-
+		inCTCSSDCSSquelchTail=false;
 		if (trxGetMode() == RADIO_MODE_DIGITAL)
 		{
 			clockManagerSetRunMode(kAPP_PowerModeHsrun);
@@ -268,6 +294,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				}
 #endif
 			}
+			HandleCTCSSDCSSquelchTailAtEndOfTX(ev);
 			//DTMF latch
 			if (dtmfLatchState==dtmfPTTLatched)
 			{
@@ -276,6 +303,8 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 				else
 				{
 					dtmfLatchState=dtmfNotLatched;
+					if (inCTCSSDCSSquelchTail)
+						inCTCSSDCSSquelchTail=false;
 					trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
 
 					handleTxTermination(ev, TXSTOP_DTMF_KEYING_TIMEOUT);
@@ -323,7 +352,6 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		}
 		//
 
-//joe
 		// Got an event, or
 		if (ev->hasEvent || // PTT released, Timeout triggered,
 				( (((ev->buttons & BUTTON_PTT) == 0) || ((timeout != 0) && (timeInSeconds == 0))) ||
@@ -465,7 +493,11 @@ static void handleEvent(uiEvent_t *ev)
 
 			if (keyval != 99)
 			{
+				if (manualDTMFCodeIndex==0)
+					memset(&lastDialledDTMFContact, 0xffu, sizeof(lastDialledDTMFContact));
 				trxSetDTMF(keyval);
+				if (manualDTMFCodeIndex < DTMF_CODE_MAX_LEN)
+					lastDialledDTMFContact.code[manualDTMFCodeIndex++]=keyval;
 				isTransmittingTone = true;
 				PTTToggledDown = true; // released after a timeout when the dtmf key is released.
 				if (nonVolatileSettings.dtmfLatch > 0)
@@ -530,7 +562,7 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 		reason=TXSTOP_TIMEOUT;
 		keyboardReset();
 	}
-
+	manualDTMFCodeIndex=0; // reset for next time.
 	dtmfPTTLatch=false;
 	voicePromptsTerminate();
 	voicePromptsInit();

@@ -35,11 +35,12 @@
 #include "functions/rxPowerSaving.h"
 #include "functions/sonic_lite.h"
 const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
-const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0006; // Version 6 TOC increased to 320. Added PROMPT_VOX and PROMPT_UNUSED_1 to PROMPT_UNUSED_10
+const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0007; // v7 increased to 350 
+// Version 6 TOC increased to 320. Added PROMPT_VOX and PROMPT_UNUSED_1 to PROMPT_UNUSED_10
 													// Version 5 TOC increased to 300
 													// Version 4 does not have unused items
                                                     // Version 3 does not have the PROMPT_TBD items in it
-#define VOICE_PROMPTS_TOC_SIZE 320
+#define VOICE_PROMPTS_TOC_SIZE 350
 #define CUSTOM_VOICE_PROMPT_PHRASE_LENGTH 16
 static void getAmbeData(int offset,int length);
 static int GetCustomVoicePromptData(int customPromptNumber);
@@ -109,6 +110,21 @@ __attribute__((section(".data.$RAM2"))) static VoicePromptsSequence_t voicePromp
 __attribute__((section(".data.$RAM2"))) uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
 __attribute__((section(".data.$RAM2"))) char phraseCache[maxCustomVoicePrompts][CUSTOM_VOICE_PROMPT_PHRASE_LENGTH]; //cache the phrases we have custom prompts for.
+
+const userDictEntry userDictionary[]=
+{
+	{"hotspot", PROMPT_CUSTOM1}, // Hotspot
+	{"clearnode", PROMPT_CUSTOM2}, // ClearNode
+	{"sharinode", PROMPT_CUSTOM3}, // ShariNode
+	{"microhub", PROMPT_CUSTOM4}, // MicroHub
+	{"openspot", PROMPT_CUSTOM5}, // Openspot
+	{"repeater", PROMPT_CUSTOM6}, // repeater
+	{"blindhams", PROMPT_CUSTOM7}, // BlindHams
+		{"allstar", PROMPT_CUSTOM8}, // Allstar
+	{"parrot", PROMPT_CUSTOM9}, // Parrot
+	{"channel",PROMPT_CHANNEL},
+	{0, 0}
+};
 
 // replay logic shares ambe buffer so is colocated here also
 
@@ -483,7 +499,7 @@ static uint16_t LookupCustomPrompt(char* ptr, int* advanceBy)
 		int len=strlen(phraseCache[i]);
 		if (strncasecmp(phraseCache[i], ptr, len)==0)
 		{
-			*advanceBy+=len-1;
+			*advanceBy=len;
 			return i+1; // prompts are numbered from 1.
 		}
 	}	
@@ -492,7 +508,7 @@ static uint16_t LookupCustomPrompt(char* ptr, int* advanceBy)
 
 static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 {
-	if (!ptr) return 0;
+	if (!ptr || !*ptr) return 0;
 	
 	// look up ## followed by digit and speak as custom prompt.
 	if (includeCustomPrompts)
@@ -508,11 +524,17 @@ static uint16_t Lookup(char* ptr, int* advanceBy, bool includeCustomPrompts)
 		if (customPromptNumber > 0)
 			return VOICE_PROMPT_CUSTOM+customPromptNumber;
 	}
-	if (strncasecmp(ptr, "channel", 7)==0)
+	
+	for (int index=0; userDictionary[index].userWord!=0; ++index)
 	{
-		*advanceBy+=6;
-		return PROMPT_CHANNEL;
+		int len=strlen(userDictionary[index].userWord);
+		if (strncasecmp(userDictionary[index].userWord, ptr, len)==0)
+		{
+			*advanceBy=len;
+			return userDictionary[index].vp;
+		}
 	}
+
 	return 0;
 }
 
@@ -535,6 +557,7 @@ void voicePromptsAppendStringEx(char *promptString, VoicePromptFlags_T flags)
 		{
 			voicePromptsAppendPrompt(vp);
 			promptString+=advanceBy;
+			continue;
 		}
 		else if ((*promptString >= '0') && (*promptString <= '9'))
 		{

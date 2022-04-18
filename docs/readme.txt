@@ -17,8 +17,59 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
+13 April 2022:
+Warning, warning, warning!
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
+1. Changed default scan hold time to 10 seconds (by popular demand).
+2. Also by request, I have added a new option to disable the beep indicating mismatched rx and tx talkgroup/TS/CC. Note, only disable this if you know what you are doing because if you disable this without understanding what it does, and you don't get the audio indication, you may try replying to a DMR signal being received on a different talkgroup. It is advisable to keep this on unless the beep indicating the mismatched talkgroup is really not important to you because you are just listening. The option is called DMR Talkgroup Beep, and it is in the Sound Options menu. It defaults to on. Remember, this beep indicates that the rx signal you just heard is not on the same tg/ts/cc that you have set for tx.
+3. When the radio is set to transmit a CTCSS or DCS tone, the other station would always hear a squelch tail when you release PTT. I've now eliminated this via a new option. When you release PTT, if a tone is being transmitted, we stop transmitting the tone or code and keep transmitting the carrier for a specified tail time. This gives the receiver time to detect the absence of the tone or code and shut off its amplifier. If using DCS, we send a 136.5 tone. This is an option called CSS Tail in the Options menu. You can set it to off, or in increments of 50 ms up to 500 ms. It defaults to 350 ms which is the time it takes for the MD9600 to respond without a squelch crash. A new voice prompt was added for this option so please update your voice prompts.
+4. Added new End RX Beep option to Sound options menu by request. This will play a beep when the radio stops receiving a signal. This is most useful in DMR mode when it is not obvious when the channel becomes free. The option has 4 values: off, DMR, FM and Both. 
+5. Fixed PTT latch so that if Busy Channel Lockout (BCL) is enabled, pressing PTT while a signal is being received won't latch the PTT.
+6. . Fixed some display corruption in the Sound Options Menu.
+7. Hopefully fixed the DMR ID announcement feature which was fixed in the last release to not speak signals on the wrong timeslot when using a repeater, but it broke the feature on simplex.
+8. On the GD77S, Extra long hold SK2 would not go to the next channel bank channel if the current channel+16 was the very last channel in the zone.
+9. On the GD77S, you could not modify the very last channel in the zone, if you attempted to, a new channel would be added instead of modifying the last one.  
+10. When modifying a channel on the GD77S, we now maintain the name rather than overwriting it. We only overwrite if adding a new channel.
+11. If a zone on the GD77S has more than 16 channels, you could not previously rename channels above 16. This has been fixed.
+12. Added ability to insert a pause in a DTMF  contact. Add a P in the code field of a DTMF contact where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones. (On radios with a keypad, remember you can  toggle the keypad between  alpha numeric and numeric/DTMF mode with SK2+right.) Please note, you must update your CPS to the one in this archive otherwise if you try import from your radio and there is a contact with a P in their DTMF code, the old CPS would crash.
+13. There is now a new version of the CPS installer called AccessibleGD77CPSInstaller.exe. this must be installed prior to attempting to use the new pause feature in DTMF contacts as the old CPS did not support the P for pause and would crash. (Thanks to OK1TE for fixing this and preparing the installer).
+14. Fixed issue on GD77S with color codes when using the VFO. Steps to repro:
+    a. Use virtual keypad to enter a frequency.
+    b. Use virtual keypad to set mode to DMR.
+    c. Because no cc had been set, it would default to 0 rather than the radio's default.
+    d. If you tried changing it with cc menu, it would change the rx color but not the tx color so as soon as you pressed ptt, it would be reset to 0.
+    We now properly set both rx and tx color when setting up the vfo from the virtual keypad.
+    Also, when you use the cc menu to change the color code, it changes both the rx and tx color code.
+15. Increased the maximum number of builtin voice prompts from 320 to 350. Please update your voice prompts!
+16. Reorganized the GD77S options into Options1 and Options2, to allow easier addition of future options. I also added the CSS Tail Elimination option and put back band limits which were removed earlier in the beta cycle.
+17. Added back in user dictionary words (will match case insensitive) including:
+  17.1 hotspot
+17.2 clearnode
+17.3 sharinode
+17.4 microHub
+17.5 openspot
+17.6 repeater
+17.7 blindhams
+17.8 allstar
+17.9 parrot
+18. Added last DTMF contact to channel summary description on long hold SK1. This way, you can connect to an allstar node, go away and come back later and so long as you haven't changed channels, the channel summary will tell you the last DTMF contact you connected to without you having to dial the status.
+18.1. When you dial a contact from the DTMF contact list, the name of the contact is added to the summary on long hold SK1.
+18.2. When you manually dial a DTMF string (PTT plus keypad keys or virtual keypad on GD77S), the numbers and letters of the code are added to the summary on long hold SK1.
+18.3. If you change channels, the last contact is cleared .
+19. Enhanced GD77S keypad mode to directly access VFO A, VFO B or current channel.
+19.1. In the options 2 menu, there is now a Keypad Mode option. You can set this to VFO A, VFO B or Channel. The VFO or last known channel (prior to entering Options mode) will be loaded immediately.
+19.2.	When you cycle the radio to Keypad mode with orange, it will now say keypad mode VFO A, or VFO B or the channel name, followed by the character you would be selecting.
+19.3.	If you set keypad mode to VFO A for instance, as soon as you cycle to keypad mode, VFO A is now active immediately. Similarly, if you had set keypad mode to VFO B, VFO B would be active. If set to channel, then whatever channel was active before is still active.
+19.4.	Extra long hold of sk1 in Keypad mode, or any of the Options modes, will now speak the summary of the active VFO or channel so you can figure out what is set without having to exit keypad mode or Options mode to find out.
+19.5.	Long hold orange will save whatever you change back to either VFO A or VFO B as appropriate but saving to the current channel will only be temporal until you change the knob. 
+19.6. If you wish to save to a channel permanently, you must use A1 through a16 command explicitly to overwrite  an existing channel 1 through 16, or use the command  A with no digits to create  a new channel and append that channel to the current zone.
+20. Added del command to GD77S virtual keypad to delete a channel. E.g. Use del16 to delete channel 16 from the radio.
+21. Added R command to GD77S to recall a channel to VFO. For example, if your Keypad mode is set to VFO A, then R5 will recall channel 5 to VFO A.
+22. Added S command to GD77S to swap two channels, e.g. S5 10 long hold orange will swap channel 5 with channel 10. Note there is only a space between the channel designators, there is no space between the command and first channel designator.
+
+
 22 February 2022
+Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Fixed long standing issue of announcing channel errantly when dual watch or priority channel scan resumes after ptt is released.
 2. Increased the number of custom voice prompts to 32 for the GD77, GD77S and RD5R, and 99 for the DM1801 and DM1801A (as the DM1801 radios have 2MB flash). In order to do this I had to rework the code which handles the entering of digits while SK1 is held down. To play a prompt, press SK1, enter the digits or digits, and release SK1. The prompt will either be played when you release SK1 or when you enter the second digit. To save, hold down the last digit, e.g. to save prompt 32, record the prompt, press and hold SK1, press and release digit 3, and then press and hold down digit 2 until you get the save mesage.
 3. Added new voice prompt/tag edit mode.

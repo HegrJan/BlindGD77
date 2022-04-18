@@ -604,6 +604,8 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 					blocksTA = 0x00;
 					overrideTA = false;
 					lastHeardNeedsAnnouncementTimer = (id !=trxDMRID) ? LAST_HEARD_TIMER_TIMEOUT : -1;
+					lastHeardUpdateTime=fw_millis();
+
 					retVal = true;// something has changed
 					lastID = id;
 
@@ -619,7 +621,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						}
 
 						item->time = fw_millis();
-						lastHeardUpdateTime=item->time;
 						lastTG = talkGroupOrPcId;
 
 						if (item == LinkHead)
@@ -682,7 +683,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 						item->id = id;
 						item->talkGroupOrPcId = talkGroupOrPcId;
 						item->time = fw_millis();
-						lastHeardUpdateTime=item->time;
 						item->receivedTS = (dmrMonitorCapturedTS != -1) ? dmrMonitorCapturedTS : trxGetDMRTimeSlot();
 						lastTG = talkGroupOrPcId;
 
@@ -711,7 +711,6 @@ bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot)
 							item->talkGroupOrPcId = talkGroupOrPcId;// update the TG in case they changed TG
 							updateLHItem(item);
 							item->time = fw_millis();
-							lastHeardUpdateTime=item->time;
 						}
 
 						lastTG = talkGroupOrPcId;
@@ -1469,7 +1468,7 @@ void uiUtilityRenderQSOData(void)
 			uiUtilityDisplayInformation(LinkHead->talkgroup, different ? DISPLAY_INFO_CONTACT_INVERTED : DISPLAY_INFO_CONTACT, -1);
 
 			// If voice prompt feedback is enabled. Play a short beep to indicate the inverse video display showing the TG / TS / CC does not match the current Tx config
-			if (different && nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+			if (different && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && settingsIsOptionBitSet(BIT_INDICATE_DMR_RXTXTG_MISMATCH))
 			{
 				soundSetMelody(MELODY_RX_TGTSCC_WARNING_BEEP);
 			}
@@ -2790,20 +2789,40 @@ dmrDbTextDecode((uint8_t*)&output, (uint8_t*)&compressedBuf, bytes);
 voicePromptsAppendStringEx(output,vpAnnounceCustomPrompts);
 }
 */
-void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
+
+static void announceLastDTMFContact(bool anouncePrompt)
 {
-	bool isChannelScreen=menuSystemGetCurrentMenuNumber() == UI_CHANNEL_MODE;
+	if (lastDialledDTMFContact.code[0]==0xff)
+		return; // no contact dialled recently.
 	
+	if (anouncePrompt)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->contact);
+	}
+	char buff[DTMF_CODE_MAX_LEN+1]; // DTMF may have 16 chars plus a null.
+
+	if (lastDialledDTMFContact.name[0]!=0 && lastDialledDTMFContact.name[0]!=0xff)
+	{
+		codeplugUtilConvertBufToString(lastDialledDTMFContact.name, buff, DTMF_CODE_MAX_LEN);
+	}
+	else
+	{
+		dtmfConvertCodeToChars(lastDialledDTMFContact.code, buff, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
+	}
+	voicePromptsAppendString(buff);	
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+}
+
+void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
+{
 	voicePromptsInit();
 	announceItemWithInit(false, PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY); // since this function calling does the init and play.
 	AnnounceLastHeardContact();
-	if (announceName)
-	{
-		if (isChannelScreen)
-			announceChannelName(true, true);
-		else
-			announceVFOChannelName();
-	}
+	if (isChannelScreen)
+		announceChannelName(true, true);
+	else
+		announceVFOChannelName();
+	
 
 	announceFrequency();
 	
@@ -2834,6 +2853,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying, bool announceName)
 	}
 	else
 	{
+		announceLastDTMFContact(!voicePromptWasPlaying);
 		bool rxAndTxTonesAreTheSame = (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
 		&& (currentChannelData->rxTone ==currentChannelData->txTone);
 		if (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
@@ -3303,6 +3323,7 @@ static uint32_t dtmfGetToneDuration(uint32_t duration)
 	return ((starOrHash ? (uiDataGlobal.DTMFContactList.durations.otherDur * 100) : 0) + duration);
 }
 
+static bool inDTMFPause=false;
 
 static void dtmfProcess(void)
 {
@@ -3314,8 +3335,34 @@ static void dtmfProcess(void)
 	if (PITCounter > uiDataGlobal.DTMFContactList.nextPeriod)
 	{
 		uint32_t duration = (1000 / (uiDataGlobal.DTMFContactList.durations.rate * 2));
+		bool pause=uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] == 0x20;
+		if (pause)
+		{
+			uiDataGlobal.DTMFContactList.inTone=false;
+			uiDataGlobal.DTMFContactList.nextPeriod = PITCounter + 10000;
+			inDTMFPause=true;
+			if (trxTransmissionEnabled)
+			{
+				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
+				trxDisableTransmission();
 
-		if (uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] != 0xFFU)
+				trxTransmissionEnabled = false;
+				trxSetRX();
+				return;
+			}
+
+			// Keep pausing while carrier is detected, e.g. response from hotspot 
+			if (trxCarrierDetected())
+				return;
+			if (inDTMFPause)
+			{
+				uiDataGlobal.DTMFContactList.poPtr++;
+				inDTMFPause=false;
+			}
+
+			return;
+		}
+		else if (uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] != 0xFFU)
 		{
 			// Set voice channel (and tone), accordingly to the next inTone state
 			if (uiDataGlobal.DTMFContactList.inTone == false)
@@ -3327,7 +3374,7 @@ static void dtmfProcess(void)
 			{
 				trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_NONE);
 			}
-
+			
 			uiDataGlobal.DTMFContactList.inTone = !uiDataGlobal.DTMFContactList.inTone;
 		}
 		else
@@ -3376,6 +3423,7 @@ void dtmfSequenceReset(void)
 	uiDataGlobal.DTMFContactList.poLen = 0U;
 	uiDataGlobal.DTMFContactList.poPtr = 0U;
 	uiDataGlobal.DTMFContactList.isKeying = false;
+	inDTMFPause=false;
 }
 
 bool dtmfSequenceIsKeying(void)
@@ -3423,11 +3471,39 @@ void dtmfSequenceStop(void)
 	uiDataGlobal.DTMFContactList.poLen = 0U;
 }
 
+static uint16_t dtmfCTCSSDCSSquelchTail=0;
+#ifndef CTCSSDCS_TAIL
+#define CTCSSDCS_TAIL 250
+#endif
+
+static bool HandleDTMFCTCSSDCSSquelchTail()
+{
+	if (currentChannelData->txTone == 0xffff) return false;
+
+	if (dtmfCTCSSDCSSquelchTail)
+	{
+		dtmfCTCSSDCSSquelchTail--;
+		if (dtmfCTCSSDCSSquelchTail==0)
+			return false; // so the dtmf tx will be reset.
+		return true;
+	}
+	
+	bool isDCS = (codeplugGetCSSType(currentChannelData->txTone)& CSS_TYPE_DCS) ? true : false;
+
+	dtmfCTCSSDCSSquelchTail = CTCSSDCS_TAIL;
+	// clear whatever tone or DCS code was used so the tail can be txmitted without anything to allow the receiving radio to shut down its rx without a squelch tail.
+	// If using DCS, however, send a 136.5 tone instead.
+	trxSetTxCSS(isDCS ? 1365 : 0xffff); 		
+	return true;
+}
+
 void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 {
 	if (uiDataGlobal.DTMFContactList.isKeying)
 	{
-		if (!trxTransmissionEnabled)
+		bool pause=uiDataGlobal.DTMFContactList.buffer[uiDataGlobal.DTMFContactList.poPtr] == 0x20;
+
+		if (!trxTransmissionEnabled && !pause)
 		{
 			rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
 			// Start TX DTMF, prepare for ANALOG
@@ -3446,6 +3522,9 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 		// DTMF has been TXed, restore DIGITAL/ANALOG
 		if (uiDataGlobal.DTMFContactList.poLen == 0U)
 		{
+			if (HandleDTMFCTCSSDCSSquelchTail())
+				return;
+			
 			trxDisableTransmission();
 
 			if (trxTransmissionEnabled)
@@ -3498,6 +3577,8 @@ void dtmfSequenceTick(bool popPreviousMenuOnEnding)
 	{
 		if (code[i] < 16)
 			text[j++] = DTMF_AllowedChars[code[i]];
+		else if (code[i]==0x20)
+			text[j++]='P'; // pause.
 	}
 	text[j] = 0;
 
@@ -3516,12 +3597,13 @@ extern int toupper(int __c);
 	memset(code, 0xFFU, DTMF_CODE_MAX_LEN);
 	for (int i = 0; (i < maxSize) && text[i]; i++)
 	{
+		bool pause=toupper(text[i])=='P';
 		char *symbol = strchr(DTMF_AllowedChars, toupper(text[i]));
-		if (!symbol)
+		if (!symbol && !pause)
 		{
 			return false;
 		}
-		code[i] = (symbol - DTMF_AllowedChars);
+		code[i] =pause ? 0x20 : (symbol - DTMF_AllowedChars);
 	}
 
 	return true;
@@ -3705,7 +3787,7 @@ static bool IsLastHeardContactRelevant()
 	if (LinkHead->id==trxDMRID) return false; // one's own ID.
 	if ((fw_millis() - lastHeardUpdateTime) > 10000) return false; // If it is older than 10 seconds.
 	if (trxGetMode()==RADIO_MODE_ANALOG) return false;
-	if (dmrMonitorCapturedTS != trxGetDMRTimeSlot())
+	if ((trxDMRModeRx == DMR_MODE_DMO) && ((dmrMonitorCapturedTS !=-1) && (dmrMonitorCapturedTS != trxGetDMRTimeSlot())))
 		return false;
 
 	return true;
@@ -3765,6 +3847,7 @@ void AnnounceLastHeardContactIfNeeded()
 		voicePromptsInit();
 		AnnounceLastHeardContact(); // just queue, do not play.
 		lastHeardNeedsAnnouncementTimer--; // so we do  not do it again until it changes.
+		return;
 	}
 	
 	if (getAudioAmpStatus() & (AUDIO_AMP_MODE_RF | AUDIO_AMP_MODE_BEEP | AUDIO_AMP_MODE_PROMPT))
@@ -3997,6 +4080,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
 		customVoicePromptIndex=0xff; // reset.
 		keyboardReset(); // reset the keyboard also.
+		return true;
 	}
 	else if (KEYCHECK_SHORTUP_NUMBER(ev->keys))
 	{// digit is being released, either set customVoicePromptIndex or combine with prior value as appropriate.
@@ -4016,9 +4100,10 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{// play straight away since we can't add any more digits.
 			PlayAndResetCustomVoicePromptIndex();
 		}
+		return true;
 	}
 		
-	return true; // We've handled the key combination.
+	return false;
 }
 
 void ShowEditAudioClipScreen(uint16_t start, uint16_t end)

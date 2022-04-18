@@ -230,7 +230,8 @@ const stringsTable_t englishLanguage =
 .voice_prompt_vol = "Voice Vol",
 .voice_prompt_rate="Voice Rate",
 .dtmf_vol="DTMF vol",
-.vp_saved="prompt saved"
+.vp_saved="prompt saved",
+.css_tail="CSS Tl.E"
 };
 /********************************************************************
  *
