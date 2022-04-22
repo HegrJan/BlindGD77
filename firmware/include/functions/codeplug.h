@@ -88,7 +88,11 @@ extern const int VFO_SWEEP_SCAN_RANGE_SAMPLE_STEP_TABLE[7];
 #define CODEPLUG_CHANNELS_PER_BANK                                128
 
 #define CODEPLUG_DTMF_CONTACTS_MIN                                  1
-#define CODEPLUG_DTMF_CONTACTS_MAX                                 32
+
+// The following  used to be 32.
+// The original DTMF contacts region went from 0x2f88 to 0x3388 in EPROM. With 60 contacts, top of DTMF contacts region is now 0x3708.
+// Channel data starts at 0x3780. Between 0x3740 and 3780 there was some text but it was unclear what it was for since the firmware does not seem to reference it.
+#define CODEPLUG_DTMF_CONTACTS_MAX                                 60
 
 #define CODEPLUG_CSS_TONE_NONE                                 0xFFFF
 typedef enum
