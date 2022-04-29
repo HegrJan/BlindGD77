@@ -17,7 +17,12 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-13 April 2022:
+29 April 2022
+1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM.
+2. Long hold SK1 from contact list will now play current channel or VFO summary, allowing you to hear this info without having to exit the contact list. Note that long hold SK1 used to play the DMR voice tag if the list was in digital mode, but, now that tag is played automatically if available, there was no need to keep this function on this key. Also, sk1 would repeat the current list item and thus repeat the voice tag if needed.
+ 
+
+18 April 2022:
 Warning, warning, warning!
 Please note! You will need to update your voice prompts. This will not overwrite your custom voice prompts.
 1. Changed default scan hold time to 10 seconds (by popular demand).

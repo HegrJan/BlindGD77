@@ -1,5 +1,5 @@
 AccessibleGD77 Instructions by Joseph Stephen VK7JS 
-18 December 2021
+25 March 2022
 Email: vk7js@faithfulgenerations.com
 Uploading the AccessibleGD77 Firmware and Voice Prompts
 
@@ -26,7 +26,7 @@ then plug the GD77 programming cable into the mic/earphone sockets of the GD77, 
 7. On the left hand side of the radio hold the bottom two buttons called SK1 and SK2 (below the long PTT button) depressed at the same time and turn on the GD77. (Note for the Rd5R, SK1 is above PTT and SK2 is below PTT).
 You should hear a sound from windows as it recognizes the device but the screen on the GD77 will remain blank. 
 
-8. Now run the OpenGD77 CPS software included in the AccessibleGD77 archive (assuming you have already installed it. If you haven't installed it, go ahead and install it. The file is called OpenGD77CPSInstaller.exe. Once installed, run it. Note: you must use the version in the AccessibleGD77 archive, not the Radioddity version in the 2021-01-26_GD-77_CPS_&_Firmware_Changelog_Ham_Version.zip archive.) 
+8. Now run the AccessibleGD77CPS  software included in the AccessibleGD77 archive (assuming you have already installed it. If you haven't installed it, go ahead and install it. The file is called AccessibleGD77CPSInstaller.exe. Once installed, run it. Note: you must use the version in the AccessibleGD77 archive, not the Radioddity version in the 2021-01-26_GD-77_CPS_&_Firmware_Changelog_Ham_Version.zip archive.) 
 
 9. From the Extras menu, choose Firmware Loader (you can get to it by typing  Alt+e, then f). 
 

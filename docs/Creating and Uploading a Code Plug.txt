@@ -7,7 +7,7 @@ There will be one channel for each repeater or hot-spot you want to include in t
 
 You will also have to decide which Talk-Groups you want to put in the Code-plug. The default code plug you are modifying already has one talk-group configured TG9 (local). Which additional talk-groups you choose to include is up to you but as a suggestion if you live in the UK TG2350 the UK National Talk-Group and then TG2351, TG2352 and TG2353 the three main UK chat Talk-Groups and perhaps one of the local talk-groups for Scotland, North of England etc. depending on where you live, TG91 for the World wide talk group  and as a blind ham you might want to include TG31679 the Blind Ham Talk-Group and for lots of activity provided you are on the Brandmeister network TG23526 the Hub Net Talk Group, it’s usually very busy but I don’t think it is available on the DMR+ or Phoenix networks. If you are using a hotspot then you don’t have a problem because you can choose to connect to any of the networks that you want. Speech quality on Hub net varies greatly simply because people are being transcoded onto it from many different sources including older FM repeaters, echo-link and many others but as I say you will hear lots of activity.
 So let’s get down to creating your own personal code plug.
-Set the focus to your desktop and type o until you find your Open GD77CPS short cut on the desktop and hit Enter to start the program running.
+Set the focus to your desktop and type a until you find your AccessibleGD77CPS short cut on the desktop and hit Enter to start the program running.
 Type Alt+f 
 and then cursor down twice and you will be focused on the Open menu element
 now type default into the edit box and hit enter

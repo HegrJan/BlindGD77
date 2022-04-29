@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-22 March 2022
+29 April 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -236,7 +236,7 @@ Voice Tag/Prompt Edit Mode
 DMR voice tag feature. 
 You can now associate a voice clip with a DMR ID and then have that voice tag played while reviewing your DMR contact list.
 1. After the other station has announced their callsign or name, press SK1+hash. The DMR contact details dialog will pop up with their ID already filled in and the last few seconds of DMR associated with that ID. Further capturing of DMR audio is suspended while this dialog is active, to give you time to decide what you wish to do with the audio, and so your continuing QSO won't overwrite what you are about to save. You can fill in the other station's name and, if you need to edit the voice tag, you can turn on the edit mode (see above) and fix the voice tag before exiting this screen. If you wish to edit the voice tag later, after it has already been saved, see 5 above, and note the limitations. The voice tag will be associated with this contact so deleting the contact will delete the voice tag. These voice tags are not counted toward your custom voice prompts. Currently you can have 256 DMR ID tags.
-2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press long hold SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
+2. While reviewing the DMR contact list, make sure you have private contacts showing by pressing Hash to toggle to Private calls. If there is a DMR voice tag associated with a contact, it will be played as you arrow through the list. To repeat it, press SK1. Again, if you wish to edit it later, after you've just heard the voice tag, go into edit mode with SK1+green, copy it back to the edit buffer with *, and edit it. When you exit the edit mode with Green, the edited version will be automatically saved. If you wish to discard the edit, exit with Red instead.  
 
 Creating a new channel.
 1. Press MR/VFO from the Channel Screen to go to VFO.
