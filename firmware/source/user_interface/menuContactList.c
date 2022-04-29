@@ -300,8 +300,9 @@ static void handleEvent(uiEvent_t *ev)
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{// Play voice tag associated with digital contact.
-			PlayDMRVoiceTag(true);
+		{
+			bool announceChannelName=currentChannelData->name[0]!=0;
+			AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), announceChannelName);
 			return;
 		}
 		if (repeatVoicePromptOnSK1(ev))
