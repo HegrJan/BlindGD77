@@ -20,7 +20,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 29 April 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM.
 2. Long hold SK1 from contact list will now play current channel or VFO summary, allowing you to hear this info without having to exit the contact list. Note that long hold SK1 used to play the DMR voice tag if the list was in digital mode, but, now that tag is played automatically if available, there was no need to keep this function on this key. Also, sk1 would repeat the current list item and thus repeat the voice tag if needed.
- 
+3. Fixed bug where if you deleted a DMR id override in the channel details screen by deleting the entire contents of the edit, it would not delete. There had to be  a valid DMR ID or 0 in the edit.
 
 18 April 2022:
 Warning, warning, warning!
