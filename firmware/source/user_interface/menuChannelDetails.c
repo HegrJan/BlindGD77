@@ -745,24 +745,24 @@ static void handleEvent(uiEvent_t *ev)
 			uiDataGlobal .FreqEnter.index=strlen(editParams.editBuffer);
 			memcpy(uiDataGlobal.FreqEnter.digits, editParams.editBuffer, strlen(editParams.editBuffer));// so we don't null terminate and wipe out the rest of the filler chars.
 		}
-		if (uiDataGlobal.FreqEnter.index != 0)
-		{
-			int number = freqEnterRead(0, 8, (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID));
-
-			if (((menuDataGlobal.currentItemIndex == CH_DETAILS_RXFREQ) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXFREQ))
-				&& (trxGetBandFromFrequency(number) != -1))
-			{
-				updateFrequency(number);
-			}
-			else if ((menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID)
-				&& (((number >= MIN_TG_OR_PC_VALUE) && (number <= MAX_TG_OR_PC_VALUE)) || (number == 0)))
-			{
-				codeplugChannelSetOptionalDMRID(number, &tmpChannel);
-				freqEnterReset();
-			}
-		}
 		if (handled)
 		{
+			if ((uiDataGlobal.FreqEnter.index != 0) || (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID))
+			{
+				int number = freqEnterRead(0, 8, (menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID));
+
+				if (((menuDataGlobal.currentItemIndex == CH_DETAILS_RXFREQ) || (menuDataGlobal.currentItemIndex == CH_DETAILS_TXFREQ))
+					&& (trxGetBandFromFrequency(number) != -1))
+				{
+					updateFrequency(number);
+				}
+				else if ((menuDataGlobal.currentItemIndex == CH_DETAILS_DMRID)
+					&& (((number >= MIN_TG_OR_PC_VALUE) && (number <= MAX_TG_OR_PC_VALUE)) || (number == 0)))
+				{
+					codeplugChannelSetOptionalDMRID(number, &tmpChannel);
+					freqEnterReset();
+				}
+			}
 			updateScreen(false, editParams.allowedToSpeakUpdate);
 			return;
 		}
