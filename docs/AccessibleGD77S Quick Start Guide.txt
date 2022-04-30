@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-29 April 2022
+30 April 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -218,6 +218,9 @@ If you need to reset the radio's settings to their default values, power off the
 You'll then need to reset all of your favorite options.
 Occasionally, due to changes in the firmware, updating the firmware may force a settings reset. If this happens, you'll hear the message "Update Settings" and you will need to reset your favorite settings in the various menus.
 This does not affect your codeplug.
+
+Hotspot Mode:
+To change hotspot mode, press and hold SK1 while powering on. You will cycle through the various hotspot modes each time you do this.
 
 Auto Dial Contact.
 Associating a DTMF contact with a channel (auto dial contact):
