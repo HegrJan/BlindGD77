@@ -132,6 +132,7 @@ These Modes contain the following options:
 Options1:
 * Master Power,
 * Band Limits,
+* Hotspot Mode,
 * FM Mic Gain,
 * DMR Mic Gain,
 * FM Beep,
@@ -144,8 +145,7 @@ Options1:
 * TOT master (needed for PTT latch),
 * PTT Latch, (Enable TOT (timeout timer. Note that PTT Latch will not work without a Timeout defined. This is by design. Also, when PTT Latch is enabled, like on the GD77, beeps are automatically enabled when you press and release PTT so you know when transmission has started and stopped)
 * Eco Level (5 levels of battery save mode),
-* AutoZone,
-* Firmware Info.
+* AutoZone
 
 Options 2 contains:
 * Vox Threshold,
@@ -158,7 +158,8 @@ Options 2 contains:
 * Record prompt mode (PTT Prompt), (see below), 
 * Review Prompt (All Prompt) (see below),
 * Edit start, and 
-* Edit end (see below).
+* Edit end (see below),
+* Firmware Info.
 
 Keypad Mode:
 In the options 2 menu, there is now a Keypad Mode option. You can set this to VFO A, VFO B or Channel.

@@ -62,6 +62,7 @@ typedef enum
 {
 	GD77S_OPTION_POWER,
 	GD77S_OPTION_BAND_LIMITS,
+	GD77S_OPTION_HOTSPOT_MODE,
 	GD77S_OPTION_FM_MIC_GAIN,
 	GD77S_OPTION_DMR_MIC_GAIN,
 	GD77S_OPTION_VHF_SQUELCH,
@@ -75,7 +76,6 @@ typedef enum
 	GD77S_OPTION_PTT_LATCH,
 	GD77S_OPTION_ECO,
 	GD77S_OPTION_AUTOZONE,
-	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_VOX_THRESHOLD,
 	GD77S_OPTION_VOX_TAIL,
 	GD77S_OPTION_KEYPAD_SOURCE, //  VFO_A, VFO_B, cur_channel
@@ -87,6 +87,7 @@ typedef enum
 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW,
 	GD77S_OPTION_EDIT_START,
 	GD77S_OPTION_EDIT_END,
+	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
 } 	GD77S_OPTIONS_t;
 
@@ -3583,6 +3584,27 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			}
 			break;
 		}
+		case GD77S_OPTION_HOTSPOT_MODE:
+		{
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->hotspot_mode);
+			if (uiDataGlobal.dmrDisabled)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->n_a);
+			}
+			else
+			{
+				if (nonVolatileSettings.hotspotType == 0)
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->off);
+				}
+				else
+				{
+					voicePromptsAppendString((nonVolatileSettings.hotspotType == HOTSPOT_TYPE_MMDVM) ? "MMDVM" : "BlueDV");
+				}
+			}
+			break;
+		}
 		case GD77S_OPTION_FM_MIC_GAIN:
 			announceMicGain(voicePromptWasPlaying==false, true, false);
 			break;
@@ -4530,6 +4552,14 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			{
 				nonVolatileSettings.txFreqLimited =BAND_LIMITS_NONE;
 			}
+			break;
+		case GD77S_OPTION_HOTSPOT_MODE:
+			if (dir > 0 && nonVolatileSettings.hotspotType < HOTSPOT_TYPE_BLUEDV)
+				settingsIncrement(nonVolatileSettings.hotspotType, 1);
+			if (dir < 0 && nonVolatileSettings.hotspotType > 0)
+				settingsDecrement(nonVolatileSettings.hotspotType, 1);
+			if (dir == 0)
+				settingsSet(nonVolatileSettings.hotspotType, 0);
 			break;
 		case GD77S_OPTION_FM_MIC_GAIN:
 			if (dir > 0)
