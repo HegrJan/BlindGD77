@@ -1,6 +1,6 @@
 Radioddity GD77S Quick Start Guide
 by Joseph Stephen VK7JS
-30 April 2022
+5 May 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 Please note. Turn on word wrap to read this document in a text editor.
@@ -115,7 +115,7 @@ Note to clear a CTCSS or DCS code, enter c followed by long hold orange.
 Remember, if you wish to enter a new command, don't forget to clear the buffer first with long hold sk2.
 2.10. Command A1 through A16 followed by long hold orange, copy current channel settings or VFO (depending on Keypad mode setting in Options 2 menu) to channel 1 through 16 in the current zone, overwriting its prior contents. Use the command  A with no digits to create  a new channel and append that channel to the current zone.
 2.11. Extra long hold SK1 will speak the current VFO or channel summary depending on whether the Keypad is in VFO A, VFO B or channel mode.
-2.12. Use the command *# followed by a six char name followed by a DTMF code string to add a DTMF contact to the DTMF contacts list. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange. When editing a DTMF code, you can add a P where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones.
+2.12. Use the command AC immediately followed by a name, then a space, then a code to add a DTMF contact. To make that contact an autodial for a partticular channel, prefix the name with ADZZCC where ZZ is the zone number and CC the channel number. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: "ACAD0102 *12345" followed by long hold orange. When editing a DTMF code, you can add a P where you want a 1 second pause. Note that if after the second has expired, if a carrier is  detected, e.g. due to the audio response from an allstar node still playing back, the radio will wait until the carrier is dropped before continuing to send the DTMF tones.
 2.13. Save the last prompt (recorded with SK1+ptt)to custom prompt 1 through 32 using the virtual keypad command *##digits. E.g. *##1 will save the last recorded prompt to custom prompt 1 (see below for how to record and use custom voice prompts). You can also use *##* or *##*text to save to the next available slot.
 2.14. To edit a channel name use e followed by channel number followed by name, e.g. e1hello to name channel 1 in the current zone hello.
 2.15. To delete a channel, use delN where n is a channel number, e.g. DEL16 to delete channel 16. This will delete the channel 16 from the radio.
@@ -229,8 +229,9 @@ You can associate a DTMF contact with a channel such that the first time you pre
 TO do this, add a contact to the contacts list and give it the following name format:
 ADXXYY where AD means auto dial, XX is the 1-based  zone number and YY is the 1-based channel number, (padding with leading 0s so each is two digits.) The letters "AD" must be in uppercase if entered from the CPS software's contact list. SO, if you wish to dial a contact on channel 1 in zone 1, call the contact AD0101. If you wish to dial a contact on channel 1 in any zone, use 00 for the zone number, e.g. AD0001.
 To toggle the feature so you can redial, or so it doesn't dial the first time with PTT, press and hold SK2 on the FM channel associated with the contact. Also, if you go to a channel with an auto dial contact and you decide you don't want to auto dial it, if you either go to virtual keypad or the DTMF dialer and dial something from either, the auto dial is toggled off since you've dialled something else. You can of course toggle it on again with long hold SK2. 
-You can now add contacts to the GD77S using the virtual keypad. Dial the string *# followed by a six character name followed by the DTMF string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: *#AD0102*12345 followed by long hold orange.
-To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command *#AD0102 followed by long hold orange. 
+You can now add contacts to the GD77S using the virtual keypad. Dial the string AC followed by a name then a space, then the DTMF code string. Thus, if you wish to add an auto dial contact to channel 2 in zone 1, which dials *12345 when you first hit PTT on that channel, the command would look like the following: "ACAD0102 *12345" followed by long hold orange.
+To delete the contact, use the command without any DTMF code. For example, to delete the contact AD0102, use the command ACAD0102 followed by long hold orange. 
+To add a non-autodial contact, the name can be anything else not starting with AD, e.g. "ACBYE *73" would add a contact BYE and the code *73.
 
 Replay DMR Audio:
 You can now replay the last 5 seconds of DMR audio. This works for both TX and RX so one can test the sound of one's audio without using parrot. Press and hold SK2 to replay the DMR audio. This feature uses a circular buffer so it always remembers the last approximately 5 seconds of audio regardless of whether it is from a received station or your own last transmission. Note long hold SK2 has multiple functions depending on the context:

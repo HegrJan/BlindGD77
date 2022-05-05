@@ -17,11 +17,14 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
-30 April 2022
-1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM.
-2. Long hold SK1 from contact list will now play current channel or VFO summary, allowing you to hear this info without having to exit the contact list. Note that long hold SK1 used to play the DMR voice tag if the list was in digital mode, but, now that tag is played automatically if available, there was no need to keep this function on this key. Also, sk1 would repeat the current list item and thus repeat the voice tag if needed.
-3. Fixed bug where if you deleted a DMR id override in the channel details screen by deleting the entire contents of the edit, it would not delete. There had to be  a valid DMR ID or 0 in the edit.
-4. Added Hotspot mode to GD77S Options menu. (While you  can cycle  this with SK1 while powering on, you get no voice feedback because the speaking of your callsign on power on clobbers it. Also, people don't remember the power on sequence.)
+5 May 2022
+1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
+2. Fixed issue of attempting to create a new contact when the list is full and the dialog still coming up. Now, if the list is full, you'll get an error message rather than the dialog still being invoked.
+3. Long hold SK1 from contact list will now play current channel or VFO summary, allowing you to hear this info without having to exit the contact list. Note that long hold SK1 used to play the DMR voice tag if the list was in digital mode, but, now that tag is played automatically if available, there was no need to keep this function on this key. Also, sk1 would repeat the current list item and thus repeat the voice tag if needed.
+4. Fixed bug where if you deleted a DMR id override in the channel details screen by deleting the entire contents of the edit, it would not delete. There had to be  a valid DMR ID or 0 in the edit.
+5. Added Hotspot mode to GD77S Options menu. (While you  can cycle  this with SK1 while powering on, you get no voice feedback because the speaking of your callsign on power on clobbers it. Also, people don't remember the power on sequence.)
+6. I've removed the *#ADZZCCCode GD77S virtual keypad command for adding an autodial for a zone and channel and replaced it with a generic command for adding a DTMF contact. If you enter AC for add contact, immediately followed by the name, then a space, then the code, you’ll add a DTMF contact. If you want that contact to be an autodial, the first 6 chars of the name have to be ADZZCC where zz is the zone and CC the channel, the rest of the name can be anything. So, Its very similar to before except that you can optionally have letters or anything following the ADZZCC in the name to help you understand the purpose of the autodial.
+7. There is a new CPS installer in this archive thanks to Jan OK1TE. It fixes a few issues with the DTMF form including adding hotkeys for the Add and Delete buttons similar to the Digital Contacts form. The file is called AccessibleGD77CPSInstaller.exe. Jan's specific changes are as follows: To be consistent with the digital contacts form, I've added Ctrl-Insert and Ctrl-I to the Add button and Ctrl-Del to the Delete button. I've also changed the tab order to land in the grid when opening the DTMF contact form.
 
 18 April 2022:
 Warning, warning, warning!
