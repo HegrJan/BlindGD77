@@ -308,7 +308,7 @@ static void handleEvent(uiEvent_t *ev)
 				else if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 				{
 					// Check existance.
-					if (createNew && (dtmfContactCount > 0) && codeplugGetDTMFContactIndex(contactName) > 0)
+					if (createNew && (dtmfContactCount > 0) && codeplugGetDTMFContactIndex(contactName, true) > 0)
 					{
 						menuDTMFContactDetailsState=MENU_DTMF_CONTACT_DETAILS_EXISTS;
 						menuDTMFContactDetailsTimeout = 2000;

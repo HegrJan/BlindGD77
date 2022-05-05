@@ -1649,7 +1649,7 @@ bool codeplugFindAllChannelsIndexInCurrentZone(uint16_t indexRelativeToAllChanne
 	return false;
 }
 
-int codeplugGetDTMFContactIndex(char* name)
+int codeplugGetDTMFContactIndex(char* name, bool exactMatch)
 {
 	if (!name || !*name) return 0;
 
@@ -1664,7 +1664,8 @@ int codeplugGetDTMFContactIndex(char* name)
 			char buf[DTMF_NAME_MAX_LEN+1];
 
 			codeplugUtilConvertBufToString(record.name,buf, DTMF_NAME_MAX_LEN);
-			if (strcmp(name, buf)==0)
+			if ((exactMatch && strcmp(name, buf)==0) 
+				|| (!exactMatch && strncmp(name, buf, strlen(name))==0))
 			{
 				return index;
 			}
@@ -1672,3 +1673,4 @@ int codeplugGetDTMFContactIndex(char* name)
 	}
 return 0;
 }
+

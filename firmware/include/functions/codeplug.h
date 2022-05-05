@@ -361,6 +361,5 @@ bool codeplugIsAutozoneValid();
 uint16_t codeplugAutozoneGetTotalChannels();
 bool codeplugAutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq);
 bool codeplugAutoZoneGetChannelData(struct_codeplugChannel_t *channelBuf, uint16_t index);
-int codeplugGetDTMFContactIndex(char* name);
-
+int codeplugGetDTMFContactIndex(char* name, bool exactMatch);
 #endif
