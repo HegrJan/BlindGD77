@@ -1,6 +1,6 @@
 Radioddity GD77 Quick Start Guide
 by Joseph Stephen VK7JS
-29 April 2022
+11 May 2022
 To contact Joseph Stephen, email vk7js@faithfulgenerations.com
 
 
@@ -10,7 +10,7 @@ This Guide assumes you are running the forked version of OpenGD77 produced by Jo
 See the bottom of this document for links to the original and forked branches on Github.
 
 To install the CPS software required to communicate with your radio in order to upload Firmware, voice prompts and a code plug, please run the file called:
-OpenGD77CPSInstaller.exe
+AccessibleGD77CPSInstaller.exe
 in the root folder of this archive.
 To upload firmware, see the file called 
 Firmware Upload.txt.

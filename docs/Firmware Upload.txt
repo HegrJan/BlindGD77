@@ -7,40 +7,34 @@ Please note! If you ever wish to restore your GD77 or GD77S to its factory stock
 
 Although these detailed instructions are for the GD77, the new AccessibleGD77 firmware is also available for the GD77S, the Baofeng DM-1801, DM-1801A, and the RD-5R radios.
 
-1. The AccessibleGD77 firmware requires the DMR codec from the official Radioddity firmware because the DMR codec is proprietary and can't be distributede by us. What we do is merge the DMR codec from the official firmware with AccessibleGD77 at the time you upload AccessibleGD77 to your radio. This requires a once-off-step to tell the CPS software where the official firmware resides so that all future firmware updates can refer to this firmware to obtain the DMR codec. This is why we suggest you keep a folder set up for this purpose on your hard disk.
-Download the official Radioddity firmware from the folowing link:
-https://radioddity.s3.amazonaws.com/2021-01-26_GD-77_CPS_%26_Firmware_Changelog_Ham_Version.zip 
+1. Unpack the AccessibleGD77 archive to a folder on your hard disk, e.g. c:\accessibleGD77. (I assume you've done this since you're reading this file, but, take note of where you unpacked the archive because you will need to refer to the folder later in these steps).
 
-2. Once downloaded, copy the file 2021-01-26_GD-77_CPS_&_Firmware_Changelog_Ham_Version.zip to somewhere on your hard disk where you can unzip it (using Windows Explorer) or your favorite unzip tool.
+2. Install the AccessibleGD77CPS software, used to upload firmware, voice prompts and your codeplug to the radio. It is calledAccessibleGD77CPSInstaller.exe and is in the root folder of this package. Note that this version is different to the official OpenGD77CPS as distributed by Ian Spencer. While both versions can coexist on your computer, please always use the version in this package to communicate with a radio running the AccessibleGD77 firmware in this package.
 
-3. Since you are already reading this, you will have already unzipped the AccessibleGD77 firmware to a folder on your hard disk, e.g. c:\AccessibleGD77 from which all future updates should be performed.
+3. The AccessibleGD77 firmware requires the DMR codec from the official Radioddity firmware because the DMR codec is proprietary. What we do is merge the DMR codec from the official firmware with AccessibleGD77 at the time you upload AccessibleGD77 to your radio. This requires a once-off-step to tell the CPS software where the official firmware resides so that all future firmware updates can refer to this firmware to obtain the DMR codec. This is why we suggest you keep a folder set up for this purpose on your hard disk.
+We now include the official firmware in the root folder of this package. It is called GD-77_V4.3.6.sgl.
 
-4. Inside the 2021-01-26_GD-77_CPS_&_Firmware_Changelog_Ham_Version.zip you'll find a folder called 
-Firmware software V4.3.6.
-
-5. Inside that folder, locate the file called GD-77_V4.3.6.sgl and copy it to the folder where you will be installing AccessibleGD77 from, e.g. c:\AccessibleGD77.
-
-6. Pull down the rubber cover on the right hand side of the radio with your finger tip to give access to the mic and earphone sockets 
+4. Pull down the rubber cover on the right hand side of the radio with your finger tip to give access to the mic and earphone sockets 
 then plug the GD77 programming cable into the mic/earphone sockets of the GD77, and plug the USB end of the cable into a USB port on your computer.
  
-7. On the left hand side of the radio hold the bottom two buttons called SK1 and SK2 (below the long PTT button) depressed at the same time and turn on the GD77. (Note for the Rd5R, SK1 is above PTT and SK2 is below PTT).
+5. On the left hand side of the radio hold the bottom two buttons called SK1 and SK2 (below the long PTT button) depressed at the same time and turn on the GD77. (Note for the Rd5R, SK1 is above PTT and SK2 is below PTT).
 You should hear a sound from windows as it recognizes the device but the screen on the GD77 will remain blank. 
 
-8. Now run the AccessibleGD77CPS  software included in the AccessibleGD77 archive (assuming you have already installed it. If you haven't installed it, go ahead and install it. The file is called AccessibleGD77CPSInstaller.exe. Once installed, run it. Note: you must use the version in the AccessibleGD77 archive, not the Radioddity version in the 2021-01-26_GD-77_CPS_&_Firmware_Changelog_Ham_Version.zip archive.) 
+6. Now run the AccessibleGD77CPS  software you installed in step 2.
 
-9. From the Extras menu, choose Firmware Loader (you can get to it by typing  Alt+e, then f). 
+7. From the Extras menu, choose Firmware Loader (you can get to it by typing  Alt+e, then f). 
 
-10. A window opens allowing you to choose which model of DMR radio you want to upload firmware to. If you have uploaded firmware before with this CPS then you can skip down to step 13. If not, go to step 11.
+8. A window opens allowing you to choose which model of DMR radio you want to upload firmware to. If you have uploaded firmware before with this CPS then you can skip down to step 11. If not, continue with the next step.
 
-11. If this is the first time you've uploaded firmware, tab to the button called "Select Firmware 4.3.6" And press it.
+9. If this is the first time you've uploaded firmware, tab to the button called "Select Firmware 4.3.6" And press it.
 
-12. Choose the GD-77_V4.3.6.sgl file you copied from the official Radioddity archive in step 5 and choose the Open button. You'll get a confirmation dialog telling you that the DMR codec has been confirmed. Pres Ok.
+10. Choose the GD-77_V4.3.6.sgl file from the root folder of this package and choose the Open button. You'll get a confirmation dialog telling you that the DMR codec has been confirmed. Pres Ok.
 
-13. Now tab to and choose your radio model from the combobox, 
+11. Now tab to and choose your radio model from the combobox, 
 
-14. Choose the "Select a File and Update" button.
+12. Choose the "Select a File and Update" button.
 
-15. Now choose the version of AccessibleGD77 for your radio type from the folder where you unzipped AccessibleGD77, e.g. 
+13. Now choose the version of AccessibleGD77 for your radio type from the folder where you unzipped AccessibleGD77, e.g. 
 c:\accessibleGD77:
 * AccessibleGD77.bin for the GD77 (non s model),
 * AccessibleGD77S.bin for the GD77S model,
@@ -49,18 +43,20 @@ c:\accessibleGD77:
 * AccessibleRD5R.bin for the Baofeng RD5R.
 and choose Open.
 
-16. The firmeware update will take about a minute after which you'll get a confirmation dialog. Choose ok to dismiss it and close the firmware loader.
+14. The firmeware update will take about a minute after which you'll get a confirmation dialog. Choose ok to dismiss it and close the firmware loader.
 
-17. Turn off the GD-77 but leave it connected to the computer and then turn it back on without pressing any of the side buttons. (This is very important as the radio's firmware update mode is a different mode to the codeplug/voice prompts upload mode).
+15. Turn off the GD-77 but leave it connected to the computer and then turn it back on without pressing any of the side buttons. (This is very important as the radio's firmware update mode is a different mode to the codeplug/voice prompts upload mode).
 
-18. From the OpenGD77 CPS Software, choose Extras and then GD77 Support. You can get to it by typing Alt+e then o.
+Installing Voice Prompts.
+If you've already installed voice prompts on this radio and you were not instructed in the readme to update them, then you can skip to step 20, otherwise continue.
+16. Choose the Extras option from the AccessibleGD77CPS menu, and then GD77 Support. You can get to it by typing Alt+e then o.
 
-19. From this window, tab about 5 times to get to the "Upload Voice Prompts" button and press it.
+17. From this window, tab about 5 times to get to the "Upload Voice Prompts" button and press it.
 
-20. Choose a voice prompt file from the "voice prompt files" folder of the AccessibleGD77 archive and choose Open. (Note there are two versions of each voice prompt file, one at 1.25 times the speed of the original voice, and one at 1.75 times the speed of the original voice.). Note that you do not need to update voice prompts each time you update to a new version of the firmware unless the instructions for the firmware update explicitly tell you to, i.e. if new voice prompts have been added for the firmware release. Of course if you've never uploaded voice prompts then you need to do it initialy.
+18. Choose a voice prompt file from the "voice prompt files" folder of this package, and choose Open. (Note there are two versions of each voice prompt file, one at 1.25 times the speed of the original voice, and one at 1.75 times the speed of the original voice.). Note that you do not need to update voice prompts each time you update to a new version of the firmware unless the instructions for the firmware update explicitly tell you to, i.e. if new voice prompts have been added for the firmware release. Of course if you've never uploaded voice prompts then you need to do it initialy.
 
-21. Once the voice prompt file has been uploaded, you'll get a confirmation dialog. Choose OK and close the OpenGD77 Support dialog.
+19. Once the voice prompt file has been uploaded, you'll get a confirmation dialog. Choose OK and close the OpenGD77 Support dialog.
 
-22. You can now close the CPS software, turn off your radio, unplug it and turn it back on again. It should come up speaking at voice prompt level 3. You can find instructions in the AccessibleGD77 Quick Start Guide for your particular radio model if you wish to change the verbosity of the radio.
+20. You can now close the CPS software, turn off your radio, unplug it and turn it back on again. It should come up speaking at voice prompt level 3. You can find instructions in the AccessibleGD77 Quick Start Guide for your particular radio model if you wish to change the verbosity of the radio.
 
 End of document.
