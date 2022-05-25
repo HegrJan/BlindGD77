@@ -62,6 +62,7 @@ typedef enum
 {
 	GD77S_OPTION_POWER,
 	GD77S_OPTION_BAND_LIMITS,
+	GD77S_OPTION_HOTSPOT_MODE,
 	GD77S_OPTION_FM_MIC_GAIN,
 	GD77S_OPTION_DMR_MIC_GAIN,
 	GD77S_OPTION_VHF_SQUELCH,
@@ -75,7 +76,6 @@ typedef enum
 	GD77S_OPTION_PTT_LATCH,
 	GD77S_OPTION_ECO,
 	GD77S_OPTION_AUTOZONE,
-	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_VOX_THRESHOLD,
 	GD77S_OPTION_VOX_TAIL,
 	GD77S_OPTION_KEYPAD_SOURCE, //  VFO_A, VFO_B, cur_channel
@@ -87,6 +87,7 @@ typedef enum
 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW,
 	GD77S_OPTION_EDIT_START,
 	GD77S_OPTION_EDIT_END,
+	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
 } 	GD77S_OPTIONS_t;
 
@@ -3064,12 +3065,12 @@ static int GetDTMFContactIndexForZoneAndChannelAutoDial(bool checkIfAlreadyDiall
 	char autoDialContactForZoneAndChannel[7];
 	snprintf(autoDialContactForZoneAndChannel, 7, "AD%02d%02d", nonVolatileSettings.currentZone+1, nonVolatileSettings.currentChannelIndexInZone + 1);
 	
-	int index = codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel);
+	int index = codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel, false);
 	if (index > 0)
 		return index;
 	// try again without zone 
 	snprintf(autoDialContactForZoneAndChannel, 7, "AD00%02d", nonVolatileSettings.currentChannelIndexInZone + 1);
-	return codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel);
+	return codeplugGetDTMFContactIndex(autoDialContactForZoneAndChannel, false);
 }
 
 static void ToggleGD77SDTMFAutoDialer(bool announce)
@@ -3583,6 +3584,27 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			}
 			break;
 		}
+		case GD77S_OPTION_HOTSPOT_MODE:
+		{
+			if (!voicePromptWasPlaying)
+				voicePromptsAppendLanguageString(&currentLanguage->hotspot_mode);
+			if (uiDataGlobal.dmrDisabled)
+			{
+				voicePromptsAppendLanguageString(&currentLanguage->n_a);
+			}
+			else
+			{
+				if (nonVolatileSettings.hotspotType == 0)
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->off);
+				}
+				else
+				{
+					voicePromptsAppendString((nonVolatileSettings.hotspotType == HOTSPOT_TYPE_MMDVM) ? "MMDVM" : "BlueDV");
+				}
+			}
+			break;
+		}
 		case GD77S_OPTION_FM_MIC_GAIN:
 			announceMicGain(voicePromptWasPlaying==false, true, false);
 			break;
@@ -3956,6 +3978,47 @@ static int GetPowerLevelFromMilliwatValue(int number)
 	return 10;
 }
 
+static bool HandleGD77SAddContact(char* name, char* code)
+{
+	bool deleting=!code || !*code;
+			
+	struct_codeplugDTMFContact_t tmpDTMFContact;
+	memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
+	codeplugUtilConvertStringToBuf(name, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
+		
+	int dtmfContactIndex =codeplugGetDTMFContactIndex(name, true);
+	// see if we are deleting the contact.
+	if (deleting)
+		memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
+	else
+		dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
+
+	if (dtmfContactIndex==0 && !deleting)
+		dtmfContactIndex=GD77SParameters.dtmfListCount+1;
+	voicePromptsInit();
+
+	if ((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
+	{
+		codeplugContactSaveDTMFDataForIndex(dtmfContactIndex, &tmpDTMFContact);
+		GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
+		GD77SParameters.dtmfListSelected=dtmfContactIndex-1; // GD77S parameters uses 0-based index.
+		voicePromptsAppendString(name);
+		if (deleting)
+			voicePromptsAppendLanguageString(&currentLanguage->contact_deleted);
+		else
+			voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
+	}
+	else
+	{// error.
+		if (dtmfContactIndex > CODEPLUG_DTMF_CONTACTS_MAX)
+			voicePromptsAppendLanguageString(&currentLanguage->list_full);
+		else
+			voicePromptsAppendLanguageString(&currentLanguage->error);
+	}
+	voicePromptsPlay();
+	return true;
+}
+
 static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 {
 	if (!GD77SKeypadBuffer[0])
@@ -4002,51 +4065,21 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		return true;
 	}
 
-	if (strncmp(GD77SKeypadBuffer, "*#", 2)==0 && strlen(GD77SKeypadBuffer) >= 8)
-	{// Add a DTMF contact name is first 6 chars after *#, code is rest of string.
-		char name[7]="\0";
-		char code[DTMF_CODE_MAX_LEN+1]="\0";
-		strncpy(name, GD77SKeypadBuffer+2, 6);
-		name[6]='\0';
-		bool deleting=strlen(GD77SKeypadBuffer)==8;
-		if (!deleting)
-			strcpy(code,GD77SKeypadBuffer+8);
-		struct_codeplugDTMFContact_t tmpDTMFContact;
-		memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
-		codeplugUtilConvertStringToBuf(name, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
-		
-		int dtmfContactIndex =codeplugGetDTMFContactIndex(name);
-		// see if we are deleting the contact.
-		if (deleting)
-			memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
-		else
-			dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
-
-		if (dtmfContactIndex==0 && !deleting)
-			dtmfContactIndex=GD77SParameters.dtmfListCount+1;
-		voicePromptsInit();
-
-		if ((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
+	if ((strncmp(GD77SKeypadBuffer, "AC", 2)==0) && (strlen(GD77SKeypadBuffer) >= 5))
+	{// Add a DTMF contact name is chars after AC upto space, code is rest of string.
+		char temp[GD77S_KEYPAD_BUF_MAX];
+		strcpy(temp, GD77SKeypadBuffer+2);
+		char* nameStr=strtok(temp, " ");
+		char* codeStr=strtok(NULL, ", ");
+		if (nameStr && *nameStr)
 		{
-			codeplugContactSaveDTMFDataForIndex(dtmfContactIndex, &tmpDTMFContact);
-			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
-			GD77SParameters.dtmfListSelected=dtmfContactIndex-1; // GD77S parameters uses 0-based index.
-			voicePromptsAppendString(name);
-			if (deleting)
-			voicePromptsAppendLanguageString(&currentLanguage->contact_deleted);
-			else
-			voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
+			HandleGD77SAddContact(nameStr, codeStr);
 		}
 		else
-		{// error.
-			if (dtmfContactIndex > CODEPLUG_DTMF_CONTACTS_MAX)
-				voicePromptsAppendLanguageString(&currentLanguage->list_full);
-			else
-				voicePromptsAppendLanguageString(&currentLanguage->error);
-						}
-		voicePromptsPlay();
+			soundSetMelody(MELODY_ERROR_BEEP);
 		return true;
 	}
+
 	if (strncmp(GD77SKeypadBuffer, "**", 2)==0)
 	{// set or clear channel specific power.
 		int number = isdigit(GD77SKeypadBuffer[2]) ? atoi(GD77SKeypadBuffer+2) : 0;
@@ -4530,6 +4563,14 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			{
 				nonVolatileSettings.txFreqLimited =BAND_LIMITS_NONE;
 			}
+			break;
+		case GD77S_OPTION_HOTSPOT_MODE:
+			if (dir > 0 && nonVolatileSettings.hotspotType < HOTSPOT_TYPE_BLUEDV)
+				settingsIncrement(nonVolatileSettings.hotspotType, 1);
+			if (dir < 0 && nonVolatileSettings.hotspotType > 0)
+				settingsDecrement(nonVolatileSettings.hotspotType, 1);
+			if (dir == 0)
+				settingsSet(nonVolatileSettings.hotspotType, 0);
 			break;
 		case GD77S_OPTION_FM_MIC_GAIN:
 			if (dir > 0)

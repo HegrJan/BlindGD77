@@ -300,8 +300,9 @@ static void handleEvent(uiEvent_t *ev)
 	if (ev->events & BUTTON_EVENT)
 	{
 		if (BUTTONCHECK_LONGDOWN(ev, BUTTON_SK1) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{// Play voice tag associated with digital contact.
-			PlayDMRVoiceTag(true);
+		{
+			bool announceChannelName=currentChannelData->name[0]!=0;
+			AnnounceChannelSummary((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_VOICE_LEVEL_2), announceChannelName);
 			return;
 		}
 		if (repeatVoicePromptOnSK1(ev))
@@ -642,6 +643,22 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 				}
 				break;
 			case CONTACT_LIST_QUICK_MENU_NEW:
+				// protect against adding new if already full
+				if (((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) && (contactListEntryCount==CODEPLUG_CONTACTS_MAX)) ||
+					((contactListType == MENU_CONTACT_LIST_CONTACT_DTMF) && (contactListEntryCount==CODEPLUG_DTMF_CONTACTS_MAX)))
+				{
+					if (nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+					{
+						uiDataGlobal.VoicePrompts.inhibitInitial = true;
+						voicePromptsInit();
+						voicePromptsAppendLanguageString(&currentLanguage->list_full);
+						voicePromptsPlay();
+					}
+					else
+						menuContactListSubMenuExitCode |= MENU_STATUS_ERROR;
+					return;
+				}
+				// ok, deliberate fall through.
 				uiDataGlobal.currentSelectedContactIndex =0; // Deliberate fall through
 			case CONTACT_LIST_QUICK_MENU_EDIT:
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
