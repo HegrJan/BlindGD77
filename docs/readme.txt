@@ -17,6 +17,9 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.txt.
 A key function summary is included in the docs folder called "Key Function Summary.txt"
 
+25 May 2022
+1. Converted all quick start guides to RTF with headings and lists etc.
+
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
 2. Fixed issue of attempting to create a new contact when the list is full and the dialog still coming up. Now, if the list is full, you'll get an error message rather than the dialog still being invoked.
