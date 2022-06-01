@@ -1,4 +1,4 @@
-AccessibleGD77 Readme.txt file by Joseph Stephen VK7JS.
+AccessibleGD77 Readme.rtf file by Joseph Stephen VK7JS.
 Email: vk7js@faithfulgenerations.com
 
 Please note, if you are reading this file in a text editor, please ensure word wrap is enabled 
@@ -7,20 +7,21 @@ This file contains the change log of all changes made since Roger's rerelease of
 There are versions of firmware in this archive for the following radio models:
 Radioddity GD77, GD77S, Baofeng DM1801, DM1801A and RD5R.
 If you would like to read the quickstart guide for the AccessibleGD77 firmware, open the docs folder in this archive and locate the file relevant for your radio model:
-"AccessibleGD77 Quick Start Guide.txt" for the Radioddity GD77,
-"AccessibleGD77S Quick Start Guide.txt" for the Radioddity GD77S, the model without a screen or numeric keypad,
-"AccessibleDM1801 Quick Start Guide.txt" for the Baofeng DM1801,
-"AccessibleDM1801A Quick Start Guide.txt" for the Baofeng DM1801A (which has two less keys than the DM1801),
-"AccessibleRD5R Quick Start Guide.txt" for the Baofeng RD5R.
+"AccessibleGD77 Quick Start Guide.rtf" for the Radioddity GD77,
+"AccessibleGD77S Quick Start Guide.rtf" for the Radioddity GD77S, the model without a screen or numeric keypad,
+"AccessibleDM1801 Quick Start Guide.rtf" for the Baofeng DM1801,
+"AccessibleDM1801A Quick Start Guide.rtf" for the Baofeng DM1801A (which has two less keys than the DM1801),
+"AccessibleRD5R Quick Start Guide.rtf" for the Baofeng RD5R.
 The docs folder also contains help files produced by Ian Spencer, DJ0HF, which may assist you in getting started with the CPS software, the software used to communicate with your radio from your computer in order to upload firmware, voice prompts and your channel data (known as a CodePlug).
-If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
-Plese note: The license and copyright information are set out in the file called license.txt.
-A key function summary is included in the docs folder called "Key Function Summary.txt"
+If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.rtf" file in the docs folder.
+Plese note: The license and copyright information are set out in the file called license.rtf.
+A key function summary is included in the docs folder called "Key Function Summary.rtf"
 
-25 May 2022
+2 June 2022
 1. Converted all quick start guides to RTF with headings and lists etc.
+2. Added Chris ve3rwj's Boot up tone creation instructions.
 
-11 May 2022
+ 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
 2. Fixed issue of attempting to create a new contact when the list is full and the dialog still coming up. Now, if the list is full, you'll get an error message rather than the dialog still being invoked.
 3. Long hold SK1 from contact list will now play current channel or VFO summary, allowing you to hear this info without having to exit the contact list. Note that long hold SK1 used to play the DMR voice tag if the list was in digital mode, but, now that tag is played automatically if available, there was no need to keep this function on this key. Also, sk1 would repeat the current list item and thus repeat the voice tag if needed.
