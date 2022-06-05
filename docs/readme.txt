@@ -20,7 +20,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 5 June 2022
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
-3. On the Radio Information screen, when viewing the temperature, you can now use left and right arrow to change between Celcius and Fahrenheit. The radio will remember the last unit selected. Please update your voice prompts from this archive to include the new Fahrenheit voice prompt!
+3. On the Radio Information screen, when viewing the temperature, you can now use left and right arrow to change between Celsius and Fahrenheit. The radio will remember the last unit selected. Please update your voice prompts from this archive to include the new Fahrenheit voice prompt!
 4. On the Radio Information screen, the reading will now occur automatically at voice prompt level 3, when the temperature or voltage changes, rather than having to query it.
  
 
