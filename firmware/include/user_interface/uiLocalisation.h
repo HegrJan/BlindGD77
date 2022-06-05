@@ -244,6 +244,7 @@ typedef struct
    const char* dtmf_vol;
    const char* vp_saved;
    const char* css_tail;
+   const char* fahrenheit;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];
