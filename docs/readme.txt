@@ -20,8 +20,9 @@ A key function summary is included in the docs folder called "Key Function Summa
 5 June 2022
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
-3. On the Radio Information screen, when viewing the temperature, you can now use left and right arrow to change between Celcius and Fahrenheit. The radio will remember the last unit selected.
+3. On the Radio Information screen, when viewing the temperature, you can now use left and right arrow to change between Celcius and Fahrenheit. The radio will remember the last unit selected. Please update your voice prompts from this archive to include the new Fahrenheit voice prompt!
 4. On the Radio Information screen, the reading will now occur automatically at voice prompt level 3, when the temperature or voltage changes, rather than having to query it.
+ 
 
  11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
