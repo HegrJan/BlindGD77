@@ -2189,7 +2189,14 @@ void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital)
 }
 #endif
 
-ANNOUNCE_STATIC void announceTemperature(bool voicePromptWasPlaying)
+// Converts tenths of a degree celcius to tenths of a degree fahrenheit.
+int CelciusToFahrenheit(int tenthsOfADegreeCelcius)
+{
+	float dgCelcius =(tenthsOfADegreeCelcius  * 0.10);
+	return 10 * (dgCelcius * 1.8 + 32);
+}
+
+ void announceTemperature(bool voicePromptWasPlaying)
 {
 	char buffer[17];
 	int temperature = getTemperature();
@@ -2197,9 +2204,17 @@ ANNOUNCE_STATIC void announceTemperature(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->temperature);
 	}
-	snprintf(buffer, 17, "%d.%1d", (temperature / 10), (temperature % 10));
+	
+	if (settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT))
+	{
+		int tenthsDgFahrenheit = CelciusToFahrenheit(temperature);
+		snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d", (tenthsDgFahrenheit / 10), abs(tenthsDgFahrenheit % 10));
+	}
+	else
+		snprintf(buffer, 17, "%d.%1d", (temperature / 10), (temperature % 10));
+	
 	voicePromptsAppendString(buffer);
-	voicePromptsAppendLanguageString(&currentLanguage->celcius);
+	voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
 }
 
 ANNOUNCE_STATIC void announceBatteryVoltage(void)

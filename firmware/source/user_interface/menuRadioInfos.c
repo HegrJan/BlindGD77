@@ -114,12 +114,7 @@ static size_t circularBufferGetData(voltageCircularBuffer_t *cb, int32_t *data, 
 
      return count;
 }
-// Converts tenths of a degree celcius to tenths of a degree fahrenheit.
-int CelciusToFahrenheit(int tenthsOfADegreeCelcius)
-{
-	float dgCelcius =(tenthsOfADegreeCelcius  * 0.10);
-	return 10 * (dgCelcius * 1.8 + 32);
-}
+
 menuStatus_t menuRadioInfos(uiEvent_t *ev, bool isFirstRun)
 {
 	static uint32_t m = 0;
@@ -563,20 +558,7 @@ static void updateVoicePrompts(bool spellIt, bool firstRun)
 			break;
 			case RADIO_INFOS_TEMPERATURE_LEVEL:
 			{
-				int temperature = getTemperature();
-
-				voicePromptsAppendLanguageString(&currentLanguage->temperature);
-				if (settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT)) // convert to fahrenheit
-				{
-					int tenthsDgFahrenheit = CelciusToFahrenheit(temperature);
-					snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d", (tenthsDgFahrenheit / 10), abs(tenthsDgFahrenheit % 10));
-				}
-				else
-				{
-					snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d", (temperature / 10), abs(temperature % 10));
-				}
-				voicePromptsAppendString(buffer);
-				voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
+				announceTemperature(false);
 			}
 			break;
 		}

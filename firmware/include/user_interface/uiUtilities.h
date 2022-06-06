@@ -46,6 +46,7 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying);
 void announceEcoLevel(bool voicePromptWasPlaying);
 void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital);
+void announceTemperature(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceBatteryPercentage(void);
 ANNOUNCE_STATIC void announceTS(void);
 ANNOUNCE_STATIC void announceCC(void);
@@ -214,4 +215,6 @@ bool ScanShouldSkipFrequency(uint32_t freq);
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase);
 void removeUnnecessaryZerosFromVoicePrompts(char *str);
 void ShowEditAudioClipScreen(uint16_t start, uint16_t end);
+// Converts tenths of a degree celcius to tenths of a degree fahrenheit.
+int CelciusToFahrenheit(int tenthsOfADegreeCelcius);
 #endif

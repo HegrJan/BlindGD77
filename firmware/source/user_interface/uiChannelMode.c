@@ -87,6 +87,7 @@ typedef enum
 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW,
 	GD77S_OPTION_EDIT_START,
 	GD77S_OPTION_EDIT_END,
+	GD77S_OPTION_TEMPERATURE_UNIT,
 	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
 } 	GD77S_OPTIONS_t;
@@ -3766,7 +3767,11 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			else
 				voicePromptsAppendPrompt(PROMPT_CHANNEL);
 			break;
-		case GD77S_OPTION_MAX:
+		case GD77S_OPTION_TEMPERATURE_UNIT:
+			voicePromptsAppendLanguageString(&currentLanguage->temperature);
+			voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
+			break;
+		case GD77S_OPTION_MAX://joe
 			return;
 	};
 	voicePromptsPlay();
@@ -4892,6 +4897,12 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 				codeplugChannelGetDataForIndex(currentZone.channels[nonVolatileSettings.currentChannelIndexInZone], &channelScreenChannelData);
 			}
 			loadChannelData(true, false);
+			break;
+		case GD77S_OPTION_TEMPERATURE_UNIT:
+			if (dir > 0)
+				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, true);
+			else if (dir <= 0)
+				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, false);
 			break;
 		case GD77S_OPTION_MAX:
 			return;
