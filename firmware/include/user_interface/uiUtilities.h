@@ -211,6 +211,8 @@ void SetBit(uint8_t* bits, int whichBit, bool set);
 void resetOriginalSettingsData(void);
 void AnnounceLastHeardContact();
 void AnnounceLastHeardContactIfNeeded();
+void announceReverseToggle();
+
 bool ScanShouldSkipFrequency(uint32_t freq);
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase);
 void removeUnnecessaryZerosFromVoicePrompts(char *str);

@@ -2327,6 +2327,8 @@ static void announceQRG(uint32_t qrg, bool unit)
 static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool announceTx)
 {
 	bool duplex = (currentChannelData->txFreq != currentChannelData->rxFreq);
+	if (uiDataGlobal.reverseRepeater && duplex && announcePrompt)
+		voicePromptsAppendPrompt(PROMPT_REVERSE);
 
 	if (duplex && announcePrompt && announceRx)
 	{
@@ -2334,13 +2336,13 @@ static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool annou
 	}
 
 	if (announceRx)
-		announceQRG(currentChannelData->rxFreq, true);
+		announceQRG(uiDataGlobal.reverseRepeater ? currentChannelData->txFreq : currentChannelData->rxFreq, true);
 
 	if (duplex && announceTx)
 	{
 		if (announcePrompt)
 			voicePromptsAppendPrompt(PROMPT_TRANSMIT);
-		announceQRG(currentChannelData->txFreq, true);
+		announceQRG(uiDataGlobal.reverseRepeater ? currentChannelData->rxFreq : currentChannelData->txFreq, true);
 	}
 }
 
@@ -2838,7 +2840,6 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 	else
 		announceVFOChannelName();
 	
-
 	announceFrequency();
 	
 	uint32_t lFreq, hFreq;
@@ -4132,4 +4133,18 @@ void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
 	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, buffer, FONT_SIZE_3, TEXT_ALIGN_LEFT, false);
 	
 	ucRender();
+}
+
+void announceReverseToggle()
+{
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		return;
+	voicePromptsInit();
+	voicePromptsAppendPrompt(PROMPT_REVERSE);
+
+		if (uiDataGlobal.reverseRepeater)
+		voicePromptsAppendLanguageString(&currentLanguage->on);
+	else
+		voicePromptsAppendLanguageString(&currentLanguage->off);
+	voicePromptsPlay();
 }

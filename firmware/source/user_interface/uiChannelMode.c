@@ -1370,28 +1370,6 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 
-		if ((uiDataGlobal.reverseRepeater == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK1) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-		{
-			trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
-			uiDataGlobal.reverseRepeater = true;
-			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-			uiChannelModeUpdateScreen(0);
-			return;
-		}
-		else if ((uiDataGlobal.reverseRepeater == true) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{
-			trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-			uiDataGlobal.reverseRepeater = false;
-
-			// We are still displaying channel details (SK1 has been released), force to update the screen
-			if (uiDataGlobal.displayChannelSettings)
-			{
-				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				uiChannelModeUpdateScreen(0);
-			}
-
-			return;
-		}
 		// Display channel settings (RX/TX/etc) while SK1 is pressed
 		else if ((uiDataGlobal.displayChannelSettings == false) && BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 		{
@@ -1514,6 +1492,29 @@ static void handleEvent(uiEvent_t *ev)
 
 				menuSystemPushNewMenu(MENU_MAIN_MENU);
 			}
+			return;
+		}
+		else if ((uiDataGlobal.reverseRepeater == false) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+		{
+			trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
+			uiDataGlobal.reverseRepeater = true;
+			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+			uiChannelModeUpdateScreen(0);
+			announceReverseToggle();
+			return;
+		}
+		else if ((uiDataGlobal.reverseRepeater == true) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+		{
+			trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+			uiDataGlobal.reverseRepeater = false;
+
+			// We are still displaying channel details (SK1 has been released), force to update the screen
+			if (uiDataGlobal.displayChannelSettings)
+			{
+				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				uiChannelModeUpdateScreen(0);
+			}
+			announceReverseToggle();
 			return;
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
