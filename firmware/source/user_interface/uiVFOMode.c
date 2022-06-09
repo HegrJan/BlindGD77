@@ -129,7 +129,6 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 	{
 		uiDataGlobal.FreqEnter.index = 0;
 		uiDataGlobal.isDisplayingQSOData = false;
-		uiDataGlobal.reverseRepeater = false;
 		uiDataGlobal.displaySquelch = false;
 		settingsSet(nonVolatileSettings.initialMenuNumber, (uint8_t) UI_VFO_MODE);
 		uiDataGlobal.displayQSOStatePrev = QSO_DISPLAY_IDLE;
@@ -926,13 +925,6 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;
 				}
-			}
-
-			// Leaving Channel Details disable reverse repeater feature
-			if (uiDataGlobal.reverseRepeater)
-			{
-				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				uiDataGlobal.reverseRepeater = false;
 			}
 
 			uiVFOModeUpdateScreen(0);

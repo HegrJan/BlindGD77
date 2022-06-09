@@ -398,7 +398,6 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 
 		settingsSet(nonVolatileSettings.initialMenuNumber, (uint8_t) UI_CHANNEL_MODE);// This menu.
 		uiDataGlobal.displayChannelSettings = false;
-		uiDataGlobal.reverseRepeater = false;
 		nextChannelReady = false;
 		uiDataGlobal.displaySquelch = false;
 		uiDataGlobal.Scan.refreshOnEveryStep = false;
@@ -942,7 +941,10 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 	}
 
 	clearActiveDMRID();
-	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+	if (uiDataGlobal.reverseRepeater)
+		trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_AUTO);
+	else
+		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 	trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
 
 	if (currentChannelData->chMode == RADIO_MODE_ANALOG)
@@ -1397,13 +1399,6 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;
 				}
-			}
-
-			// Leaving Channel Details disable reverse repeater feature
-			if (uiDataGlobal.reverseRepeater)
-			{
-				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				uiDataGlobal.reverseRepeater = false;
 			}
 
 			uiChannelModeUpdateScreen(0);
