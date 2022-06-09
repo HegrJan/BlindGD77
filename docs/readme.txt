@@ -17,13 +17,13 @@ If you would like to know how to create a DMR ID Database and download it to you
 Plese note: The license and copyright information are set out in the file called license.rtf.
 A key function summary is included in the docs folder called "Key Function Summary.rtf"
 
-8 June 2022
+9 June 2022
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
 3. On the Radio Information screen, when viewing the temperature, you can now use left and right arrow to change between Celsius and Fahrenheit. The radio will remember the last unit selected. Please update your voice prompts from this archive to include the new Fahrenheit voice prompt!
 4. On the Radio Information screen, the reading will now occur automatically at voice prompt level 3, when the temperature or voltage changes, rather than having to query it.
  5. A new option has been added to the Options2 menu of the GD77S, prior to Firmware Info, called Temperature. This has two values, Celsius and Fahrenheit. This determines the temperature unit used when you press long hold orange to hear the battery and CPU temperature.
-6. By request, changed the Reverse function as follows. Instead of having to hold down SK1+SK2 to keep reverse active, you now long press Hash and the Reverse function will be turned on (the radio will say Reverse on). If you then press long hold hash again, the Reverse will be disabled (the radio will say Reverse off.). Reverse is also disabled if you press PTT. This also works in VFO Mode which necessitated moving Sweep scan to SK2+long hold hash. Note that if Reverse is on, the Summary long hold SK1 will now also tell you and switch the rx and tx frequency.
+6. By request, changed the Reverse function as follows. Instead of having to hold down SK1+SK2 to keep reverse active, you now long press Hash and the Reverse function will be turned on (the radio will say Reverse on). If you then press long hold hash again, the Reverse will be disabled (the radio will say Reverse off.). This also works in VFO Mode which necessitated moving Sweep scan to SK2+long hold hash. Note that if Reverse is on, the Summary long hold SK1 will now also tell you and switch the rx and tx frequencies.
 
  11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
