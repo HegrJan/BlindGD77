@@ -46,7 +46,6 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying);
 void announceEcoLevel(bool voicePromptWasPlaying);
 void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital);
-void announceTemperature(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceBatteryPercentage(void);
 ANNOUNCE_STATIC void announceTS(void);
 ANNOUNCE_STATIC void announceCC(void);
@@ -212,6 +211,7 @@ void resetOriginalSettingsData(void);
 void AnnounceLastHeardContact();
 void AnnounceLastHeardContactIfNeeded();
 void announceReverseToggle();
+void announceTemperature(bool voicePromptWasPlaying);
 
 bool ScanShouldSkipFrequency(uint32_t freq);
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase);
