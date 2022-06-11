@@ -16,6 +16,8 @@ The docs folder also contains help files produced by Ian Spencer, DJ0HF, which m
 If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.rtf" file in the docs folder.
 Plese note: The license and copyright information are set out in the file called license.rtf.
 A key function summary is included in the docs folder called "Key Function Summary.rtf"
+If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
+You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
 9 June 2022
 1. Converted all quick start guides to RTF with headings and lists etc.
@@ -24,6 +26,8 @@ A key function summary is included in the docs folder called "Key Function Summa
 4. On the Radio Information screen, the reading will now occur automatically at voice prompt level 3, when the temperature or voltage changes, rather than having to query it.
  5. A new option has been added to the Options2 menu of the GD77S, prior to Firmware Info, called Temperature. This has two values, Celsius and Fahrenheit. This determines the temperature unit used when you press long hold orange to hear the battery and CPU temperature.
 6. By request, changed the Reverse function as follows. Instead of having to hold down SK1+SK2 to keep reverse active, you now long press Hash and the Reverse function will be turned on (the radio will say Reverse on). If you then press long hold hash again, the Reverse will be disabled (the radio will say Reverse off.). This also works in VFO Mode which necessitated moving Sweep scan to SK2+long hold hash. Note that if Reverse is on, the Summary long hold SK1 will now also tell you and switch the rx and tx frequencies.
+7. We now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
+8. Changed boot melody  to same as Acknowledgement beep, i.e. three rising tones.
 
  11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
