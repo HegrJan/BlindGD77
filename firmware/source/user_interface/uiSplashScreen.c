@@ -118,7 +118,7 @@ menuStatus_t uiSplashScreen(uiEvent_t *ev, bool isFirstRun)
 		}
 		else
 		{
-			soundSetMelody(MELODY_POWER_ON);
+			soundSetMelody(MELODY_ACK_BEEP);
 			hasBootMelody=true;
 		}
 		if (!hasBootMelody && !hasBootText)

@@ -62,7 +62,7 @@ __attribute__((section(".data.$RAM2"))) int melody_generic[512];// Note. As we d
 #define DIT_LENGTH  60
 #define DAH_LENGTH  3 * DIT_LENGTH
 //const int melody_poweron[] = { 440, 300, 466, 300, 494, 300, -1, -1 };
-const int MELODY_POWER_ON[] = { 880, DAH_LENGTH,
+/*const int MELODY_POWER_ON[] = { 880, DAH_LENGTH,
 								0, DIT_LENGTH,
 								880, DIT_LENGTH,
 								0, DIT_LENGTH,
@@ -71,7 +71,7 @@ const int MELODY_POWER_ON[] = { 880, DAH_LENGTH,
 								880, DIT_LENGTH,
 								0, DIT_LENGTH,
 								880, DAH_LENGTH,
-								-1, -1 };
+								-1, -1 };*/
 const int MELODY_PRIVATE_CALL[] = {
 								880, DIT_LENGTH,
 								0, DIT_LENGTH,
