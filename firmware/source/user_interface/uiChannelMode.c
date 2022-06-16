@@ -138,6 +138,7 @@ static uint16_t getCurrentChannelInCurrentZoneForGD77S(void);
 static void handleUpKey(uiEvent_t *ev);
 #endif // PLATFORM_GD77S
 static void selectPrevNextZone(bool nextZone);
+static void SortChannels(sort_type_t sortType);
 
 static void handleEvent(uiEvent_t *ev);
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement);
@@ -1489,7 +1490,7 @@ static void handleEvent(uiEvent_t *ev)
 			}
 			return;
 		}
-		else if ((uiDataGlobal.reverseRepeater == false) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+		else if (!reorderingChannels && (uiDataGlobal.reverseRepeater == false) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
 		{
 			trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
 			uiDataGlobal.reverseRepeater = true;
@@ -1816,6 +1817,20 @@ static void handleEvent(uiEvent_t *ev)
 				}
 
 			}
+		}
+		else if (reorderingChannels && (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR) || KEYCHECK_LONGDOWN(ev->keys, KEY_0) || KEYCHECK_LONGDOWN(ev->keys, KEY_HASH)))
+		{
+			sort_type_t sortType=sortNone;
+			if (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
+			{
+				sortType=sortByName;
+			}
+			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH))
+			{
+				sortType=sortByFrequency;
+			}
+			SortChannels(sortType);
+			return;
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
 		{
@@ -3767,7 +3782,7 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			voicePromptsAppendLanguageString(&currentLanguage->temperature);
 			voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
 			break;
-		case GD77S_OPTION_MAX://joe
+		case GD77S_OPTION_MAX:
 			return;
 	};
 	voicePromptsPlay();
@@ -5584,3 +5599,37 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 	}
 }
 #endif // PLATFORM_GD77S
+static void SortChannels(sort_type_t sortType)
+{
+	if (!CanSortZoneChannels(&currentZone))
+		return;
+	
+	voicePromptsInit();
+	voicePromptsAppendLanguageString(&currentLanguage->sortBy);
+	switch (sortType)
+	{
+	case sortByName:
+		voicePromptsAppendLanguageString(&currentLanguage->name);
+		break;
+	case sortByFrequency:
+		voicePromptsAppendLanguageString(&currentLanguage->frequency);
+		break;
+	default:
+		voicePromptsAppendLanguageString(&currentLanguage->none);
+		break;
+	}
+	voicePromptsPlay();
+	
+	uint16_t priorIndex=currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+	SortZoneChannels(&currentZone, sortType);
+	// set the current channel to the new sorted position.
+	for (uint16_t i=0; i <  currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone; ++i)
+	{
+		if (currentZone.channels[i]==priorIndex)
+		{
+			nonVolatileSettings.currentChannelIndexInZone=i;
+			break;
+		}
+	}
+	reorderingChannels=false;
+}

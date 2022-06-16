@@ -46,6 +46,7 @@ typedef enum
 	MENU_CONTACT_LIST_CONTACT_DTMF
 } contactListContactType_t;
 
+static bool needToSort=true;
 
 static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
@@ -83,7 +84,14 @@ static void overrideWithSelectedContact(void)
 static void reloadContactList(contactListContactType_t type)
 {
 	menuDataGlobal.endIndex = (type == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? codeplugContactsGetCount(contactCallType) : codeplugDTMFContactsGetCount();
-
+	if (needToSort)
+	{
+		if (contactListType== MENU_CONTACT_LIST_CONTACT_DTMF)
+			SortDTMFContacts();
+		else
+			SortDigitalContacts();
+		needToSort=false;
+	}
 	if (menuDataGlobal.endIndex > 0)
 	{
 		if (menuDataGlobal.currentItemIndex >= menuDataGlobal.endIndex)
@@ -118,7 +126,10 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 
 				// Shows digital contact list if called from "contact list" menu entry, or from <SK2>+# in digital.
 				// Otherwise displays DTMF contact list
-				contactListType = ((currentMenu == MENU_CONTACT_LIST) || ((currentMenu == MENU_CONTACT_QUICKLIST) && (trxGetMode() != RADIO_MODE_ANALOG))) ? MENU_CONTACT_LIST_CONTACT_DIGITAL : MENU_CONTACT_LIST_CONTACT_DTMF;
+				bool contactListTypeLocal = ((currentMenu == MENU_CONTACT_LIST) || ((currentMenu == MENU_CONTACT_QUICKLIST) && (trxGetMode() != RADIO_MODE_ANALOG))) ? MENU_CONTACT_LIST_CONTACT_DIGITAL : MENU_CONTACT_LIST_CONTACT_DTMF;
+				if (contactListType!=contactListTypeLocal)
+					needToSort=true;
+				contactListType=contactListTypeLocal;
 				contactCallType = CONTACT_CALLTYPE_TG;
 
 				dtmfSequenceReset();

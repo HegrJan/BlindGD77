@@ -123,6 +123,12 @@ typedef enum
 
 // AllChannels zone indexNumber is -1
 #define CODEPLUG_ZONE_IS_ALLCHANNELS(z) ((z).NOT_IN_CODEPLUGDATA_indexNumber ==-1)
+typedef enum
+{
+	sortNone=0,
+	sortByName,
+	sortByFrequency
+} sort_type_t;
 
 typedef struct
 {
@@ -362,4 +368,9 @@ uint16_t codeplugAutozoneGetTotalChannels();
 bool codeplugAutoZoneGetFrequenciesForIndex(uint16_t index, uint32_t* rxFreq, uint32_t* txFreq);
 bool codeplugAutoZoneGetChannelData(struct_codeplugChannel_t *channelBuf, uint16_t index);
 int codeplugGetDTMFContactIndex(char* name, bool exactMatch);
+void SortDTMFContacts();
+void SortDigitalContacts();
+
+bool CanSortZoneChannels(struct_codeplugZone_t* zone);
+void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType);
 #endif

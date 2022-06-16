@@ -29,8 +29,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "functions/codeplug.h"
 #include "functions/autozone.h"
+#include "functions/voicePrompts.h"
+#include "functions/sound.h"
 #include "hardware/EEPROM.h"
 #include "hardware/SPI_Flash.h"
 #include "functions/trx.h"
@@ -943,7 +946,7 @@ static void codeplugInitContactsCache(void)
 			}
 		}
 	}
-
+	
 	for (int i = 0; i < CODEPLUG_DTMF_CONTACTS_MAX; i++)
 	{
 		if (EEPROM_Read(CODEPLUG_ADDR_DTMF_CONTACTS + (i * CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE), (uint8_t *)&c, 1))
@@ -1674,3 +1677,125 @@ int codeplugGetDTMFContactIndex(char* name, bool exactMatch)
 return 0;
 }
 
+static sort_type_t lastSortTypeRequested=sortNone;
+
+typedef struct 
+{
+	uint16_t index;
+	char name[16];
+	uint32_t freq;
+} sortStruct_t;
+
+// Note 100 is enough to hold channels for a zone or all DTMF contacts.
+// or up to 100 Digital contacts.
+static sortStruct_t sortBuffer[150];
+
+int sortCMPFunction(const void * a, const void * b)
+{
+	// return sort to original order in codeplug.
+	if (lastSortTypeRequested==sortNone)
+	{
+		int index1 = (*(uint16_t*)a);
+		int index2 = (*(uint16_t*)b);
+		return index1 - index2;
+	}
+	
+	sortStruct_t* ch1=(sortStruct_t*)a;
+	sortStruct_t* ch2=(sortStruct_t*)b;
+	
+	if (lastSortTypeRequested == sortByName) // by name
+	{
+		return strncmp(ch1->name, ch2->name, 16);
+	}
+	
+	return ch1->freq - ch2->freq;
+}
+
+void SortDTMFContacts()
+{
+	if (codeplugContactsCache.numDTMFContacts < 2) return;
+	
+	// the only sort type supported by DTMF contacts.
+	lastSortTypeRequested = sortByName;
+	
+	struct_codeplugDTMFContact_t contact;
+	
+	for (int index=0; index < codeplugContactsCache.numDTMFContacts; ++index)
+	{
+		uint8_t realIndex=codeplugContactsCache.contactsDTMFLookupCache[index].index;
+		codeplugDTMFContactGetDataForIndex(realIndex, &contact);
+		memcpy(sortBuffer[index].name, contact.name, 16);
+		sortBuffer[index].index=realIndex;
+	}	
+		
+	qsort(sortBuffer, codeplugContactsCache.numDTMFContacts, sizeof(sortStruct_t), sortCMPFunction);
+		
+	for (int i=0; i <codeplugContactsCache.numDTMFContacts; ++i)
+	{
+		codeplugContactsCache.contactsDTMFLookupCache[i].index = (uint8_t)sortBuffer[i].index;
+	}
+}
+
+void SortDigitalContacts()
+{
+	int digitalContacts=codeplugContactsCache.numTGContacts+codeplugContactsCache.numPCContacts+codeplugContactsCache.numALLContacts;
+	
+	if (digitalContacts < 2) return;
+	if (digitalContacts > (sizeof(sortBuffer)/sizeof(sortStruct_t))) return; // we can't cache more than the size of the sort buffer. 
+	// the only sort type supported by digital contacts.
+	lastSortTypeRequested = sortByName;
+	
+	struct_codeplugContact_t contact;
+	
+	for (int index=0; index < digitalContacts; ++index)
+	{
+		uint16_t realIndex=codeplugContactsCache.contactsLookupCache[index].index;
+		codeplugContactGetDataForIndex(realIndex, &contact);
+		memcpy(sortBuffer[index].name, contact.name, 16);
+		sortBuffer[index].index=realIndex;
+	}	
+		
+	qsort(sortBuffer, digitalContacts, sizeof(sortStruct_t), sortCMPFunction);
+		
+	for (int i=0; i <digitalContacts; ++i)
+	{
+		codeplugContactsCache.contactsLookupCache[i].index = sortBuffer[i].index;
+	}
+}
+
+bool CanSortZoneChannels(struct_codeplugZone_t* zone)
+{
+	if (!zone) return false;
+	// can't sort an autozone or all channels zone.
+	if (CODEPLUG_ZONE_IS_ALLCHANNELS(*zone)) return false;
+	if (AutoZoneIsCurrentZone(zone->NOT_IN_CODEPLUGDATA_indexNumber)) return false;
+	return zone->NOT_IN_CODEPLUGDATA_numChannelsInZone >= 2;
+}
+
+void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
+{
+	if (!CanSortZoneChannels(zone)) return;
+	
+	lastSortTypeRequested=sortType;
+	
+	if (sortType != sortNone)
+	{
+		for (int index=0; index < zone->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++index)
+		{
+			codeplugChannelGetDataWithOffsetAndLengthForIndex(zone->channels[index], (struct_codeplugChannel_t*)(sortBuffer[index].name), 0, 20); // read name and rxFreq
+			sortBuffer[index].index=zone->channels[index];
+		}	
+		
+		qsort(sortBuffer, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(sortStruct_t), sortCMPFunction);
+		
+		for (int i=0; i <zone->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++i)
+		{
+			zone->channels[i]=sortBuffer[i].index;
+		}
+	}
+	else// just order the channels as they appear in the codeplug.
+		qsort(zone->channels, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(uint16_t), sortCMPFunction);
+
+	EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zone->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
+				(uint8_t *)zone, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
+}

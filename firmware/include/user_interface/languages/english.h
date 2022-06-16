@@ -232,7 +232,9 @@ const stringsTable_t englishLanguage =
 .dtmf_vol="DTMF vol",
 .vp_saved="prompt saved",
 .css_tail="CSS Tl.E",
-.fahrenheit="°F"
+.fahrenheit="°F",
+.sortBy= "Sort by", // name/frq
+.frequency = "Frq"
 };
 /********************************************************************
  *
