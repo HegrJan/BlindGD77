@@ -5615,7 +5615,7 @@ static void SortChannels(sort_type_t sortType)
 		voicePromptsAppendLanguageString(&currentLanguage->frequency);
 		break;
 	default:
-		voicePromptsAppendLanguageString(&currentLanguage->none);
+		voicePromptsAppendLanguageString(&currentLanguage->all_channels);
 		break;
 	}
 	voicePromptsPlay();
@@ -5632,4 +5632,5 @@ static void SortChannels(sort_type_t sortType)
 		}
 	}
 	reorderingChannels=false;
+	keyboardReset();
 }

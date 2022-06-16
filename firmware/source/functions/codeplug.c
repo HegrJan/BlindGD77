@@ -1693,6 +1693,7 @@ static sortStruct_t sortBuffer[150];
 int sortCMPFunction(const void * a, const void * b)
 {
 	// return sort to original order in codeplug.
+	// Only relevant for channels.
 	if (lastSortTypeRequested==sortNone)
 	{
 		int index1 = (*(uint16_t*)a);
@@ -1702,12 +1703,12 @@ int sortCMPFunction(const void * a, const void * b)
 	
 	sortStruct_t* ch1=(sortStruct_t*)a;
 	sortStruct_t* ch2=(sortStruct_t*)b;
-	
+	// relevant for channels and contacts.
 	if (lastSortTypeRequested == sortByName) // by name
 	{
-		return strncmp(ch1->name, ch2->name, 16);
+		return strncasecmp(ch1->name, ch2->name, 16);
 	}
-	
+	// Only relevant for channels.
 	return ch1->freq - ch2->freq;
 }
 
