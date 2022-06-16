@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-16 June 2022
+17 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -30,7 +30,7 @@ Please update your Voice Prompts from this archive.
 7. We now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 8. Changed boot melody  to same as Acknowledgement beep, i.e. three rising tones.
 9. You can now sort channels by name, codeplug order or frequency, and contacts are sorted by name.
-9.1. From the channel screen, choose Reorder from the Orange button quick menu, then, as well as arrows allowing you to move channels around (existing functionality), the following keys will do the following functions:
+9.1. From the channel screen, choose Reorder from the Orange button quick menu, then, as well as arrows allowing you to move channels around (existing functionality), the following keys will do the following functions (and automatically exit the reorder mode when complete):
 9.1.1. Long hold * will sort the channels in the current zone by Name.
 9.1.2. Long hold 0 will sort the channels in the current zone as they appear in the codeplug all channels order,
 9.1.3. Long hold # will sort the channels in the current zone by rx frequency. (Note once the sort has completed, the zone index is written back to the EPROM, so it is persistent.)
