@@ -35,8 +35,16 @@ Please update your Voice Prompts from this archive.
 9.1.2. Long hold 0 will sort the channels in the current zone as they appear in the codeplug all channels order,
 9.1.3. Long hold # will sort the channels in the current zone by rx frequency. (Note once the sort has completed, the zone index is written back to the EPROM, so it is persistent.)
 9.2. In contacts, both DTMF and digital contacts are now automatically sorted by name. Note this only sorts the in-memory index, the EPROM is not rewritten since we'd be touching the actual database, unlike the zone which is just an index into the all channels data. (Note that if there are more than 150 digital contacts, we won't sort since I've currently put an upper limit due to the sort buffer size required to do the quick sort since aqccessing the flash and eprom directly from the comparison function was causing nasty reboots.)
+10. Added SRT*, SRT# and SRT0 commands to GD77S virtual keypad to do the equivalent of the sort functions mentioned in 9 above. I.e. SRT* sort channels by name, SRT# sort channels by frequency, and SRT0 sort channels as they appear in the channels list of the CodePlug.
+11. Fixed a bug on the GD77S with the new VFO keypad mode as follows: 
+* User chose VFO a or VFO b as default keypad mode from Options 2 Keypad menu.
+* User sets VFO to a frequency, e.g. 147 MHz from keypad mode.
+* User exits keypad mode and goes to another channel, say channel 1 with frequency 439.15 MHz.
+* User wishes to choose a DTMF contact to dial on channel 1 so they hit Orange to get to DTMF mode.
+* As user passes Keypad mode, VFO a is now loaded and by the time they execute DTMF command, it is on 147 MHz (the VFO frequency) rather than the desired channel 1 frequency of 439.15.
+TO solve this, if you set Keypad mode to VFO a or b, when you cycle to Keypad mode with Orange, the VFO is only loaded if the user settles on the option for more than 1.5 seconds. If they keep pressing Orange to cycle to the next option, the original channel remains loaded as they'd expect.
 
- 11 May 2022
+11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
 2. Fixed issue of attempting to create a new contact when the list is full and the dialog still coming up. Now, if the list is full, you'll get an error message rather than the dialog still being invoked.
 3. Long hold SK1 from contact list will now play current channel or VFO summary, allowing you to hear this info without having to exit the contact list. Note that long hold SK1 used to play the DMR voice tag if the list was in digital mode, but, now that tag is played automatically if available, there was no need to keep this function on this key. Also, sk1 would repeat the current list item and thus repeat the voice tag if needed.
