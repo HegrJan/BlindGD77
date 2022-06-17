@@ -108,6 +108,9 @@ typedef struct
 	uint16_t dialedChannels; // bit 0 ch1, bit 1 ch2, ... bit 15 ch 16.
 	uint16_t dialedZones; // bit 0 zone 1, bit 1 zone 2, ... bit 15 zone 16.
 	uint8_t customPromptIndex;
+	// the next variable is used when cycling past the Keypad option.
+	// If keypad is set to VFO, we only want to load the VFO if the user stops on that option, not if they are on their way to the next option.
+	uint16_t pendingVFOLoadTimer;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -124,7 +127,8 @@ static GD77SParameters_t GD77SParameters =
 		.option=0,
 		.dialedChannels=0,
 		.dialedZones=0,
-		.customPromptIndex=1
+		.customPromptIndex=1,
+		.pendingVFOLoadTimer=0
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -446,6 +450,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			}
 
 			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
+			SortDTMFContacts();
 		}
 #endif
 		uiChannelModeUpdateScreen(0);
@@ -508,6 +513,19 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		if (ev->events == NO_EVENT)
 		{
 #if defined(PLATFORM_GD77S)
+			if (GD77SParameters.pendingVFOLoadTimer > 0)
+			{// if user has settled on Keypad mode and we need to switch to VFO A or VFO B, check if it is time to do so.
+				GD77SParameters.pendingVFOLoadTimer--;
+				if (GD77SParameters.pendingVFOLoadTimer==0)
+				{
+					memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
+					loadChannelData(true, false);
+					voicePromptsInit();
+					announceFrequency();
+					voicePromptsPlay();
+				}
+			}
+
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
 			if (((uiDataGlobal.Scan.active == false) && !ModeUsesChannelKnob() && (rotarySwitchGetPosition()+GD77SParameters.channelbankOffset != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
@@ -4166,7 +4184,20 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 
 		return true;
 	}
-
+	if (strncmp(GD77SKeypadBuffer,"SRT", 3)==0 && strchr("*0#", GD77SKeypadBuffer[3]))
+	{
+		sort_type_t sortType=sortNone;
+		if (GD77SKeypadBuffer[3] == '*')
+		{
+			sortType=sortByName;
+		}
+		else if (GD77SKeypadBuffer[3] == '#')
+		{
+			sortType=sortByFrequency;
+		}
+		SortChannels(sortType);
+		return true;
+	}
 	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
 	{// talkgroup # followed by digits. 
 		int len=strlen(GD77SKeypadBuffer);
@@ -5116,6 +5147,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			else
 				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
 			GD77SParameters.virtualVFOMode=false;
+			GD77SParameters.pendingVFOLoadTimer=0;
+
 			//skip over Digital controls if the radio is in Analog mode
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{
@@ -5181,8 +5214,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					GD77sSelectedCharIndex = rotarySwitchGetPosition()-1;
 					if (nonVolatileSettings.currentVFONumber < 2)
 					{
-						memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
-						loadChannelData(true, false);
+						GD77SParameters.pendingVFOLoadTimer=1500;
 					}
 					break;
 				case GD77S_UIMODE_VOX:
