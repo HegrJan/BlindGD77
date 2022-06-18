@@ -2836,7 +2836,9 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 	announceItemWithInit(false, PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY); // since this function calling does the init and play.
 	AnnounceLastHeardContact();
 	if (isChannelScreen)
+	{
 		announceChannelName(true, true);
+	}
 	else
 		announceVFOChannelName();
 	
@@ -2899,6 +2901,8 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 			voicePromptsAppendLanguageString(&currentLanguage->from_master);
 	
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		if (uiChannelModeIsReorderingChannels())
+			voicePromptsAppendLanguageString(&currentLanguage->reorder_channels);
 
 		announceZoneName(voicePromptWasPlaying);
 	}

@@ -121,6 +121,7 @@ int menuGetMenuOffset(int maxMenuEntries, int loopOffset);
 
 void uiChannelModeUpdateScreen(int txTimeSecs);
 void uiChannelModeColdStart(void);
+bool uiChannelModeIsReorderingChannels();
 void uiVFOModeUpdateScreen(int txTimeSecs);
 void uiVFOLoadContact(struct_codeplugContact_t *contact);
 bool uiVFOModeIsTXFocused(void);

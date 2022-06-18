@@ -5666,3 +5666,8 @@ static void SortChannels(sort_type_t sortType)
 	reorderingChannels=false;
 	keyboardReset();
 }
+
+bool uiChannelModeIsReorderingChannels()
+{
+	return reorderingChannels;
+}
