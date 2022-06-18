@@ -92,6 +92,18 @@ const int CODEPLUG_ADDR_DEVICE_INFO = 0x80;
 const int CODEPLUG_ADDR_DEVICE_INFO_READ_SIZE = 96;// (sizeof struct_codeplugDeviceInfo_t)
 
 const int CODEPLUG_ADDR_BOOT_PASSWORD_PIN = 0x7518;
+static sort_type_t lastSortTypeRequested=sortNone;
+
+typedef struct 
+{
+	uint16_t index;
+	char name[16];
+	uint32_t numericField;
+} sortStruct_t;
+
+// Note 100 is enough to hold channels for a zone or all DTMF contacts.
+// or up to 100 Digital contacts.
+static sortStruct_t sortBuffer[150];
 
 static uint16_t allChannelsTotalNumOfChannels = 0;
 static uint16_t allChannelsHighestChannelIndex = 0;
@@ -746,6 +758,28 @@ static void codeplugRxGroupInitCache(void)
 	SPI_Flash_read(CODEPLUG_ADDR_RX_GROUP_LEN, (uint8_t*) &codeplugRXGroupCache[0], CODEPLUG_RX_GROUPLIST_MAX);
 }
 
+int sortCMPFunction(const void * a, const void * b)
+{
+	// return sort to original order in codeplug.
+	// Only relevant for channels.
+	if (lastSortTypeRequested==sortNone)
+	{
+		int index1 = (*(uint16_t*)a);
+		int index2 = (*(uint16_t*)b);
+		return index1 - index2;
+	}
+	
+	sortStruct_t* ch1=(sortStruct_t*)a;
+	sortStruct_t* ch2=(sortStruct_t*)b;
+	// relevant for channels and contacts.
+	if (lastSortTypeRequested == sortByName) // by name
+	{
+		return strncasecmp(ch1->name, ch2->name, 16);
+	}
+	// Only relevant for channels.
+	return ch1->numericField - ch2->numericField;
+}
+
 bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroupBuf)
 {
 	int i = 0;
@@ -764,6 +798,9 @@ bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroup
 			{
 				codeplugContactGetDataForIndex(rxGroupBuf->contacts[i], &contactData);
 				rxGroupBuf->NOT_IN_CODEPLUG_contactsTG[i] = contactData.tgNumber;
+				sortBuffer[i].index=rxGroupBuf->contacts[i];
+				codeplugUtilConvertBufToString(contactData.name, sortBuffer[i].name, 16);
+				sortBuffer[i].numericField=contactData.tgNumber;
 				// Empty groups seem to be filled with zeros
 				if (rxGroupBuf->contacts[i] == 0)
 				{
@@ -772,6 +809,16 @@ bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroup
 			}
 
 			rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup = i;
+			// sort it.
+			lastSortTypeRequested=sortByName;
+			qsort(sortBuffer, rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup, sizeof(sortStruct_t), sortCMPFunction);
+		
+			for (int i=0; i <rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup; ++i)
+			{
+				rxGroupBuf->contacts[i] = sortBuffer[i].index;
+				rxGroupBuf->NOT_IN_CODEPLUG_contactsTG[i]=sortBuffer[i].numericField;
+			}
+
 			return true;
 		}
 	}
@@ -1677,41 +1724,6 @@ int codeplugGetDTMFContactIndex(char* name, bool exactMatch)
 return 0;
 }
 
-static sort_type_t lastSortTypeRequested=sortNone;
-
-typedef struct 
-{
-	uint16_t index;
-	char name[16];
-	uint32_t freq;
-} sortStruct_t;
-
-// Note 100 is enough to hold channels for a zone or all DTMF contacts.
-// or up to 100 Digital contacts.
-static sortStruct_t sortBuffer[150];
-
-int sortCMPFunction(const void * a, const void * b)
-{
-	// return sort to original order in codeplug.
-	// Only relevant for channels.
-	if (lastSortTypeRequested==sortNone)
-	{
-		int index1 = (*(uint16_t*)a);
-		int index2 = (*(uint16_t*)b);
-		return index1 - index2;
-	}
-	
-	sortStruct_t* ch1=(sortStruct_t*)a;
-	sortStruct_t* ch2=(sortStruct_t*)b;
-	// relevant for channels and contacts.
-	if (lastSortTypeRequested == sortByName) // by name
-	{
-		return strncasecmp(ch1->name, ch2->name, 16);
-	}
-	// Only relevant for channels.
-	return ch1->freq - ch2->freq;
-}
-
 void SortDTMFContacts()
 {
 	if (codeplugContactsCache.numDTMFContacts < 2) return;
@@ -1725,7 +1737,7 @@ void SortDTMFContacts()
 	{
 		uint8_t realIndex=codeplugContactsCache.contactsDTMFLookupCache[index].index;
 		codeplugDTMFContactGetDataForIndex(realIndex, &contact);
-		memcpy(sortBuffer[index].name, contact.name, 16);
+		codeplugUtilConvertBufToString(contact.name, sortBuffer[index].name, 16);
 		sortBuffer[index].index=realIndex;
 	}	
 		
@@ -1752,7 +1764,7 @@ void SortDigitalContacts()
 	{
 		uint16_t realIndex=codeplugContactsCache.contactsLookupCache[index].index;
 		codeplugContactGetDataForIndex(realIndex, &contact);
-		memcpy(sortBuffer[index].name, contact.name, 16);
+		codeplugUtilConvertBufToString(contact.name, sortBuffer[index].name, 16);
 		sortBuffer[index].index=realIndex;
 	}	
 		
