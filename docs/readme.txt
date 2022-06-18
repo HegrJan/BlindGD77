@@ -44,6 +44,7 @@ Please update your Voice Prompts from this archive.
 * User wishes to choose a DTMF contact to dial on channel 1 so they hit Orange to get to DTMF mode.
 * As user passes Keypad mode, VFO a is now loaded and by the time they execute DTMF command, it is on 147 MHz (the VFO frequency) rather than the desired channel 1 frequency of 439.15.
 TO solve this, if you set Keypad mode to VFO a or b, when you cycle to Keypad mode with Orange, the VFO is only loaded if the user settles on the option for more than 1.5 seconds. If they keep pressing Orange to cycle to the next option, the original channel remains loaded as they'd expect.
+12. Added announcement of "reorder channels" to channel summary if reorder mode is active, immediately prior to the zone name. Thus, the summary will say something like "reorder channels zone 1" at the end of the summary if reorder mode is active on radios with a keypad.
 
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
