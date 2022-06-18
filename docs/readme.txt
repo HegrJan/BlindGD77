@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-17 June 2022
+18 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -35,6 +35,7 @@ Please update your Voice Prompts from this archive.
 9.1.2. Long hold 0 will sort the channels in the current zone as they appear in the codeplug all channels order,
 9.1.3. Long hold # will sort the channels in the current zone by rx frequency. (Note once the sort has completed, the zone index is written back to the EPROM, so it is persistent.)
 9.2. In contacts, both DTMF and digital contacts are now automatically sorted by name. Note this only sorts the in-memory index, the EPROM is not rewritten since we'd be touching the actual database, unlike the zone which is just an index into the all channels data. (Note that if there are more than 150 digital contacts, we won't sort since I've currently put an upper limit due to the sort buffer size required to do the quick sort since aqccessing the flash and eprom directly from the comparison function was causing nasty reboots.)
+9.3. The TGList navigated by left and right arrows on a DMR channel are now also automatically sorted by name or tg.
 10. Added SRT*, SRT# and SRT0 commands to GD77S virtual keypad to do the equivalent of the sort functions mentioned in 9 above. I.e. SRT* sort channels by name, SRT# sort channels by frequency, and SRT0 sort channels as they appear in the channels list of the CodePlug.
 11. Fixed a bug on the GD77S with the new VFO keypad mode as follows: 
 * User chose VFO a or VFO b as default keypad mode from Options 2 Keypad menu.
