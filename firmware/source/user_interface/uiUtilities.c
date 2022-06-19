@@ -2809,8 +2809,9 @@ voicePromptsAppendStringEx(output,vpAnnounceCustomPrompts);
 
 static void announceLastDTMFContact(bool anouncePrompt)
 {
-	if (lastDialledDTMFContact.code[0]==0xff)
-		return; // no contact dialled recently.
+	struct_codeplugDTMFContact_t lastDialledDTMFContact;
+	if (!GetLastDialledDTMFContactForFrequency(currentChannelData->txFreq, &lastDialledDTMFContact))
+		return;
 	
 	if (anouncePrompt)
 	{
@@ -3912,6 +3913,7 @@ bool ScanShouldSkipFrequency(uint32_t freq)
 	}
 	return false;	
 }
+
 static void PlayAndResetCustomVoicePromptIndex()
 {
 	if (customVoicePromptIndex==0xff) return;

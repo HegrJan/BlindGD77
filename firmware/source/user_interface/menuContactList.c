@@ -441,7 +441,7 @@ static void handleEvent(uiEvent_t *ev)
 						if (currentMode == RADIO_MODE_ANALOG)
 						{
 							dtmfSequencePrepare(contactListDTMFContactData.code, true);
-							memcpy(&lastDialledDTMFContact,&contactListDTMFContactData, sizeof(lastDialledDTMFContact));
+							AddDTMFContactToLastDialledCache(currentChannelData->txFreq, &contactListDTMFContactData);
 						}
 						else
 						{

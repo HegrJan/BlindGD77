@@ -212,12 +212,26 @@ typedef struct
 	int 			savedDMRTs;
 } monitorModeSettingsStruct_t;
 
+#define MaxRetainedDialledDTMFContacts 5
+typedef struct 
+{
+	struct_codeplugDTMFContact_t contact;
+	uint32_t txFreq;
+} lastDialledDTMFContact_t;
+
+typedef struct
+{
+	lastDialledDTMFContact_t contacts[MaxRetainedDialledDTMFContacts];
+	uint8_t maxDialledDTMFEntries;
+} struct_lastDialledDTMFContactsCache_t;
+extern struct_lastDialledDTMFContactsCache_t lastDialledDTMFContactsCache;
+
 extern settingsStruct_t nonVolatileSettings;
 extern struct_codeplugChannel_t *currentChannelData;
 extern struct_codeplugChannel_t channelScreenChannelData;
 extern struct_codeplugContact_t contactListContactData;
 extern struct_codeplugDTMFContact_t contactListDTMFContactData;
-extern struct_codeplugDTMFContact_t lastDialledDTMFContact;
+
 extern int contactListContactIndex;
 extern int settingsUsbMode;
 extern monitorModeSettingsStruct_t monitorModeData;
@@ -302,5 +316,7 @@ void enableVoicePromptsIfLoaded(bool enableFullPrompts);
 int settingsGetScanStepTimeMilliseconds(void);
 void settingsSetCurrentChannelIndexForZone(int16_t channelIndex, int16_t zoneIndex);
 int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex);
+void AddDTMFContactToLastDialledCache(uint32_t txFreq, struct_codeplugDTMFContact_t* contact);
+bool GetLastDialledDTMFContactForFrequency(uint32_t txFreq, struct_codeplugDTMFContact_t* contact);
 
 #endif

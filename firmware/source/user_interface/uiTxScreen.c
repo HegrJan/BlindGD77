@@ -44,6 +44,7 @@ typedef enum
 
 static uint16_t dtmfPTTLatchTimeout=0;
 static uint8_t manualDTMFCodeIndex=0;
+static struct_codeplugDTMFContact_t lastDialledDTMFContact;
 
 typedef enum
 {
@@ -498,6 +499,10 @@ static void handleEvent(uiEvent_t *ev)
 				trxSetDTMF(keyval);
 				if (manualDTMFCodeIndex < DTMF_CODE_MAX_LEN)
 					lastDialledDTMFContact.code[manualDTMFCodeIndex++]=keyval;
+				// add to history.
+				dtmfConvertCodeToChars(lastDialledDTMFContact.code, lastDialledDTMFContact.name, DTMF_CODE_MAX_LEN);
+				AddDTMFContactToLastDialledCache(currentChannelData->txFreq, &lastDialledDTMFContact);
+				
 				isTransmittingTone = true;
 				PTTToggledDown = true; // released after a timeout when the dtmf key is released.
 				if (nonVolatileSettings.dtmfLatch > 0)
