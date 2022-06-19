@@ -753,7 +753,7 @@ bool codeplugDeleteChannelWithIndex(int index)
 	return true;
 }
 
-static void codeplugRxGroupInitCache(void)
+void codeplugRxGroupInitCache(void)
 {
 	SPI_Flash_read(CODEPLUG_ADDR_RX_GROUP_LEN, (uint8_t*) &codeplugRXGroupCache[0], CODEPLUG_RX_GROUPLIST_MAX);
 }
@@ -810,15 +810,17 @@ bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroup
 
 			rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup = i;
 			// sort it.
-			lastSortTypeRequested=sortByName;
-			qsort(sortBuffer, rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup, sizeof(sortStruct_t), sortCMPFunction);
-		
-			for (int i=0; i <rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup; ++i)
+			if (nonVolatileSettings.sortFlags&sortContactsByName)
 			{
-				rxGroupBuf->contacts[i] = sortBuffer[i].index;
-				rxGroupBuf->NOT_IN_CODEPLUG_contactsTG[i]=sortBuffer[i].numericField;
-			}
-
+				lastSortTypeRequested=sortByName;
+				qsort(sortBuffer, rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup, sizeof(sortStruct_t), sortCMPFunction);
+		
+				for (int i=0; i <rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup; ++i)
+				{
+					rxGroupBuf->contacts[i] = sortBuffer[i].index;
+					rxGroupBuf->NOT_IN_CODEPLUG_contactsTG[i]=sortBuffer[i].numericField;
+				}
+}
 			return true;
 		}
 	}
@@ -958,7 +960,7 @@ bool codeplugContactsContainsPC(uint32_t pc)
 	return false;
 }
 
-static void codeplugInitContactsCache(void)
+void codeplugInitContactsCache(void)
 {
 	struct_codeplugContact_t contact;
 	uint8_t                  c;
@@ -1726,6 +1728,9 @@ return 0;
 
 void SortDTMFContacts()
 {
+		if ((nonVolatileSettings.sortFlags&sortContactsByName)==0)
+		return; 
+
 	if (codeplugContactsCache.numDTMFContacts < 2) return;
 	
 	// the only sort type supported by DTMF contacts.
@@ -1751,6 +1756,8 @@ void SortDTMFContacts()
 
 void SortDigitalContacts()
 {
+	if ((nonVolatileSettings.sortFlags&sortContactsByName)==0)
+		return; 
 	int digitalContacts=codeplugContactsCache.numTGContacts+codeplugContactsCache.numPCContacts+codeplugContactsCache.numALLContacts;
 	
 	if (digitalContacts < 2) return;

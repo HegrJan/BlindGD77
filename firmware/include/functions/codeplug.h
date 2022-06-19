@@ -344,6 +344,8 @@ bool codeplugGetOpenGD77CustomData(codeplugCustomDataType_t dataType, uint8_t *d
 
 void codeplugAllChannelsInitCache(void);
 void codeplugInitCaches(void);
+void codeplugInitContactsCache(void);
+void codeplugRxGroupInitCache(void);
 
 bool codeplugContactsContainsPC(uint32_t pc);
 bool codeplugGetGeneralSettings(struct_codeplugGeneralSettings_t *generalSettingsBuffer);

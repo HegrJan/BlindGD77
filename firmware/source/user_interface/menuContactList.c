@@ -357,6 +357,34 @@ static void handleEvent(uiEvent_t *ev)
 				updateScreen(false);
 				menuContactListExitCode |= MENU_STATUS_LIST_TYPE;
 			}
+			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
+			{// set the sort contacts flag.
+				voicePromptsInit();
+				voicePromptsAppendLanguageString(&currentLanguage->sortBy);
+
+				if ((nonVolatileSettings.sortFlags & sortContactsByName)==0)
+				{
+					nonVolatileSettings.sortFlags |= sortContactsByName;
+					voicePromptsAppendLanguageString(&currentLanguage->name);
+					needToSort=true;
+				}
+				else
+				{
+					nonVolatileSettings.sortFlags &= ~sortContactsByName;
+					codeplugInitContactsCache();
+					codeplugRxGroupInitCache();
+					voicePromptsAppendLanguageString(&currentLanguage->none);
+					needToSort=false;
+				}
+				lastLoadedRxGroup=-1; // force reload as it has been changed.
+				uiDataGlobal.VoicePrompts.inhibitInitial=true;
+				reloadContactList(contactListType);
+				contactListDisplayState = MENU_CONTACT_LIST_DISPLAY;
+				updateScreen(false);
+				voicePromptsPlay();
+
+				return; 
+			}
 			else if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)

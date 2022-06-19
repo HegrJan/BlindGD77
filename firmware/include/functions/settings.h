@@ -139,7 +139,8 @@ typedef struct
 	uint8_t dtmfVol; // 0 to 255.
 	uint8_t endRXBeep; // see END_RX_BEEP enum.
 	uint8_t ctcssSqlTail; // for eliminating squelch tail.
-	// currently 135 bytes Apr 2  2022 VK7JS. 
+	uint8_t sortFlags;
+	// currently 136 bytes Jun  19  2022 VK7JS. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
@@ -189,6 +190,12 @@ typedef enum PROMPT_AUTOPLAY_THRESHOLD
 	PROMPT_THRESHOLD_3,
 	PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY
 } audioPromptThreshold_t;
+
+typedef enum SortFlags
+{
+	sortContactsOff=0,
+	sortContactsByName = 0x01
+} sortFlags_t;
 
 typedef struct
 {
