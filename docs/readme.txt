@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-19 June 2022
+20 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -46,7 +46,8 @@ Please update your Voice Prompts from this archive.
 * As user passes Keypad mode, VFO a is now loaded and by the time they execute DTMF command, it is on 147 MHz (the VFO frequency) rather than the desired channel 1 frequency of 439.15.
 TO solve this, if you set Keypad mode to VFO a or b, when you cycle to Keypad mode with Orange, the VFO is only loaded if the user settles on the option for more than 1.5 seconds. If they keep pressing Orange to cycle to the next option, the original channel remains loaded as they'd expect.
 13. Added announcement of "reorder channels" to channel summary if reorder mode is active, immediately prior to the zone name. Thus, the summary will say something like "reorder channels zone 1" at the end of the summary if reorder mode is active on radios with a keypad.
-14. We now remember up to 5 frequency/DTMF contact combinations. This means that if you dial a DTMF contact either from a channel or even in VFO mode, from the DTMF contacts list or manually, and issue a channel/VFO summary after changing and returning to a channel or frequency, the summary will remember the DTMF contact. This is very useful when you have a hotspot and connect to an allstar or other node and then change channels. When you return to the hotspot channel and issue the summary, it will remind you of the last contact that was connected. Of course if you reset your hotspot this will be irrelevant but is generally useful, especially if you have multiple hotspots. Note the history is reset when you power cycle the radio. Also, if you enter more than five contacts on different channels or frequencies, the oldest is replaced by the sixth etc.
+14. Talk groups and dialled DTMF contacts are now associated  with each channel. This means that if you choose a talk group on one DMR channel, when you revisit that channel, that talkgroup is automatically reselected (you will need to key up to ensure your repeater or hotspot is syncrhonized). On analog channels, when you dial a DTMF contact from the contacts list, it is automatically saved for that channel. If your node has disconnected, press long hold sk2+hash to redial the channel's saved DTMF contact. You can clear the DTMF contact for a channel using SK2+red, which for DMR channels clears a private call.
+15. As a result of 14, at voice prompt level 2, we will again say the mode since hearing a contact does not mean a digital channel but could be the currently connected DTMF contact.
 
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
