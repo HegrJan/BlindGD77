@@ -60,8 +60,6 @@ struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
 struct_codeplugContact_t contactListContactData;
 struct_codeplugDTMFContact_t contactListDTMFContactData;
-struct_lastDialledDTMFContactsCache_t lastDialledDTMFContactsCache={0};
-
 struct_codeplugChannel_t settingsVFOChannel[2];// VFO A and VFO B from the codeplug.
 int settingsUsbMode = USB_MODE_CPS;
 
@@ -573,45 +571,3 @@ int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex)
 	return nonVolatileSettings.zoneChannelIndices[zoneIndex];
 }
 
-void AddDTMFContactToLastDialledCache(uint32_t txFreq, struct_codeplugDTMFContact_t* contact)
-{
-	// see if it already exists and update it.
-	for (uint8_t index=0; index < lastDialledDTMFContactsCache.maxDialledDTMFEntries; ++index)
-	{
-		if (lastDialledDTMFContactsCache.contacts[index].txFreq == txFreq)
-		{
-			memcpy(&lastDialledDTMFContactsCache.contacts[index].contact, contact, sizeof(struct_codeplugDTMFContact_t)); // update it.
-			return;
-		}
-	}
-
-	if (lastDialledDTMFContactsCache.maxDialledDTMFEntries < MaxRetainedDialledDTMFContacts)
-	{
-		lastDialledDTMFContactsCache.contacts[lastDialledDTMFContactsCache.maxDialledDTMFEntries].txFreq = txFreq;
-		memcpy(&lastDialledDTMFContactsCache.contacts[lastDialledDTMFContactsCache.maxDialledDTMFEntries].contact, contact, sizeof(struct_codeplugDTMFContact_t));
-		lastDialledDTMFContactsCache.maxDialledDTMFEntries++;
-		return;
-	}
-	// otherwise move the entries down and fill the last spot.
-	for (uint8_t index=1; index < MaxRetainedDialledDTMFContacts; ++index)
-	{
-		memcpy(&lastDialledDTMFContactsCache.contacts[index-1], &lastDialledDTMFContactsCache.contacts[index], sizeof(lastDialledDTMFContact_t));	
-	}
-	lastDialledDTMFContactsCache.contacts[MaxRetainedDialledDTMFContacts-1].txFreq = txFreq;
-	memcpy(&lastDialledDTMFContactsCache.contacts[MaxRetainedDialledDTMFContacts-1].contact, contact, sizeof(struct_codeplugDTMFContact_t));
-}
-
-bool GetLastDialledDTMFContactForFrequency(uint32_t txFreq, struct_codeplugDTMFContact_t* contact)
-{
-	if (!contact) return false;
-	
-	for (uint8_t index=0; index < lastDialledDTMFContactsCache.maxDialledDTMFEntries; ++index)
-	{
-		if (lastDialledDTMFContactsCache.contacts[index].txFreq == txFreq)
-		{
-			memcpy(contact, &lastDialledDTMFContactsCache.contacts[index].contact, sizeof(struct_codeplugDTMFContact_t));
-			return true;
-		}
-	}
-	return false;
-}

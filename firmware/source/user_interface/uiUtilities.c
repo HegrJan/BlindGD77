@@ -2112,6 +2112,34 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
 	}
 }
 
+static void announceChannelDTMFContact(bool anouncePrompt)
+{
+		if (currentChannelData->NOT_IN_CODEPLUG_flag != 0) return; // its not the channel screen.
+			if ((currentChannelData->LibreDMR_flag1 & ChannelContactOverride)==0) return;
+
+	struct_codeplugDTMFContact_t lastDialledDTMFContact;
+	if (!codeplugDTMFContactGetDataForIndex(currentChannelData->contact, &lastDialledDTMFContact))
+	{
+		return;
+	}
+		if (anouncePrompt)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->contact);
+	}
+	char buff[DTMF_CODE_MAX_LEN+1]; // DTMF may have 16 chars plus a null.
+
+	if (lastDialledDTMFContact.name[0]!=0 && lastDialledDTMFContact.name[0]!=0xff)
+	{
+		codeplugUtilConvertBufToString(lastDialledDTMFContact.name, buff, DTMF_CODE_MAX_LEN);
+	}
+	else
+	{
+		dtmfConvertCodeToChars(lastDialledDTMFContact.code, buff, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
+	}
+	voicePromptsAppendString(buff);	
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+}
+
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying)
 {
 	int powerLevel = trxGetPowerLevel();
@@ -2567,8 +2595,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		{
 			announceVFOChannelName();
 		}
-		if (!lessVerbose)// At level 2, do not say FM or DMR, only say contact which will indicate DMR, no contact will presumably be fm.
-			announceRadioMode(voicePromptWasPlaying);
+		announceRadioMode(voicePromptWasPlaying);
 		if (voicePromptSequenceState == PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE)
 		{
 			break;
@@ -2581,6 +2608,10 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 				voicePromptsAppendPrompt(PROMPT_SILENCE);
 				announceTS();
 			}
+		}
+		else
+		{
+			announceChannelDTMFContact( !voicePromptWasPlaying);
 		}
 		if ((currentChannelData->libreDMR_Power != 0) && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH)))
 		{
@@ -2807,30 +2838,6 @@ voicePromptsAppendStringEx(output,vpAnnounceCustomPrompts);
 }
 */
 
-static void announceLastDTMFContact(bool anouncePrompt)
-{
-	struct_codeplugDTMFContact_t lastDialledDTMFContact;
-	if (!GetLastDialledDTMFContactForFrequency(currentChannelData->txFreq, &lastDialledDTMFContact))
-		return;
-	
-	if (anouncePrompt)
-	{
-		voicePromptsAppendLanguageString(&currentLanguage->contact);
-	}
-	char buff[DTMF_CODE_MAX_LEN+1]; // DTMF may have 16 chars plus a null.
-
-	if (lastDialledDTMFContact.name[0]!=0 && lastDialledDTMFContact.name[0]!=0xff)
-	{
-		codeplugUtilConvertBufToString(lastDialledDTMFContact.name, buff, DTMF_CODE_MAX_LEN);
-	}
-	else
-	{
-		dtmfConvertCodeToChars(lastDialledDTMFContact.code, buff, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
-	}
-	voicePromptsAppendString(buff);	
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-}
-
 void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 {
 	voicePromptsInit();
@@ -2872,7 +2879,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 	}
 	else
 	{
-		announceLastDTMFContact(!voicePromptWasPlaying);
+		announceChannelDTMFContact(!voicePromptWasPlaying);
 		bool rxAndTxTonesAreTheSame = (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
 		&& (currentChannelData->rxTone ==currentChannelData->txTone);
 		if (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)

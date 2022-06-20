@@ -109,8 +109,14 @@ typedef enum
 #define CODEPLUG_CHANNEL_FLAG_ZONE_SKIP                          0x20
 #define CODEPLUG_CHANNEL_IS_FLAG_SET(c, f)                      ((((c)->flag4 & (f)) != 0x0))
 
+
 extern int codeplugChannelsPerZone;
 
+typedef enum
+{
+	ChannelContactOverride=0x40,
+	ChannelDMRUserIDOverride =0x80
+} LibreDMR_flags_t;
 
 enum CONTACT_CALLTYPE_SELECT { CONTACT_CALLTYPE_TG = 0, CONTACT_CALLTYPE_PC, CONTACT_CALLTYPE_ALL };
 
@@ -157,7 +163,7 @@ typedef struct
 	uint16_t txTone;
 	uint8_t voiceEmphasis;
 	uint8_t txSignaling;
-	uint8_t LibreDMR_flag1; // was unmuteRule. 0x80: Optional DMRID sets.
+	uint8_t LibreDMR_flag1; // was unmuteRule. 0x80: Optional DMRID sets, 0x40 contact is last contact used on this channel.
 	uint8_t rxSignaling;    // +--
 	uint8_t artsInterval;   // | These 3 bytes were repurposed for optional DMRID
 	uint8_t encrypt;        // +--
@@ -375,4 +381,5 @@ void SortDigitalContacts();
 
 bool CanSortZoneChannels(struct_codeplugZone_t* zone);
 void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType);
+void AddLastReferencedContactToChannel(int allChannelsIndex, uint16_t contact);
 #endif

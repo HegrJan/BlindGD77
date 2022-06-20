@@ -46,8 +46,6 @@ typedef enum
 	MENU_CONTACT_LIST_CONTACT_DTMF
 } contactListContactType_t;
 
-static bool needToSort=true;
-
 static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
 
@@ -67,6 +65,15 @@ static int submenuEntryCount;
 
 static const char * const *calltypeVoices[3] = { NULL, NULL, NULL };
 
+static void UpdateChannelWithLastReferencedContact()
+{
+								if (currentChannelData->NOT_IN_CODEPLUG_flag != 0) return; // its not the channel screen.
+	if (uiDataGlobal.currentSelectedContactIndex == 0) return; // nothing to add.
+							
+	uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+	AddLastReferencedContactToChannel(channelIndex, uiDataGlobal.currentSelectedContactIndex);
+}
+
 // Apply contact + its TS on selection for TX (contact list of quick list).
 static void overrideWithSelectedContact(void)
 {
@@ -84,14 +91,6 @@ static void overrideWithSelectedContact(void)
 static void reloadContactList(contactListContactType_t type)
 {
 	menuDataGlobal.endIndex = (type == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? codeplugContactsGetCount(contactCallType) : codeplugDTMFContactsGetCount();
-	if (needToSort)
-	{
-		if (contactListType== MENU_CONTACT_LIST_CONTACT_DTMF)
-			SortDTMFContacts();
-		else
-			SortDigitalContacts();
-		needToSort=false;
-	}
 	if (menuDataGlobal.endIndex > 0)
 	{
 		if (menuDataGlobal.currentItemIndex >= menuDataGlobal.endIndex)
@@ -128,7 +127,6 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 				// Otherwise displays DTMF contact list
 				bool contactListTypeLocal = ((currentMenu == MENU_CONTACT_LIST) || ((currentMenu == MENU_CONTACT_QUICKLIST) && (trxGetMode() != RADIO_MODE_ANALOG))) ? MENU_CONTACT_LIST_CONTACT_DIGITAL : MENU_CONTACT_LIST_CONTACT_DTMF;
 				if (contactListType!=contactListTypeLocal)
-					needToSort=true;
 				contactListType=contactListTypeLocal;
 				contactCallType = CONTACT_CALLTYPE_TG;
 
@@ -366,16 +364,15 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					nonVolatileSettings.sortFlags |= sortContactsByName;
 					voicePromptsAppendLanguageString(&currentLanguage->name);
-					needToSort=true;
 				}
 				else
 				{
 					nonVolatileSettings.sortFlags &= ~sortContactsByName;
-					codeplugInitContactsCache();
-					codeplugRxGroupInitCache();
 					voicePromptsAppendLanguageString(&currentLanguage->none);
-					needToSort=false;
 				}
+				codeplugInitContactsCache();
+				codeplugRxGroupInitCache();
+
 				lastLoadedRxGroup=-1; // force reload as it has been changed.
 				uiDataGlobal.VoicePrompts.inhibitInitial=true;
 				reloadContactList(contactListType);
@@ -425,6 +422,7 @@ static void handleEvent(uiEvent_t *ev)
 							if (currentMode == RADIO_MODE_DIGITAL)
 							{
 								overrideWithSelectedContact();
+								UpdateChannelWithLastReferencedContact();
 								uiDataGlobal.currentSelectedContactIndex = 0;
 								announceItem(PROMPT_SEQUENCE_CONTACT_TG_OR_PC, PROMPT_THRESHOLD_3);
 								menuSystemPopAllAndDisplayRootMenu();
@@ -441,7 +439,7 @@ static void handleEvent(uiEvent_t *ev)
 						if (currentMode == RADIO_MODE_ANALOG)
 						{
 							dtmfSequencePrepare(contactListDTMFContactData.code, true);
-							AddDTMFContactToLastDialledCache(currentChannelData->txFreq, &contactListDTMFContactData);
+							UpdateChannelWithLastReferencedContact();
 						}
 						else
 						{
@@ -650,6 +648,7 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 					}
 					return;
 				}
+				UpdateChannelWithLastReferencedContact();
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
 					if (trxGetMode() == RADIO_MODE_DIGITAL)
@@ -792,3 +791,4 @@ menuStatus_t menuContactListSubMenu(uiEvent_t *ev, bool isFirstRun)
 
 	return menuContactListSubMenuExitCode;
 }
+

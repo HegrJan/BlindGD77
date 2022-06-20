@@ -543,7 +543,7 @@ uint32_t codeplugChannelGetOptionalDMRID(struct_codeplugChannel_t *channelBuf)
 {
 	uint32_t retVal = 0;
 
-	if (channelBuf->LibreDMR_flag1 & 0x80)
+	if (channelBuf->LibreDMR_flag1 & ChannelDMRUserIDOverride)
 	{
 		retVal = ((channelBuf->rxSignaling << 16) | (channelBuf->artsInterval << 8) | channelBuf->encrypt);
 	}
@@ -565,12 +565,12 @@ void codeplugChannelSetOptionalDMRID(uint32_t dmrID, struct_codeplugChannel_t *c
 	// Set DMRId and flag, if valid.
 	if ((dmrID >= MIN_TG_OR_PC_VALUE) && (dmrID <= MAX_TG_OR_PC_VALUE))
 	{
-		channelBuf->LibreDMR_flag1 |= 0x80;
+		channelBuf->LibreDMR_flag1 |= ChannelDMRUserIDOverride;
 		tmpID = dmrID;
 	}
 	else
 	{
-		channelBuf->LibreDMR_flag1 &= ~0x80;
+		channelBuf->LibreDMR_flag1 &= ~ChannelDMRUserIDOverride;
 	}
 
 	channelBuf->rxSignaling = (tmpID >> 16) & 0xFF;
@@ -995,7 +995,7 @@ void codeplugInitContactsCache(void)
 			}
 		}
 	}
-	
+	SortDigitalContacts();
 	for (int i = 0; i < CODEPLUG_DTMF_CONTACTS_MAX; i++)
 	{
 		if (EEPROM_Read(CODEPLUG_ADDR_DTMF_CONTACTS + (i * CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE), (uint8_t *)&c, 1))
@@ -1006,6 +1006,7 @@ void codeplugInitContactsCache(void)
 			}
 		}
 	}
+	SortDTMFContacts();
 }
 
 void codeplugContactsCacheUpdateOrInsertContactAt(int index, struct_codeplugContact_t *contact)
@@ -1819,4 +1820,17 @@ void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
 
 	EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zone->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
 				(uint8_t *)zone, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
+}
+
+// contactIndex is either a DMR contact index  into the digital contacts list, or a  DTMF contact index.
+void AddLastReferencedContactToChannel(int allChannelsIndex, uint16_t contact)
+{
+	struct_codeplugChannel_t channelBuf;
+	codeplugChannelGetDataForIndex(allChannelsIndex, &channelBuf);
+	channelBuf.contact=contact;
+	channelBuf.LibreDMR_flag1 |= ChannelContactOverride;
+	codeplugChannelSaveDataForIndex( allChannelsIndex, &channelBuf);
+	// also update it in the live version.
+	currentChannelData->contact=contact;
+	currentChannelData->LibreDMR_flag1 |= ChannelContactOverride;
 }
