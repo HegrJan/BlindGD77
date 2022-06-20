@@ -1823,12 +1823,17 @@ void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
 }
 
 // contactIndex is either a DMR contact index  into the digital contacts list, or a  DTMF contact index.
+// pass in 0 for the contact to clear it.
 void AddLastReferencedContactToChannel(int allChannelsIndex, uint16_t contact)
 {
 	struct_codeplugChannel_t channelBuf;
 	codeplugChannelGetDataForIndex(allChannelsIndex, &channelBuf);
 	channelBuf.contact=contact;
-	channelBuf.LibreDMR_flag1 |= ChannelContactOverride;
+	if (contact > 0)
+		channelBuf.LibreDMR_flag1 |= ChannelContactOverride;
+	else // clear it.
+		channelBuf.LibreDMR_flag1 &= ~ChannelContactOverride;
+	
 	codeplugChannelSaveDataForIndex( allChannelsIndex, &channelBuf);
 	// also update it in the live version.
 	currentChannelData->contact=contact;

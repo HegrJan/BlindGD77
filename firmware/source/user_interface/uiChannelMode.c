@@ -612,9 +612,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			}
 		}
 
-#if defined(PLATFORM_GD77S)
 		dtmfSequenceTick(false);
-#endif
 	}
 	return menuChannelExitStatus;
 }
@@ -1535,7 +1533,9 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				struct_codeplugDTMFContact_t lastDialledDTMFContact;
 				if (codeplugDTMFContactGetDataForIndex(currentChannelData->contact, &lastDialledDTMFContact))
+				{
 					dtmfSequencePrepare(lastDialledDTMFContact.code, true);
+				}
 				keyboardReset();
 				return;
 			}
@@ -1637,7 +1637,14 @@ static void handleEvent(uiEvent_t *ev)
 				uiChannelModeUpdateScreen(0);
 				return;// The event has been handled
 			}
-
+			// clear dtmf contact override.
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && (trxGetMode() == RADIO_MODE_ANALOG))
+			{
+				uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
+				AddLastReferencedContactToChannel(channelIndex, 0);
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
+				return;
+			}
 			if(directChannelNumber > 0)
 			{
 				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
@@ -2868,7 +2875,7 @@ static void updateTrxID(void)
 		*/
 		if ((currentRxGroupData.name[0] != 0) && (nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE] < currentRxGroupData.NOT_IN_CODEPLUG_numTGsInGroup))
 		{
-			codeplugContactGetDataForIndex(currentRxGroupData.contacts[nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE]], &currentContactData);//joe
+			codeplugContactGetDataForIndex(currentRxGroupData.contacts[nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE]], &currentContactData);
 			uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
 			AddLastReferencedContactToChannel(channelIndex, currentRxGroupData.contacts[nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE]]);
 		}
@@ -3170,10 +3177,6 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, DTMF_CODE_MAX_LEN))
 			{
 				dtmfSequencePrepare(dtmfCodeBuffer, true);
-				struct_codeplugDTMFContact_t contactToAdd;
-				memcpy(contactToAdd.name, GD77SKeypadBuffer, 16);
-				memcpy(contactToAdd.code, dtmfCodeBuffer, 16);
-				AddDTMFContactToLastDialledCache(currentZone->channels[nonVolatileSettings.currentChannelIndexInZone], &contactToAdd);
 
 				// We've dialled something, disable autodial.
 				DisableAutoDialerForCurrentChannelAndZone();
