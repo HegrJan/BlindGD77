@@ -3204,7 +3204,7 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 				bool dialingContactForChannel = (GD77SParameters.uiMode != GD77S_UIMODE_DTMF_CONTACTS) && (onceOffChannelContactIndex > 0);
 	uint16_t contactIndex = dialingContactForChannel ? onceOffChannelContactIndex : GD77SParameters.dtmfListSelected + 1;
 				codeplugDTMFContactGetDataForNumber(contactIndex, &dtmfContact);
-				AddLastReferencedContactToChannel(currentChannel->channels[nonVolatileSettings.currentChannelIndexInZone], contactIndex);
+				AddLastReferencedContactToChannel(currentZone.channels[nonVolatileSettings.currentChannelIndexInZone], contactIndex);
 
 				dtmfSequencePrepare(dtmfContact.code, true);
 				// We've dialed something, disable the autodial for this channel and zone.
@@ -4199,6 +4199,36 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		voicePromptsPlay();
 
 		return true;
+	}
+	if (strncmp(GD77SKeypadBuffer,"CLR", 3)==0)
+	{
+		uint16_t channelIndex= currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
+		AddLastReferencedContactToChannel(channelIndex, 0);
+		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+		return true;
+	}
+	if (strncmp(GD77SKeypadBuffer,"SRTC", 4)==0)
+	{// sort contacts on/off.
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->sortBy);
+
+		if ((nonVolatileSettings.sortFlags & sortContactsByName)==0)
+		{
+			nonVolatileSettings.sortFlags |= sortContactsByName;
+			voicePromptsAppendLanguageString(&currentLanguage->name);
+		}
+		else
+		{
+			nonVolatileSettings.sortFlags &= ~sortContactsByName;
+			voicePromptsAppendLanguageString(&currentLanguage->none);
+		}
+		codeplugInitContactsCache();
+		codeplugRxGroupInitCache();
+
+		lastLoadedRxGroup=-1; // force reload as it has been changed.
+		uiDataGlobal.VoicePrompts.inhibitInitial=true;
+		voicePromptsPlay();
+		return true;		
 	}
 	if (strncmp(GD77SKeypadBuffer,"SRT", 3)==0 && strchr("*0#", GD77SKeypadBuffer[3]))
 	{
