@@ -43,6 +43,7 @@
 ANNOUNCE_STATIC void announceRadioMode(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying);
+ANNOUNCE_STATIC void announceChannelDTMFContact(bool anouncePrompt);
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying);
 void announceEcoLevel(bool voicePromptWasPlaying);
 void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital);

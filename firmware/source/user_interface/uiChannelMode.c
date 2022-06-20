@@ -3434,7 +3434,8 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 			}
 			if (trxGetMode() == RADIO_MODE_DIGITAL)
 				announceContactNameTgOrPc(true); // avoid saying "contact", just announce the tg.
-
+			else
+				announceChannelDTMFContact(false); // do not announce prompt.
 			voicePromptsPlay();
 		}
 
@@ -4200,7 +4201,7 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 
 		return true;
 	}
-	if (strncmp(GD77SKeypadBuffer,"CLR", 3)==0)
+	if (strncmp(GD77SKeypadBuffer,"CCC", 3)==0)
 	{
 		uint16_t channelIndex= currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
 		AddLastReferencedContactToChannel(channelIndex, 0);

@@ -2112,7 +2112,7 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
 	}
 }
 
-static void announceChannelDTMFContact(bool anouncePrompt)
+ANNOUNCE_STATIC void announceChannelDTMFContact(bool anouncePrompt)
 {
 		if (currentChannelData->NOT_IN_CODEPLUG_flag != 0) return; // its not the channel screen.
 			if ((currentChannelData->LibreDMR_flag1 & ChannelContactOverride)==0) return;
