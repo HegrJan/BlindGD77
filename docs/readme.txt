@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-20 June 2022
+21 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -50,6 +50,8 @@ TO solve this, if you set Keypad mode to VFO a or b, when you cycle to Keypad mo
 15. Added announcement of "reorder channels" to channel summary if reorder mode is active, immediately prior to the zone name. Thus, the summary will say something like "reorder channels zone 1" at the end of the summary if reorder mode is active on radios with a keypad.
 16. Talk groups and dialled DTMF contacts are now associated  with each channel. This means that if you choose a talk group on one DMR channel, when you revisit that channel, that talkgroup is automatically reselected (you will need to key up to ensure your repeater or hotspot is syncrhonized). On analog channels, when you dial a DTMF contact from the contacts list, it is automatically saved for that channel. If your node has disconnected, press long hold sk2+hash to redial the channel's saved DTMF contact. You can clear the DTMF contact for a channel using SK2+red, which for DMR channels clears a private call.
 17. As a result of 16, at voice prompt level 2, we will again say the mode since hearing a contact does not mean a digital channel but could be the currently connected DTMF contact.
+18. Added DTMF Rate to Sound Options Menu after DTMF Volume. The range is 1 to 10 with 10 being the fastest. This was also added to the GD77S Options menu. The default value is 3 (which matches the CPS).
+
 
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
