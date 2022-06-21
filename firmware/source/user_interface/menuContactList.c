@@ -61,7 +61,7 @@ static menuStatus_t menuContactListExitCode = MENU_STATUS_SUCCESS;
 static menuStatus_t menuContactListSubMenuExitCode = MENU_STATUS_SUCCESS;
 static int contactListEntryCount;
 static int submenuEntryCount;
-
+static bool sortAfterCreateOrEditContact=false;
 
 static const char * const *calltypeVoices[3] = { NULL, NULL, NULL };
 
@@ -90,6 +90,13 @@ static void overrideWithSelectedContact(void)
 
 static void reloadContactList(contactListContactType_t type)
 {
+	if (sortAfterCreateOrEditContact)
+	{// coming back from creating a new contact.
+		sortAfterCreateOrEditContact=false;
+		nonVolatileSettings.sortFlags|=sortContactsByName;
+		codeplugInitContactsCache(); // force it to be reloaded unsorted!
+	}
+
 	menuDataGlobal.endIndex = (type == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? codeplugContactsGetCount(contactCallType) : codeplugDTMFContactsGetCount();
 	if (menuDataGlobal.endIndex > 0)
 	{
@@ -697,8 +704,16 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 					return;
 				}
 				// ok, deliberate fall through.
+				
 				uiDataGlobal.currentSelectedContactIndex =0; // Deliberate fall through
 			case CONTACT_LIST_QUICK_MENU_EDIT:
+				sortAfterCreateOrEditContact=(nonVolatileSettings.sortFlags&sortContactsByName) ? true : false;
+				if (sortAfterCreateOrEditContact)
+				{// if we don't unsort, the functions which find free indices and insert/update the internal cache break!
+					nonVolatileSettings.sortFlags&=~sortContactsByName;
+					codeplugInitContactsCache(); // force it to be reloaded unsorted!
+				}
+
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
 					menuSystemSetCurrentMenu(MENU_CONTACT_DETAILS);

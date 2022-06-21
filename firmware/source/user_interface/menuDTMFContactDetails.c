@@ -330,7 +330,6 @@ static void handleEvent(uiEvent_t *ev)
 						&& (tmpDTMFContact.name[0]!=0xFFU) && (tmpDTMFContact.code[0] != 0xFFU))
 					{
 						codeplugContactSaveDTMFDataForIndex(dtmfContactDetailsIndex, &tmpDTMFContact);
-						SortDTMFContacts();
 						menuDTMFContactDetailsTimeout = 2000;
 						menuDTMFContactDetailsState = MENU_DTMF_CONTACT_DETAILS_SAVED;
 						voicePromptsInit();

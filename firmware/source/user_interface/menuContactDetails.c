@@ -509,7 +509,6 @@ static void handleEvent(uiEvent_t *ev)
 							if (contactIsNewOrAtSameIndex(&tmpContact, contactDetailsIndex))
 							{
 								codeplugContactSaveDataForIndex(contactDetailsIndex, &tmpContact);
-								SortDigitalContacts();
 
 								menuContactDetailsTimeout = 2000;
 								menuContactDetailsState = MENU_CONTACT_DETAILS_SAVED;
