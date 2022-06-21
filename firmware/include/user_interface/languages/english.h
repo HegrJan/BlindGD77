@@ -234,7 +234,8 @@ const stringsTable_t englishLanguage =
 .css_tail="CSS Tl.E",
 .fahrenheit="°F",
 .sortBy= "Sort by", // name/frq
-.frequency = "Frq"
+.frequency = "Frq",
+.dtmf_rate="DTMF Rate"
 };
 /********************************************************************
  *

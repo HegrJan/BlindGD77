@@ -247,6 +247,7 @@ typedef struct
    const char* fahrenheit;
    const char* sortBy;
    const char* frequency;
+   const char* dtmf_rate;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

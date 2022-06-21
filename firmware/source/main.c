@@ -441,7 +441,7 @@ void mainTask(void *data)
 
 	// Get DTMF contacts duration settings
 	codeplugGetSignallingDTMFDurations(&uiDataGlobal.DTMFContactList.durations);
-
+	uiDataGlobal.DTMFContactList.durations.rate=nonVolatileSettings.dtmfRate;
 
 #if defined(PLATFORM_GD77S)
 	// Those act as a toggles

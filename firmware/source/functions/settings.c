@@ -196,6 +196,8 @@ bool settingsLoadSettings(void)
 		nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 	if (nonVolatileSettings.ctcssSqlTail > 50)
 		nonVolatileSettings.ctcssSqlTail=35;
+	if (nonVolatileSettings.dtmfRate < 1 || nonVolatileSettings.dtmfRate > 10)
+		nonVolatileSettings.dtmfRate=3;
 	return hasRestoredDefaultsettings;
 }
 
@@ -352,6 +354,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.voicePromptVolumePercent=100; // max volume.
 	nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 	nonVolatileSettings.dtmfVol=10;
+	nonVolatileSettings.dtmfRate=3;
 	nonVolatileSettings.endRXBeep=0;
 	nonVolatileSettings.ctcssSqlTail=35; // tenths of a second.
 	nonVolatileSettings.sortFlags = 0;
