@@ -1530,7 +1530,7 @@ static void handleEvent(uiEvent_t *ev)
 		}
 		else if (!reorderingChannels && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
 		{// redial last DTMF contact.
-			if (trxGetMode() == RADIO_MODE_ANALOG)
+			if ((trxGetMode() == RADIO_MODE_ANALOG) && (currentChannelData->LibreDMR_flag1 & ChannelContactOverride))
 			{
 				struct_codeplugDTMFContact_t lastDialledDTMFContact;
 				if (codeplugDTMFContactGetDataForIndex(currentChannelData->contact, &lastDialledDTMFContact))
