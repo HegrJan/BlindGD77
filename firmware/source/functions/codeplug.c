@@ -1553,6 +1553,10 @@ bool codeplugGetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_
 	return false;
 }
 
+bool codeplugSetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_t *signallingDTMFDurationsBuffer)
+{
+	return  EEPROM_Write(CODEPLUG_ADDR_SIGNALLING_DTMF_DURATIONS, (uint8_t *)signallingDTMFDurationsBuffer, SIGNALLING_DTMF_DURATIONS_DATA_STRUCT_SIZE);
+}
 
 bool codeplugGetDeviceInfo(struct_codeplugDeviceInfo_t *deviceInfoBuffer)
 {

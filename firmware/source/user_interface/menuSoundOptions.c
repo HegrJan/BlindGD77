@@ -35,6 +35,7 @@ static void updateScreen(bool isFirstRun);
 static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
+static uint8_t originalDTMFRate=3; // default value.
 
 enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DTMF_VOL, OPTIONS_MENU_DTMF_RATE, OPTIONS_MENU_DMR_BEEP, OPTIONS_DMR_RXTX_MISMATCH_TX_BEEP, OPTIONS_MENU_FM_BEEP, OPTIONS_END_RX_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE, OPTIONS_ANNOUNCE_DMR_ID,
@@ -56,6 +57,7 @@ menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
 		{
 			// Store original settings, used on cancel event.
 			memcpy(&originalNonVolatileSettings, &nonVolatileSettings, sizeof(settingsStruct_t));
+			originalDTMFRate=uiDataGlobal.DTMFContactList.durations.rate;
 		}
 
 		voicePromptsInit();
@@ -159,7 +161,7 @@ static void updateScreen(bool isFirstRun)
 					break;
 				case OPTIONS_MENU_DTMF_RATE:
 					leftSide = (char * const *)&currentLanguage->dtmf_rate;
-					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfRate);
+					snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",uiDataGlobal.DTMFContactList.durations.rate);
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
 					leftSide = (char * const *)&currentLanguage->dmr_beep;
@@ -437,6 +439,8 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			// All parameters has already been applied
 			settingsSaveIfNeeded(true);
+			if (uiDataGlobal.DTMFContactList.durations.rate!=originalDTMFRate)
+				codeplugSetSignallingDTMFDurations(&uiDataGlobal.DTMFContactList.durations);
 			resetOriginalSettingsData();
 			menuSystemPopAllAndDisplayRootMenu();
 			return;
@@ -445,6 +449,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			// Restore original settings.
 			memcpy(&nonVolatileSettings, &originalNonVolatileSettings, sizeof(settingsStruct_t));
+			uiDataGlobal.DTMFContactList.durations.rate=originalDTMFRate;
 			soundBeepVolumeDivider = nonVolatileSettings.beepVolumeDivider;
 			setMicGainDMR(nonVolatileSettings.micGainDMR);
 			trxSetMicGainFM(nonVolatileSettings.micGainFM);
@@ -493,10 +498,9 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_DTMF_RATE:
-					if (nonVolatileSettings.dtmfRate < 10)
+					if (uiDataGlobal.DTMFContactList.durations.rate < 10)
 					{
-						settingsIncrement(nonVolatileSettings.dtmfRate, 1);
-						uiDataGlobal.DTMFContactList.durations.rate=nonVolatileSettings.dtmfRate;
+						uiDataGlobal.DTMFContactList.durations.rate++;
 					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:
@@ -645,10 +649,9 @@ static void handleEvent(uiEvent_t *ev)
 					}
 					break;
 				case OPTIONS_MENU_DTMF_RATE:
-					if (nonVolatileSettings.dtmfRate > 1)
+					if (uiDataGlobal.DTMFContactList.durations.rate > 1)
 					{
-						settingsDecrement(nonVolatileSettings.dtmfRate, 1);
-						uiDataGlobal.DTMFContactList.durations.rate=nonVolatileSettings.dtmfRate;
+						uiDataGlobal.DTMFContactList.durations.rate--;
 					}
 					break;
 				case OPTIONS_MENU_DMR_BEEP:

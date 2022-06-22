@@ -3732,7 +3732,7 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			break;
 		case GD77S_OPTION_DTMF_RATE:
 			voicePromptsAppendLanguageString(&currentLanguage->dtmf_rate);
-			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",nonVolatileSettings.dtmfRate);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",uiDataGlobal.DTMFContactList.durations.rate);
 			voicePromptsAppendString(rightSideVar);
 			break;
 		case GD77S_OPTION_TOT_MASTER:
@@ -4844,19 +4844,19 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 		{
 			if (dir > 0)
 			{
-				if (nonVolatileSettings.dtmfRate < 10)
-					settingsIncrement(nonVolatileSettings.dtmfRate, 1);
+				if (uiDataGlobal.DTMFContactList.durations.rate < 10)
+					uiDataGlobal.DTMFContactList.durations.rate++;
 			}
 			else  if (dir < 0)
 			{
-				if (nonVolatileSettings.dtmfRate > 1)
-					settingsDecrement(nonVolatileSettings.dtmfRate, 1);
+				if (uiDataGlobal.DTMFContactList.durations.rate > 1)
+					uiDataGlobal.DTMFContactList.durations.rate--;
 			}
 			else // default
 			{
-				settingsSet(nonVolatileSettings.dtmfRate, 3);
+				uiDataGlobal.DTMFContactList.durations.rate = 3;
 			}
-			uiDataGlobal.DTMFContactList.durations.rate=nonVolatileSettings.dtmfRate;
+			codeplugSetSignallingDTMFDurations(&uiDataGlobal.DTMFContactList.durations);
 			break;
 		}
 		case GD77S_OPTION_TOT_MASTER:
