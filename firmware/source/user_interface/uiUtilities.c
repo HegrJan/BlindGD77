@@ -4045,7 +4045,14 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	if (customPromptReviewMode)
 	{
 		// red or green cancel.
-		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+		{
+			customPromptReviewMode=false;
+			voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
+			voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+			return true;
+		}
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
 			customPromptReviewMode=false;
 			voicePromptsInit();
@@ -4085,12 +4092,6 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			PlayCustomVoicePromptAndPhrase(reviewPromptIndex, true, true);
 			return true;
 		}
-		else if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
-		{
-			voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
-			ReplayDMR();
-			return true;
-		}
 		else if (repeatVoicePromptOnSK1(ev))
 		{
 			return true;
@@ -4101,9 +4102,8 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			SaveCustomVoicePrompt(reviewPromptIndex, 0);
 			return true;
 		}
-		return true; // anything else is eaten.
 	}
-	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
+	bool IsVoicePromptEditMode=voicePromptsGetEditMode() && !customPromptReviewMode;
 	if (IsVoicePromptEditMode)
 	{
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
@@ -4182,7 +4182,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	if (!GetDMRContinuousSave() && (menuSystemGetCurrentMenuNumber() != MENU_CONTACT_DETAILS))
 		SetDMRContinuousSave(true);
 	// SK1 is not being held down on its own.
-	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode;
+	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode || customPromptReviewMode;
 	// SK1+green enter edit mode.
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) && !IsVoicePromptEditMode)
 	{
@@ -4191,10 +4191,10 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	}
 	
 	// No number is going down, coming up or being held.
-	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return IsVoicePromptEditMode;
+	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return IsVoicePromptEditMode || customPromptReviewMode;
 	
 	int keyval=menuGetKeypadKeyValueEx(ev, true, false);
-	if (keyval > 9) return IsVoicePromptEditMode;
+	if (keyval > 9) return IsVoicePromptEditMode || customPromptReviewMode;
 	
 	if (KEYCHECK_LONGDOWN_NUMBER(ev->keys))
 	{
@@ -4234,7 +4234,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		return true;
 	}
 		
-	return false;
+	return customPromptReviewMode;
 }
 
 void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
