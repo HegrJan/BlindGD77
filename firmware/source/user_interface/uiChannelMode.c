@@ -3590,7 +3590,14 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 			voicePromptsAppendString(buf);
 		if ((GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
 		{
-			PlayCustomVoicePromptAndPhrase(GD77SParameters.customPromptIndex, false, false);
+			voicePromptsAppendInteger(GD77SParameters.customPromptIndex);
+			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+GD77SParameters.customPromptIndex);
+			char reviewPhrase[16]="\0";
+			if (GetCustomVoicePromptPhrase(GD77SParameters.customPromptIndex, reviewPhrase, 16))
+			{
+				voicePromptsAppendPrompt(PROMPT_EQUALS);
+				voicePromptsAppendStringEx(reviewPhrase, vpAnnounceSpaceAndSymbols);
+			}
 		}
 	}
 	voicePromptsPlay();
