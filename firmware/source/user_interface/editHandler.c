@@ -187,11 +187,11 @@ static void ToggleKeypadAlphaEnable()
 	}
 	voicePromptsPlay();
 }
-bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
+bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams, bool callCustomPromptHandler)
 {
 	if (!editParams || !editParams->editBuffer || !editParams->cursorPos)
 		return false;
-	if (HandleCustomPrompts(ev, editParams->editBuffer))
+	if (callCustomPromptHandler && HandleCustomPrompts(ev, editParams->editBuffer))
 	{
 		editParams->allowedToSpeakUpdate=false;
 		return true;
@@ -312,6 +312,7 @@ bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams)
 	editParams->allowedToSpeakUpdate = false;
 	return true;
 }
+
 char* GetCurrentEditBuffer()
 {
 	return editParams.editBuffer;

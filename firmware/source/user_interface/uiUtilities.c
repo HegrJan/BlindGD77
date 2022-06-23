@@ -3953,23 +3953,57 @@ static bool ForceUseOfVoiceTagIndex()
 	return true;
 }
 
-bool PlayCustomVoicePromptAndPhrase(int customPromptNumber, bool init, bool play)
+static bool customPromptReviewMode=false;
+static uint8_t reviewPromptIndex=1;
+static char reviewPhrase[SCREEN_LINE_BUFFER_SIZE] = "\0";
+static int reviewPhrasePos=0;
+
+#if !defined(PLATFORM_GD77S)
+static void ShowReviewAudioClipScreen()
+{
+	ucClearBuf();
+	char buffer[SCREEN_LINE_BUFFER_SIZE] = "\0";
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "Review Prompt %d", reviewPromptIndex);
+	menuDisplayTitle(buffer);
+	
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%s", reviewPhrase);
+	int phraseLen= strlen(reviewPhrase);
+	
+	for (int i=phraseLen; i < SCREEN_LINE_BUFFER_SIZE; ++i)
+	{
+		buffer[i]='_';
+	}
+	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, buffer, FONT_SIZE_3, TEXT_ALIGN_LEFT, false);
+	
+	ucRender();
+}
+#endif // #if !defined(PLATFORM_GD77S)
+
+bool ReviewPromptUpdateScreen(bool entryChanged, bool init, bool play)
 {
 	if (init)
 		voicePromptsInit();
-	
-	voicePromptsAppendInteger(customPromptNumber);
-	voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+customPromptNumber);
-	
-	char phrase[17];
-	if (GetCustomVoicePromptPhrase(customPromptNumber, phrase, 17))
+	if (entryChanged)
 	{
-		voicePromptsAppendPrompt(PROMPT_EQUALS);
-		voicePromptsAppendStringEx(phrase, vpAnnounceSpaceAndSymbols);
-	}
+		voicePromptsAppendInteger(reviewPromptIndex);
+		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
 	
+		if (GetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase, SCREEN_LINE_BUFFER_SIZE))
+		{
+			voicePromptsAppendPrompt(PROMPT_EQUALS);
+			voicePromptsAppendStringEx(reviewPhrase, vpAnnounceSpaceAndSymbols);
+		}
+		else
+			reviewPhrase[0] = '\0';
+		reviewPhrasePos=strlen(reviewPhrase);
+	}
+	#if !defined(PLATFORM_GD77S)
+	ShowReviewAudioClipScreen();
+#endif // #if !defined(PLATFORM_GD77S)
+
 	if (play)
 		voicePromptsPlay();
+	
 	return true;
 }			
 
@@ -3979,9 +4013,6 @@ While SK1 is being held down, keep track of, and combine, the digits being press
 or the number entered so far is already two digits long, at which time, play the corresponding custom voice prompt.
 If the last digit is held down for a long hold, save the corresponding voice prompt.
 */
-static bool customPromptReviewMode=false;
-static uint8_t reviewPromptIndex=1;
-
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 {
 	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) return false;
@@ -4012,10 +4043,19 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			voicePromptsAppendLanguageString(&currentLanguage->audio_prompt);
 			voicePromptsAppendLanguageString(&currentLanguage->all);
 			voicePromptsAppendLanguageString(&currentLanguage->on);
-			PlayCustomVoicePromptAndPhrase(reviewPromptIndex, false, false);
+			
+			editParams.editFieldType=EDIT_TYPE_ALPHANUMERIC;
+			editParams.editBuffer=reviewPhrase;
+			reviewPhrasePos=strlen(reviewPhrase);
+			editParams.cursorPos=&reviewPhrasePos;
+			editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
+			editParams.xPixelOffset=0;
+			editParams.yPixelOffset=0; // use default for menu.
+			keypadAlphaEnable = true;
+
+			ReviewPromptUpdateScreen(true, false, false);
 
 			voicePromptsPlay();
-			keyboardReset();
 		}
 		return true;
 	}
@@ -4048,8 +4088,23 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			customPromptReviewMode=false;
-			voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
-			voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+			keyboardReset();
+			// sk2+green save phrase
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
+			{
+				voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
+				voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+			}
+			else
+			{
+				SetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase);
+				voicePromptsInit();
+				voicePromptsAppendInteger(reviewPromptIndex);
+				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
+				voicePromptsAppendPrompt(PROMPT_SILENCE);
+				voicePromptsAppendLanguageString(&currentLanguage->vp_saved);
+				voicePromptsPlay();
+			}
 			return true;
 		}
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
@@ -4062,34 +4117,44 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			voicePromptsPlay();
 			return true;
 		}
-		else if ((KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_RIGHT)))
+		else if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
 		{
 			if (reviewPromptIndex < GetMaxCustomVoicePrompts()-5)
 				reviewPromptIndex+=5;
 			else
 				reviewPromptIndex=GetMaxCustomVoicePrompts();
-			PlayCustomVoicePromptAndPhrase(reviewPromptIndex, true, true);
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
 			return true;
 		}
-		else if ((KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN) || KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_LEFT)))
+		else if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
 		{
 			if (reviewPromptIndex > 5)
 				reviewPromptIndex-=5;
 			else
 				reviewPromptIndex=1;
-			PlayCustomVoicePromptAndPhrase(reviewPromptIndex, true, true);
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
 			return true;
 		}
-		else if ((KEYCHECK_SHORTUP(ev->keys, KEY_UP) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT))&& (reviewPromptIndex < GetMaxCustomVoicePrompts()))
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_UP))
 		{
-			reviewPromptIndex++;
-			PlayCustomVoicePromptAndPhrase(reviewPromptIndex, true, true);
+			if (reviewPromptIndex < GetMaxCustomVoicePrompts())
+				reviewPromptIndex++;
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
 			return true;
 		}
-		else if ((KEYCHECK_SHORTUP(ev->keys, KEY_DOWN) || KEYCHECK_SHORTUP(ev->keys, KEY_LEFT)) && (reviewPromptIndex > 1))
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN))
 		{
-			reviewPromptIndex--;
-			PlayCustomVoicePromptAndPhrase(reviewPromptIndex, true, true);
+			if (reviewPromptIndex > 1)
+				reviewPromptIndex--;
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
 			return true;
 		}
 		else if (repeatVoicePromptOnSK1(ev))
@@ -4100,6 +4165,16 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{// delete voice prompt.
 			ReplayInit();
 			SaveCustomVoicePrompt(reviewPromptIndex, 0);
+			return true;
+		}
+		else if (HandleEditEvent(ev, &editParams, false))
+		{
+			bool moved=KEYCHECK_SHORTUP(ev->keys, KEY_LEFT) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || (ev->keys.event == KEY_MOD_PRESS);
+			if (moved)
+			{
+				ReviewPromptUpdateScreen(false, false, false);
+				editUpdateCursor(&editParams, moved, true);
+			}
 			return true;
 		}
 	}

@@ -737,7 +737,7 @@ static void handleEvent(uiEvent_t *ev)
 	}
 	if ( UseEditHandler())
 	{
-		bool handled=HandleEditEvent(ev, &editParams);
+		bool handled=HandleEditEvent(ev, &editParams, true);
 		// ensure the field for display is correctly padded with filler chars and update from editor.
 		if (handled && editParams.editFieldType == EDIT_TYPE_NUMERIC)
 		{

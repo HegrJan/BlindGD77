@@ -401,7 +401,7 @@ static void handleEvent(uiEvent_t *ev)
 					updateScreen(false, true);
 					menuContactDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 				}
-				else if (UseEditHandler() && HandleEditEvent(ev, &editParams))
+				else if (UseEditHandler() && HandleEditEvent(ev, &editParams, true))
 				{
 					updateScreen(false, editParams.allowedToSpeakUpdate);
 					editUpdateCursor(&editParams, true, true);

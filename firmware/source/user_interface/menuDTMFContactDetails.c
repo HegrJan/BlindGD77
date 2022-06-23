@@ -299,7 +299,7 @@ static void handleEvent(uiEvent_t *ev)
 					updateScreen(false, true);
 					menuDTMFContactDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 				}
-				else if (HandleEditEvent(ev, &editParams))
+				else if (HandleEditEvent(ev, &editParams, true))
 				{
 					updateScreen(false, editParams.allowedToSpeakUpdate);
 					editUpdateCursor(&editParams, true, true);
