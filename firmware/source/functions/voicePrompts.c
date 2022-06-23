@@ -824,6 +824,8 @@ bool SetCustomVoicePromptPhrase(int customPromptNumber, char* phrase)
 	else
 		memset(hdr.phrase, 0, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
 	strncpy(phraseCache[customPromptNumber-1], hdr.phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
+	if (customPromptNumber > highestUsedCustomVoicePromptNumberWithPhrase)
+		highestUsedCustomVoicePromptNumberWithPhrase=customPromptNumber;
 	
 	return SPI_Flash_write(addr, (uint8_t*)&hdr, sizeof(hdr));
 }

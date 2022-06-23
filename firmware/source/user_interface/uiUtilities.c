@@ -4083,7 +4083,9 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		return true;
 	}
 	if (customPromptReviewMode)
-	{
+	{// This may get reset by a keyboard reset when saving a prompt.
+		if (!keypadAlphaEnable && (editParams.editFieldType == EDIT_TYPE_ALPHANUMERIC))
+			keypadAlphaEnable=true;
 		// red or green cancel.
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
