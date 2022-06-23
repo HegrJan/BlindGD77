@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-22 June 2022
+23 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -52,15 +52,18 @@ TO solve this, if you set Keypad mode to VFO a or b, when you cycle to Keypad mo
 17. As a result of 16, at voice prompt level 2, we will again say the mode since hearing a contact does not mean a digital channel but could be the currently connected DTMF contact.
 18. Added DTMF Rate to Sound Options Menu after DTMF Volume. The range is 1 to 10 with 10 being the fastest. This was also added to the GD77S Options menu. The default value is 3 (which matches the CPS).
 19. Added a "Prompt All" mode similar to the gd77s for the other radios with a keyboard.
-This mode allows rapid review of custom voice prompts.
+This mode allows rapid review of custom voice prompts and editing of the associated phrase.
 19.1. Moved save custom prompt to next available slot from SK1+* to SK1+long hold * so it is consistent with other save custom prompt actions.
 19.2. SK1+* now enters custom prompt review mode. In this mode:
-	* copies current prompt to edit buffer (does not invoke edit mode).
-	Long hold 0 zeros or clears currently selected custom prompt.
-	Arrows move through and play  custom prompt and spell its associated phrase if any.
-	Long hold arrows moves through custom prompts by larger increments.
+	Long hold 0 zeros or deletes currently selected custom prompt.
+	Up/Down Arrows move through and play  custom prompt and spell its associated phrase if any.
+	Long hold Up/Down arrows moves through custom prompts by larger increments.
 	SK1 repeats current prompt and phrase if any.
-	Red/Green cancels review mode.
+	Left/Right and usual editing keys edit the phrase for the currently selected prompt.
+	Green saves the updated phrase associated with the prompt and exits Review Mode.
+	SK1+Green invokes   Edit mode on the currently selected custom prompt (exiting review mode). From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). 
+	Red cancels review mode and discards any editing of the phrase.
+	Other standard custom prompt mode keystrokes will still work in this mode.
 19.2. The GD77S version now also spells a custom prompt's  associated phrase if any in its "Prompt All" mode.
 
 11 May 2022
