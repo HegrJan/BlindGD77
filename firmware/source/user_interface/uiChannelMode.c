@@ -5041,7 +5041,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		if (GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2)
 		{
 			if (voicePromptsGetEditMode())
-				voicePromptsSetEditMode(false);
+				voicePromptsSetEditMode(false, true);
 			encodingCustomVoicePrompt = false;
 
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
@@ -5066,7 +5066,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		// See if we should enable or disable voice tag edit mode.
 		bool voiceTagEditMode = ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && ((GD77SParameters.option >=	GD77S_OPTION_EDIT_START) && (GD77SParameters.option <=	GD77S_OPTION_EDIT_END)));
 		if (voiceTagEditMode != voicePromptsGetEditMode())
-			voicePromptsSetEditMode(voiceTagEditMode);
+			voicePromptsSetEditMode(voiceTagEditMode, true);
 		// See if we should turn on decode mode where we record a voice prompt on PTT but do not tx.
 		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_RECORD));
 

@@ -915,7 +915,7 @@ void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
 	SPI_Flash_write(addr, (uint8_t*)&hdr, sizeof(CustomVoicePromptsHeader_t));
 }
 
-void voicePromptsSetEditMode(bool flag)
+void voicePromptsSetEditMode(bool flag, bool announce)
 {
 	if (!voicePromptDataIsLoaded) return;
 #if !defined(PLATFORM_GD77S)
@@ -926,10 +926,13 @@ void voicePromptsSetEditMode(bool flag)
 	}
 #endif
 	editingVoicePrompt=flag;	
-	voicePromptsInit();
-	voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
-	voicePromptsAppendLanguageString(flag ? &currentLanguage->on : &currentLanguage->off);
-	voicePromptsPlay();	
+	if (announce)
+	{
+		voicePromptsInit();
+		voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
+		voicePromptsAppendLanguageString(flag ? &currentLanguage->on : &currentLanguage->off);
+		voicePromptsPlay();	
+	}
 }
 
 bool voicePromptsGetEditMode()

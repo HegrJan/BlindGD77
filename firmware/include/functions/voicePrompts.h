@@ -186,7 +186,7 @@ bool SetCustomVoicePromptPhrase(int customPromptNumber, char* phrase);
 uint8_t GetMaxCustomVoicePrompts();
 uint8_t GetNextFreeVoicePromptIndex(bool forDMRVoiceTag);
 void DeleteDMRVoiceTag(int dmrVoiceTagNumber);
-void voicePromptsSetEditMode(bool flag);
+void voicePromptsSetEditMode(bool flag, bool announce);
 bool voicePromptsGetEditMode();
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute);
 void voicePromptsEditAutoTrim();

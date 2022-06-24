@@ -3995,7 +3995,10 @@ bool ReviewPromptUpdateScreen(bool entryChanged, bool init, bool play)
 	if (entryChanged)
 	{
 		voicePromptsAppendInteger(reviewPromptIndex);
-		voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
+		if (CustomVoicePromptExists(reviewPromptIndex))
+			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
+		else
+			voicePromptsAppendLanguageString(&currentLanguage->none);
 	
 		if (GetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase, SCREEN_LINE_BUFFER_SIZE))
 		{
@@ -4102,8 +4105,12 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 			{
 				if (CustomVoicePromptExists(reviewPromptIndex))
+				{
 					voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
-				voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+				}
+				customVoicePromptIndexToSave=reviewPromptIndex;
+				
+				voicePromptsSetEditMode(true, true);
 			}
 			else
 			{
@@ -4208,10 +4215,12 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{// Try and determine where to save the edited audio.
 			if (ForceUseOfVoiceTagIndex())
 				customVoicePromptIndexToSave=contactListContactData.ringStyle;
+			bool useReviewPhrase=(customVoicePromptIndexToSave==reviewPromptIndex) && reviewPhrase[0] !=0;
 			if (customVoicePromptIndexToSave!=0xff)
-				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
+				SaveCustomVoicePrompt(customVoicePromptIndexToSave, useReviewPhrase ? reviewPhrase : 0);
+			voicePromptsSetEditMode(false, customVoicePromptIndexToSave==0xff); // only announce if we didn't save the prompt.
 			customVoicePromptIndexToSave=0xff;
-			voicePromptsSetEditMode(false);
+
 #if !defined(PLATFORM_GD77S)
 			ForceScreenRedraw(ev);
 #endif
@@ -4221,7 +4230,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{
 			voicePromptsAdjustEnd(false, 0, true);
 			voicePromptsAdjustEnd(true, 0, true);
-			voicePromptsSetEditMode(false);
+			voicePromptsSetEditMode(false, true);
 
 			customVoicePromptIndex=0xff;
 #if !defined(PLATFORM_GD77S)
@@ -4278,7 +4287,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	// SK1+green enter edit mode.
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) && !IsVoicePromptEditMode)
 	{
-		voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+		voicePromptsSetEditMode(true, true);
 		return true;
 	}
 	
