@@ -3591,13 +3591,18 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		if ((GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
 		{
 			voicePromptsAppendInteger(GD77SParameters.customPromptIndex);
-			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+GD77SParameters.customPromptIndex);
-			char reviewPhrase[16]="\0";
-			if (GetCustomVoicePromptPhrase(GD77SParameters.customPromptIndex, reviewPhrase, 16))
+			if (CustomVoicePromptExists(GD77SParameters.customPromptIndex))
 			{
-				voicePromptsAppendPrompt(PROMPT_EQUALS);
-				voicePromptsAppendStringEx(reviewPhrase, vpAnnounceSpaceAndSymbols);
+				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+GD77SParameters.customPromptIndex);
+				char reviewPhrase[16]="\0";
+				if (GetCustomVoicePromptPhrase(GD77SParameters.customPromptIndex, reviewPhrase, 16))
+				{
+					voicePromptsAppendPrompt(PROMPT_EQUALS);
+					voicePromptsAppendStringEx(reviewPhrase, vpAnnounceSpaceAndSymbols);
+				}
 			}
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->none);
 		}
 	}
 	voicePromptsPlay();
