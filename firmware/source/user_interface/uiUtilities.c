@@ -3959,11 +3959,20 @@ static char reviewPhrase[SCREEN_LINE_BUFFER_SIZE] = "\0";
 static int reviewPhrasePos=0;
 
 #if !defined(PLATFORM_GD77S)
+static void ForceScreenRedraw(uiEvent_t *ev)
+{
+	keyboardReset();
+	ev->keys.key=0;
+	ev->buttons=0;
+	ev->events |=FUNCTION_EVENT;
+	ev->function = FUNC_REDRAW;
+}
+
 static void ShowReviewAudioClipScreen()
 {
 	ucClearBuf();
 	char buffer[SCREEN_LINE_BUFFER_SIZE] = "\0";
-	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "Review Prompt %d", reviewPromptIndex);
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%s %d", currentLanguage->promptReview, reviewPromptIndex);
 	menuDisplayTitle(buffer);
 	
 	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%s", reviewPhrase);
@@ -4040,8 +4049,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{
 			customPromptReviewMode=true;
 			voicePromptsInit();
-			voicePromptsAppendLanguageString(&currentLanguage->audio_prompt);
-			voicePromptsAppendLanguageString(&currentLanguage->all);
+			voicePromptsAppendLanguageString(&currentLanguage->promptReview);
 			voicePromptsAppendLanguageString(&currentLanguage->on);
 			
 			editParams.editFieldType=EDIT_TYPE_ALPHANUMERIC;
@@ -4090,7 +4098,6 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			customPromptReviewMode=false;
-			keyboardReset();
 			// sk2+green save phrase
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 			{
@@ -4099,13 +4106,24 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			}
 			else
 			{
-				SetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase);
 				voicePromptsInit();
-				voicePromptsAppendInteger(reviewPromptIndex);
-				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
-				voicePromptsAppendPrompt(PROMPT_SILENCE);
-				voicePromptsAppendLanguageString(&currentLanguage->vp_saved);
+
+				if (SetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase))
+				{
+					voicePromptsAppendInteger(reviewPromptIndex);
+					voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+					voicePromptsAppendLanguageString(&currentLanguage->vp_saved);
+				}
+				else
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->promptReview);
+					voicePromptsAppendLanguageString(&currentLanguage->off);
+				}
 				voicePromptsPlay();
+#if !defined(PLATFORM_GD77S)
+				ForceScreenRedraw(ev);
+#endif
 			}
 			return true;
 		}
@@ -4113,11 +4131,13 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{
 			customPromptReviewMode=false;
 			voicePromptsInit();
-			voicePromptsAppendLanguageString(&currentLanguage->audio_prompt);
-			voicePromptsAppendLanguageString(&currentLanguage->all);
+			voicePromptsAppendLanguageString(&currentLanguage->promptReview);
 			voicePromptsAppendLanguageString(&currentLanguage->off);
 			voicePromptsPlay();
-			return true;
+#if !defined(PLATFORM_GD77S)
+			ForceScreenRedraw(ev);
+#endif
+						return true;
 		}
 		else if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
 		{
@@ -4191,12 +4211,9 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
 			customVoicePromptIndexToSave=0xff;
 			voicePromptsSetEditMode(false);
-			keyboardReset();
-			ev->keys.key=0;
-			ev->buttons=0;
-			ev->events |=FUNCTION_EVENT;
-			ev->function = FUNC_REDRAW;
-			
+#if !defined(PLATFORM_GD77S)
+			ForceScreenRedraw(ev);
+#endif
 			return false; // so next menu handler gets called and screen gets updated.
 		}
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
@@ -4206,12 +4223,9 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			voicePromptsSetEditMode(false);
 
 			customVoicePromptIndex=0xff;
-			keyboardReset();
-			ev->keys.key=0;
-			ev->buttons=0;
-			ev->events |=FUNCTION_EVENT;
-			ev->function = FUNC_REDRAW;
-			
+#if !defined(PLATFORM_GD77S)
+				ForceScreenRedraw(ev);
+#endif
 			return false; // so next menu handler gets called and screen is updated.
 		}
 		if ((ev->keys.key==0) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))

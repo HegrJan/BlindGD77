@@ -3548,6 +3548,8 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 			vpValueString= (char * const *)&currentLanguage->off;
 		break;
 	case 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW:
+		vpString = (char * const *)&currentLanguage->promptReview;
+		break;
 	case 	GD77S_OPTION_CUSTOM_PROMPT_RECORD:
 		vpString = (char * const *)&currentLanguage->audio_prompt;
 		break;
@@ -3571,8 +3573,6 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		// distinguish between ptt prompt record mode and prompt review mode.
 		if (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_RECORD)
 			voicePromptsAppendLanguageString(&currentLanguage->ptt);
-		if (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW)
-			voicePromptsAppendLanguageString(&currentLanguage->all);
 
 		if (vp != NUM_VOICE_PROMPTS)
 			voicePromptsAppendPrompt(vp);

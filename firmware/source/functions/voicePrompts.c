@@ -819,6 +819,10 @@ bool SetCustomVoicePromptPhrase(int customPromptNumber, char* phrase)
 	CustomVoicePromptsHeader_t hdr;
 	if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
 		return false;
+	// See if it actually changed.
+	if (phrase && *phrase && strcmp(phrase, hdr.phrase) == 0)
+		return false;
+	
 	if (phrase && *phrase)
 		strncpy(hdr.phrase, phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
 	else
