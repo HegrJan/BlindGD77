@@ -868,6 +868,19 @@ void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 	voicePromptsPlay();
 }
 
+bool CustomVoicePromptExists(int customPromptNumber)
+{
+	if (!voicePromptDataIsLoaded) return false;
+	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) return false;
+	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of modification.
+	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+		CustomVoicePromptsHeader_t hdr;
+	if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
+		return false;
+	
+	return hdr.customVPLength > 0;
+}
+
 uint8_t GetMaxCustomVoicePrompts()
 {
 	return maxCustomVoicePrompts;

@@ -4101,7 +4101,8 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			// sk2+green save phrase
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 			{
-				voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
+				if (CustomVoicePromptExists(reviewPromptIndex))
+					voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
 				voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
 			}
 			else
