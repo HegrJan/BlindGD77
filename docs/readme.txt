@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-23 June 2022
+24 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -61,7 +61,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 	SK1 repeats current prompt and phrase if any.
 	Left/Right and usual editing keys edit the phrase for the currently selected prompt.
 	Green saves the updated phrase associated with the prompt and exits Review Mode.
-	SK1+Green invokes   Edit mode on the currently selected custom prompt (exiting review mode). From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). 
+	SK1+Green invokes   Edit mode on the currently selected custom prompt (exiting review mode). From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). If the current prompt is empty, the current record buffer is used instead.
 	Red cancels review mode and discards any editing of the phrase.
 	Other standard custom prompt mode keystrokes will still work in this mode.
 19.2. The GD77S version now also spells a custom prompt's  associated phrase if any in its "Prompt All" mode.
