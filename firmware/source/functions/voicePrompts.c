@@ -741,6 +741,10 @@ void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool r
 {
 	replayAmbeCircularBufferPushBack(&replayBuffer, ambeBlockPtr, blockLen, reset, wrapWhenFull);
 }
+bool ReplayBufferContainsCustomVoicePrompt()
+{//wrap is off when recording custom prompts but on for continuous DMR save.
+	return !replayBuffer.allowWrap && 	replayAmbeGetLength(&replayBuffer, true) > 0;
+}
 
 static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phrase)
 {

@@ -4115,8 +4115,13 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			else
 			{
 				voicePromptsInit();
-
-				if (SetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase))
+				bool newPromptSaved =false;
+				if (ReplayBufferContainsCustomVoicePrompt() && !CustomVoicePromptExists(reviewPromptIndex))
+				{
+					SaveCustomVoicePrompt(reviewPromptIndex, reviewPhrase);
+					newPromptSaved = true;
+				}
+				if (newPromptSaved || SetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase))
 				{
 					voicePromptsAppendInteger(reviewPromptIndex);
 					voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
@@ -4189,6 +4194,12 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		}
 		else if (repeatVoicePromptOnSK1(ev))
 		{
+			return true;
+		}
+				else if (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
+		{// overwrite current prompt with content of record buffer. //joe
+			if (ReplayBufferContainsCustomVoicePrompt())
+				SaveCustomVoicePrompt(reviewPromptIndex, reviewPhrase);
 			return true;
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_0))
