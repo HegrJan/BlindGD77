@@ -4101,7 +4101,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
 			customPromptReviewMode=false;
-			// sk2+green save phrase
+			// sk2+green go to audio edit mode.
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 			{
 				if (CustomVoicePromptExists(reviewPromptIndex))
@@ -4113,7 +4113,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 				voicePromptsSetEditMode(true, true);
 			}
 			else
-			{
+			{// save the prompt or the phrase or both as necessary.
 				voicePromptsInit();
 				bool newPromptSaved =false;
 				if (ReplayBufferContainsCustomVoicePrompt() && !CustomVoicePromptExists(reviewPromptIndex))
@@ -4200,12 +4200,14 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{// overwrite current prompt with content of record buffer. //joe
 			if (ReplayBufferContainsCustomVoicePrompt())
 				SaveCustomVoicePrompt(reviewPromptIndex, reviewPhrase);
+			keyboardReset();
 			return true;
 		}
 		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_0))
 		{// delete voice prompt.
 			ReplayInit();
 			SaveCustomVoicePrompt(reviewPromptIndex, 0);
+			keyboardReset();
 			return true;
 		}
 		else if (HandleEditEvent(ev, &editParams, false))
