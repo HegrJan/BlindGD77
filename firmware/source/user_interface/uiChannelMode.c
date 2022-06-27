@@ -4053,7 +4053,13 @@ static bool HandleGD77SAddContact(char* name, char* code)
 	struct_codeplugDTMFContact_t tmpDTMFContact;
 	memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
 	codeplugUtilConvertStringToBuf(name, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
-		
+	bool resortAfterSave=(nonVolatileSettings.sortFlags & sortContactsByName) ? true : false;
+	if (resortAfterSave)
+	{
+		nonVolatileSettings.sortFlags &=~sortContactsByName;
+		codeplugInitContactsCache(); // force it to be reloaded unsorted!
+	}
+
 	int dtmfContactIndex =codeplugGetDTMFContactIndex(name, true);
 	// see if we are deleting the contact.
 	if (deleting)
@@ -4062,7 +4068,7 @@ static bool HandleGD77SAddContact(char* name, char* code)
 		dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
 
 	if (dtmfContactIndex==0 && !deleting)
-		dtmfContactIndex=GD77SParameters.dtmfListCount+1;
+		dtmfContactIndex=codeplugDTMFContactGetFreeIndex();
 	voicePromptsInit();
 
 	if ((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
@@ -4084,6 +4090,12 @@ static bool HandleGD77SAddContact(char* name, char* code)
 			voicePromptsAppendLanguageString(&currentLanguage->error);
 	}
 	voicePromptsPlay();
+	if (resortAfterSave)
+	{
+		nonVolatileSettings.sortFlags |= sortContactsByName;
+		codeplugInitContactsCache(); // force it to be reloaded sorted!
+	}
+	
 	return true;
 }
 
