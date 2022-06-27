@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-25 June 2022
+27 June 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -62,7 +62,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 •	Green saves the updated phrase associated with the prompt, or saves a newly recorded prompt to an empty slot, and exits Review Mode. (If there is something in the recording buffer, it will not automatically replace an existing prompt, see next bullet point). Note if you move away from an edited phrase using Up/Down without saving it, the change to that phrase is discarded.
 •	Long hold * copies what is in the record buffer over an existing prompt if you wish to replace an existing prompt with a new recording.
 •	Long hold 0 zeros or clears currently selected custom prompt.
-•	SK1+Green invokes   Edit mode on the currently selected custom prompt (exiting review mode). If the current prompt is empty, the recording buffer is used for editing instead, making it possible to create a new prompt from within Review Mode. From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). If you hit Green from within audio edit mode invoked from review mode, the edited recording is automatically saved to the current prompt slot being reviewed prior to entering audio edit mode.
+•	SK1+Green invokes   Edit mode on the currently selected custom prompt. If the current prompt is empty, the recording buffer is used for editing instead, making it possible to create a new prompt from within Review Mode. From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). If you hit Green from within audio edit mode invoked from review mode, the edited recording is automatically saved to the current prompt slot being reviewed prior to entering audio edit mode.
 •	Red cancels the mode and discards any edits to the current phrase.
 	Other standard custom prompt mode keystrokes will still work in this mode.
 19.2. The GD77S version now also spells a custom prompt's  associated phrase if any in its "Prompt All" mode.
