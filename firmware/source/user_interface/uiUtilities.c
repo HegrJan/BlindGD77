@@ -4046,7 +4046,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		return true;
 	}
 	// SK1+* go into custom voice prompt review mode.
-		if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+	if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_SHORTUP(ev->keys, KEY_STAR) && !voicePromptsGetEditMode())
 	{
 		if (customPromptReviewMode==false)
 		{
@@ -4093,14 +4093,14 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
 		return true;
 	}
-	if (customPromptReviewMode)
+	
+	if (customPromptReviewMode && !voicePromptsGetEditMode())
 	{// This may get reset by a keyboard reset when saving a prompt.
 		if (!keypadAlphaEnable && (editParams.editFieldType == EDIT_TYPE_ALPHANUMERIC))
 			keypadAlphaEnable=true;
 		// red or green cancel.
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
-			customPromptReviewMode=false;
 			// sk2+green go to audio edit mode.
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 			{
@@ -4114,6 +4114,8 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			}
 			else
 			{// save the prompt or the phrase or both as necessary.
+				customPromptReviewMode=false; // Exit custom prompt review mode.
+
 				voicePromptsInit();
 				bool newPromptSaved =false;
 				if (ReplayBufferContainsCustomVoicePrompt() && !CustomVoicePromptExists(reviewPromptIndex))
@@ -4221,7 +4223,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			return true;
 		}
 	}
-	bool IsVoicePromptEditMode=voicePromptsGetEditMode() && !customPromptReviewMode;
+	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
 	if (IsVoicePromptEditMode)
 	{
 			if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
