@@ -3957,7 +3957,7 @@ static bool customPromptReviewMode=false;
 static uint8_t reviewPromptIndex=1;
 static char reviewPhrase[SCREEN_LINE_BUFFER_SIZE] = "\0";
 static int reviewPhrasePos=0;
-
+static uint16_t reviewPromptDurationMS=0;
 #if !defined(PLATFORM_GD77S)
 static void ForceScreenRedraw(uiEvent_t *ev)
 {
@@ -3995,11 +3995,12 @@ bool ReviewPromptUpdateScreen(bool entryChanged, bool init, bool play)
 	if (entryChanged)
 	{
 		voicePromptsAppendInteger(reviewPromptIndex);
-		if (CustomVoicePromptExists(reviewPromptIndex))
+		uint16_t vpLength=CustomVoicePromptExists(reviewPromptIndex);
+		if (vpLength > 0)
 			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
 		else
 			voicePromptsAppendLanguageString(&currentLanguage->none);
-	
+		reviewPromptDurationMS=(vpLength/9)*20; // ms.
 		if (GetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase, SCREEN_LINE_BUFFER_SIZE))
 		{
 			voicePromptsAppendPrompt(PROMPT_EQUALS);
@@ -4199,7 +4200,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			return true;
 		}
 				else if (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
-		{// overwrite current prompt with content of record buffer. //joe
+		{// overwrite current prompt with content of record buffer.
 			if (ReplayBufferContainsCustomVoicePrompt())
 				SaveCustomVoicePrompt(reviewPromptIndex, reviewPhrase);
 			keyboardReset();
@@ -4210,6 +4211,20 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 			ReplayInit();
 			SaveCustomVoicePrompt(reviewPromptIndex, 0);
 			keyboardReset();
+			return true;
+		}
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+		{
+			voicePromptsInit();
+			if (CustomVoicePromptExists(reviewPromptIndex))
+			{
+				AnnounceClipPos(reviewPromptDurationMS);
+			}
+			else if (ReplayBufferContainsCustomVoicePrompt())
+			{
+				AnnounceEditBufferLength();
+			}
+
 			return true;
 		}
 		else if (HandleEditEvent(ev, &editParams, false))
@@ -4377,5 +4392,19 @@ void announceReverseToggle()
 		voicePromptsAppendLanguageString(&currentLanguage->on);
 	else
 		voicePromptsAppendLanguageString(&currentLanguage->off);
+	voicePromptsPlay();
+}
+
+void 	AnnounceClipPos(uint16_t ms)
+{
+// caller announces start or end as appropriate.
+	uint16_t s=ms/1000;
+	uint16_t f=ms%1000;
+	char num[6];
+	snprintf(num, 6, "%u.%03u", s, f);
+	removeUnnecessaryZerosFromVoicePrompts((char*)&num);
+	voicePromptsAppendString(num);
+	voicePromptsAppendPrompt(PROMPT_SECONDS);
+	
 	voicePromptsPlay();
 }

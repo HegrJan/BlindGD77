@@ -221,4 +221,6 @@ void ShowEditAudioClipScreen(uint16_t start, uint16_t end);
 // Converts tenths of a degree celcius to tenths of a degree fahrenheit.
 int CelciusToFahrenheit(int tenthsOfADegreeCelcius);
 bool PlayCustomVoicePromptAndPhrase(int customPromptIndex, bool init, bool play);
+void 	AnnounceClipPos(uint16_t ms);
+
 #endif
