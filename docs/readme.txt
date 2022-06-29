@@ -62,6 +62,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 •	Green saves the updated phrase associated with the prompt, or saves a newly recorded prompt to an empty slot, and exits Review Mode. (If there is something in the recording buffer, it will not automatically replace an existing prompt, see next bullet point). Note if you move away from an edited phrase using Up/Down without saving it, the change to that phrase is discarded.
 •	Long hold * copies what is in the record buffer over an existing prompt if you wish to replace an existing prompt with a new recording.
 •	Long hold 0 zeros or clears currently selected custom prompt.
+•	SK2+hash announces the length of the currently selected voice prompt, or if the current slot is empty, the length of the record buffer.
 •	SK1+Green invokes   Edit mode on the currently selected custom prompt. If the current prompt is empty, the recording buffer is used for editing instead, making it possible to create a new prompt from within Review Mode. From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). If you hit Green from within audio edit mode invoked from review mode, the edited recording is automatically saved to the current prompt slot being reviewed prior to entering audio edit mode.
 •	Red cancels the mode and discards any edits to the current phrase.
 	Other standard custom prompt mode keystrokes will still work in this mode.
@@ -70,6 +71,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 19.2.2. Reordered review and record mode on GD77S for custom prompts. This makes it easier to choose a slot to either edit or save a prompt to.
 19.2.3. In Review mode, long hold sk2 will either save what is in the record buffer to an empty slot, or copy what is in that slot back to the record buffer for editing.
     19.2.4. Long hold SK2 in record mode will save to the last prompt reviewed's slot. This will overwrite what is in the slot, useful for replacing a prompt but potentially dangerous, but done by request.
+20 Added my recorded testimony to the Joseph's writings folder.
 
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
