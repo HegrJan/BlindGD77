@@ -84,8 +84,8 @@ typedef enum
 	GD77S_OPTION_RATE,
 	GD77S_OPTION_PHONETIC_SPELL,
 	GD77S_OPTION_DMR_ID_ANNOUNCE,
-	GD77S_OPTION_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW,
+	GD77S_OPTION_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
 	GD77S_OPTION_EDIT_START,
 	GD77S_OPTION_EDIT_END,
 	GD77S_OPTION_TEMPERATURE_UNIT,
@@ -4600,7 +4600,8 @@ static bool SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decremen
 			}
 			else
 			{// save to next available slot.
-				GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
+				if (GD77SParameters.customPromptIndex==0)
+					GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
 				SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, NULL);
 			}
 			return true; // do not break or the announce at the bottom will kill the replay.	
@@ -4619,7 +4620,10 @@ static bool SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decremen
 			}
 			else
 			{
-				voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
+				if (CustomVoicePromptExists(GD77SParameters.customPromptIndex))
+					voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
+				else if (ReplayBufferContainsCustomVoicePrompt())
+					SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, 0);
 				ReplayDMR();
 				return true; // return so that announce at bottom won't clobber replay.
 			}
