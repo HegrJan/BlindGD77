@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-29 June 2022
+2 July 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -58,6 +58,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 •	Up/Down Arrows move through and play  each custom prompt and spell its associated phrase if any.
 •	Long hold Up/Down arrows moves through custom prompts by larger increments.
 •	SK1 repeats current prompt and phrase if any.
+•	PTT by itself (or with SK1) record new prompt.
 •	Left/Right and usual editing keys edit the phrase for the currently selected prompt.
 •	Green saves the updated phrase associated with the prompt, or saves a newly recorded prompt to an empty slot, and exits Review Mode. (If there is something in the recording buffer, it will not automatically replace an existing prompt, see next bullet point). Note if you move away from an edited phrase using Up/Down without saving it, the change to that phrase is discarded.
 •	Long hold * copies what is in the record buffer over an existing prompt if you wish to replace an existing prompt with a new recording.
@@ -72,7 +73,8 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 19.2.3. In Review mode, long hold sk2 will either save what is in the record buffer to an empty slot, or copy what is in that slot back to the record buffer for editing.
     19.2.4. Long hold SK2 in record mode will save to the last prompt reviewed's slot. This will overwrite what is in the slot, useful for replacing a prompt but potentially dangerous, but done by request.
 20 Added my recorded testimony to the Joseph's writings folder.
-
+21. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
+ 
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
 2. Fixed issue of attempting to create a new contact when the list is full and the dialog still coming up. Now, if the list is full, you'll get an error message rather than the dialog still being invoked.
