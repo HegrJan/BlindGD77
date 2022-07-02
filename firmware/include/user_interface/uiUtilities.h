@@ -222,5 +222,5 @@ void ShowEditAudioClipScreen(uint16_t start, uint16_t end);
 int CelciusToFahrenheit(int tenthsOfADegreeCelcius);
 bool PlayCustomVoicePromptAndPhrase(int customPromptIndex, bool init, bool play);
 void 	AnnounceClipPos(uint16_t ms);
-
+bool CustomPromptReviewMode();
 #endif

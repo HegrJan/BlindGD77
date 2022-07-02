@@ -4408,3 +4408,7 @@ void 	AnnounceClipPos(uint16_t ms)
 	
 	voicePromptsPlay();
 }
+bool CustomPromptReviewMode()
+{
+	return customPromptReviewMode;
+}
