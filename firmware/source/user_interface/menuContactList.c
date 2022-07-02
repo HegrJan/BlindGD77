@@ -501,7 +501,7 @@ static void handleEvent(uiEvent_t *ev)
 					codeplugContactSaveDTMFDataForIndex(uiDataGlobal.currentSelectedContactIndex, &dtmfContact);
 				}
 				uiDataGlobal.currentSelectedContactIndex = 0;
-				menuContactListTimeout = 1000;
+				menuContactListTimeout = 500;
 				contactListDisplayState = MENU_CONTACT_LIST_DELETED;
 				reloadContactList(contactListType);
 				updateScreen(false);
@@ -732,7 +732,7 @@ static void handleSubMenuEvent(uiEvent_t *ev)
 						if ((contactListContactData.callType == CONTACT_CALLTYPE_TG) &&
 								codeplugContactGetRXGroup(contactListContactData.NOT_IN_CODEPLUGDATA_indexNumber))
 						{
-							menuContactListTimeout = 1000;
+							menuContactListTimeout = 500;
 							contactListOverrideState = MENU_CONTACT_LIST_TG_IN_RXGROUP;
 							voicePromptsAppendLanguageString(&currentLanguage->contact_used);
 							voicePromptsAppendLanguageString(&currentLanguage->in_rx_group);

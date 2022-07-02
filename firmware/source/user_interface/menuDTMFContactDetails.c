@@ -311,7 +311,7 @@ static void handleEvent(uiEvent_t *ev)
 					if (createNew && (dtmfContactCount > 0) && codeplugGetDTMFContactIndex(contactName, true) > 0)
 					{
 						menuDTMFContactDetailsState=MENU_DTMF_CONTACT_DETAILS_EXISTS;
-						menuDTMFContactDetailsTimeout = 2000;
+						menuDTMFContactDetailsTimeout = 500;
 						voicePromptsInit();
 						voicePromptsAppendLanguageString(&currentLanguage->duplicate);
 						voicePromptsPlay();
@@ -330,7 +330,7 @@ static void handleEvent(uiEvent_t *ev)
 						&& (tmpDTMFContact.name[0]!=0xFFU) && (tmpDTMFContact.code[0] != 0xFFU))
 					{
 						codeplugContactSaveDTMFDataForIndex(dtmfContactDetailsIndex, &tmpDTMFContact);
-						menuDTMFContactDetailsTimeout = 2000;
+						menuDTMFContactDetailsTimeout = 500;
 						menuDTMFContactDetailsState = MENU_DTMF_CONTACT_DETAILS_SAVED;
 						voicePromptsInit();
 						voicePromptsAppendLanguageString(&currentLanguage->contact_saved);

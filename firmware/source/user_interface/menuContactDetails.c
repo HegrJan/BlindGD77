@@ -510,13 +510,13 @@ static void handleEvent(uiEvent_t *ev)
 							{
 								codeplugContactSaveDataForIndex(contactDetailsIndex, &tmpContact);
 
-								menuContactDetailsTimeout = 2000;
+								menuContactDetailsTimeout = 500;
 								menuContactDetailsState = MENU_CONTACT_DETAILS_SAVED;
 								voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
 							}
 							else
 							{
-								menuContactDetailsTimeout = 2000;
+								menuContactDetailsTimeout = 500;
 								menuContactDetailsState = MENU_CONTACT_DETAILS_EXISTS;
 								voicePromptsAppendLanguageString(&currentLanguage->duplicate);
 							}
