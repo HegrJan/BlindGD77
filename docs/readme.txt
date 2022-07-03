@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-2 July 2022
+3 July 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
 2. Added Chris ve3rwj's Boot up tone creation instructions.
@@ -72,6 +72,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 19.2.2. Reordered review and record mode on GD77S for custom prompts. This makes it easier to choose a slot to either edit or save a prompt to.
 19.2.3. In Review mode, long hold sk2 will either save what is in the record buffer to an empty slot, or copy what is in that slot back to the record buffer for editing.
     19.2.4. Long hold SK2 in record mode will save to the last prompt reviewed's slot. This will overwrite what is in the slot, useful for replacing a prompt but potentially dangerous, but done by request.
+	19.2.5. Added DEL##1 through DEL##32 to delete a custom voice prompt to the list of virtual keypad commands.
 20 Added my recorded testimony to the Joseph's writings folder.
 21. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
  

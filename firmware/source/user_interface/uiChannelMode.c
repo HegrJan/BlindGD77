@@ -4144,6 +4144,14 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		GD77SParameters.customPromptIndex=customPromptNumber;
 		return true;
 	}
+	if (strncmp(GD77SKeypadBuffer, "DEL##", 5)==0 && isdigit(GD77SKeypadBuffer[5]))
+	{// delete custom voice prompt.
+		int customPromptNumber= atoi(GD77SKeypadBuffer+5);
+		ReplayInit();
+		SaveCustomVoicePrompt(customPromptNumber, 0);
+		GD77SParameters.customPromptIndex=(customPromptNumber > 1) ? customPromptNumber-1 : 1;
+		return true;
+	}
 
 	if ((strncmp(GD77SKeypadBuffer, "AC", 2)==0) && (strlen(GD77SKeypadBuffer) >= 5))
 	{// Add a DTMF contact name is chars after AC upto space, code is rest of string.
