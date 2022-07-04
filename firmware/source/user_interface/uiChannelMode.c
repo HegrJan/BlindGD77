@@ -72,6 +72,7 @@ typedef enum
 	GD77S_OPTION_DMR_BEEP,
 	GD77S_OPTION_RX_END_BEEP,
 	GD77S_OPTION_DTMF_VOL,
+	GD77S_OPTION_DTMF_RATE,
 	GD77S_OPTION_TOT_MASTER,
 	GD77S_OPTION_PTT_LATCH,
 	GD77S_OPTION_ECO,
@@ -83,10 +84,11 @@ typedef enum
 	GD77S_OPTION_RATE,
 	GD77S_OPTION_PHONETIC_SPELL,
 	GD77S_OPTION_DMR_ID_ANNOUNCE,
-	GD77S_OPTION_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW,
+	GD77S_OPTION_CUSTOM_PROMPT_RECORD, // for recording a custom prompt.
 	GD77S_OPTION_EDIT_START,
 	GD77S_OPTION_EDIT_END,
+	GD77S_OPTION_TEMPERATURE_UNIT,
 	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
 } 	GD77S_OPTIONS_t;
@@ -107,6 +109,9 @@ typedef struct
 	uint16_t dialedChannels; // bit 0 ch1, bit 1 ch2, ... bit 15 ch 16.
 	uint16_t dialedZones; // bit 0 zone 1, bit 1 zone 2, ... bit 15 zone 16.
 	uint8_t customPromptIndex;
+	// the next variable is used when cycling past the Keypad option.
+	// If keypad is set to VFO, we only want to load the VFO if the user stops on that option, not if they are on their way to the next option.
+	uint16_t pendingVFOLoadTimer;
 } GD77SParameters_t;
 
 static GD77SParameters_t GD77SParameters =
@@ -123,7 +128,8 @@ static GD77SParameters_t GD77SParameters =
 		.option=0,
 		.dialedChannels=0,
 		.dialedZones=0,
-		.customPromptIndex=1
+		.customPromptIndex=1,
+		.pendingVFOLoadTimer=0
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -137,6 +143,7 @@ static uint16_t getCurrentChannelInCurrentZoneForGD77S(void);
 static void handleUpKey(uiEvent_t *ev);
 #endif // PLATFORM_GD77S
 static void selectPrevNextZone(bool nextZone);
+static void SortChannels(sort_type_t sortType);
 
 static void handleEvent(uiEvent_t *ev);
 static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnnouncement);
@@ -397,7 +404,6 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 
 		settingsSet(nonVolatileSettings.initialMenuNumber, (uint8_t) UI_CHANNEL_MODE);// This menu.
 		uiDataGlobal.displayChannelSettings = false;
-		uiDataGlobal.reverseRepeater = false;
 		nextChannelReady = false;
 		uiDataGlobal.displaySquelch = false;
 		uiDataGlobal.Scan.refreshOnEveryStep = false;
@@ -445,6 +451,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			}
 
 			GD77SParameters.dtmfListCount = codeplugDTMFContactsGetCount();
+			SortDTMFContacts();
 		}
 #endif
 		uiChannelModeUpdateScreen(0);
@@ -507,6 +514,19 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 		if (ev->events == NO_EVENT)
 		{
 #if defined(PLATFORM_GD77S)
+			if (GD77SParameters.pendingVFOLoadTimer > 0)
+			{// if user has settled on Keypad mode and we need to switch to VFO A or VFO B, check if it is time to do so.
+				GD77SParameters.pendingVFOLoadTimer--;
+				if (GD77SParameters.pendingVFOLoadTimer==0)
+				{
+					memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
+					loadChannelData(true, false);
+					voicePromptsInit();
+					announceFrequency();
+					voicePromptsPlay();
+				}
+			}
+
 			// Just ensure rotary's selected channel is matching the already loaded one
 			// as rotary selector could be turned while the GD is OFF, or in hotspot mode.
 			if (((uiDataGlobal.Scan.active == false) && !ModeUsesChannelKnob() && (rotarySwitchGetPosition()+GD77SParameters.channelbankOffset != getCurrentChannelInCurrentZoneForGD77S())) || (GD77SParameters.firstRun == true))
@@ -593,9 +613,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun)
 			}
 		}
 
-#if defined(PLATFORM_GD77S)
 		dtmfSequenceTick(false);
-#endif
 	}
 	return menuChannelExitStatus;
 }
@@ -927,8 +945,6 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 
 	if (!useChannelDataInMemory)
 	{
-		memset(&lastDialledDTMFContact, 0xffu, sizeof(lastDialledDTMFContact)); // loading a new channel, clear this out.
-
 		if (CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone))
 		{
 			// All Channels virtual zone
@@ -941,7 +957,10 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 	}
 
 	clearActiveDMRID();
-	trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+	if (uiDataGlobal.reverseRepeater)
+		trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_AUTO);
+	else
+		trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
 	trxSetModeAndBandwidth(currentChannelData->chMode, ((currentChannelData->flag4 & 0x02) == 0x02));
 
 	if (currentChannelData->chMode == RADIO_MODE_ANALOG)
@@ -989,9 +1008,9 @@ static void loadChannelData(bool useChannelDataInMemory, bool loadVoicePromptAnn
 			settingsSet(nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE], 0);
 			menuChannelExitStatus |= (MENU_STATUS_LIST_TYPE | MENU_STATUS_FORCE_FIRST);
 		}
-
+		bool usingContactOverride = (currentChannelData->LibreDMR_flag1 & ChannelContactOverride);
 		// Check if this channel has an Rx Group
-		if (rxGroupValid && nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE] < currentRxGroupData.NOT_IN_CODEPLUG_numTGsInGroup)
+		if (!usingContactOverride && (rxGroupValid && nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE] < currentRxGroupData.NOT_IN_CODEPLUG_numTGsInGroup))
 		{
 			codeplugContactGetDataForIndex(currentRxGroupData.contacts[nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE]], &currentContactData);
 		}
@@ -1369,28 +1388,6 @@ static void handleEvent(uiEvent_t *ev)
 			return;
 		}
 
-		if ((uiDataGlobal.reverseRepeater == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK1) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-		{
-			trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
-			uiDataGlobal.reverseRepeater = true;
-			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-			uiChannelModeUpdateScreen(0);
-			return;
-		}
-		else if ((uiDataGlobal.reverseRepeater == true) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{
-			trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-			uiDataGlobal.reverseRepeater = false;
-
-			// We are still displaying channel details (SK1 has been released), force to update the screen
-			if (uiDataGlobal.displayChannelSettings)
-			{
-				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				uiChannelModeUpdateScreen(0);
-			}
-
-			return;
-		}
 		// Display channel settings (RX/TX/etc) while SK1 is pressed
 		else if ((uiDataGlobal.displayChannelSettings == false) && BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 		{
@@ -1418,13 +1415,6 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;
 				}
-			}
-
-			// Leaving Channel Details disable reverse repeater feature
-			if (uiDataGlobal.reverseRepeater)
-			{
-				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				uiDataGlobal.reverseRepeater = false;
 			}
 
 			uiChannelModeUpdateScreen(0);
@@ -1514,6 +1504,42 @@ static void handleEvent(uiEvent_t *ev)
 				menuSystemPushNewMenu(MENU_MAIN_MENU);
 			}
 			return;
+		}
+		else if (!reorderingChannels && (uiDataGlobal.reverseRepeater == false) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+		{
+			trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
+			uiDataGlobal.reverseRepeater = true;
+			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+			uiChannelModeUpdateScreen(0);
+			announceReverseToggle();
+			return;
+		}
+		else if ((uiDataGlobal.reverseRepeater == true) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+		{
+			trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+			uiDataGlobal.reverseRepeater = false;
+
+			// We are still displaying channel details (SK1 has been released), force to update the screen
+			if (uiDataGlobal.displayChannelSettings)
+			{
+				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				uiChannelModeUpdateScreen(0);
+			}
+			announceReverseToggle();
+			return;
+		}
+		else if (!reorderingChannels && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
+		{// redial last DTMF contact.
+			if ((trxGetMode() == RADIO_MODE_ANALOG) && (currentChannelData->LibreDMR_flag1 & ChannelContactOverride))
+			{
+				struct_codeplugDTMFContact_t lastDialledDTMFContact;
+				if (codeplugDTMFContactGetDataForIndex(currentChannelData->contact, &lastDialledDTMFContact))
+				{
+					dtmfSequencePrepare(lastDialledDTMFContact.code, true);
+				}
+				keyboardReset();
+				return;
+			}
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
 		{
@@ -1612,7 +1638,14 @@ static void handleEvent(uiEvent_t *ev)
 				uiChannelModeUpdateScreen(0);
 				return;// The event has been handled
 			}
-
+			// clear dtmf contact override.
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2) && (trxGetMode() == RADIO_MODE_ANALOG))
+			{
+				uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
+				AddLastReferencedContactToChannel(channelIndex, 0);
+				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_2);
+				return;
+			}
 			if(directChannelNumber > 0)
 			{
 				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY);
@@ -1819,6 +1852,20 @@ static void handleEvent(uiEvent_t *ev)
 				}
 
 			}
+		}
+		else if (reorderingChannels && (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR) || KEYCHECK_LONGDOWN(ev->keys, KEY_0) || KEYCHECK_LONGDOWN(ev->keys, KEY_HASH)))
+		{
+			sort_type_t sortType=sortNone;
+			if (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
+			{
+				sortType=sortByName;
+			}
+			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH))
+			{
+				sortType=sortByFrequency;
+			}
+			SortChannels(sortType);
+			return;
 		}
 		else if (KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
 		{
@@ -2830,6 +2877,8 @@ static void updateTrxID(void)
 		if ((currentRxGroupData.name[0] != 0) && (nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE] < currentRxGroupData.NOT_IN_CODEPLUG_numTGsInGroup))
 		{
 			codeplugContactGetDataForIndex(currentRxGroupData.contacts[nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE]], &currentContactData);
+			uint16_t channelIndex=CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
+			AddLastReferencedContactToChannel(channelIndex, currentRxGroupData.contacts[nonVolatileSettings.currentIndexInTRxGroupList[SETTINGS_CHANNEL_MODE]]);
 		}
 		else
 		{
@@ -3128,9 +3177,7 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 			uint8_t dtmfCodeBuffer[DTMF_CODE_MAX_LEN+1];
 			if (dtmfConvertCharsToCode(GD77SKeypadBuffer, dtmfCodeBuffer, DTMF_CODE_MAX_LEN))
 			{
-				memset(&lastDialledDTMFContact, 0xffu, sizeof(lastDialledDTMFContact));
 				dtmfSequencePrepare(dtmfCodeBuffer, true);
-				memcpy(&lastDialledDTMFContact.code,&dtmfCodeBuffer, sizeof(lastDialledDTMFContact.code));
 
 				// We've dialled something, disable autodial.
 				DisableAutoDialerForCurrentChannelAndZone();
@@ -3158,7 +3205,7 @@ bool uiChannelModeTransmitDTMFContactForGD77S(void)
 				bool dialingContactForChannel = (GD77SParameters.uiMode != GD77S_UIMODE_DTMF_CONTACTS) && (onceOffChannelContactIndex > 0);
 	uint16_t contactIndex = dialingContactForChannel ? onceOffChannelContactIndex : GD77SParameters.dtmfListSelected + 1;
 				codeplugDTMFContactGetDataForNumber(contactIndex, &dtmfContact);
-				memcpy(&lastDialledDTMFContact, &dtmfContact, sizeof(lastDialledDTMFContact));
+				AddLastReferencedContactToChannel(currentZone.channels[nonVolatileSettings.currentChannelIndexInZone], contactIndex);
 
 				dtmfSequencePrepare(dtmfContact.code, true);
 				// We've dialed something, disable the autodial for this channel and zone.
@@ -3388,7 +3435,8 @@ static void checkAndUpdateSelectedChannelForGD77S(uint16_t chanNum, bool forceSp
 			}
 			if (trxGetMode() == RADIO_MODE_DIGITAL)
 				announceContactNameTgOrPc(true); // avoid saying "contact", just announce the tg.
-
+			else
+				announceChannelDTMFContact(false); // do not announce prompt.
 			voicePromptsPlay();
 		}
 
@@ -3500,6 +3548,8 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 			vpValueString= (char * const *)&currentLanguage->off;
 		break;
 	case 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW:
+		vpString = (char * const *)&currentLanguage->promptReview;
+		break;
 	case 	GD77S_OPTION_CUSTOM_PROMPT_RECORD:
 		vpString = (char * const *)&currentLanguage->audio_prompt;
 		break;
@@ -3523,8 +3573,6 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		// distinguish between ptt prompt record mode and prompt review mode.
 		if (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_RECORD)
 			voicePromptsAppendLanguageString(&currentLanguage->ptt);
-		if (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW)
-			voicePromptsAppendLanguageString(&currentLanguage->all);
 
 		if (vp != NUM_VOICE_PROMPTS)
 			voicePromptsAppendPrompt(vp);
@@ -3543,7 +3591,18 @@ static bool AnnounceGD77sVoiceOption(bool alwaysAnnounceOptionName, bool clearPr
 		if ((GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_REVIEW) && (GD77SParameters.customPromptIndex > 0))
 		{
 			voicePromptsAppendInteger(GD77SParameters.customPromptIndex);
-			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM + GD77SParameters.customPromptIndex);
+			if (CustomVoicePromptExists(GD77SParameters.customPromptIndex))
+			{
+				voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+GD77SParameters.customPromptIndex);
+				char reviewPhrase[16]="\0";
+				if (GetCustomVoicePromptPhrase(GD77SParameters.customPromptIndex, reviewPhrase, 16))
+				{
+					voicePromptsAppendPrompt(PROMPT_EQUALS);
+					voicePromptsAppendStringEx(reviewPhrase, vpAnnounceSpaceAndSymbols);
+				}
+			}
+			else
+				voicePromptsAppendLanguageString(&currentLanguage->none);
 		}
 	}
 	voicePromptsPlay();
@@ -3682,6 +3741,11 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 				voicePromptsAppendLanguageString(&currentLanguage->off);
 			}
 			break;
+		case GD77S_OPTION_DTMF_RATE:
+			voicePromptsAppendLanguageString(&currentLanguage->dtmf_rate);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%d",uiDataGlobal.DTMFContactList.durations.rate);
+			voicePromptsAppendString(rightSideVar);
+			break;
 		case GD77S_OPTION_TOT_MASTER:
 			if (!voicePromptWasPlaying)
 				voicePromptsAppendLanguageString(&currentLanguage->tot);
@@ -3765,6 +3829,10 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 				announceVFOChannelName();
 			else
 				voicePromptsAppendPrompt(PROMPT_CHANNEL);
+			break;
+		case GD77S_OPTION_TEMPERATURE_UNIT:
+			voicePromptsAppendLanguageString(&currentLanguage->temperature);
+			voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
 			break;
 		case GD77S_OPTION_MAX:
 			return;
@@ -3985,7 +4053,13 @@ static bool HandleGD77SAddContact(char* name, char* code)
 	struct_codeplugDTMFContact_t tmpDTMFContact;
 	memset(&tmpDTMFContact, 0xFFU, sizeof(struct_codeplugDTMFContact_t));
 	codeplugUtilConvertStringToBuf(name, tmpDTMFContact.name, DTMF_NAME_MAX_LEN);
-		
+	bool resortAfterSave=(nonVolatileSettings.sortFlags & sortContactsByName) ? true : false;
+	if (resortAfterSave)
+	{
+		nonVolatileSettings.sortFlags &=~sortContactsByName;
+		codeplugInitContactsCache(); // force it to be reloaded unsorted!
+	}
+
 	int dtmfContactIndex =codeplugGetDTMFContactIndex(name, true);
 	// see if we are deleting the contact.
 	if (deleting)
@@ -3994,7 +4068,7 @@ static bool HandleGD77SAddContact(char* name, char* code)
 		dtmfConvertCharsToCode(code, tmpDTMFContact.code, DTMF_CODE_MAX_LEN);
 
 	if (dtmfContactIndex==0 && !deleting)
-		dtmfContactIndex=GD77SParameters.dtmfListCount+1;
+		dtmfContactIndex=codeplugDTMFContactGetFreeIndex();
 	voicePromptsInit();
 
 	if ((dtmfContactIndex >= CODEPLUG_DTMF_CONTACTS_MIN) && (dtmfContactIndex <= CODEPLUG_DTMF_CONTACTS_MAX))
@@ -4016,6 +4090,12 @@ static bool HandleGD77SAddContact(char* name, char* code)
 			voicePromptsAppendLanguageString(&currentLanguage->error);
 	}
 	voicePromptsPlay();
+	if (resortAfterSave)
+	{
+		nonVolatileSettings.sortFlags |= sortContactsByName;
+		codeplugInitContactsCache(); // force it to be reloaded sorted!
+	}
+	
 	return true;
 }
 
@@ -4062,6 +4142,14 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 		}
 		SaveCustomVoicePrompt(customPromptNumber, phrasePtr);
 		GD77SParameters.customPromptIndex=customPromptNumber;
+		return true;
+	}
+	if (strncmp(GD77SKeypadBuffer, "DEL##", 5)==0 && isdigit(GD77SKeypadBuffer[5]))
+	{// delete custom voice prompt.
+		int customPromptNumber= atoi(GD77SKeypadBuffer+5);
+		ReplayInit();
+		SaveCustomVoicePrompt(customPromptNumber, 0);
+		GD77SParameters.customPromptIndex=(customPromptNumber > 1) ? customPromptNumber-1 : 1;
 		return true;
 	}
 
@@ -4150,7 +4238,50 @@ static bool ProcessGD77SKeypadCmd(uiEvent_t *ev)
 
 		return true;
 	}
+	if (strncmp(GD77SKeypadBuffer,"CCC", 3)==0)
+	{
+		uint16_t channelIndex= currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]; 
+		AddLastReferencedContactToChannel(channelIndex, 0);
+		announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ, PROMPT_THRESHOLD_3);
+		return true;
+	}
+	if (strncmp(GD77SKeypadBuffer,"SRTC", 4)==0)
+	{// sort contacts on/off.
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->sortBy);
 
+		if ((nonVolatileSettings.sortFlags & sortContactsByName)==0)
+		{
+			nonVolatileSettings.sortFlags |= sortContactsByName;
+			voicePromptsAppendLanguageString(&currentLanguage->name);
+		}
+		else
+		{
+			nonVolatileSettings.sortFlags &= ~sortContactsByName;
+			voicePromptsAppendLanguageString(&currentLanguage->none);
+		}
+		codeplugInitContactsCache();
+		codeplugRxGroupInitCache();
+
+		lastLoadedRxGroup=-1; // force reload as it has been changed.
+		uiDataGlobal.VoicePrompts.inhibitInitial=true;
+		voicePromptsPlay();
+		return true;		
+	}
+	if (strncmp(GD77SKeypadBuffer,"SRT", 3)==0 && strchr("*0#", GD77SKeypadBuffer[3]))
+	{
+		sort_type_t sortType=sortNone;
+		if (GD77SKeypadBuffer[3] == '*')
+		{
+			sortType=sortByName;
+		}
+		else if (GD77SKeypadBuffer[3] == '#')
+		{
+			sortType=sortByFrequency;
+		}
+		SortChannels(sortType);
+		return true;
+	}
 	if (trxGetMode() == RADIO_MODE_DIGITAL && GD77SKeypadBuffer[0]=='#')
 	{// talkgroup # followed by digits. 
 		int len=strlen(GD77SKeypadBuffer);
@@ -4477,7 +4608,8 @@ static bool SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decremen
 			}
 			else
 			{// save to next available slot.
-				GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
+				if (GD77SParameters.customPromptIndex==0)
+					GD77SParameters.customPromptIndex=GetNextFreeVoicePromptIndex(false);
 				SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, NULL);
 			}
 			return true; // do not break or the announce at the bottom will kill the replay.	
@@ -4496,7 +4628,10 @@ static bool SetGD77S_VoiceOption(int dir) // 0 default, 1 increment, -1 decremen
 			}
 			else
 			{
-				voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
+				if (CustomVoicePromptExists(GD77SParameters.customPromptIndex))
+					voicePromptsCopyCustomPromptToEditBuffer(GD77SParameters.customPromptIndex);
+				else if (ReplayBufferContainsCustomVoicePrompt())
+					SaveCustomVoicePrompt(GD77SParameters.customPromptIndex, 0);
 				ReplayDMR();
 				return true; // return so that announce at bottom won't clobber replay.
 			}
@@ -4740,6 +4875,25 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			}
 			break;
 		}
+		case GD77S_OPTION_DTMF_RATE:
+		{
+			if (dir > 0)
+			{
+				if (uiDataGlobal.DTMFContactList.durations.rate < 10)
+					uiDataGlobal.DTMFContactList.durations.rate++;
+			}
+			else  if (dir < 0)
+			{
+				if (uiDataGlobal.DTMFContactList.durations.rate > 1)
+					uiDataGlobal.DTMFContactList.durations.rate--;
+			}
+			else // default
+			{
+				uiDataGlobal.DTMFContactList.durations.rate = 3;
+			}
+			codeplugSetSignallingDTMFDurations(&uiDataGlobal.DTMFContactList.durations);
+			break;
+		}
 		case GD77S_OPTION_TOT_MASTER:
 			if (dir > 0)
 			{
@@ -4893,6 +5047,12 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 			}
 			loadChannelData(true, false);
 			break;
+		case GD77S_OPTION_TEMPERATURE_UNIT:
+			if (dir > 0)
+				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, true);
+			else if (dir <= 0)
+				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, false);
+			break;
 		case GD77S_OPTION_MAX:
 			return;
 	};
@@ -4910,7 +5070,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		if (GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2)
 		{
 			if (voicePromptsGetEditMode())
-				voicePromptsSetEditMode(false);
+				voicePromptsSetEditMode(false, true);
 			encodingCustomVoicePrompt = false;
 
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
@@ -4935,7 +5095,7 @@ static bool HandleGD77sOptionEvent(uiEvent_t *ev)
 		// See if we should enable or disable voice tag edit mode.
 		bool voiceTagEditMode = ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && ((GD77SParameters.option >=	GD77S_OPTION_EDIT_START) && (GD77SParameters.option <=	GD77S_OPTION_EDIT_END)));
 		if (voiceTagEditMode != voicePromptsGetEditMode())
-			voicePromptsSetEditMode(voiceTagEditMode);
+			voicePromptsSetEditMode(voiceTagEditMode, true);
 		// See if we should turn on decode mode where we record a voice prompt on PTT but do not tx.
 		encodingCustomVoicePrompt = ((GD77SParameters.uiMode == GD77S_UIMODE_OPTIONS2) && (GD77SParameters.option == 	GD77S_OPTION_CUSTOM_PROMPT_RECORD));
 
@@ -5094,6 +5254,8 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 			else
 				GD77SParameters.uiMode = (GD77S_UIMODES_t) (GD77SParameters.uiMode + 1) % GD77S_UIMODE_MAX;
 			GD77SParameters.virtualVFOMode=false;
+			GD77SParameters.pendingVFOLoadTimer=0;
+
 			//skip over Digital controls if the radio is in Analog mode
 			if (trxGetMode() == RADIO_MODE_ANALOG)
 			{
@@ -5159,8 +5321,7 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 					GD77sSelectedCharIndex = rotarySwitchGetPosition()-1;
 					if (nonVolatileSettings.currentVFONumber < 2)
 					{
-						memcpy(&channelScreenChannelData.rxFreq, &settingsVFOChannel[nonVolatileSettings.currentVFONumber].rxFreq, CODEPLUG_CHANNEL_DATA_STRUCT_SIZE - 16); // Don't copy the name of the vfo, which is in the first 16 bytes
-						loadChannelData(true, false);
+						GD77SParameters.pendingVFOLoadTimer=1500;
 					}
 					break;
 				case GD77S_UIMODE_VOX:
@@ -5577,3 +5738,43 @@ if (GD77SParameters.cycleFunctionsInReverse && BUTTONCHECK_DOWN(ev, BUTTON_SK1)=
 	}
 }
 #endif // PLATFORM_GD77S
+static void SortChannels(sort_type_t sortType)
+{
+	if (!CanSortZoneChannels(&currentZone))
+		return;
+	
+	voicePromptsInit();
+	voicePromptsAppendLanguageString(&currentLanguage->sortBy);
+	switch (sortType)
+	{
+	case sortByName:
+		voicePromptsAppendLanguageString(&currentLanguage->name);
+		break;
+	case sortByFrequency:
+		voicePromptsAppendLanguageString(&currentLanguage->frequency);
+		break;
+	default:
+		voicePromptsAppendLanguageString(&currentLanguage->all_channels);
+		break;
+	}
+	voicePromptsPlay();
+	
+	uint16_t priorIndex=currentZone.channels[nonVolatileSettings.currentChannelIndexInZone];
+	SortZoneChannels(&currentZone, sortType);
+	// set the current channel to the new sorted position.
+	for (uint16_t i=0; i <  currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone; ++i)
+	{
+		if (currentZone.channels[i]==priorIndex)
+		{
+			nonVolatileSettings.currentChannelIndexInZone=i;
+			break;
+		}
+	}
+	reorderingChannels=false;
+	keyboardReset();
+}
+
+bool uiChannelModeIsReorderingChannels()
+{
+	return reorderingChannels;
+}

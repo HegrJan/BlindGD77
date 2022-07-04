@@ -43,8 +43,6 @@ typedef enum
 } txTerminationReason_t;
 
 static uint16_t dtmfPTTLatchTimeout=0;
-static uint8_t manualDTMFCodeIndex=0;
-
 typedef enum
 {
 	dtmfNotLatched=0,
@@ -493,11 +491,8 @@ static void handleEvent(uiEvent_t *ev)
 
 			if (keyval != 99)
 			{
-				if (manualDTMFCodeIndex==0)
-					memset(&lastDialledDTMFContact, 0xffu, sizeof(lastDialledDTMFContact));
 				trxSetDTMF(keyval);
-				if (manualDTMFCodeIndex < DTMF_CODE_MAX_LEN)
-					lastDialledDTMFContact.code[manualDTMFCodeIndex++]=keyval;
+				
 				isTransmittingTone = true;
 				PTTToggledDown = true; // released after a timeout when the dtmf key is released.
 				if (nonVolatileSettings.dtmfLatch > 0)
@@ -562,7 +557,6 @@ static void handleTxTermination(uiEvent_t *ev, txTerminationReason_t reason)
 		reason=TXSTOP_TIMEOUT;
 		keyboardReset();
 	}
-	manualDTMFCodeIndex=0; // reset for next time.
 	dtmfPTTLatch=false;
 	voicePromptsTerminate();
 	voicePromptsInit();

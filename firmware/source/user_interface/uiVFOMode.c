@@ -129,7 +129,6 @@ menuStatus_t uiVFOMode(uiEvent_t *ev, bool isFirstRun)
 	{
 		uiDataGlobal.FreqEnter.index = 0;
 		uiDataGlobal.isDisplayingQSOData = false;
-		uiDataGlobal.reverseRepeater = false;
 		uiDataGlobal.displaySquelch = false;
 		settingsSet(nonVolatileSettings.initialMenuNumber, (uint8_t) UI_VFO_MODE);
 		uiDataGlobal.displayQSOStatePrev = QSO_DISPLAY_IDLE;
@@ -899,29 +898,6 @@ static void handleEvent(uiEvent_t *ev)
 			soundSetMelody(MELODY_ACK_BEEP);
 			return;
 		}
-
-		if ((uiVFOModeSweepScanning(true) == false) && (uiDataGlobal.reverseRepeater == false) && (BUTTONCHECK_DOWN(ev, BUTTON_SK1) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-		{
-			trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
-			uiDataGlobal.reverseRepeater = true;
-			uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-			uiVFOModeUpdateScreen(0);
-			return;
-		}
-		else if ((uiDataGlobal.reverseRepeater == true) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2) == 0))
-		{
-			trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-			uiDataGlobal.reverseRepeater = false;
-
-			// We are still displaying channel details (SK1 has been released), force to update the screen
-			if (uiDataGlobal.displayChannelSettings)
-			{
-				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
-				uiVFOModeUpdateScreen(0);
-			}
-
-			return;
-		}
 		// Display channel settings (CTCSS, Squelch) while SK1 is pressed
 		else if ((uiDataGlobal.displayChannelSettings == false) && BUTTONCHECK_DOWN(ev, BUTTON_SK1))
 		{
@@ -949,13 +925,6 @@ static void handleEvent(uiEvent_t *ev)
 				{
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_CALLER_DATA;
 				}
-			}
-
-			// Leaving Channel Details disable reverse repeater feature
-			if (uiDataGlobal.reverseRepeater)
-			{
-				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
-				uiDataGlobal.reverseRepeater = false;
 			}
 
 			uiVFOModeUpdateScreen(0);
@@ -1010,7 +979,30 @@ static void handleEvent(uiEvent_t *ev)
 
 		if (uiDataGlobal.FreqEnter.index == 0)
 		{
-			if (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_HASH) == false))
+			if ((uiVFOModeSweepScanning(true) == false) && (uiDataGlobal.reverseRepeater==false) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+			{
+				trxSetFrequency(currentChannelData->txFreq, currentChannelData->rxFreq, DMR_MODE_DMO);// Swap Tx and Rx freqs but force DMR Active
+				uiDataGlobal.reverseRepeater = true;
+				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+				uiVFOModeUpdateScreen(0);
+				announceReverseToggle();
+				return;
+			}
+			else if ((uiDataGlobal.reverseRepeater == true) && (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)==0))
+			{
+				trxSetFrequency(currentChannelData->rxFreq, currentChannelData->txFreq, DMR_MODE_AUTO);
+				uiDataGlobal.reverseRepeater = false;
+
+				// We are still displaying channel details (SK1 has been released), force to update the screen
+				if (uiDataGlobal.displayChannelSettings)
+				{
+					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
+					uiVFOModeUpdateScreen(0);
+				}
+				announceReverseToggle();
+				return;
+			}
+			else if (KEYCHECK_LONGDOWN(ev->keys, KEY_HASH) && (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_HASH) == false) && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
 				if (uiDataGlobal.Scan.active && (screenOperationMode[nonVolatileSettings.currentVFONumber] != VFO_SCREEN_OPERATION_SWEEP))
 				{

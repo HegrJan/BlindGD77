@@ -136,7 +136,7 @@ PROMPT_CUSTOM6, // repeater
 PROMPT_CUSTOM7, // BlindHams
 PROMPT_CUSTOM8, // Allstar
 PROMPT_CUSTOM9, // parrot
-PROMPT_CUSTOM10, // unused
+PROMPT_REVERSE,
 NUM_VOICE_PROMPTS,
 	__MAKE_ENUM_16BITS = INT16_MAX
 } voicePrompt_t;
@@ -179,11 +179,15 @@ bool voicePromptsCheckMagicAndVersion(uint32_t *bufferAddress);
  void ReplayDMR(void);
 void ReplayInit(void);
 void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool reset, bool wrapWhenFull);
+bool ReplayBufferContainsCustomVoicePrompt();
 void SaveCustomVoicePrompt(int customPromptNumber, char* phrase); // phrase is an optional string to map to the ambe data. I.e. can map one's name to the recording of their name.
+uint16_t CustomVoicePromptExists(int customPromptNumber);
+bool GetCustomVoicePromptPhrase(int customPromptNumber, char* phrase, int bufLen); // phrase is an optional string to map to the ambe data. I.e. can map one's name to the recording of their name.
+bool SetCustomVoicePromptPhrase(int customPromptNumber, char* phrase);
 uint8_t GetMaxCustomVoicePrompts();
 uint8_t GetNextFreeVoicePromptIndex(bool forDMRVoiceTag);
 void DeleteDMRVoiceTag(int dmrVoiceTagNumber);
-void voicePromptsSetEditMode(bool flag);
+void voicePromptsSetEditMode(bool flag, bool announce);
 bool voicePromptsGetEditMode();
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute);
 void voicePromptsEditAutoTrim();

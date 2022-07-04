@@ -1,4 +1,4 @@
-AccessibleGD77 Readme.txt file by Joseph Stephen VK7JS.
+AccessibleGD77 Readme.rtf file by Joseph Stephen VK7JS.
 Email: vk7js@faithfulgenerations.com
 
 Please note, if you are reading this file in a text editor, please ensure word wrap is enabled 
@@ -7,19 +7,75 @@ This file contains the change log of all changes made since Roger's rerelease of
 There are versions of firmware in this archive for the following radio models:
 Radioddity GD77, GD77S, Baofeng DM1801, DM1801A and RD5R.
 If you would like to read the quickstart guide for the AccessibleGD77 firmware, open the docs folder in this archive and locate the file relevant for your radio model:
-"AccessibleGD77 Quick Start Guide.txt" for the Radioddity GD77,
-"AccessibleGD77S Quick Start Guide.txt" for the Radioddity GD77S, the model without a screen or numeric keypad,
-"AccessibleDM1801 Quick Start Guide.txt" for the Baofeng DM1801,
-"AccessibleDM1801A Quick Start Guide.txt" for the Baofeng DM1801A (which has two less keys than the DM1801),
-"AccessibleRD5R Quick Start Guide.txt" for the Baofeng RD5R.
+"AccessibleGD77 Quick Start Guide.rtf" for the Radioddity GD77,
+"AccessibleGD77S Quick Start Guide.rtf" for the Radioddity GD77S, the model without a screen or numeric keypad,
+"AccessibleDM1801 Quick Start Guide.rtf" for the Baofeng DM1801,
+"AccessibleDM1801A Quick Start Guide.rtf" for the Baofeng DM1801A (which has two less keys than the DM1801),
+"AccessibleRD5R Quick Start Guide.rtf" for the Baofeng RD5R.
 The docs folder also contains help files produced by Ian Spencer, DJ0HF, which may assist you in getting started with the CPS software, the software used to communicate with your radio from your computer in order to upload firmware, voice prompts and your channel data (known as a CodePlug).
-If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.txt" file in the docs folder.
-Plese note: The license and copyright information are set out in the file called license.txt.
-A key function summary is included in the docs folder called "Key Function Summary.txt"
+If you would like to know how to create a DMR ID Database and download it to your radio so the radio can announce who just transmitted, see the "Creating and Downloading a DMR ID Database.rtf" file in the docs folder.
+Plese note: The license and copyright information are set out in the file called license.rtf.
+A key function summary is included in the docs folder called "Key Function Summary.rtf"
+If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
+You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-25 May 2022
+3 July 2022
+Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
-
+2. Added Chris ve3rwj's Boot up tone creation instructions.
+3. On the Radio Information screen, when viewing the temperature, you can now use left and right arrow to change between Celsius and Fahrenheit. The radio will remember the last unit selected. Please update your voice prompts from this archive to include the new Fahrenheit voice prompt!
+4. On the Radio Information screen, the reading will now occur automatically at voice prompt level 3, when the temperature or voltage changes, rather than having to query it.
+ 5. A new option has been added to the Options2 menu of the GD77S, prior to Firmware Info, called Temperature. This has two values, Celsius and Fahrenheit. This determines the temperature unit used when you press long hold orange to hear the battery and CPU temperature.
+6. By request, changed the Reverse function as follows. Instead of having to hold down SK1+SK2 to keep reverse active, you now long press Hash and the Reverse function will be turned on (the radio will say Reverse on). If you then press long hold hash again, the Reverse will be disabled (the radio will say Reverse off.). This also works in VFO Mode which necessitated moving Sweep scan to SK2+long hold hash. Note that if Reverse is on, the Summary long hold SK1 will now also tell you and switch the rx and tx frequencies.
+7. We now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
+8. Changed boot melody  to same as Acknowledgement beep, i.e. three rising tones.
+9. You can now sort channels by name, codeplug order or frequency.
+9.1. From the channel screen, choose Reorder from the Orange button quick menu, then, as well as arrows allowing you to move channels around (existing functionality), the following keys will do the following functions (and automatically exit the reorder mode when complete):
+9.1.1. Long hold * will sort the channels in the current zone by Name.
+9.1.2. Long hold 0 will sort the channels in the current zone as they appear in the codeplug all channels order,
+9.1.3. Long hold # will sort the channels in the current zone by rx frequency. (Note once the sort has completed, the zone index is written back to the EPROM, so it is persistent.)
+10. You can now optionally sort contacts by name.
+10.1. From Contacts list, press and hold * to either sort by name or revert the order to the codeplug order. Both DTMF and digital contacts will be sorted. Note this only sorts the in-memory index, the EPROM is not rewritten since we'd be touching the actual database, unlike the zone which is just an index into the all channels data. (Note that if there are more than 150 digital contacts, we won't sort since I've currently put an upper limit due to the sort buffer size required to do the quick sort since aqccessing the flash and eprom directly from the comparison function was causing nasty reboots.)
+10.2. The TGList navigated by left and right arrows on a DMR channel will follow the requested sort order.
+11. Added SRT*, SRT# and SRT0 commands to GD77S virtual keypad to do the equivalent of the sort functions mentioned in 9 above. I.e. SRT* sort channels by name, SRT# sort channels by frequency, and SRT0 sort channels as they appear in the channels list of the CodePlug.
+12. Added SRTC to toggle the sorting of contacts to the GD77S.
+13. Added CCC command to clear channel contact to GD77S, see 16 below.
+14. Fixed a bug on the GD77S with the new VFO keypad mode as follows: 
+* User chose VFO a or VFO b as default keypad mode from Options 2 Keypad menu.
+* User sets VFO to a frequency, e.g. 147 MHz from keypad mode.
+* User exits keypad mode and goes to another channel, say channel 1 with frequency 439.15 MHz.
+* User wishes to choose a DTMF contact to dial on channel 1 so they hit Orange to get to DTMF mode.
+* As user passes Keypad mode, VFO a is now loaded and by the time they execute DTMF command, it is on 147 MHz (the VFO frequency) rather than the desired channel 1 frequency of 439.15.
+TO solve this, if you set Keypad mode to VFO a or b, when you cycle to Keypad mode with Orange, the VFO is only loaded if the user settles on the option for more than 1.5 seconds. If they keep pressing Orange to cycle to the next option, the original channel remains loaded as they'd expect.
+15. Added announcement of "reorder channels" to channel summary if reorder mode is active, immediately prior to the zone name. Thus, the summary will say something like "reorder channels zone 1" at the end of the summary if reorder mode is active on radios with a keypad.
+16. Talk groups and dialled DTMF contacts are now associated  with each channel. This means that if you choose a talk group on one DMR channel, when you revisit that channel, that talkgroup is automatically reselected (you will need to key up to ensure your repeater or hotspot is syncrhonized). On analog channels, when you dial a DTMF contact from the contacts list, it is automatically saved for that channel. If your node has disconnected, press long hold sk2+hash to redial the channel's saved DTMF contact. You can clear the DTMF contact for a channel using SK2+red, which for DMR channels clears a private call.
+17. As a result of 16, at voice prompt level 2, we will again say the mode since hearing a contact does not mean a digital channel but could be the currently connected DTMF contact.
+18. Added DTMF Rate to Sound Options Menu after DTMF Volume. The range is 1 to 10 with 10 being the fastest. This was also added to the GD77S Options menu. The default value is 3 (which matches the CPS).
+19. Added a Review Prompt mode similar to the gd77s for the other radios with a keyboard.
+This mode allows rapid review of custom voice prompts and editing of the associated phrase.
+19.1. Moved save custom prompt to next available slot from SK1+* to SK1+long hold * so it is consistent with other save custom prompt actions.
+19.2. SK1+* now enters custom prompt review mode. In this mode:
+•	Up/Down Arrows move through and play  each custom prompt and spell its associated phrase if any.
+•	Long hold Up/Down arrows moves through custom prompts by larger increments.
+•	SK1 repeats current prompt and phrase if any.
+•	PTT by itself (or with SK1) record new prompt.
+•	Left/Right and usual editing keys edit the phrase for the currently selected prompt.
+•	Green saves the updated phrase associated with the prompt, or saves a newly recorded prompt to an empty slot, and exits Review Mode. (If there is something in the recording buffer, it will not automatically replace an existing prompt, see next bullet point). Note if you move away from an edited phrase using Up/Down without saving it, the change to that phrase is discarded.
+•	Long hold * copies what is in the record buffer over an existing prompt if you wish to replace an existing prompt with a new recording.
+•	Long hold 0 zeros or clears currently selected custom prompt.
+•	SK2+hash announces the length of the currently selected voice prompt, or if the current slot is empty, the length of the record buffer.
+•	SK1+Green invokes   Edit mode on the currently selected custom prompt. If the current prompt is empty, the recording buffer is used for editing instead, making it possible to create a new prompt from within Review Mode. From Edit mode you can autotrim, move the start or end manually or obtain the prompt length (prior functionality). If you hit Green from within audio edit mode invoked from review mode, the edited recording is automatically saved to the current prompt slot being reviewed prior to entering audio edit mode.
+•	Red cancels the mode and discards any edits to the current phrase.
+	Other standard custom prompt mode keystrokes will still work in this mode.
+19.2. GD77S changes to custom prompts:
+19.2.1. The GD77S version now also spells a custom prompt's  associated phrase if any in its "Prompt All" mode.
+19.2.2. Reordered review and record mode on GD77S for custom prompts. This makes it easier to choose a slot to either edit or save a prompt to.
+19.2.3. In Review mode, long hold sk2 will either save what is in the record buffer to an empty slot, or copy what is in that slot back to the record buffer for editing.
+    19.2.4. Long hold SK2 in record mode will save to the last prompt reviewed's slot. This will overwrite what is in the slot, useful for replacing a prompt but potentially dangerous, but done by request.
+	19.2.5. Added DEL##1 through DEL##32 to delete a custom voice prompt to the list of virtual keypad commands.
+20 Added my recorded testimony to the Joseph's writings folder.
+21. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
+ 
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
 2. Fixed issue of attempting to create a new contact when the list is full and the dialog still coming up. Now, if the list is full, you'll get an error message rather than the dialog still being invoked.

@@ -513,7 +513,7 @@ static void handleEvent(uiEvent_t *ev)
 			updateCursor();
 		}
 	}
-	else if (HandleEditEvent(ev, &editParams))
+	else if (HandleEditEvent(ev, &editParams, true))
 	{
 		updateScreen(false, editParams.allowedToSpeakUpdate);
 		updateCursor();

@@ -442,7 +442,6 @@ void mainTask(void *data)
 	// Get DTMF contacts duration settings
 	codeplugGetSignallingDTMFDurations(&uiDataGlobal.DTMFContactList.durations);
 
-
 #if defined(PLATFORM_GD77S)
 	// Those act as a toggles
 
@@ -846,7 +845,7 @@ void mainTask(void *data)
 #if ! defined(PLATFORM_GD77S)
 					// If SK1 is held down with PTT, record a voice prompt.
 					bool priorEncodingCustomVoicePrompt=encodingCustomVoicePrompt;
-					encodingCustomVoicePrompt=(buttons & BUTTON_SK1);
+					encodingCustomVoicePrompt=CustomPromptReviewMode() || (buttons & BUTTON_SK1);
 					if (encodingCustomVoicePrompt&&!priorEncodingCustomVoicePrompt)
 						ReplayInit();
 #endif // ! defined(PLATFORM_GD77S)

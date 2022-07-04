@@ -207,7 +207,7 @@ static void updateScreen(bool forceRedraw)
 
 				if (voicePromptsIsPlaying() == false)
 				{
-					updateVoicePrompts(false, false);
+					updateVoicePrompts(nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3, false);
 				}
 			}
 
@@ -306,7 +306,7 @@ static void updateScreen(bool forceRedraw)
 
 			if (voicePromptsIsPlaying() == false)
 			{
-				updateVoicePrompts(false, false);
+				updateVoicePrompts(nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3, false);
 			}
 		}
 		break;
@@ -364,8 +364,14 @@ static void updateScreen(bool forceRedraw)
 					ucFillCircle(x, tankVCenter, tankRadius - 3, ((temperature > TEMPERATURE_CRITICAL) ? !blink : true));
 					ucFillRect(x - 4, 20, 9, temperatureHeight, true);
 				}
-
-				snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d%s", (temperature / 10), abs(temperature % 10), currentLanguage->celcius);
+				if (settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT)) // convert to fahrenheit
+				{
+					int tenthsDgFahrenheit = CelciusToFahrenheit(temperature);
+					snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d%s", (tenthsDgFahrenheit / 10), abs(tenthsDgFahrenheit % 10), currentLanguage->fahrenheit);
+				}
+				else
+					snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d%s", (temperature / 10), abs(temperature % 10), currentLanguage->celcius);
+					
 				ucPrintAt((((x - (7 + 5)) - (7 * 8)) >> 1), (((DISPLAY_SIZE_Y - (14 + FONT_SIZE_3_HEIGHT)) >> 1) + 14), buffer, FONT_SIZE_3);
 
 				uint32_t t = (uint32_t)((((CLAMP(temperature, 100, 700)) - 100) * temperatureHeight) / (700 - 100)); // clamp to 10..70 °C, then scale
@@ -378,7 +384,7 @@ static void updateScreen(bool forceRedraw)
 
 				if (voicePromptsIsPlaying() == false)
 				{
-					updateVoicePrompts(false, false);
+					updateVoicePrompts(nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3, false);
 				}
 			}
 
@@ -448,6 +454,15 @@ static void handleEvent(uiEvent_t *ev)
 				updateScreen(true);
 			}
 		}
+		else if (displayMode ==RADIO_INFOS_TEMPERATURE_LEVEL)
+		{
+			if (settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT))
+			{
+				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, false);
+				updateScreen(true);
+				updateVoicePrompts(true, false);
+			}
+		}
 	}
 	else if (KEYCHECK_PRESS(ev->keys, KEY_RIGHT))
 	{
@@ -457,6 +472,15 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				graphStyle = GRAPH_LINE;
 				updateScreen(true);
+			}
+		}
+		else if (displayMode ==RADIO_INFOS_TEMPERATURE_LEVEL)
+		{
+			if (!settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT))
+			{
+				settingsSetOptionBit(BIT_TEMPERATURE_UNIT,true);
+				updateScreen(true);
+				updateVoicePrompts(true, false);
 			}
 		}
 	}
@@ -534,12 +558,7 @@ static void updateVoicePrompts(bool spellIt, bool firstRun)
 			break;
 			case RADIO_INFOS_TEMPERATURE_LEVEL:
 			{
-				int temperature = getTemperature();
-
-				voicePromptsAppendLanguageString(&currentLanguage->temperature);
-				snprintf(buffer, 17, "%d.%1d", (temperature / 10), (temperature % 10));
-				voicePromptsAppendString(buffer);
-				voicePromptsAppendLanguageString(&currentLanguage->celcius);
+				announceTemperature(false);
 			}
 			break;
 		}

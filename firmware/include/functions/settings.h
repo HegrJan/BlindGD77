@@ -72,7 +72,8 @@ typedef enum
 	BIT_ANNOUNCE_LASTHEARD = (1 << 9),
 	BIT_BCL = (1 <<10),
 	BIT_PHONETIC_SPELL = (1 << 11),
-	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12)
+	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12),
+	BIT_TEMPERATURE_UNIT = (1 << 13) // 0 celcius, 1 fahrenheit
 } bitfieldOptions_t;
 
 typedef struct
@@ -138,7 +139,8 @@ typedef struct
 	uint8_t dtmfVol; // 0 to 255.
 	uint8_t endRXBeep; // see END_RX_BEEP enum.
 	uint8_t ctcssSqlTail; // for eliminating squelch tail.
-	// currently 135 bytes Apr 2  2022 VK7JS. 
+	uint8_t sortFlags;
+	// currently 138 bytes Jun  22  2022 VK7JS. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
@@ -189,6 +191,12 @@ typedef enum PROMPT_AUTOPLAY_THRESHOLD
 	PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY
 } audioPromptThreshold_t;
 
+typedef enum SortFlags
+{
+	sortContactsOff=0,
+	sortContactsByName = 0x01
+} sortFlags_t;
+
 typedef struct
 {
 	volatile bool	isEnabled;
@@ -209,7 +217,7 @@ extern struct_codeplugChannel_t *currentChannelData;
 extern struct_codeplugChannel_t channelScreenChannelData;
 extern struct_codeplugContact_t contactListContactData;
 extern struct_codeplugDTMFContact_t contactListDTMFContactData;
-extern struct_codeplugDTMFContact_t lastDialledDTMFContact;
+
 extern int contactListContactIndex;
 extern int settingsUsbMode;
 extern monitorModeSettingsStruct_t monitorModeData;

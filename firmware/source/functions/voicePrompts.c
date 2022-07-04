@@ -742,6 +742,11 @@ void AddAmbeBlocksToReplayBuffer(uint8_t* ambeBlockPtr, uint8_t blockLen, bool r
 	replayAmbeCircularBufferPushBack(&replayBuffer, ambeBlockPtr, blockLen, reset, wrapWhenFull);
 }
 
+bool ReplayBufferContainsCustomVoicePrompt()
+{//wrap is off when recording custom prompts but on for continuous DMR save.
+	return !replayBuffer.allowWrap && 	replayAmbeGetLength(&replayBuffer, true) > 0;
+}
+
 static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phrase)
 {
 	if (!voicePromptDataIsLoaded) return false;
@@ -791,6 +796,49 @@ static bool SaveAMBEBufferAsCustomVoicePrompt(int customPromptNumber, char* phra
 	return SPI_Flash_write(addr, (uint8_t*)&replayBuffer, CUSTOM_VOICE_PROMPT_MAX_SIZE);
 }
 
+bool GetCustomVoicePromptPhrase(int customPromptNumber, char* phrase, int bufLen)
+{
+	if (!voicePromptDataIsLoaded) return false;
+	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) return false;
+	
+	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of modification.
+	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+	CustomVoicePromptsHeader_t hdr;
+	if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
+		return false;
+	int len=strlen(hdr.phrase);
+	if (len==0) return false;
+	
+	strncpy(phrase, hdr.phrase, bufLen);
+	phrase[bufLen-1]='\0';// in case the prompt was exactly 16 chars.
+	return true;
+}
+
+bool SetCustomVoicePromptPhrase(int customPromptNumber, char* phrase)
+{
+	if (!voicePromptDataIsLoaded) return false;
+	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) return false;
+	
+	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of modification.
+	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+	CustomVoicePromptsHeader_t hdr;
+	if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
+		return false;
+	// See if it actually changed.
+	if (phrase && *phrase && strcmp(phrase, hdr.phrase) == 0)
+		return false;
+	
+	if (phrase && *phrase)
+		strncpy(hdr.phrase, phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
+	else
+		memset(hdr.phrase, 0, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
+	strncpy(phraseCache[customPromptNumber-1], hdr.phrase, CUSTOM_VOICE_PROMPT_PHRASE_LENGTH);
+	if (customPromptNumber > highestUsedCustomVoicePromptNumberWithPhrase)
+		highestUsedCustomVoicePromptNumberWithPhrase=customPromptNumber;
+	
+	return SPI_Flash_write(addr, (uint8_t*)&hdr, sizeof(hdr));
+}
+
 static int GetCustomVoicePromptData(int customPromptNumber)
 {
 	if (!voicePromptDataIsLoaded) return 0;
@@ -823,6 +871,20 @@ void SaveCustomVoicePrompt(int customPromptNumber, char* phrase)
 		voicePromptsAppendLanguageString(&currentLanguage->list_full);
 	}
 	voicePromptsPlay();
+}
+
+// Returns the length of the prompt data in ambe frames.
+uint16_t CustomVoicePromptExists(int customPromptNumber)
+{
+	if (!voicePromptDataIsLoaded) return 0;
+	if (customPromptNumber < 1 || customPromptNumber > maxCustomVoicePrompts) return 0;
+	// custom voice prompts are saved moving downward from the top of the voice prompt area. Each one is a fixed size for ease of modification.
+	uint32_t addr=VOICE_PROMPTS_REGION_TOP-(customPromptNumber*CUSTOM_VOICE_PROMPT_MAX_SIZE);
+		CustomVoicePromptsHeader_t hdr;
+	if (!SPI_Flash_read(addr, (uint8_t*)&hdr, sizeof(hdr)) || !CheckCustomVPSignature(&hdr))
+		return 0;
+	
+	return hdr.customVPLength;
 }
 
 uint8_t GetMaxCustomVoicePrompts()
@@ -859,7 +921,7 @@ void DeleteDMRVoiceTag(int dmrVoiceTagNumber)
 	SPI_Flash_write(addr, (uint8_t*)&hdr, sizeof(CustomVoicePromptsHeader_t));
 }
 
-void voicePromptsSetEditMode(bool flag)
+void voicePromptsSetEditMode(bool flag, bool announce)
 {
 	if (!voicePromptDataIsLoaded) return;
 #if !defined(PLATFORM_GD77S)
@@ -870,10 +932,13 @@ void voicePromptsSetEditMode(bool flag)
 	}
 #endif
 	editingVoicePrompt=flag;	
-	voicePromptsInit();
-	voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
-	voicePromptsAppendLanguageString(flag ? &currentLanguage->on : &currentLanguage->off);
-	voicePromptsPlay();	
+	if (announce)
+	{
+		voicePromptsInit();
+		voicePromptsAppendPrompt(PROMPT_EDIT_VOICETAG);
+		voicePromptsAppendLanguageString(flag ? &currentLanguage->on : &currentLanguage->off);
+		voicePromptsPlay();	
+	}
 }
 
 bool voicePromptsGetEditMode()
@@ -915,20 +980,6 @@ uint16_t GetAMBEFrameAverageSampleAmplitude()
 	double average=(runningTotal/WAV_BUFFER_SIZE); // two lots of 80 samples.
 	
 	return average;
-}
-
-static void 	AnnounceClipPos(uint16_t ms)
-{
-// caller announces start or end as appropriate.
-	uint16_t s=ms/1000;
-	uint16_t f=ms%1000;
-	char num[6];
-	snprintf(num, 6, "%u.%03u", s, f);
-	removeUnnecessaryZerosFromVoicePrompts((char*)&num);
-	voicePromptsAppendString(num);
-	voicePromptsAppendPrompt(PROMPT_SECONDS);
-	
-	voicePromptsPlay();
 }
 
 void voicePromptsAdjustEnd(bool adjustStart, int clipStep, bool absolute)

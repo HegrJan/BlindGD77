@@ -29,8 +29,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "functions/codeplug.h"
 #include "functions/autozone.h"
+#include "functions/voicePrompts.h"
+#include "functions/sound.h"
 #include "hardware/EEPROM.h"
 #include "hardware/SPI_Flash.h"
 #include "functions/trx.h"
@@ -89,6 +92,18 @@ const int CODEPLUG_ADDR_DEVICE_INFO = 0x80;
 const int CODEPLUG_ADDR_DEVICE_INFO_READ_SIZE = 96;// (sizeof struct_codeplugDeviceInfo_t)
 
 const int CODEPLUG_ADDR_BOOT_PASSWORD_PIN = 0x7518;
+static sort_type_t lastSortTypeRequested=sortNone;
+
+typedef struct 
+{
+	uint16_t index;
+	char name[16];
+	uint32_t numericField;
+} sortStruct_t;
+
+// Note 100 is enough to hold channels for a zone or all DTMF contacts.
+// or up to 100 Digital contacts.
+static sortStruct_t sortBuffer[150];
 
 static uint16_t allChannelsTotalNumOfChannels = 0;
 static uint16_t allChannelsHighestChannelIndex = 0;
@@ -528,7 +543,7 @@ uint32_t codeplugChannelGetOptionalDMRID(struct_codeplugChannel_t *channelBuf)
 {
 	uint32_t retVal = 0;
 
-	if (channelBuf->LibreDMR_flag1 & 0x80)
+	if (channelBuf->LibreDMR_flag1 & ChannelDMRUserIDOverride)
 	{
 		retVal = ((channelBuf->rxSignaling << 16) | (channelBuf->artsInterval << 8) | channelBuf->encrypt);
 	}
@@ -550,12 +565,12 @@ void codeplugChannelSetOptionalDMRID(uint32_t dmrID, struct_codeplugChannel_t *c
 	// Set DMRId and flag, if valid.
 	if ((dmrID >= MIN_TG_OR_PC_VALUE) && (dmrID <= MAX_TG_OR_PC_VALUE))
 	{
-		channelBuf->LibreDMR_flag1 |= 0x80;
+		channelBuf->LibreDMR_flag1 |= ChannelDMRUserIDOverride;
 		tmpID = dmrID;
 	}
 	else
 	{
-		channelBuf->LibreDMR_flag1 &= ~0x80;
+		channelBuf->LibreDMR_flag1 &= ~ChannelDMRUserIDOverride;
 	}
 
 	channelBuf->rxSignaling = (tmpID >> 16) & 0xFF;
@@ -738,9 +753,31 @@ bool codeplugDeleteChannelWithIndex(int index)
 	return true;
 }
 
-static void codeplugRxGroupInitCache(void)
+void codeplugRxGroupInitCache(void)
 {
 	SPI_Flash_read(CODEPLUG_ADDR_RX_GROUP_LEN, (uint8_t*) &codeplugRXGroupCache[0], CODEPLUG_RX_GROUPLIST_MAX);
+}
+
+int sortCMPFunction(const void * a, const void * b)
+{
+	// return sort to original order in codeplug.
+	// Only relevant for channels.
+	if (lastSortTypeRequested==sortNone)
+	{
+		int index1 = (*(uint16_t*)a);
+		int index2 = (*(uint16_t*)b);
+		return index1 - index2;
+	}
+	
+	sortStruct_t* ch1=(sortStruct_t*)a;
+	sortStruct_t* ch2=(sortStruct_t*)b;
+	// relevant for channels and contacts.
+	if (lastSortTypeRequested == sortByName) // by name
+	{
+		return strncasecmp(ch1->name, ch2->name, 16);
+	}
+	// Only relevant for channels.
+	return ch1->numericField - ch2->numericField;
 }
 
 bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroupBuf)
@@ -761,6 +798,9 @@ bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroup
 			{
 				codeplugContactGetDataForIndex(rxGroupBuf->contacts[i], &contactData);
 				rxGroupBuf->NOT_IN_CODEPLUG_contactsTG[i] = contactData.tgNumber;
+				sortBuffer[i].index=rxGroupBuf->contacts[i];
+				codeplugUtilConvertBufToString(contactData.name, sortBuffer[i].name, 16);
+				sortBuffer[i].numericField=contactData.tgNumber;
 				// Empty groups seem to be filled with zeros
 				if (rxGroupBuf->contacts[i] == 0)
 				{
@@ -769,6 +809,18 @@ bool codeplugRxGroupGetDataForIndex(int index, struct_codeplugRxGroup_t *rxGroup
 			}
 
 			rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup = i;
+			// sort it.
+			if (nonVolatileSettings.sortFlags&sortContactsByName)
+			{
+				lastSortTypeRequested=sortByName;
+				qsort(sortBuffer, rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup, sizeof(sortStruct_t), sortCMPFunction);
+		
+				for (int i=0; i <rxGroupBuf->NOT_IN_CODEPLUG_numTGsInGroup; ++i)
+				{
+					rxGroupBuf->contacts[i] = sortBuffer[i].index;
+					rxGroupBuf->NOT_IN_CODEPLUG_contactsTG[i]=sortBuffer[i].numericField;
+				}
+}
 			return true;
 		}
 	}
@@ -908,7 +960,7 @@ bool codeplugContactsContainsPC(uint32_t pc)
 	return false;
 }
 
-static void codeplugInitContactsCache(void)
+void codeplugInitContactsCache(void)
 {
 	struct_codeplugContact_t contact;
 	uint8_t                  c;
@@ -943,7 +995,7 @@ static void codeplugInitContactsCache(void)
 			}
 		}
 	}
-
+	SortDigitalContacts();
 	for (int i = 0; i < CODEPLUG_DTMF_CONTACTS_MAX; i++)
 	{
 		if (EEPROM_Read(CODEPLUG_ADDR_DTMF_CONTACTS + (i * CODEPLUG_DTMF_CONTACT_DATA_STRUCT_SIZE), (uint8_t *)&c, 1))
@@ -954,6 +1006,7 @@ static void codeplugInitContactsCache(void)
 			}
 		}
 	}
+	SortDTMFContacts();
 }
 
 void codeplugContactsCacheUpdateOrInsertContactAt(int index, struct_codeplugContact_t *contact)
@@ -1500,6 +1553,10 @@ bool codeplugGetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_
 	return false;
 }
 
+bool codeplugSetSignallingDTMFDurations(struct_codeplugSignalling_DTMFDurations_t *signallingDTMFDurationsBuffer)
+{
+	return  EEPROM_Write(CODEPLUG_ADDR_SIGNALLING_DTMF_DURATIONS, (uint8_t *)signallingDTMFDurationsBuffer, SIGNALLING_DTMF_DURATIONS_DATA_STRUCT_SIZE);
+}
 
 bool codeplugGetDeviceInfo(struct_codeplugDeviceInfo_t *deviceInfoBuffer)
 {
@@ -1674,3 +1731,115 @@ int codeplugGetDTMFContactIndex(char* name, bool exactMatch)
 return 0;
 }
 
+void SortDTMFContacts()
+{
+		if ((nonVolatileSettings.sortFlags&sortContactsByName)==0)
+		return; 
+
+	if (codeplugContactsCache.numDTMFContacts < 2) return;
+	
+	// the only sort type supported by DTMF contacts.
+	lastSortTypeRequested = sortByName;
+	
+	struct_codeplugDTMFContact_t contact;
+	
+	for (int index=0; index < codeplugContactsCache.numDTMFContacts; ++index)
+	{
+		uint8_t realIndex=codeplugContactsCache.contactsDTMFLookupCache[index].index;
+		codeplugDTMFContactGetDataForIndex(realIndex, &contact);
+		codeplugUtilConvertBufToString(contact.name, sortBuffer[index].name, 16);
+		sortBuffer[index].index=realIndex;
+	}	
+		
+	qsort(sortBuffer, codeplugContactsCache.numDTMFContacts, sizeof(sortStruct_t), sortCMPFunction);
+		
+	for (int i=0; i <codeplugContactsCache.numDTMFContacts; ++i)
+	{
+		codeplugContactsCache.contactsDTMFLookupCache[i].index = (uint8_t)sortBuffer[i].index;
+	}
+}
+
+void SortDigitalContacts()
+{
+	if ((nonVolatileSettings.sortFlags&sortContactsByName)==0)
+		return; 
+	int digitalContacts=codeplugContactsCache.numTGContacts+codeplugContactsCache.numPCContacts+codeplugContactsCache.numALLContacts;
+	
+	if (digitalContacts < 2) return;
+	if (digitalContacts > (sizeof(sortBuffer)/sizeof(sortStruct_t))) return; // we can't cache more than the size of the sort buffer. 
+	// the only sort type supported by digital contacts.
+	lastSortTypeRequested = sortByName;
+	
+	struct_codeplugContact_t contact;
+	
+	for (int index=0; index < digitalContacts; ++index)
+	{
+		uint16_t realIndex=codeplugContactsCache.contactsLookupCache[index].index;
+		codeplugContactGetDataForIndex(realIndex, &contact);
+		codeplugUtilConvertBufToString(contact.name, sortBuffer[index].name, 16);
+		sortBuffer[index].index=realIndex;
+	}	
+		
+	qsort(sortBuffer, digitalContacts, sizeof(sortStruct_t), sortCMPFunction);
+		
+	for (int i=0; i <digitalContacts; ++i)
+	{
+		codeplugContactsCache.contactsLookupCache[i].index = sortBuffer[i].index;
+	}
+}
+
+bool CanSortZoneChannels(struct_codeplugZone_t* zone)
+{
+	if (!zone) return false;
+	// can't sort an autozone or all channels zone.
+	if (CODEPLUG_ZONE_IS_ALLCHANNELS(*zone)) return false;
+	if (AutoZoneIsCurrentZone(zone->NOT_IN_CODEPLUGDATA_indexNumber)) return false;
+	return zone->NOT_IN_CODEPLUGDATA_numChannelsInZone >= 2;
+}
+
+void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
+{
+	if (!CanSortZoneChannels(zone)) return;
+	
+	lastSortTypeRequested=sortType;
+	
+	if (sortType != sortNone)
+	{
+		for (int index=0; index < zone->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++index)
+		{
+			codeplugChannelGetDataWithOffsetAndLengthForIndex(zone->channels[index], (struct_codeplugChannel_t*)(sortBuffer[index].name), 0, 20); // read name and rxFreq
+			codeplugUtilConvertBufToString(sortBuffer[index].name, sortBuffer[index].name, 16);
+			sortBuffer[index].index=zone->channels[index];
+		}	
+		
+		qsort(sortBuffer, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(sortStruct_t), sortCMPFunction);
+		
+		for (int i=0; i <zone->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++i)
+		{
+			zone->channels[i]=sortBuffer[i].index;
+		}
+	}
+	else// just order the channels as they appear in the codeplug.
+		qsort(zone->channels, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(uint16_t), sortCMPFunction);
+
+	EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zone->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
+				(uint8_t *)zone, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
+}
+
+// contactIndex is either a DMR contact index  into the digital contacts list, or a  DTMF contact index.
+// pass in 0 for the contact to clear it.
+void AddLastReferencedContactToChannel(int allChannelsIndex, uint16_t contact)
+{
+	struct_codeplugChannel_t channelBuf;
+	codeplugChannelGetDataForIndex(allChannelsIndex, &channelBuf);
+	channelBuf.contact=contact;
+	if (contact > 0)
+		channelBuf.LibreDMR_flag1 |= ChannelContactOverride;
+	else // clear it.
+		channelBuf.LibreDMR_flag1 &= ~ChannelContactOverride;
+	
+	codeplugChannelSaveDataForIndex( allChannelsIndex, &channelBuf);
+	// also update it in the live version.
+	currentChannelData->contact=contact;
+	currentChannelData->LibreDMR_flag1 |= ChannelContactOverride;
+}

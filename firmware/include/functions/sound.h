@@ -35,7 +35,7 @@
 
 
 extern int melody_generic[512];
-extern const int MELODY_POWER_ON[];
+//extern const int MELODY_POWER_ON[];
 extern const int MELODY_PRIVATE_CALL[];
 extern const int MELODY_KEY_BEEP[];
 extern const int MELODY_KEY_LONG_BEEP[];

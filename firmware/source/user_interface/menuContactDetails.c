@@ -401,7 +401,7 @@ static void handleEvent(uiEvent_t *ev)
 					updateScreen(false, true);
 					menuContactDetailsExitCode |= MENU_STATUS_LIST_TYPE;
 				}
-				else if (UseEditHandler() && HandleEditEvent(ev, &editParams))
+				else if (UseEditHandler() && HandleEditEvent(ev, &editParams, true))
 				{
 					updateScreen(false, editParams.allowedToSpeakUpdate);
 					editUpdateCursor(&editParams, true, true);
@@ -509,13 +509,14 @@ static void handleEvent(uiEvent_t *ev)
 							if (contactIsNewOrAtSameIndex(&tmpContact, contactDetailsIndex))
 							{
 								codeplugContactSaveDataForIndex(contactDetailsIndex, &tmpContact);
-								menuContactDetailsTimeout = 2000;
+
+								menuContactDetailsTimeout = 500;
 								menuContactDetailsState = MENU_CONTACT_DETAILS_SAVED;
 								voicePromptsAppendLanguageString(&currentLanguage->contact_saved);
 							}
 							else
 							{
-								menuContactDetailsTimeout = 2000;
+								menuContactDetailsTimeout = 500;
 								menuContactDetailsState = MENU_CONTACT_DETAILS_EXISTS;
 								voicePromptsAppendLanguageString(&currentLanguage->duplicate);
 							}

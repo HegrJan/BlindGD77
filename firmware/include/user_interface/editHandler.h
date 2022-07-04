@@ -47,7 +47,7 @@ extern EditStructParrams_t editParams;
 void editUpdateCursor(EditStructParrams_t* editParams, bool moved, bool render);
 void moveCursorLeftInString(char *str, int *pos, bool delete);
 void moveCursorRightInString(char *str, int *pos, int max);
-bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams);
+bool HandleEditEvent(uiEvent_t *ev, EditStructParrams_t* editParams, bool callCustomPromptHandler);
 void RequeueEditBufferForAnnouncementOnSK1IfNeeded();
 char* GetCurrentEditBuffer();
 #endif //EDIT_HANDLER_H_INCLUDED

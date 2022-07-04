@@ -244,6 +244,11 @@ typedef struct
    const char* dtmf_vol;
    const char* vp_saved;
    const char* css_tail;
+   const char* fahrenheit;
+   const char* sortBy;
+   const char* frequency;
+   const char* dtmf_rate;
+   const char* promptReview;
 } stringsTable_t;
 
 extern const stringsTable_t languages[];

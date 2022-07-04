@@ -2112,6 +2112,34 @@ ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying)
 	}
 }
 
+ANNOUNCE_STATIC void announceChannelDTMFContact(bool anouncePrompt)
+{
+		if (currentChannelData->NOT_IN_CODEPLUG_flag != 0) return; // its not the channel screen.
+			if ((currentChannelData->LibreDMR_flag1 & ChannelContactOverride)==0) return;
+
+	struct_codeplugDTMFContact_t lastDialledDTMFContact;
+	if (!codeplugDTMFContactGetDataForIndex(currentChannelData->contact, &lastDialledDTMFContact))
+	{
+		return;
+	}
+		if (anouncePrompt)
+	{
+		voicePromptsAppendLanguageString(&currentLanguage->contact);
+	}
+	char buff[DTMF_CODE_MAX_LEN+1]; // DTMF may have 16 chars plus a null.
+
+	if (lastDialledDTMFContact.name[0]!=0 && lastDialledDTMFContact.name[0]!=0xff)
+	{
+		codeplugUtilConvertBufToString(lastDialledDTMFContact.name, buff, DTMF_CODE_MAX_LEN);
+	}
+	else
+	{
+		dtmfConvertCodeToChars(lastDialledDTMFContact.code, buff, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
+	}
+	voicePromptsAppendString(buff);	
+	voicePromptsAppendPrompt(PROMPT_SILENCE);
+}
+
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying)
 {
 	int powerLevel = trxGetPowerLevel();
@@ -2189,7 +2217,14 @@ void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital)
 }
 #endif
 
-ANNOUNCE_STATIC void announceTemperature(bool voicePromptWasPlaying)
+// Converts tenths of a degree celcius to tenths of a degree fahrenheit.
+int CelciusToFahrenheit(int tenthsOfADegreeCelcius)
+{
+	float dgCelcius =(tenthsOfADegreeCelcius  * 0.10);
+	return 10 * (dgCelcius * 1.8 + 32);
+}
+
+ void announceTemperature(bool voicePromptWasPlaying)
 {
 	char buffer[17];
 	int temperature = getTemperature();
@@ -2197,9 +2232,17 @@ ANNOUNCE_STATIC void announceTemperature(bool voicePromptWasPlaying)
 	{
 		voicePromptsAppendLanguageString(&currentLanguage->temperature);
 	}
-	snprintf(buffer, 17, "%d.%1d", (temperature / 10), (temperature % 10));
+	
+	if (settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT))
+	{
+		int tenthsDgFahrenheit = CelciusToFahrenheit(temperature);
+		snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%3d.%1d", (tenthsDgFahrenheit / 10), abs(tenthsDgFahrenheit % 10));
+	}
+	else
+		snprintf(buffer, 17, "%d.%1d", (temperature / 10), (temperature % 10));
+	
 	voicePromptsAppendString(buffer);
-	voicePromptsAppendLanguageString(&currentLanguage->celcius);
+	voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
 }
 
 ANNOUNCE_STATIC void announceBatteryVoltage(void)
@@ -2312,6 +2355,8 @@ static void announceQRG(uint32_t qrg, bool unit)
 static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool announceTx)
 {
 	bool duplex = (currentChannelData->txFreq != currentChannelData->rxFreq);
+	if (uiDataGlobal.reverseRepeater && duplex && announcePrompt)
+		voicePromptsAppendPrompt(PROMPT_REVERSE);
 
 	if (duplex && announcePrompt && announceRx)
 	{
@@ -2319,13 +2364,13 @@ static void announceFrequencyEx(bool announcePrompt, bool announceRx, bool annou
 	}
 
 	if (announceRx)
-		announceQRG(currentChannelData->rxFreq, true);
+		announceQRG(uiDataGlobal.reverseRepeater ? currentChannelData->txFreq : currentChannelData->rxFreq, true);
 
 	if (duplex && announceTx)
 	{
 		if (announcePrompt)
 			voicePromptsAppendPrompt(PROMPT_TRANSMIT);
-		announceQRG(currentChannelData->txFreq, true);
+		announceQRG(uiDataGlobal.reverseRepeater ? currentChannelData->rxFreq : currentChannelData->txFreq, true);
 	}
 }
 
@@ -2550,8 +2595,7 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 		{
 			announceVFOChannelName();
 		}
-		if (!lessVerbose)// At level 2, do not say FM or DMR, only say contact which will indicate DMR, no contact will presumably be fm.
-			announceRadioMode(voicePromptWasPlaying);
+		announceRadioMode(voicePromptWasPlaying);
 		if (voicePromptSequenceState == PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE)
 		{
 			break;
@@ -2564,6 +2608,10 @@ void announceItemWithInit(bool init, voicePromptItem_t item, audioPromptThreshol
 				voicePromptsAppendPrompt(PROMPT_SILENCE);
 				announceTS();
 			}
+		}
+		else
+		{
+			announceChannelDTMFContact( !voicePromptWasPlaying);
 		}
 		if ((currentChannelData->libreDMR_Power != 0) && (nonVolatileSettings.extendedInfosOnScreen & (INFO_ON_SCREEN_PWR & INFO_ON_SCREEN_BOTH)))
 		{
@@ -2790,40 +2838,18 @@ voicePromptsAppendStringEx(output,vpAnnounceCustomPrompts);
 }
 */
 
-static void announceLastDTMFContact(bool anouncePrompt)
-{
-	if (lastDialledDTMFContact.code[0]==0xff)
-		return; // no contact dialled recently.
-	
-	if (anouncePrompt)
-	{
-		voicePromptsAppendLanguageString(&currentLanguage->contact);
-	}
-	char buff[DTMF_CODE_MAX_LEN+1]; // DTMF may have 16 chars plus a null.
-
-	if (lastDialledDTMFContact.name[0]!=0 && lastDialledDTMFContact.name[0]!=0xff)
-	{
-		codeplugUtilConvertBufToString(lastDialledDTMFContact.name, buff, DTMF_CODE_MAX_LEN);
-	}
-	else
-	{
-		dtmfConvertCodeToChars(lastDialledDTMFContact.code, buff, DTMF_CODE_MAX_LEN); // convert the dtmfCode to numbers and letters.
-	}
-	voicePromptsAppendString(buff);	
-	voicePromptsAppendPrompt(PROMPT_SILENCE);
-}
-
 void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 {
 	voicePromptsInit();
 	announceItemWithInit(false, PROMPT_SEQUENCE_SCAN_TYPE, PROMPT_THRESHOLD_NEVER_PLAY_IMMEDIATELY); // since this function calling does the init and play.
 	AnnounceLastHeardContact();
 	if (isChannelScreen)
+	{
 		announceChannelName(true, true);
+	}
 	else
 		announceVFOChannelName();
 	
-
 	announceFrequency();
 	
 	uint32_t lFreq, hFreq;
@@ -2853,7 +2879,7 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 	}
 	else
 	{
-		announceLastDTMFContact(!voicePromptWasPlaying);
+		announceChannelDTMFContact(!voicePromptWasPlaying);
 		bool rxAndTxTonesAreTheSame = (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
 		&& (currentChannelData->rxTone ==currentChannelData->txTone);
 		if (currentChannelData->rxTone != CODEPLUG_CSS_TONE_NONE)
@@ -2883,6 +2909,8 @@ void AnnounceChannelSummary(bool voicePromptWasPlaying,  bool isChannelScreen)
 			voicePromptsAppendLanguageString(&currentLanguage->from_master);
 	
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
+		if (uiChannelModeIsReorderingChannels())
+			voicePromptsAppendLanguageString(&currentLanguage->reorder_channels);
 
 		announceZoneName(voicePromptWasPlaying);
 	}
@@ -3892,6 +3920,7 @@ bool ScanShouldSkipFrequency(uint32_t freq)
 	}
 	return false;	
 }
+
 static void PlayAndResetCustomVoicePromptIndex()
 {
 	if (customVoicePromptIndex==0xff) return;
@@ -3923,7 +3952,74 @@ static bool ForceUseOfVoiceTagIndex()
 	// This is being called from SK1+hash invocation so even though we might be focused on an edit, force the use of the voice tag index rather than any custom prompt.
 	return true;
 }
-			
+
+static bool customPromptReviewMode=false;
+static uint8_t reviewPromptIndex=1;
+static char reviewPhrase[SCREEN_LINE_BUFFER_SIZE] = "\0";
+static int reviewPhrasePos=0;
+static uint16_t reviewPromptDurationMS=0;
+#if !defined(PLATFORM_GD77S)
+static void ForceScreenRedraw(uiEvent_t *ev)
+{
+	keyboardReset();
+	ev->keys.key=0;
+	ev->buttons=0;
+	ev->events |=FUNCTION_EVENT;
+	ev->function = FUNC_REDRAW;
+}
+
+static void ShowReviewAudioClipScreen()
+{
+	ucClearBuf();
+	char buffer[SCREEN_LINE_BUFFER_SIZE] = "\0";
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%s %d", currentLanguage->promptReview, reviewPromptIndex);
+	menuDisplayTitle(buffer);
+	
+	snprintf(buffer, SCREEN_LINE_BUFFER_SIZE, "%s", reviewPhrase);
+	int phraseLen= strlen(reviewPhrase);
+	
+	for (int i=phraseLen; i < SCREEN_LINE_BUFFER_SIZE; ++i)
+	{
+		buffer[i]='_';
+	}
+	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, buffer, FONT_SIZE_3, TEXT_ALIGN_LEFT, false);
+	
+	ucRender();
+}
+#endif // #if !defined(PLATFORM_GD77S)
+
+bool ReviewPromptUpdateScreen(bool entryChanged, bool init, bool play)
+{
+	if (init)
+		voicePromptsInit();
+	if (entryChanged)
+	{
+		voicePromptsAppendInteger(reviewPromptIndex);
+		uint16_t vpLength=CustomVoicePromptExists(reviewPromptIndex);
+		if (vpLength > 0)
+			voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
+		else
+			voicePromptsAppendLanguageString(&currentLanguage->none);
+		reviewPromptDurationMS=(vpLength/9)*20; // ms.
+		if (GetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase, SCREEN_LINE_BUFFER_SIZE))
+		{
+			voicePromptsAppendPrompt(PROMPT_EQUALS);
+			voicePromptsAppendStringEx(reviewPhrase, vpAnnounceSpaceAndSymbols);
+		}
+		else
+			reviewPhrase[0] = '\0';
+		reviewPhrasePos=strlen(reviewPhrase);
+	}
+	#if !defined(PLATFORM_GD77S)
+	ShowReviewAudioClipScreen();
+#endif // #if !defined(PLATFORM_GD77S)
+
+	if (play)
+		voicePromptsPlay();
+	
+	return true;
+}			
+
 /*
 Handle custom voice prompts.
 While SK1 is being held down, keep track of, and combine, the digits being pressed (actually released) until SK1 is released
@@ -3941,8 +4037,8 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		PlayAndResetCustomVoicePromptIndex();
 		return true;
 	}
-	//SK1+* save to next available custom voice prompt slot.
-	if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_SHORTUP(ev->keys, KEY_STAR))
+	//SK1+long hold * save to next available custom voice prompt slot.
+	if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
 	{// save to the next available custom voice prompt slot.
 		customVoicePromptIndex=GetNextFreeVoicePromptIndex(false);
 		SaveCustomVoicePrompt(customVoicePromptIndex, phrase);
@@ -3950,6 +4046,32 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		keyboardReset(); // reset the keyboard also.
 		return true;
 	}
+	// SK1+* go into custom voice prompt review mode.
+	if ((ev->buttons & BUTTON_SK1) &&KEYCHECK_SHORTUP(ev->keys, KEY_STAR) && !voicePromptsGetEditMode())
+	{
+		if (customPromptReviewMode==false)
+		{
+			customPromptReviewMode=true;
+			voicePromptsInit();
+			voicePromptsAppendLanguageString(&currentLanguage->promptReview);
+			voicePromptsAppendLanguageString(&currentLanguage->on);
+			
+			editParams.editFieldType=EDIT_TYPE_ALPHANUMERIC;
+			editParams.editBuffer=reviewPhrase;
+			reviewPhrasePos=strlen(reviewPhrase);
+			editParams.cursorPos=&reviewPhrasePos;
+			editParams.maxLen=SCREEN_LINE_BUFFER_SIZE;
+			editParams.xPixelOffset=0;
+			editParams.yPixelOffset=0; // use default for menu.
+			keypadAlphaEnable = true;
+
+			ReviewPromptUpdateScreen(true, false, false);
+
+			voicePromptsPlay();
+		}
+		return true;
+	}
+
 	// SK1+# associate last played DMR with ID and save to contact.
 	if ((ev->buttons & BUTTON_SK1) && IsLastHeardContactRelevant() && KEYCHECK_SHORTUP(ev->keys, KEY_HASH))
 	{// associate last recorded DMR with last heard ID.
@@ -3972,6 +4094,150 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		menuSystemPushNewMenu(MENU_CONTACT_DETAILS);
 		return true;
 	}
+	
+	if (customPromptReviewMode && !voicePromptsGetEditMode())
+	{// This may get reset by a keyboard reset when saving a prompt.
+		if (!keypadAlphaEnable && (editParams.editFieldType == EDIT_TYPE_ALPHANUMERIC))
+			keypadAlphaEnable=true;
+		// red or green cancel.
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
+		{
+			// sk2+green go to audio edit mode.
+			if (BUTTONCHECK_DOWN(ev, BUTTON_SK1))
+			{
+				if (CustomVoicePromptExists(reviewPromptIndex))
+				{
+					voicePromptsCopyCustomPromptToEditBuffer(reviewPromptIndex);
+				}
+				customVoicePromptIndexToSave=reviewPromptIndex;
+				
+				voicePromptsSetEditMode(true, true);
+			}
+			else
+			{// save the prompt or the phrase or both as necessary.
+				customPromptReviewMode=false; // Exit custom prompt review mode.
+
+				voicePromptsInit();
+				bool newPromptSaved =false;
+				if (ReplayBufferContainsCustomVoicePrompt() && !CustomVoicePromptExists(reviewPromptIndex))
+				{
+					SaveCustomVoicePrompt(reviewPromptIndex, reviewPhrase);
+					newPromptSaved = true;
+				}
+				if (newPromptSaved || SetCustomVoicePromptPhrase(reviewPromptIndex, reviewPhrase))
+				{
+					voicePromptsAppendInteger(reviewPromptIndex);
+					voicePromptsAppendPrompt(VOICE_PROMPT_CUSTOM+reviewPromptIndex);
+					voicePromptsAppendPrompt(PROMPT_SILENCE);
+					voicePromptsAppendLanguageString(&currentLanguage->vp_saved);
+				}
+				else
+				{
+					voicePromptsAppendLanguageString(&currentLanguage->promptReview);
+					voicePromptsAppendLanguageString(&currentLanguage->off);
+				}
+				voicePromptsPlay();
+#if !defined(PLATFORM_GD77S)
+				ForceScreenRedraw(ev);
+#endif
+			}
+			return true;
+		}
+		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
+		{
+			customPromptReviewMode=false;
+			voicePromptsInit();
+			voicePromptsAppendLanguageString(&currentLanguage->promptReview);
+			voicePromptsAppendLanguageString(&currentLanguage->off);
+			voicePromptsPlay();
+#if !defined(PLATFORM_GD77S)
+			ForceScreenRedraw(ev);
+#endif
+						return true;
+		}
+		else if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_UP))
+		{
+			if (reviewPromptIndex < GetMaxCustomVoicePrompts()-5)
+				reviewPromptIndex+=5;
+			else
+				reviewPromptIndex=GetMaxCustomVoicePrompts();
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
+			return true;
+		}
+		else if (KEYCHECK_LONGDOWN_REPEAT(ev->keys, KEY_DOWN))
+		{
+			if (reviewPromptIndex > 5)
+				reviewPromptIndex-=5;
+			else
+				reviewPromptIndex=1;
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
+			return true;
+		}
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_UP))
+		{
+			if (reviewPromptIndex < GetMaxCustomVoicePrompts())
+				reviewPromptIndex++;
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
+			return true;
+		}
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_DOWN))
+		{
+			if (reviewPromptIndex > 1)
+				reviewPromptIndex--;
+			
+			ReviewPromptUpdateScreen(true, true, true);
+			
+			return true;
+		}
+		else if (repeatVoicePromptOnSK1(ev))
+		{
+			return true;
+		}
+				else if (KEYCHECK_LONGDOWN(ev->keys, KEY_STAR))
+		{// overwrite current prompt with content of record buffer.
+			if (ReplayBufferContainsCustomVoicePrompt())
+				SaveCustomVoicePrompt(reviewPromptIndex, reviewPhrase);
+			keyboardReset();
+			return true;
+		}
+		else if (KEYCHECK_LONGDOWN(ev->keys, KEY_0))
+		{// delete voice prompt.
+			ReplayInit();
+			SaveCustomVoicePrompt(reviewPromptIndex, 0);
+			keyboardReset();
+			return true;
+		}
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_HASH) && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
+		{
+			voicePromptsInit();
+			if (CustomVoicePromptExists(reviewPromptIndex))
+			{
+				AnnounceClipPos(reviewPromptDurationMS);
+			}
+			else if (ReplayBufferContainsCustomVoicePrompt())
+			{
+				AnnounceEditBufferLength();
+			}
+
+			return true;
+		}
+		else if (HandleEditEvent(ev, &editParams, false))
+		{
+			bool moved=KEYCHECK_SHORTUP(ev->keys, KEY_LEFT) || KEYCHECK_SHORTUP(ev->keys, KEY_RIGHT) || (ev->keys.event == KEY_MOD_PRESS);
+			if (moved)
+			{
+				ReviewPromptUpdateScreen(false, false, false);
+				editUpdateCursor(&editParams, moved, true);
+			}
+			return true;
+		}
+	}
 	bool IsVoicePromptEditMode=voicePromptsGetEditMode();
 	if (IsVoicePromptEditMode)
 	{
@@ -3979,31 +4245,27 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		{// Try and determine where to save the edited audio.
 			if (ForceUseOfVoiceTagIndex())
 				customVoicePromptIndexToSave=contactListContactData.ringStyle;
+			bool useReviewPhrase=(customVoicePromptIndexToSave==reviewPromptIndex) && reviewPhrase[0] !=0;
 			if (customVoicePromptIndexToSave!=0xff)
-				SaveCustomVoicePrompt(customVoicePromptIndexToSave, 0);
+				SaveCustomVoicePrompt(customVoicePromptIndexToSave, useReviewPhrase ? reviewPhrase : 0);
+			voicePromptsSetEditMode(false, customVoicePromptIndexToSave==0xff); // only announce if we didn't save the prompt.
 			customVoicePromptIndexToSave=0xff;
-			voicePromptsSetEditMode(false);
-			keyboardReset();
-			ev->keys.key=0;
-			ev->buttons=0;
-			ev->events |=FUNCTION_EVENT;
-			ev->function = FUNC_REDRAW;
-			
+
+#if !defined(PLATFORM_GD77S)
+			ForceScreenRedraw(ev);
+#endif
 			return false; // so next menu handler gets called and screen gets updated.
 		}
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_RED))
 		{
 			voicePromptsAdjustEnd(false, 0, true);
 			voicePromptsAdjustEnd(true, 0, true);
-			voicePromptsSetEditMode(false);
+			voicePromptsSetEditMode(false, true);
 
 			customVoicePromptIndex=0xff;
-			keyboardReset();
-			ev->keys.key=0;
-			ev->buttons=0;
-			ev->events |=FUNCTION_EVENT;
-			ev->function = FUNC_REDRAW;
-			
+#if !defined(PLATFORM_GD77S)
+				ForceScreenRedraw(ev);
+#endif
 			return false; // so next menu handler gets called and screen is updated.
 		}
 		if ((ev->keys.key==0) && BUTTONCHECK_SHORTUP(ev, BUTTON_SK1))
@@ -4051,19 +4313,19 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 	if (!GetDMRContinuousSave() && (menuSystemGetCurrentMenuNumber() != MENU_CONTACT_DETAILS))
 		SetDMRContinuousSave(true);
 	// SK1 is not being held down on its own.
-	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode;
+	if (((ev->buttons & BUTTON_SK1) && (ev->buttons & BUTTON_SK2)==0)==false) return IsVoicePromptEditMode || customPromptReviewMode;
 	// SK1+green enter edit mode.
 	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) && !IsVoicePromptEditMode)
 	{
-		voicePromptsSetEditMode(true); // so nothing else gets written to circular buffer while we're allowing edits.
+		voicePromptsSetEditMode(true, true);
 		return true;
 	}
 	
 	// No number is going down, coming up or being held.
-	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return IsVoicePromptEditMode;
+	if (!KEYCHECK_PRESS_NUMBER(ev->keys) && !KEYCHECK_DOWN_NUMBER(ev->keys) && !KEYCHECK_SHORTUP_NUMBER(ev->keys)) return IsVoicePromptEditMode || customPromptReviewMode;
 	
 	int keyval=menuGetKeypadKeyValueEx(ev, true, false);
-	if (keyval > 9) return IsVoicePromptEditMode;
+	if (keyval > 9) return IsVoicePromptEditMode || customPromptReviewMode;
 	
 	if (KEYCHECK_LONGDOWN_NUMBER(ev->keys))
 	{
@@ -4103,7 +4365,7 @@ bool HandleCustomPrompts(uiEvent_t *ev, char* phrase)
 		return true;
 	}
 		
-	return false;
+	return customPromptReviewMode;
 }
 
 void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
@@ -4117,4 +4379,36 @@ void ShowEditAudioClipScreen(uint16_t start, uint16_t end)
 	ucPrintCore(0, DISPLAY_Y_POS_MENU_START, buffer, FONT_SIZE_3, TEXT_ALIGN_LEFT, false);
 	
 	ucRender();
+}
+
+void announceReverseToggle()
+{
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_2)
+		return;
+	voicePromptsInit();
+	voicePromptsAppendPrompt(PROMPT_REVERSE);
+
+		if (uiDataGlobal.reverseRepeater)
+		voicePromptsAppendLanguageString(&currentLanguage->on);
+	else
+		voicePromptsAppendLanguageString(&currentLanguage->off);
+	voicePromptsPlay();
+}
+
+void 	AnnounceClipPos(uint16_t ms)
+{
+// caller announces start or end as appropriate.
+	uint16_t s=ms/1000;
+	uint16_t f=ms%1000;
+	char num[6];
+	snprintf(num, 6, "%u.%03u", s, f);
+	removeUnnecessaryZerosFromVoicePrompts((char*)&num);
+	voicePromptsAppendString(num);
+	voicePromptsAppendPrompt(PROMPT_SECONDS);
+	
+	voicePromptsPlay();
+}
+bool CustomPromptReviewMode()
+{
+	return customPromptReviewMode;
 }

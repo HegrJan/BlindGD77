@@ -43,6 +43,7 @@
 ANNOUNCE_STATIC void announceRadioMode(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceZoneName(bool voicePromptWasPlaying);
 ANNOUNCE_STATIC void announceContactNameTgOrPc(bool voicePromptWasPlaying);
+ANNOUNCE_STATIC void announceChannelDTMFContact(bool anouncePrompt);
 ANNOUNCE_STATIC void announcePowerLevel(bool voicePromptWasPlaying);
 void announceEcoLevel(bool voicePromptWasPlaying);
 void announceMicGain(bool announcePrompt, bool announceValue, bool isDigital);
@@ -210,8 +211,16 @@ void SetBit(uint8_t* bits, int whichBit, bool set);
 void resetOriginalSettingsData(void);
 void AnnounceLastHeardContact();
 void AnnounceLastHeardContactIfNeeded();
+void announceReverseToggle();
+void announceTemperature(bool voicePromptWasPlaying);
+
 bool ScanShouldSkipFrequency(uint32_t freq);
 bool HandleCustomPrompts(uiEvent_t *ev, char* phrase);
 void removeUnnecessaryZerosFromVoicePrompts(char *str);
 void ShowEditAudioClipScreen(uint16_t start, uint16_t end);
+// Converts tenths of a degree celcius to tenths of a degree fahrenheit.
+int CelciusToFahrenheit(int tenthsOfADegreeCelcius);
+bool PlayCustomVoicePromptAndPhrase(int customPromptIndex, bool init, bool play);
+void 	AnnounceClipPos(uint16_t ms);
+bool CustomPromptReviewMode();
 #endif

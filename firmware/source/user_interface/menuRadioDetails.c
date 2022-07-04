@@ -239,7 +239,7 @@ static void handleEvent(uiEvent_t *ev)
 			menuSystemPopPreviousMenu();
 			return;
 		}		
-		else if (HandleEditEvent(ev, &editParams))
+		else if (HandleEditEvent(ev, &editParams, true))
 		{
 			updateScreen(false, editParams.allowedToSpeakUpdate);
 		return; 

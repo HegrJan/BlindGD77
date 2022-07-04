@@ -60,7 +60,6 @@ struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
 struct_codeplugContact_t contactListContactData;
 struct_codeplugDTMFContact_t contactListDTMFContactData;
-struct_codeplugDTMFContact_t lastDialledDTMFContact={0};
 struct_codeplugChannel_t settingsVFOChannel[2];// VFO A and VFO B from the codeplug.
 int settingsUsbMode = USB_MODE_CPS;
 
@@ -197,6 +196,7 @@ bool settingsLoadSettings(void)
 		nonVolatileSettings.voicePromptRate=0; // default, no change, each increment of 1 increases by 10%
 	if (nonVolatileSettings.ctcssSqlTail > 50)
 		nonVolatileSettings.ctcssSqlTail=35;
+	
 	return hasRestoredDefaultsettings;
 }
 
@@ -355,6 +355,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.dtmfVol=10;
 	nonVolatileSettings.endRXBeep=0;
 	nonVolatileSettings.ctcssSqlTail=35; // tenths of a second.
+	nonVolatileSettings.sortFlags = 0;
 	settingsDirty = true;
 
 	settingsSaveSettings(false);
@@ -570,3 +571,4 @@ int16_t settingsGetCurrentChannelIndexForZone(int16_t zoneIndex)
 	
 	return nonVolatileSettings.zoneChannelIndices[zoneIndex];
 }
+
