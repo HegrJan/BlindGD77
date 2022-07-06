@@ -18,6 +18,8 @@ Plese note: The license and copyright information are set out in the file called
 A key function summary is included in the docs folder called "Key Function Summary.rtf"
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
+6 July 2022
+1. Fixed issue of voltage being repeated on Radio Info screen at voice prompt level 3. It should now only speak when the voltage changes.
 
 3 July 2022
 Please update your Voice Prompts from this archive.
@@ -73,8 +75,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 19.2.3. In Review mode, long hold sk2 will either save what is in the record buffer to an empty slot, or copy what is in that slot back to the record buffer for editing.
     19.2.4. Long hold SK2 in record mode will save to the last prompt reviewed's slot. This will overwrite what is in the slot, useful for replacing a prompt but potentially dangerous, but done by request.
 	19.2.5. Added DEL##1 through DEL##32 to delete a custom voice prompt to the list of virtual keypad commands.
-20 Added my recorded testimony to the Joseph's writings folder.
-21. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
+20. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
  
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.
