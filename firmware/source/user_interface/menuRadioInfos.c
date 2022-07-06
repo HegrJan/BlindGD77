@@ -31,11 +31,10 @@
 #include "utils.h"
 
 static SemaphoreHandle_t battSemaphore = NULL;
-
 #define VOLTAGE_BUFFER_LEN 128
 static const float BATTERY_CRITICAL_VOLTAGE = 66.7f;
 static const int TEMPERATURE_CRITICAL = 500; // 50°C
-static float prevAverageBatteryVoltage = 0.0f;
+static int prevAverageBatteryVoltage = 0;
 static int prevTemperature = 0;
 
 static menuStatus_t menuRadioInfosExitCode = MENU_STATUS_SUCCESS;
@@ -151,19 +150,22 @@ static void updateScreen(bool forceRedraw)
 {
 	static bool blink = false;
 	bool renderArrowOnly = true;
-
+	
+	
+	bool voltageChangeRequiresUpdate = ((int)averageBatteryVoltage!=prevAverageBatteryVoltage) || (averageBatteryVoltage < (BATTERY_CRITICAL_VOLTAGE + (nonVolatileSettings.batteryCalibration - 5))) || forceRedraw;
+	prevAverageBatteryVoltage=(int)averageBatteryVoltage; // use int as we want rounding for comparison.
+	
 	switch (displayMode)
 	{
 		case RADIO_INFOS_BATTERY_LEVEL:
 		{
-			if ((prevAverageBatteryVoltage != averageBatteryVoltage) || (averageBatteryVoltage < (BATTERY_CRITICAL_VOLTAGE + (nonVolatileSettings.batteryCalibration - 5))) || forceRedraw)
+			if (voltageChangeRequiresUpdate)
 			{
 				char buffer[SCREEN_LINE_BUFFER_SIZE];
 				int volts, mvolts;
 				const int x = 88;
 				const int battLevelHeight = (DISPLAY_SIZE_Y - 28);
 
-				prevAverageBatteryVoltage = averageBatteryVoltage;
 				renderArrowOnly = false;
 
 				if (forceRedraw)
@@ -207,7 +209,7 @@ static void updateScreen(bool forceRedraw)
 
 				if (voicePromptsIsPlaying() == false)
 				{
-					updateVoicePrompts(nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3, false);
+					updateVoicePrompts(voltageChangeRequiresUpdate && (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3), false);
 				}
 			}
 
@@ -306,7 +308,7 @@ static void updateScreen(bool forceRedraw)
 
 			if (voicePromptsIsPlaying() == false)
 			{
-				updateVoicePrompts(nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3, false);
+				updateVoicePrompts(voltageChangeRequiresUpdate && (nonVolatileSettings.audioPromptMode == AUDIO_PROMPT_MODE_VOICE_LEVEL_3), false);
 			}
 		}
 		break;
