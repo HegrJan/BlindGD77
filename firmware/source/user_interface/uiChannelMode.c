@@ -89,6 +89,8 @@ typedef enum
 	GD77S_OPTION_EDIT_START,
 	GD77S_OPTION_EDIT_END,
 	GD77S_OPTION_TEMPERATURE_UNIT,
+	GD77S_OPTION_TEMPERATURE_CALIBRATION, 
+	GD77S_OPTION_BATTERY_CALIBRATION,
 	GD77S_OPTION_FIRMWARE_INFO,
 	GD77S_OPTION_MAX
 } 	GD77S_OPTIONS_t;
@@ -3834,6 +3836,25 @@ static void AnnounceGD77SOption(bool alwaysAnnounceOptionName, bool clearPriorPr
 			voicePromptsAppendLanguageString(&currentLanguage->temperature);
 			voicePromptsAppendLanguageString(settingsIsOptionBitSet(BIT_TEMPERATURE_UNIT) ? &currentLanguage->fahrenheit : &currentLanguage->celcius);
 			break;
+		case GD77S_OPTION_TEMPERATURE_CALIBRATION:
+		{
+			int absValue = abs(nonVolatileSettings.temperatureCalibration);
+			voicePromptsAppendLanguageString(&currentLanguage->temperature_calibration);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%c%d.%d", (nonVolatileSettings.temperatureCalibration == 0 ? ' ' :
+				(nonVolatileSettings.temperatureCalibration > 0 ? '+' : '-')), ((absValue) / 2), ((absValue % 2) * 5));
+			voicePromptsAppendString(rightSideVar);
+			voicePromptsAppendLanguageString(&currentLanguage->celcius);
+			break;
+		}
+		case GD77S_OPTION_BATTERY_CALIBRATION:
+		{
+			int batCal = nonVolatileSettings.batteryCalibration - 5;
+			voicePromptsAppendLanguageString(&currentLanguage->battery_calibration);
+			snprintf(rightSideVar, SCREEN_LINE_BUFFER_SIZE, "%c0.%d", (batCal == 0 ? ' ' : (batCal > 0 ? '+' : '-')), abs(batCal));
+			voicePromptsAppendString(rightSideVar);
+			voicePromptsAppendPrompt(PROMPT_VOLTS);
+			break;
+		}
 		case GD77S_OPTION_MAX:
 			return;
 	};
@@ -5052,6 +5073,46 @@ static void SetGD77S_GlobalOption(int dir) // 0 default, 1 increment, -1 decreme
 				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, true);
 			else if (dir <= 0)
 				settingsSetOptionBit(BIT_TEMPERATURE_UNIT, false);
+			break;
+		case GD77S_OPTION_TEMPERATURE_CALIBRATION:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.temperatureCalibration < 20)
+				{
+					settingsIncrement(nonVolatileSettings.temperatureCalibration, 1);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.temperatureCalibration > -20)
+				{
+					settingsDecrement(nonVolatileSettings.temperatureCalibration, 1);
+				}
+			}
+			else
+			{
+				settingsSet(nonVolatileSettings.temperatureCalibration, 0);
+			}
+			break;
+		case GD77S_OPTION_BATTERY_CALIBRATION:
+			if (dir > 0)
+			{
+				if (nonVolatileSettings.batteryCalibration < 10) // = +0.5V as val is (batteryCalibration -5 ) /10
+				{
+					settingsIncrement(nonVolatileSettings.batteryCalibration, 1);
+				}
+			}
+			else if (dir < 0)
+			{
+				if (nonVolatileSettings.batteryCalibration > 0)
+				{
+					settingsDecrement(nonVolatileSettings.batteryCalibration, 1);
+				}
+			}
+			else
+			{
+				settingsSet(nonVolatileSettings.batteryCalibration, 5);
+			}
 			break;
 		case GD77S_OPTION_MAX:
 			return;
