@@ -18,8 +18,9 @@ Plese note: The license and copyright information are set out in the file called
 A key function summary is included in the docs folder called "Key Function Summary.rtf"
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
-6 July 2022
+8 July 2022
 1. Fixed issue of voltage being repeated on Radio Info screen at voice prompt level 3. It should now only speak when the voltage changes.
+2. Added Temperature and Battery Calibration options to GD77S Options2 menu.
 
 3 July 2022
 Please update your Voice Prompts from this archive.
