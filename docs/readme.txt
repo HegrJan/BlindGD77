@@ -18,6 +18,17 @@ Plese note: The license and copyright information are set out in the file called
 A key function summary is included in the docs folder called "Key Function Summary.rtf"
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
+
+16 July 2022:
+1. Implemented new Zone Lock feature.
+Press and hold * while powering on to toggle the zone lock. This will either lock the radio to the last active zone, or unlock the radio.
+When locked:
+* You can't change zones either from the menu, the channel screen or use a quick key to jump to a channel in a different zone.
+* You can't scan all zones.
+* You can't increase or decrease power. 
+* You can't change bandwidth.
+* You can't enter VFO mode.
+
 8 July 2022
 1. Fixed issue of voltage being repeated on Radio Info screen at voice prompt level 3. It should now only speak when the voltage changes.
 2. Added Temperature and Battery Calibration options to GD77S Options2 menu.
