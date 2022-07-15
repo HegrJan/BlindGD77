@@ -400,9 +400,17 @@ void mainTask(void *data)
 	watchdogInit(menuRadioInfosPushBackVoltage);
 	// If hash is held down during boot, ensure Voice Prompts are on if not already.
 	bool forceVoicePromptsOn=false;
-	if ((keyboardRead()&SCAN_HASH) && (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
+	uint32_t kbdState=keyboardRead();
+	if ((kbdState&SCAN_HASH) && (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
 	{
 		forceVoicePromptsOn=true;
+	}
+	if (kbdState&SCAN_STAR)
+	{
+		// toggle zone lock
+		bool zoneLock= settingsIsOptionBitSet(BIT_ZONE_LOCK) ? true : false;
+		zoneLock=!zoneLock;
+		settingsSetOptionBit(BIT_ZONE_LOCK, zoneLock);
 	}
 
 	soundInitBeepTask();
@@ -1002,19 +1010,12 @@ void mainTask(void *data)
 			{
 				keyFunction = codeplugGetQuickkeyFunctionID(keys.key);
 				int menuFunction = QUICKKEY_MENUID(keyFunction);
-
-#if 0 // For demo screen
-				if (keys.key == '0')
+				if (settingsIsOptionBitSet(BIT_ZONE_LOCK) && (menuFunction == MENU_ZONE_LIST))
 				{
-						static uint8_t demo = 90;
-						keyFunction = (UI_HOTSPOT_MODE << 8) | demo; // Hotspot demo mode (able to take screengrabs)
-
-						if (++demo > 99)
-						{
-							demo = 90;
-						}
+					menuFunction = 0;
+					soundSetMelody(MELODY_ERROR_BEEP);
 				}
-#endif
+
 
 #if defined(PLATFORM_RD5R)
 				if (keys.key == '5')

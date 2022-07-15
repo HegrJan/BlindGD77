@@ -1656,7 +1656,7 @@ static void handleEvent(uiEvent_t *ev)
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;
 				uiChannelModeUpdateScreen(0);
 			}
-			else
+			else if (!settingsIsOptionBitSet(BIT_ZONE_LOCK))
 			{
 #if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801A)
 				menuSystemSetCurrentMenu(UI_VFO_MODE);
@@ -1665,7 +1665,7 @@ static void handleEvent(uiEvent_t *ev)
 			}
 		}
 #if defined(PLATFORM_DM1801) || defined(PLATFORM_RD5R)
-		else if (KEYCHECK_SHORTUP(ev->keys, KEY_VFO_MR))
+		else if (KEYCHECK_SHORTUP(ev->keys, KEY_VFO_MR) && !settingsIsOptionBitSet(BIT_ZONE_LOCK))
 		{
 			StopDualWatch(true); // Ensure dual watch is stopped.
 
@@ -1881,6 +1881,11 @@ static void handleEvent(uiEvent_t *ev)
 			}
 			else if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))  // Toggle Channel Mode
 			{
+				if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+				{
+					nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+					return;	
+				}
 				if (trxGetMode() == RADIO_MODE_ANALOG)
 				{
 					currentChannelData->chMode = RADIO_MODE_DIGITAL;
@@ -1925,24 +1930,6 @@ static void handleEvent(uiEvent_t *ev)
 						menuChannelExitStatus |= MENU_STATUS_FORCE_FIRST;
 					}
 					announceItem(PROMPT_SEQUENCE_TS,PROMPT_THRESHOLD_2);
-				}
-				else
-				{
-					if ((currentChannelData->flag4 & 0x02) == 0x02)
-					{
-						currentChannelData->flag4 &= ~0x02;// clear 25kHz bit
-					}
-					else
-					{
-						currentChannelData->flag4 |= 0x02;// set 25kHz bit
-						nextKeyBeepMelody = (int *)MELODY_KEY_BEEP_FIRST_ITEM;
-					}
-					// ToDo announce VP for bandwidth perhaps
-
-					trxSetModeAndBandwidth(RADIO_MODE_ANALOG, ((currentChannelData->flag4 & 0x02) == 0x02));
-					soundSetMelody(MELODY_NACK_BEEP);
-					headerRowIsDirty = true;
-					uiChannelModeUpdateScreen(0);
 				}
 			}
 		}
@@ -1994,6 +1981,12 @@ static void handleEvent(uiEvent_t *ev)
 			
 			if (BUTTONCHECK_DOWN(ev, BUTTON_SK2))
 			{
+				if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+				{
+					nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+					return;
+				}
+
 				selectPrevNextZone(false);
 				menuSystemPopAllAndDisplaySpecificRootMenu(UI_CHANNEL_MODE, false);
 				uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN; // Force screen redraw
@@ -2164,6 +2157,12 @@ static void handleUpKey(uiEvent_t *ev)
 	bool sk2held=BUTTONCHECK_DOWN(ev, BUTTON_SK2);
 	if (sk2held || longHoldUp)
 	{
+		if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+		{
+			nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+			return;
+		}
+
 		// long hold sk2+up scan all zones.
 		if (longHoldUp)
 		{

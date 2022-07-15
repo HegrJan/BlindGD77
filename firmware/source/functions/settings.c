@@ -173,8 +173,8 @@ bool settingsLoadSettings(void)
 
 	rxPowerSavingSetLevel(nonVolatileSettings.ecoLevel);
 
-	// Scan On Boot is enabled, but latest mode was VFO, switch back to Channel Mode
-	if (settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) && (nonVolatileSettings.initialMenuNumber != UI_CHANNEL_MODE))
+	// Scan On Boot is enabled or zone was locked, but latest mode was VFO, switch back to Channel Mode
+	if ((settingsIsOptionBitSet(BIT_SCAN_ON_BOOT_ENABLED) || settingsIsOptionBitSet(BIT_ZONE_LOCK)) && (nonVolatileSettings.initialMenuNumber != UI_CHANNEL_MODE))
 	{
 		settingsSet(nonVolatileSettings.initialMenuNumber, UI_CHANNEL_MODE);
 	}

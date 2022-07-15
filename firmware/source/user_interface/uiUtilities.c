@@ -1954,6 +1954,11 @@ bool AtMaximumPower()
 
 bool increasePowerLevel(bool allowFullPower, bool goStraightToMaximum)
 {
+	if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+	{
+		nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+		return false;
+	}
 	bool powerHasChanged = false;
 
 	if (currentChannelData->libreDMR_Power != 0x00)
@@ -1995,6 +2000,11 @@ bool increasePowerLevel(bool allowFullPower, bool goStraightToMaximum)
 
 bool decreasePowerLevel(bool goStraightToMinimum)
 {
+	if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+	{
+		nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+		return false;
+	}
 	bool powerHasChanged = false;
 
 	if (currentChannelData->libreDMR_Power != 0x00)
@@ -3644,6 +3654,11 @@ void resetOriginalSettingsData(void)
 
 bool ToggleFMBandwidth(uiEvent_t *ev, struct_codeplugChannel_t* channel)
 {
+	if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+	{
+		nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+		return false;
+	}
 	if (!channel)
 		return false;
 	

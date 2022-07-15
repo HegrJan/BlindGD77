@@ -136,6 +136,12 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		if ((QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) && (QUICKKEY_LONGENTRYID(ev->function) > 0) && (QUICKKEY_LONGENTRYID(ev->function) <= menuDataGlobal.endIndex))
 		{
+			if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+			{
+				nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+				return;
+			}
+
 			menuDataGlobal.currentItemIndex = QUICKKEY_LONGENTRYID(ev->function)-1;
 			setZoneToUserSelection();
 		}

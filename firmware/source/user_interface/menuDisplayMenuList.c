@@ -145,6 +145,12 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		if ((QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) && (QUICKKEY_ENTRYID(ev->function) < menuDataGlobal.endIndex))
 		{
+			if (settingsIsOptionBitSet(BIT_ZONE_LOCK) && (QUICKKEY_ENTRYID(ev->function) == MENU_ZONE_LIST))
+			{
+				nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+				return;
+			}
+
 			menuDataGlobal.currentItemIndex = QUICKKEY_ENTRYID(ev->function);
 			updateScreen(false);
 		}
@@ -167,6 +173,12 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		if (menuDataGlobal.currentMenuList[menuDataGlobal.currentItemIndex].menuNum != -1)
 		{
+			if (settingsIsOptionBitSet(BIT_ZONE_LOCK) && (menuDataGlobal.currentMenuList[menuDataGlobal.currentItemIndex].menuNum==MENU_ZONE_LIST))
+			{
+				nextKeyBeepMelody = (int *)MELODY_ERROR_BEEP;
+				return;
+			}
+
 			menuSystemPushNewMenu(menuDataGlobal.currentMenuList[menuDataGlobal.currentItemIndex].menuNum);
 		}
 		return;
