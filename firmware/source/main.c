@@ -294,6 +294,24 @@ static void settingsUpdateAudioAlert(void)
 		soundSetMelody(MELODY_ACK_BEEP);
 	}
 }
+
+static void zoneLockToggleAudioAlert()
+{
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+	{
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->zone);
+		if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+			voicePromptsAppendLanguageString(&currentLanguage->locked);
+		else
+			voicePromptsAppendLanguageString(&currentLanguage->unlocked);
+		voicePromptsPlay();
+	}
+	else
+	{
+		soundSetMelody(settingsIsOptionBitSet(BIT_ZONE_LOCK) ? MELODY_ACK_BEEP : MELODY_NACK_BEEP);
+	}
+}
 #endif
 
 void mainTask(void *data)
@@ -405,14 +423,16 @@ void mainTask(void *data)
 	{
 		forceVoicePromptsOn=true;
 	}
+#if !defined(PLATFORM_GD77S)
 	if (kbdState&SCAN_STAR)
 	{
 		// toggle zone lock
 		bool zoneLock= settingsIsOptionBitSet(BIT_ZONE_LOCK) ? true : false;
 		zoneLock=!zoneLock;
 		settingsSetOptionBit(BIT_ZONE_LOCK, zoneLock);
+		addTimerCallback(zoneLockToggleAudioAlert, 250, MENU_ANY, false);// Need to delay playing this for a while, because otherwise it may get played before the volume is turned up enough to hear it.
 	}
-
+#endif // !defined(PLATFORM_GD77S)
 	soundInitBeepTask();
 
 #if defined(USING_EXTERNAL_DEBUGGER)
