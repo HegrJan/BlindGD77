@@ -53,7 +53,7 @@ static struct_codeplugContact_t     contact;
 static struct_codeplugDTMFContact_t dtmfContact;
 
 static int contactListType;
-static int contactCallType;
+static int contactCallType=CONTACT_CALLTYPE_ANY;
 static contactListState_t contactListDisplayState;
 static contactListState_t contactListOverrideState = MENU_CONTACT_LIST_DISPLAY;
 static int menuContactListTimeout; // Action result screen autohide timeout (or it will instantly disappear if RED or GREEN is pressed)
@@ -63,7 +63,7 @@ static int contactListEntryCount;
 static int submenuEntryCount;
 static bool sortAfterCreateOrEditContact=false;
 
-static const char * const *calltypeVoices[3] = { NULL, NULL, NULL };
+static const char * const *calltypeVoices[4] = { NULL, NULL, NULL, NULL };
 
 static void UpdateChannelWithLastReferencedContact()
 {
@@ -121,6 +121,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 		calltypeVoices[0] = &currentLanguage->group_call;
 		calltypeVoices[1] = &currentLanguage->private_call;
 		calltypeVoices[2] = &currentLanguage->all_call;
+		calltypeVoices[3] = &currentLanguage->all;
 
 		menuContactListTimeout = 0;
 
@@ -135,7 +136,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 				bool contactListTypeLocal = ((currentMenu == MENU_CONTACT_LIST) || ((currentMenu == MENU_CONTACT_QUICKLIST) && (trxGetMode() != RADIO_MODE_ANALOG))) ? MENU_CONTACT_LIST_CONTACT_DIGITAL : MENU_CONTACT_LIST_CONTACT_DTMF;
 				if (contactListType!=contactListTypeLocal)
 				contactListType=contactListTypeLocal;
-				contactCallType = CONTACT_CALLTYPE_TG;
+				contactCallType = CONTACT_CALLTYPE_ANY;
 
 				dtmfSequenceReset();
 			}
@@ -144,7 +145,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
 					codeplugContactGetDataForIndex(uiDataGlobal.currentSelectedContactIndex, &contactListContactData);
-					contactCallType = contactListContactData.callType;
+					//contactCallType = contactListContactData.callType;
 				}
 				else
 				{
@@ -230,7 +231,7 @@ static void updateScreen(bool isFirstRun)
 	switch (contactListDisplayState)
 	{
 		case MENU_CONTACT_LIST_DISPLAY:
-			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactCallType : 3)]);
+			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactCallType : 4)]);
 
 			if (menuDataGlobal.endIndex == 0)
 			{
@@ -393,7 +394,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
-					contactCallType = (contactCallType + 1) % (CONTACT_CALLTYPE_ALL + 1);
+					contactCallType = (contactCallType + 1) % (CONTACT_CALLTYPE_ANY + 1);
 					reloadContactList(contactListType);
 
 					voicePromptsInit();

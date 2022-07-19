@@ -848,6 +848,9 @@ int codeplugContactsGetCount(uint32_t callType) // 0:TG 1:PC 2:ALL
 		case CONTACT_CALLTYPE_ALL:
 			return codeplugContactsCache.numALLContacts;
 			break;
+		case CONTACT_CALLTYPE_ANY:
+			return codeplugContactsCache.numTGContacts + codeplugContactsCache.numPCContacts + codeplugContactsCache.numALLContacts;
+			break;
 	}
 
 	return 0; // Should not happen
@@ -874,7 +877,7 @@ int codeplugContactGetDataForNumberInType(int number, uint32_t callType, struct_
 
 	for (int i = 0; i < numContacts; i++)
 	{
-		if ((codeplugContactsCache.contactsLookupCache[i].tgOrPCNum >> 24) == callType)
+		if (((codeplugContactsCache.contactsLookupCache[i].tgOrPCNum >> 24) == callType) || (callType==CONTACT_CALLTYPE_ANY))
 		{
 			number--;
 		}
@@ -1778,6 +1781,7 @@ void SortDigitalContacts()
 		codeplugContactGetDataForIndex(realIndex, &contact);
 		codeplugUtilConvertBufToString(contact.name, sortBuffer[index].name, 16);
 		sortBuffer[index].index=realIndex;
+		sortBuffer[index].numericField=codeplugContactsCache.contactsLookupCache[index].tgOrPCNum;
 	}	
 		
 	qsort(sortBuffer, digitalContacts, sizeof(sortStruct_t), sortCMPFunction);
@@ -1785,6 +1789,7 @@ void SortDigitalContacts()
 	for (int i=0; i <digitalContacts; ++i)
 	{
 		codeplugContactsCache.contactsLookupCache[i].index = sortBuffer[i].index;
+		codeplugContactsCache.contactsLookupCache[i].tgOrPCNum = sortBuffer[i].numericField;
 	}
 }
 
