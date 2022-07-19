@@ -28,9 +28,10 @@ When locked:
 * You can't increase or decrease power. 
 * You can't change bandwidth.
 * You can't enter VFO mode.
-2. Digital Contact enhancements:
-2.1. The digital contacts list now defaults to showing all contacts (i.e. talk groups, private contacts and those designated as All Call). Pressing # will now cycle from all, to group call, to private call, to all call and back to all.
-2.2. Fixed an issue whereby sorting digital contacts by name would not properly honour the callType filter and hence private calls could be displayed when group call was selected.
+2. Digital Contact list enhancements:
+2.1. There is now an  All Contacts option when cycling the list filter with the  hash key. When this option is selected, the list will contain all talkgroups, private call IDS, and all call IDS. I.e. Pressing # will now cycle from group call, to private call, to all call, to all contacts.
+2.2. When you cycle the list filter with the hash key, your preference is remembered even when power cycling the radio.
+2.3. Fixed an issue whereby sorting digital contacts by name would not properly honour the callType filter and hence private calls could be displayed when group call was selected.
 
 8 July 2022
 1. Fixed issue of voltage being repeated on Radio Info screen at voice prompt level 3. It should now only speak when the voltage changes.

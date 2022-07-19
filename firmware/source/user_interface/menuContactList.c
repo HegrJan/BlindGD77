@@ -53,7 +53,6 @@ static struct_codeplugContact_t     contact;
 static struct_codeplugDTMFContact_t dtmfContact;
 
 static int contactListType;
-static int contactCallType=CONTACT_CALLTYPE_ANY;
 static contactListState_t contactListDisplayState;
 static contactListState_t contactListOverrideState = MENU_CONTACT_LIST_DISPLAY;
 static int menuContactListTimeout; // Action result screen autohide timeout (or it will instantly disappear if RED or GREEN is pressed)
@@ -97,7 +96,7 @@ static void reloadContactList(contactListContactType_t type)
 		codeplugInitContactsCache(); // force it to be reloaded unsorted!
 	}
 
-	menuDataGlobal.endIndex = (type == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? codeplugContactsGetCount(contactCallType) : codeplugDTMFContactsGetCount();
+	menuDataGlobal.endIndex = (type == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? codeplugContactsGetCount(nonVolatileSettings.dmrListFilterType) : codeplugDTMFContactsGetCount();
 	if (menuDataGlobal.endIndex > 0)
 	{
 		if (menuDataGlobal.currentItemIndex >= menuDataGlobal.endIndex)
@@ -105,7 +104,7 @@ static void reloadContactList(contactListContactType_t type)
 			menuDataGlobal.currentItemIndex = 0;
 		}
 		uiDataGlobal.currentSelectedContactIndex = (type == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-				? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, contactCallType, &contactListContactData)
+				? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, nonVolatileSettings.dmrListFilterType, &contactListContactData)
 				: codeplugDTMFContactGetDataForNumber(menuDataGlobal.currentItemIndex + 1, &contactListDTMFContactData);
 	}
 	else
@@ -136,7 +135,6 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 				bool contactListTypeLocal = ((currentMenu == MENU_CONTACT_LIST) || ((currentMenu == MENU_CONTACT_QUICKLIST) && (trxGetMode() != RADIO_MODE_ANALOG))) ? MENU_CONTACT_LIST_CONTACT_DIGITAL : MENU_CONTACT_LIST_CONTACT_DTMF;
 				if (contactListType!=contactListTypeLocal)
 				contactListType=contactListTypeLocal;
-				contactCallType = CONTACT_CALLTYPE_ANY;
 
 				dtmfSequenceReset();
 			}
@@ -145,7 +143,6 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
 					codeplugContactGetDataForIndex(uiDataGlobal.currentSelectedContactIndex, &contactListContactData);
-					//contactCallType = contactListContactData.callType;
 				}
 				else
 				{
@@ -160,7 +157,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 			{
 				voicePromptsAppendLanguageString(&currentLanguage->dmr_contacts);
-				voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
+				voicePromptsAppendLanguageString(calltypeVoices[nonVolatileSettings.dmrListFilterType]);
 			}
 			else
 			{
@@ -231,7 +228,7 @@ static void updateScreen(bool isFirstRun)
 	switch (contactListDisplayState)
 	{
 		case MENU_CONTACT_LIST_DISPLAY:
-			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? contactCallType : 4)]);
+			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? nonVolatileSettings.dmrListFilterType : 4)]);
 
 			if (menuDataGlobal.endIndex == 0)
 			{
@@ -247,7 +244,7 @@ static void updateScreen(bool isFirstRun)
 				{
 					mNum = menuGetMenuOffset(menuDataGlobal.endIndex, i);
 					idx = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-							? codeplugContactGetDataForNumberInType(mNum + 1, contactCallType, &contact)
+							? codeplugContactGetDataForNumberInType(mNum + 1, nonVolatileSettings.dmrListFilterType, &contact)
 							: codeplugDTMFContactGetDataForNumber(mNum + 1, &dtmfContact);
 
 					if (idx > 0)
@@ -347,7 +344,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				menuSystemMenuIncrement(&menuDataGlobal.currentItemIndex, menuDataGlobal.endIndex);
 				uiDataGlobal.currentSelectedContactIndex = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-						? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, contactCallType, &contactListContactData)
+						? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, nonVolatileSettings.dmrListFilterType, &contactListContactData)
 						: codeplugDTMFContactGetDataForNumber(menuDataGlobal.currentItemIndex + 1, &contactListDTMFContactData);
 				voicePromptsInit();
 				updateScreen(false);
@@ -357,7 +354,7 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				menuSystemMenuDecrement(&menuDataGlobal.currentItemIndex, menuDataGlobal.endIndex);
 				uiDataGlobal.currentSelectedContactIndex = (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
-						? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, contactCallType, &contactListContactData)
+						? codeplugContactGetDataForNumberInType(menuDataGlobal.currentItemIndex + 1, nonVolatileSettings.dmrListFilterType, &contactListContactData)
 						: codeplugDTMFContactGetDataForNumber(menuDataGlobal.currentItemIndex + 1, &contactListDTMFContactData);
 				voicePromptsInit();
 				updateScreen(false);
@@ -394,11 +391,12 @@ static void handleEvent(uiEvent_t *ev)
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
-					contactCallType = (contactCallType + 1) % (CONTACT_CALLTYPE_ANY + 1);
+					nonVolatileSettings.dmrListFilterType = (nonVolatileSettings.dmrListFilterType + 1) % (CONTACT_CALLTYPE_ANY + 1);
+					settingsSetDirty();
 					reloadContactList(contactListType);
 
 					voicePromptsInit();
-					voicePromptsAppendLanguageString(calltypeVoices[contactCallType]);
+					voicePromptsAppendLanguageString(calltypeVoices[nonVolatileSettings.dmrListFilterType]);
 					voicePromptsAppendPrompt(PROMPT_SILENCE);
 
 					updateScreen(false);

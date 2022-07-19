@@ -141,7 +141,8 @@ typedef struct
 	uint8_t endRXBeep; // see END_RX_BEEP enum.
 	uint8_t ctcssSqlTail; // for eliminating squelch tail.
 	uint8_t sortFlags;
-	// currently 138 bytes Jun  22  2022 VK7JS. 
+	uint8_t dmrListFilterType;
+	// currently 139 bytes July 19  2022 VK7JS. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

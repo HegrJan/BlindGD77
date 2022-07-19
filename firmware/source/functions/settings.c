@@ -356,6 +356,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.endRXBeep=0;
 	nonVolatileSettings.ctcssSqlTail=35; // tenths of a second.
 	nonVolatileSettings.sortFlags = 0;
+	nonVolatileSettings.dmrListFilterType = 0;
 	settingsDirty = true;
 
 	settingsSaveSettings(false);
