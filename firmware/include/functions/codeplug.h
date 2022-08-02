@@ -362,6 +362,7 @@ bool codeplugZoneAddChannelToZoneAndSave(int channelIndex, struct_codeplugZone_t
 bool codeplugZoneDeleteChannelFromZone(int channelIndex, struct_codeplugZone_t *zoneBuf);
 // Used for rearanging channels in a zone.
 bool codeplugZoneReorderChannels(int zoneChannelIndex1, int zoneChannelIndex2, struct_codeplugZone_t *zoneBuf);
+bool codeplugZoneSave(struct_codeplugZone_t *zoneBuf);
 bool codeplugGetDeviceInfo(struct_codeplugDeviceInfo_t *deviceInfoBuffer);
 
 uint16_t codeplugGetQuickkeyFunctionID(char key);

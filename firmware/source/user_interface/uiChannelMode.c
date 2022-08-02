@@ -1453,6 +1453,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			if (reorderingChannels)
 			{
+				codeplugZoneSave(&currentZone);
 				reorderingChannels=false;
 				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE, PROMPT_THRESHOLD_2);
 				return;
@@ -1619,6 +1620,7 @@ static void handleEvent(uiEvent_t *ev)
 		{
 			if (reorderingChannels)
 			{
+				codeplugZoneGetDataForNumber(nonVolatileSettings.currentZone, &currentZone);
 				reorderingChannels=false;
 				announceItem(PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE, PROMPT_THRESHOLD_2);
 				return;
@@ -5830,7 +5832,6 @@ static void SortChannels(sort_type_t sortType)
 			break;
 		}
 	}
-	reorderingChannels=false;
 	keyboardReset();
 }
 
