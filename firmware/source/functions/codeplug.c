@@ -1819,8 +1819,10 @@ void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
 		for (int index=0; index < zone->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++index)
 		{
 			codeplugChannelGetDataWithOffsetAndLengthForIndex(zone->channels[index], (struct_codeplugChannel_t*)(sortBuffer[index].name), 0, 20); // read name and rxFreq
-			codeplugUtilConvertBufToString(sortBuffer[index].name, sortBuffer[index].name, 16);
+			uint32_t freq=bcd2int(sortBuffer[index].numericField);
+			codeplugUtilConvertBufToString(sortBuffer[index].name, sortBuffer[index].name, 15);
 			sortBuffer[index].index=zone->channels[index];
+			sortBuffer[index].numericField=freq;
 		}	
 		
 		qsort(sortBuffer, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(sortStruct_t), sortCMPFunction);
