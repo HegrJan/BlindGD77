@@ -1451,7 +1451,7 @@ static void handleEvent(uiEvent_t *ev)
 	{
 		if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
 		{
-			if (reorderingChannels)
+			if (reorderingChannels && directChannelNumber== 0)
 			{
 				codeplugZoneSave(&currentZone);
 				reorderingChannels=false;
