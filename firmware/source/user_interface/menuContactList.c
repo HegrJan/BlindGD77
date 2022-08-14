@@ -138,7 +138,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 
 				dtmfSequenceReset();
 			}
-			else
+			else if (uiDataGlobal.currentSelectedContactIndex > 0)
 			{
 				if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 				{
@@ -169,7 +169,7 @@ menuStatus_t menuContactList(uiEvent_t *ev, bool isFirstRun)
 			}
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
-		else
+		else if (uiDataGlobal.currentSelectedContactIndex > 0)
 		{
 			if (contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL)
 			{
@@ -228,7 +228,7 @@ static void updateScreen(bool isFirstRun)
 	switch (contactListDisplayState)
 	{
 		case MENU_CONTACT_LIST_DISPLAY:
-			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? nonVolatileSettings.dmrListFilterType : 4)]);
+			menuDisplayTitle((char *) calltypeName[((contactListType == MENU_CONTACT_LIST_CONTACT_DIGITAL) ? nonVolatileSettings.dmrListFilterType : 3)]);
 
 			if (menuDataGlobal.endIndex == 0)
 			{
