@@ -19,7 +19,7 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
-4 August 2022:
+14 August 2022:
 1. Implemented new Zone Lock feature.
 Press and hold * while powering on to toggle the zone lock. This will either lock the radio to the last active zone, or unlock the radio.
 When locked:
@@ -35,6 +35,7 @@ When locked:
 3. When you manually reorder channels or sort channels by name, frequency or in codeplug order, Pressing the Red button will now cancel the reorder. Previously, Red would act like Green and save the reorder immediately. Now, Green will save the reorder, but Red will cancel and restore the zone to what it was prior to the reorder operation.
 4. Fixed bug with sort channels by Frequency.
 5. Fixed bug when in reorder mode, if you use direct channel entry and hit green, reorder is confirmed rather than going to the channel. Reorder is only confirmed with Green if not in the process of direct channel entry.
+6. Fixed memory error causing random radio reboot in DTMF contact screen.
 
 8 July 2022
 1. Fixed issue of voltage being repeated on Radio Info screen at voice prompt level 3. It should now only speak when the voltage changes.
