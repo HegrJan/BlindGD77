@@ -73,7 +73,8 @@ typedef enum
 	BIT_BCL = (1 <<10),
 	BIT_PHONETIC_SPELL = (1 << 11),
 	BIT_INDICATE_DMR_RXTXTG_MISMATCH = (1 << 12),
-	BIT_TEMPERATURE_UNIT = (1 << 13) // 0 celcius, 1 fahrenheit
+	BIT_TEMPERATURE_UNIT = (1 << 13), // 0 celcius, 1 fahrenheit
+	BIT_ZONE_LOCK = (1 <<14)
 } bitfieldOptions_t;
 
 typedef struct
@@ -140,7 +141,8 @@ typedef struct
 	uint8_t endRXBeep; // see END_RX_BEEP enum.
 	uint8_t ctcssSqlTail; // for eliminating squelch tail.
 	uint8_t sortFlags;
-	// currently 138 bytes Jun  22  2022 VK7JS. 
+	uint8_t dmrListFilterType;
+	// currently 139 bytes July 19  2022 VK7JS. 
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE

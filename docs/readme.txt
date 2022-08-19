@@ -19,6 +19,28 @@ A key function summary is included in the docs folder called "Key Function Summa
 If you use JAWS for Windows, we now include Doug Lee's updated JAWS scripts for the CPS software in the root folder of this archive. This installer is called jfw_dmr.exe. It will install scripts which work with both the AccessibleGD77CPS and OpenGD77CPS software. These scripts work with JAWS 17.0 or later. Once installed, you can read  the script help file by pressing JAWSKey+f1 twice quickly from the CPS software.
 You can also visit Doug Lee's website to check for updated scripts at https://www.dlee.org/updates/jfw_dmr.exe
 
+14 August 2022:
+1. Implemented new Zone Lock feature.
+Press and hold * while powering on to toggle the zone lock. This will either lock the radio to the last active zone, or unlock the radio.
+When locked:
+* You can't change zones either from the menu, the channel screen or use a quick key to jump to a channel in a different zone.
+* You can't scan all zones.
+* You can't increase or decrease power. 
+* You can't change bandwidth.
+* You can't enter VFO mode.
+2. Digital Contact list enhancements:
+2.1. There is now an  All Contacts option when cycling the list filter with the  hash key. When this option is selected, the list will contain all talkgroups, private call IDS, and all call IDS. I.e. Pressing # will now cycle from group call, to private call, to all call, to all contacts.
+2.2. When you cycle the list filter with the hash key, your preference is remembered even when power cycling the radio.
+2.3. Fixed an issue whereby sorting digital contacts by name would not properly honour the callType filter and hence private calls could be displayed when group call was selected.
+3. When you manually reorder channels or sort channels by name, frequency or in codeplug order, Pressing the Red button will now cancel the reorder. Previously, Red would act like Green and save the reorder immediately. Now, Green will save the reorder, but Red will cancel and restore the zone to what it was prior to the reorder operation.
+4. Fixed bug with sort channels by Frequency.
+5. Fixed bug when in reorder mode, if you use direct channel entry and hit green, reorder is confirmed rather than going to the channel. Reorder is only confirmed with Green if not in the process of direct channel entry.
+6. Fixed memory error causing random radio reboot in DTMF contact screen.
+
+8 July 2022
+1. Fixed issue of voltage being repeated on Radio Info screen at voice prompt level 3. It should now only speak when the voltage changes.
+2. Added Temperature and Battery Calibration options to GD77S Options2 menu.
+
 3 July 2022
 Please update your Voice Prompts from this archive.
 1. Converted all quick start guides to RTF with headings and lists etc.
@@ -73,8 +95,7 @@ This mode allows rapid review of custom voice prompts and editing of the associa
 19.2.3. In Review mode, long hold sk2 will either save what is in the record buffer to an empty slot, or copy what is in that slot back to the record buffer for editing.
     19.2.4. Long hold SK2 in record mode will save to the last prompt reviewed's slot. This will overwrite what is in the slot, useful for replacing a prompt but potentially dangerous, but done by request.
 	19.2.5. Added DEL##1 through DEL##32 to delete a custom voice prompt to the list of virtual keypad commands.
-20 Added my recorded testimony to the Joseph's writings folder.
-21. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
+20. Shortened display timeouts when saving and deleting contacts from 2s to 0.5s.
  
 11 May 2022
 1. Increased number of DTMF contacts from 32 to 60. This is the maximum number which will fit without relocating the DTMF contacts from their current memory location in the EPROM. Please update your CPS with the new version in this archive in order to read and write the extra contacts, see 7 below.

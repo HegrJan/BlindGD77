@@ -294,6 +294,24 @@ static void settingsUpdateAudioAlert(void)
 		soundSetMelody(MELODY_ACK_BEEP);
 	}
 }
+
+static void zoneLockToggleAudioAlert()
+{
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
+	{
+		voicePromptsInit();
+		voicePromptsAppendLanguageString(&currentLanguage->zone);
+		if (settingsIsOptionBitSet(BIT_ZONE_LOCK))
+			voicePromptsAppendLanguageString(&currentLanguage->locked);
+		else
+			voicePromptsAppendLanguageString(&currentLanguage->unlocked);
+		voicePromptsPlay();
+	}
+	else
+	{
+		soundSetMelody(settingsIsOptionBitSet(BIT_ZONE_LOCK) ? MELODY_ACK_BEEP : MELODY_NACK_BEEP);
+	}
+}
 #endif
 
 void mainTask(void *data)
@@ -400,11 +418,21 @@ void mainTask(void *data)
 	watchdogInit(menuRadioInfosPushBackVoltage);
 	// If hash is held down during boot, ensure Voice Prompts are on if not already.
 	bool forceVoicePromptsOn=false;
-	if ((keyboardRead()&SCAN_HASH) && (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
+	uint32_t kbdState=keyboardRead();
+	if ((kbdState&SCAN_HASH) && (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
 	{
 		forceVoicePromptsOn=true;
 	}
-
+#if !defined(PLATFORM_GD77S)
+	if (kbdState&SCAN_STAR)
+	{
+		// toggle zone lock
+		bool zoneLock= settingsIsOptionBitSet(BIT_ZONE_LOCK) ? true : false;
+		zoneLock=!zoneLock;
+		settingsSetOptionBit(BIT_ZONE_LOCK, zoneLock);
+		addTimerCallback(zoneLockToggleAudioAlert, 250, MENU_ANY, false);// Need to delay playing this for a while, because otherwise it may get played before the volume is turned up enough to hear it.
+	}
+#endif // !defined(PLATFORM_GD77S)
 	soundInitBeepTask();
 
 #if defined(USING_EXTERNAL_DEBUGGER)
@@ -1002,19 +1030,12 @@ void mainTask(void *data)
 			{
 				keyFunction = codeplugGetQuickkeyFunctionID(keys.key);
 				int menuFunction = QUICKKEY_MENUID(keyFunction);
-
-#if 0 // For demo screen
-				if (keys.key == '0')
+				if (settingsIsOptionBitSet(BIT_ZONE_LOCK) && (menuFunction == MENU_ZONE_LIST))
 				{
-						static uint8_t demo = 90;
-						keyFunction = (UI_HOTSPOT_MODE << 8) | demo; // Hotspot demo mode (able to take screengrabs)
-
-						if (++demo > 99)
-						{
-							demo = 90;
-						}
+					menuFunction = 0;
+					soundSetMelody(MELODY_ERROR_BEEP);
 				}
-#endif
+
 
 #if defined(PLATFORM_RD5R)
 				if (keys.key == '5')

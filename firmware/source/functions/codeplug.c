@@ -439,11 +439,17 @@ return false;
 	uint16_t tempChannelIndex=zoneBuf->channels[zoneChannelIndex1];
 	zoneBuf->channels[zoneChannelIndex1]=zoneBuf->channels[zoneChannelIndex2];
 	zoneBuf->channels[zoneChannelIndex2]=tempChannelIndex;
-	// IMPORTANT. Write size is different from the size of the data, because it the zone struct contains properties not in the codeplug data
+	
+	return true;
+}
+
+bool codeplugZoneSave(struct_codeplugZone_t *zoneBuf)
+{
+	if (!zoneBuf) return false;
+				// IMPORTANT. Write size is different from the size of the data, because it the zone struct contains properties not in the codeplug data
 	return EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zoneBuf->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
 				(uint8_t *)zoneBuf, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
 }
-
 static uint16_t codeplugAllChannelsGetCount(void)
 {
 	uint16_t c = 0;
@@ -848,6 +854,9 @@ int codeplugContactsGetCount(uint32_t callType) // 0:TG 1:PC 2:ALL
 		case CONTACT_CALLTYPE_ALL:
 			return codeplugContactsCache.numALLContacts;
 			break;
+		case CONTACT_CALLTYPE_ANY:
+			return codeplugContactsCache.numTGContacts + codeplugContactsCache.numPCContacts + codeplugContactsCache.numALLContacts;
+			break;
 	}
 
 	return 0; // Should not happen
@@ -874,7 +883,7 @@ int codeplugContactGetDataForNumberInType(int number, uint32_t callType, struct_
 
 	for (int i = 0; i < numContacts; i++)
 	{
-		if ((codeplugContactsCache.contactsLookupCache[i].tgOrPCNum >> 24) == callType)
+		if (((codeplugContactsCache.contactsLookupCache[i].tgOrPCNum >> 24) == callType) || (callType==CONTACT_CALLTYPE_ANY))
 		{
 			number--;
 		}
@@ -1778,6 +1787,7 @@ void SortDigitalContacts()
 		codeplugContactGetDataForIndex(realIndex, &contact);
 		codeplugUtilConvertBufToString(contact.name, sortBuffer[index].name, 16);
 		sortBuffer[index].index=realIndex;
+		sortBuffer[index].numericField=codeplugContactsCache.contactsLookupCache[index].tgOrPCNum;
 	}	
 		
 	qsort(sortBuffer, digitalContacts, sizeof(sortStruct_t), sortCMPFunction);
@@ -1785,6 +1795,7 @@ void SortDigitalContacts()
 	for (int i=0; i <digitalContacts; ++i)
 	{
 		codeplugContactsCache.contactsLookupCache[i].index = sortBuffer[i].index;
+		codeplugContactsCache.contactsLookupCache[i].tgOrPCNum = sortBuffer[i].numericField;
 	}
 }
 
@@ -1808,8 +1819,10 @@ void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
 		for (int index=0; index < zone->NOT_IN_CODEPLUGDATA_numChannelsInZone; ++index)
 		{
 			codeplugChannelGetDataWithOffsetAndLengthForIndex(zone->channels[index], (struct_codeplugChannel_t*)(sortBuffer[index].name), 0, 20); // read name and rxFreq
-			codeplugUtilConvertBufToString(sortBuffer[index].name, sortBuffer[index].name, 16);
+			uint32_t freq=bcd2int(sortBuffer[index].numericField);
+			codeplugUtilConvertBufToString(sortBuffer[index].name, sortBuffer[index].name, 15);
 			sortBuffer[index].index=zone->channels[index];
+			sortBuffer[index].numericField=freq;
 		}	
 		
 		qsort(sortBuffer, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(sortStruct_t), sortCMPFunction);
@@ -1821,9 +1834,6 @@ void SortZoneChannels(struct_codeplugZone_t* zone, sort_type_t sortType)
 	}
 	else// just order the channels as they appear in the codeplug.
 		qsort(zone->channels, zone->NOT_IN_CODEPLUGDATA_numChannelsInZone, sizeof(uint16_t), sortCMPFunction);
-
-	EEPROM_Write(CODEPLUG_ADDR_EX_ZONE_LIST + (zone->NOT_IN_CODEPLUGDATA_indexNumber * (16 + (sizeof(uint16_t) * codeplugChannelsPerZone))),
-				(uint8_t *)zone, ((codeplugChannelsPerZone == 16) ? CODEPLUG_ZONE_DATA_ORIGINAL_STRUCT_SIZE : CODEPLUG_ZONE_DATA_OPENGD77_STRUCT_SIZE));
 }
 
 // contactIndex is either a DMR contact index  into the digital contacts list, or a  DTMF contact index.
